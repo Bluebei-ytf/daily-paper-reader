@@ -25,3 +25,69 @@ subscriptions:
     stage: A
     diff_threshold_pct: 15
   keyword_recall_mode: or
+  intent_profiles:
+    - tag: aichem-map
+      description: AI4Chem领域全景、通用方法与研究方向探索
+      enabled: true
+      paper_sources:
+        - arxiv
+      keywords:
+        - keyword: chemical foundation model
+          keyword_cn: 化学基础模型
+          query: chemical foundation model pre-training and transfer learning
+        - keyword: molecular generation optimization
+          keyword_cn: 分子生成与优化
+          query: molecular generation and optimization with machine learning
+        - keyword: chemical reaction prediction
+          keyword_cn: 化学反应预测
+          query: chemical reaction prediction using artificial intelligence
+        - keyword: retrosynthesis planning
+          keyword_cn: 逆合成规划
+          query: retrosynthesis and synthetic route planning with AI
+        - keyword: chemical large language model
+          keyword_cn: 化学大语言模型
+          query: large language models for chemistry applications
+        - keyword: quantum chemistry machine learning
+          keyword_cn: 量子化学机器学习
+          query: machine learning acceleration for quantum chemistry and molecular dynamics
+      intent_queries:
+        - query: >-
+            What are the latest advances in retrosynthesis, synthesis planning, and AI agents for chemistry, and how are
+            these systems evaluated?
+          query_cn: 逆合成、合成路线规划和化学智能体近期有哪些进展，这些系统通常如何评测？
+          enabled: true
+          source: manual
+          note: ''
+        - query: What are the latest survey papers on AI for chemistry covering multiple subfields?
+          query_cn: 涵盖多个子领域的AI化学最新综述论文有哪些？
+          enabled: true
+          source: manual
+          note: ''
+        - query: >-
+            What benchmark datasets and evaluation metrics are commonly used for molecular property prediction and
+            generation?
+          query_cn: 分子性质预测和生成中常用的基准数据集和评估指标有哪些？
+          enabled: true
+          source: manual
+          note: ''
+        - query: How is deep learning applied to reaction mechanism inference and catalysis design?
+          query_cn: 深度学习如何应用于反应机理推断和催化剂设计？
+          enabled: true
+          source: manual
+          note: ''
+      updated_at: '2026-07-24T10:10:19.576Z'
+source_backends:
+  arxiv:
+    papers_table: arxiv_papers
+    use_vector_rpc: true
+    vector_rpc: match_arxiv_papers
+    vector_rpc_exact: match_arxiv_papers_exact
+    use_bm25_rpc: true
+    bm25_rpc: match_arxiv_papers_bm25
+    sync_table: arxiv_sync_status
+    sync_success_value: success
+    schema: public
+    kind: supabase
+    enabled: true
+    url: https://lyucdwgefyfbmaiopjbk.supabase.co
+    anon_key: sb_publishable_lX-oi64Uxyd7SIVv3_w2Uw_MTOojeKq
