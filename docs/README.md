@@ -41,17 +41,17 @@
 <section class="dpr-home-dashboard-card dpr-home-report-card">
   <div class="dpr-home-dashboard-header">
     <div>
-      <span class="dpr-home-dashboard-kicker">2026-07-16 ~ 2026-07-25</span>
+      <span class="dpr-home-dashboard-kicker">2026-07-25</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">共 22 篇</strong>
+    <strong class="dpr-home-dashboard-count">共 17 篇</strong>
   </div>
   <dl class="dpr-home-dashboard-stats">
     <div class="dpr-home-dashboard-stat"><dt>累计更新</dt><dd>1 次</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>11</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>6</dd></div>
     <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>11</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-07-25 07:47:16 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-07-25 22:43:06 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -62,7 +62,7 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>今日推荐22篇论文，精读11篇，重点关注LLM驱动的逆向合成与钙钛矿设计。最值得看RetroAgent利用结构化记忆与LLM进行逆向合成规划，以及Symbolic Predicate-Guided方法实现钙钛矿氧化物逆设计。建议关注逆合成与描述符引导的逆设计在材料科学中的应用。</p>
+<p>今日共17篇论文，精读6篇、速读11篇，重点聚焦化学与材料科学中的AI验证与分子动力学应用。最值得关注：精读高分论文揭示化学推理验证中“检测是瓶颈”，以及机器学习势驱动MgH2脱氢模拟的突破。建议普通读者优先速读Rem3Di的3D分子描述符学习和AI模型在化学中的可解释性研究。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -71,12 +71,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">精读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">11 篇</strong>
+    <strong class="dpr-home-dashboard-count">6 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="RetroAgent: Harnessing LLMs to Search Over Structured Memory for Agentic Retrosynthesis Planning">RetroAgent: Harnessing LLMs to Search Over Structured Memory for Agentic Retrosynthesis Planning</span></li><li><span class="dpr-home-dashboard-paper-title" title="Symbolic Predicate-Guided Language Agents for Inverse Design of Perovskite Oxides">Symbolic Predicate-Guided Language Agents for Inverse Design of Perovskite Oxides</span></li><li><span class="dpr-home-dashboard-paper-title" title="Atomic Design Transformer: Scaffold-Conditioned 3D Molecule Generation via xTB-Reward Reinforcement Learning">Atomic Design Transformer: Scaffold-Conditioned 3D Molecule Generation via xTB-Reward Reinforcement Learning</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Grounded verification of chemical and materials reasoning: detection is the bottleneck">Grounded verification of chemical and materials reasoning: detection is the bottleneck</span></li><li><span class="dpr-home-dashboard-paper-title" title="Machine Learning Potential-Driven Molecular Dynamics Simulations of Dehydrogenation in Pristine and Doped MgH$_2$">Machine Learning Potential-Driven Molecular Dynamics Simulations of Dehydrogenation in Pristine and Doped MgH$_2$</span></li><li><span class="dpr-home-dashboard-paper-title" title="DBMol: Design of High-Affinity, Target-Specific Small Molecules through Structure Prediction Models">DBMol: Design of High-Affinity, Target-Specific Small Molecules through Structure Prediction Models</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>11</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>6</strong></span></div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-skim-card">
   <div class="dpr-home-dashboard-header">
@@ -87,7 +87,7 @@
     <strong class="dpr-home-dashboard-count">11 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Full-data accuracy with fewer labels for training and fine-tuning machine-learning force fields">Full-data accuracy with fewer labels for training and fine-tuning machine-learning force fields</span></li><li><span class="dpr-home-dashboard-paper-title" title="SevenNet-Polar for MultiTask Prediction of Energy, Forces, Stress, and Born Effective Charges: Development and Application to ZrO$_2$, Li$_3$PO$_4$, and Perovskites">SevenNet-Polar for MultiTask Prediction of Energy, Forces, Stress, and Born Effective Charges: Development and Application to ZrO$_2$, Li$_3$PO$_4$, and Perovskites</span></li><li><span class="dpr-home-dashboard-paper-title" title="Accelerated descriptor-free path sampling for protein-ligand binding kinetics">Accelerated descriptor-free path sampling for protein-ligand binding kinetics</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Rem3Di: Learning smooth, chiral 3D molecular descriptors from atomistic foundation models">Rem3Di: Learning smooth, chiral 3D molecular descriptors from atomistic foundation models</span></li><li><span class="dpr-home-dashboard-paper-title" title="Machine-Learned Compact Subspace Generation for Quantum Selected Configuration Interaction within Density Matrix Embedding Framework">Machine-Learned Compact Subspace Generation for Quantum Selected Configuration Interaction within Density Matrix Embedding Framework</span></li><li><span class="dpr-home-dashboard-paper-title" title="Toward Mechanistic Interpretability of an AI Foundation Model Fine-Tuned for Atmospheric Chemistry">Toward Mechanistic Interpretability of an AI Foundation Model Fine-Tuned for Atmospheric Chemistry</span></li></ul>
   </div>
   <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>11</strong></span></div>
 </section>

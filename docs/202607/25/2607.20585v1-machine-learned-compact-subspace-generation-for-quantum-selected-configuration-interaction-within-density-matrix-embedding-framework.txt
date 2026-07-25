@@ -1,0 +1,1513 @@
+Title: Machine-Learned Compact Subspace Generation for Quantum Selected Configuration Interaction within Density Matrix Embedding Framework
+
+URL Source: https://arxiv.org/pdf/2607.20585v1
+
+Published Time: Fri, 24 Jul 2026 00:05:52 GMT
+
+Number of Pages: 31
+
+Markdown Content:
+# Machine-Learned Compact Subspace Generation for Quantum Selected Configuration Interaction within Density Matrix Embedding Framework 
+
+Ashish Kumar Patra 1, Anurag K. S. V. 1, Ruchika Bhat 1, 2 , Sai Shankar P. 1, Rahul Maitra 3, and Jaiganesh G. *, 1 
+
+> 1
+
+Qclairvoyance Quantum Labs, Secunderabad, TG 500094, India. 
+
+> 2
+
+The University of Arizona, Tucson, AZ 85721, USA. 
+
+> 3
+
+Indian Institute of Technology Bombay, Mumbai, MH 400076, India. 
+
+## ABSTRACT 
+
+Sample-based Quantum Diagonalization (SQD), an extension of Quantum Selected Configuration Interaction (QSCI), has emerged as a promising hybrid quantum-classical paradigm for computing molecular ground state energies. By leveraging quantum sampling instead of variational optimization, QSCI avoids barren plateaus and enables direct reconstruction of correlated electronic wavefunctions. However, existing configuration recovery techniques primarily enforce symmetry constraints without guaranteeing optimal selection of the most physically relevant configurations, often leading to unnecessarily large subspaces and increased classical diagonalization costs. In this work, we introduce a machine-learned compact subspace generation protocol based on Restricted Boltzmann Machines (RBMs), termed QSCI-RBM, and integrate it within the Density Matrix Embedding Theory (DMET) framework. The RBM is trained on quantum-sampled configurations to learn the underlying probability distribution of dominant determinants, enabling the targeted generation of high-probability configurations. We apply this framework to the simulation of a protein-ligand complex involving the inhibitor Carmofur bound to the SARS-CoV-2 main protease ( Mpro ). Our results demonstrate that DMET-QSCI-RBM achieves energies within the chemical accuracy threshold by accessing only approximately 4% of the configuration subspace. In contrast, standard DMET-SQD simulations failed to reach chemical accuracy while accessing up to 20% of the subspace, even as the chemical potential itself nearly converged. These findings highlight that RBM-assisted configuration generation produces significantly more compact subspaces while preserving physical accuracy, thereby reducing classical computational overhead and enabling the scalable quantum embedding simulation of complex biological systems. 
+
+## 1 Introduction 
+
+Accurate simulation of correlated electronic structure remains one of the central challenges in quantum chemistry. Exact diagonalization methods such as Full Configuration Interaction (FCI) yield formally exact solutions to the electronic Schr ¨odinger equation within a given basis, but the size of the determinant space grows combinatorially with the number of orbitals and electrons 1, making even distributed implementations on modern supercomputers intractable beyond small or moderately sized molecular systems. Recent algorithmic breakthroughs have pushed this frontier considerably: distributed FCI implementations have reached one trillion determinants for the propane molecule 2, massively parallel CASCI calculations have accessed active spaces as large as 24 electrons in 24 orbitals 3, and lossless categorical compression strategies have most recently extended exact diagonalization to the quadrillion-determinant scale for heavy-element systems 4. Yet despite these heroic classical efforts, the non-polynomial scaling persists, and the Hilbert space of a moderate-sized drug molecule or catalytic center remains orders of magnitude beyond even exascale reach. Classical approximation methods such as Coupled Cluster theory 5 and Selected Configuration Interaction 6 partially alleviate this challenge by truncating the many-body expansion to the most energetically relevant configurations, but they still encounter steep scaling walls in strongly correlated regimes where the number of important determinants itself proliferates. Hybrid quantum-classical algorithms offer a promising pathway to overcome these limitations by offloading the exponen-tially scaling part of the problem onto quantum hardware while leaving classical post-processing to conventional computers. Fault-tolerant approaches such as Quantum Phase Estimation (QPE) 7 can in principle extract molecular eigenvalues with asymptotically optimal precision scaling, but their reliance on deep, fully error-corrected circuits places them firmly beyond current Noisy Intermediate-Scale Quantum (NISQ) hardware 8. Variational Quantum Eigensolvers (VQE) 9, 10 were consequently among the first NISQ-compatible algorithms proposed for quantum chemistry and have since been applied to problems ranging 
+
+> *
+
+(Corresponding Author) email: jaiganesh@qclairvoyance.in, drjaiganesh15@gmail.com 
+
+1arXiv:2607.20585v1 [quant-ph] 22 Jul 2026 from small-molecule ground-state energies 11 to protein–ligand binding energy estimation 12 and embedded active-space simula-tions on trapped-ion hardware 13 . Despite this progress, VQE and related variational approaches suffer from well-documented optimization pathologies, including barren plateaus in the cost-function landscape that can arise from both circuit depth and hardware noise 10, 14, 15 , optimizer instability, and heightened sensitivity to measurement overhead, all of which become more severe as circuit depth and qubit count grow. Sample-based Quantum Diagonalization (SQD), also referred to as Quantum Selected Configuration Interaction (QSCI), represents a fundamentally different paradigm for combining quantum and classical resources 16, 17 . Rather than variationally optimizing a parameterized circuit, QSCI prepares an approximate quantum state and directly samples bitstrings in the computational basis; classical post-processing then uses these samples to construct a compact many-body Hamiltonian in the sampled subspace, which is diagonalized exactly using classical eigensolvers such as the Davidson method 18 . Because the quantum device is used only for sampling rather than for iterative optimization, this approach sidesteps the barren-plateau and optimizer-instability issues that plague VQE, and it has been demonstrated to reach chemical accuracy for systems well beyond the reach of exact diagonalization, including transition-metal clusters and dissociation curves on real quantum-centric supercomputing architectures 16 , with recent closed-loop demonstrations coupling quantum processors to full-scale classical supercomputers 19 . The QSCI/SQD paradigm has since been rapidly extended along several fronts: adaptive input-state construction to reduce ansatz-optimization overhead 20 , Hamiltonian-simulation-based sampling that accesses chemically relevant subspaces without variational loops 21, 22 , excited-state calculations 23 , open-shell systems 24 , implicit solvation 25 ,non-covalent interactions 26 , materials simulations 27, 28 , and Krylov-subspace variants offering polynomial-time convergence guarantees 29, 30 , including randomized-compilation 31 and unitary-decomposition 32 formulations that further reduce algorithmic error. To recover dynamic correlation missing from the selected subspace, QSCI has also been hybridized with phaseless auxiliary-field quantum Monte Carlo 33–35 , and GPU-accelerated classical diagonalization kernels have been developed to support the growing subspace sizes demanded by these workflows 36, 37 .The success of QSCI, however, critically depends on the quality of the sampled configuration subspace 17, 38, 39 . Raw hardware samples are noisy and generally violate physical symmetry constraints such as fixed electron number and total spin; existing approaches therefore use configuration recovery techniques to project the sampled bitstrings back onto the physically valid symmetry sector 16 . While effective at restoring physical validity, these recovery procedures do not guarantee an optimal selection of the dominant configurations that contribute to the ground-state wavefunction, and recent analyses have highlighted critical limitations of QSCI-type subspace construction, including unfavorable scaling of the required subspace size and sensitivity to sampling noise, with configuration interaction expansions from SQD often found to be less compact than classical selection heuristics such as Heat-Bath Configuration Interaction 40, 41 . In practice, this often leads to unnecessarily large subspaces that erode the very quantum advantage the method seeks to demonstrate, motivating a broad search for more compact and physically informed subspace-generation strategies. Efforts along this line include compact wavefunction-based selection using stochastic time evolution 42 , the Handover Iterative VQE (HI-VQE), which dynamically exchanges configuration data between quantum samplers and classical solvers to produce wavefunctions substantially more compact than classical HCI for strongly correlated systems 43–45 , and half-qubit architectures that double the addressable active space by mapping qubits to spatial rather than spin orbitals 46–48 .In parallel, machine learning has emerged as a powerful tool for learning quantum state distributions and representing many-body wavefunctions. Generative models such as Restricted Boltzmann Machines (RBMs) have demonstrated success in variationally representing strongly correlated quantum states and in efficiently sampling physically relevant configurations 49, 50 .Related generative-learning approaches have also been applied directly to configuration-space wavefunction solvers, including generative-machine-learning-driven configuration interaction (CIGen) 51 and machine-learning-guided configuration interaction (MLCI) 52 , both of which iteratively learn to propose determinants that most efficiently compress the many-body wavefunction. Closer to the QSCI setting itself, Physics-Informed Generative machine learning (PIGen-SQD) 53 anchors configuration recovery using a hierarchy of Møller-Plesset perturbative estimates 54 seeded from MP2 amplitudes and extended via symbolic tensor contractions to approximate singles, triples, and quadruples with further proliferation by RBM. This perturbative anchoring accelerates convergence and improves accuracy relative to unseeded configuration recovery, particularly under constrained hardware-sampling budgets. These successes naturally motivate the integration of RBM-based generative sampling directly within the QSCI subspace-construction step, replacing or augmenting configuration-recovery heuristics with a learned model that can directly target compact, high-quality determinant subspaces without relying on perturbative seeding. Furthermore, addressing molecular systems of pharmaceutically relevant size requires a fragmentation strategy that keeps the quantum resource requirement of each subproblem hardware-tractable. Density Matrix Embedding Theory (DMET) 55 , closely related in spirit to dynamical mean-field theory 56 , provides a rigorous embedding framework that partitions a large molecular system into smaller impurity fragments, each coupled self-consistently to a mean-field bath that preserves entanglement with the rest of the system 57 . Recent theoretical analyses further refines this understanding of DMET’s convergence behavior around the non-interacting limit 58, 59 . Because each impurity problem involves a classically tractable number of active orbitals , DMET 
+
+> 2/31
+
+is a natural fragmentation scheme for coupling quantum subroutines to large-scale chemistry: it has previously been combined with VQE for protein-ligand interaction quantification 12 and, more recently, with SQD to enable quantum-centric simulation of extended molecular systems 60 . This DMET-SQD combination has since been extended to ligand-like molecules 61 , used as a parallel fragment solver within the localized active space self-consistent field method to treat iron-sulfur clusters intractable for standard LASSCF 62 , coupled with quantum bootstrap embedding to recover correlation energy in large molecular systems 63 , and pushed toward macroscopic biological targets through heterogeneous quantum-classical supercomputing workflows spanning over 12,000 atoms 64 . A complementary embedded wavefunction (EWF) framework 65 has similarly been coupled with SQD and demonstrated on IBM quantum hardware to compute molecular electronic structure for a 300-atom Trp-cage miniprotein 66 ,achieving accuracy competitive with CCSD fragment benchmarks 64 . Integrating QSCI with DMET in this way 67 enables scalable quantum simulations of large molecular systems while keeping the qubit count per fragment constant, at the cost of introducing an additional self-consistency loop over the chemical potential that couples the fragments to their environment. Beyond these DMET-centred approaches, several modern fragmentation schemes aim to preserve higher-order correlation effects while maintaining computational efficiency. Coupled-cluster downfolding methods construct effective low-dimensional Hamiltonians by integrating out inactive degrees of freedom using classical CC theory, yielding size-consistent and sys-tematically improvable reduced models 68–70 . Variational Localized Active Space methods, such as LASSCF 71, 72 , explicitly partition the active space into weakly entangled local subspaces that can be optimized independently, providing a natural interface for hybrid classical-quantum workflows 62 . Related embedding paradigms include the Fragment Molecular Orbital (FMO) method, which decomposes a large system into overlapping fragment pairs and has been interfaced with VQE 73 to enable quantum treatment of individual fragments within a classically computed electrostatic environment. Many-body expansion (MBE) methods 74, 75 and Dynamical Mean-Field Theory (DMFT) 56, 76 provide further alternatives for capturing non-local correlation and dynamical effects. Bootstrap Embedding (BE) 77–80 builds upon DMET by enforcing consistency of reduced density matrices across fragment boundaries, and has recently been extended to quantum hardware settings. In parallel, several approaches have focused on adapting classical fragmentation techniques directly for quantum simulation algorithms: notable examples include DMET-VQE implementations on superconducting and trapped-ion platforms 12, 13, 66 ,divide-and-conquer VQE (DC-VQE) 81 which recursively decomposes the system into subsystems solved by shallow local circuits, and EWF-SQD 64, 66 demonstrated on IBM quantum hardware for protein-scale systems. Collectively, these works define a growing ecosystem of hybrid methods that aim to balance accuracy, scalability, and near-term hardware constraints in quantum-enabled electronic structure calculations. In this work, we combine these advances into a unified framework termed DMET-QSCI-RBM, in which an RBM-based generative sampler is trained directly on hardware-sampled bitstrings to construct compact, symmetry-respecting configuration subspaces within each DMET impurity fragment, without recourse to MP2-based perturbative anchoring. We apply this framework to the Carmofur/SARS-CoV-2 M pro protein–ligand complex, a pharmaceutical-scale system that we fragment into eleven molecular fragments, and we demonstrate that DMET-QSCI-RBM achieves chemical accuracy while accessing a substantially smaller fraction of the symmetry-adapted configuration space than converged DMET-SQD, establishing subspace compactness as a key practical advantage of learned, hardware-driven configuration selection over both configuration-recovery-based and perturbatively seeded alternatives. 
+
+## 2 Methodology 
+
+2.1 RBM-Guided Iterative Subspace Expansion 
+
+The QSCI-RBM workflow integrates quantum hardware sampling via the Local Unitary Cluster Jastrow (LUCJ) ansatz with a Restricted Boltzmann Machine (RBM)-guided iterative subspace expansion, driving classical Selected Configuration Interaction (SCI) diagonalization over a progressively refined, symmetry-constrained determinant space. The overall procedure is summarized in Figure 1 (Steps 1-10); its defining algorithmic features are highlighted below. • Post-selection precedes everything else (Steps 1-4). Raw hardware bitstrings Ssamp = {| φ1⟩, . . . , |φd ⟩} from LUCJ sampling (Step 1) are first filtered for particle-number and spin-z conservation (Step 2), 
+
+Nα + Nβ = Nelec , Nα − Nβ = 0, (1) before any further processing. The surviving symmetry-valid configurations are diagonalized once (Step 3) to obtain an initial energy and CI coefficients, and are then stored, together with the mandatory HF reference |φHF ⟩, as the initial determinant memory (Step 4), 
+
+M (0) =
+
+n
+
+|φ ⟩ ∈ Ssamp Nα = Nβ = Nelec 
+
+> 2
+
+o
+
+∪ {| φHF ⟩} . (2) 
+
+> 3/31
+
+• The determinant memory is updated at two distinct points within the iterative loop (Steps 5-10). First, at Step 7, the symmetry-filtered candidates freshly generated by RBM Gibbs sampling (Step 6), Gsymm , are screened by a combined 
+
+symmetry and novelty filter which retains only N-electron, spin-symmetry obtaining determinants not already present in memory. These are unioned with the current memory to form the working diagonalization space for that iteration, 
+
+U (t) = M (t) ∪ Gsymm . (3) Second, after spin-string proliferation and SCI diagonalization over U (t) (Step 8; Eq. (5) below) and CI coefficient thresholding (Step 9), the top-K new configurations exceeding the threshold τsv are permanently appended to the memory (Step 10), 
+
+M (t+1) = M (t) ∪
+
+
+
+|φ ⟩ /∈ M (t) ⟨φ |Ψ(t)⟩ 2
+
+> τsv 
+
+
+
+> top-K
+
+. (4) Only this second addition persists across iterations; the first (Step 7) is a temporary expansion used solely to construct that iteration’s diagonalization input, with novelty filtering ensuring that determinants already resident in memory are never re-admitted or double-counted. • RBM training uses equal weighting over the top predominant determinants (Step 5). At each iteration, the RBM is trained on samples drawn uniformly from the current determinant memory M (t) (excluding the HF reference), with every retained determinant assigned equal sampling weight wφ = 1 for all |φ ⟩ ∈ M (t) \ {| φHF ⟩} , regardless of its associated CI coefficient magnitude. This is a deliberate design choice: QSCI-RBM does not attempt to learn the exact ground-state probability distribution |cφ |2, but functions purely as a sample generator that has already been pre-filtered, via the top-k%post-selection step and the iterative coefficient thresholding of Eq. (4) , to contain only predominant configurations. Equal weighting within this pre-filtered set then ensures unbiased exploration across the dominant sector at each iteration, rather than over-concentrating Gibbs sampling around any single high-weight configuration. • Spin-string proliferation is applied before diagonalization (Step 8), forming a second route into the determinant memory. Rather than diagonalizing directly over the explicit determinants in U (t), the unique α-configurations Auniq 
+
+and β -configurations Buniq are first extracted from U (t), pooled together, and their full Cartesian product is formed as the projection subspace, 
+
+Puniq = Auniq ∪ Buniq , S(t) 
+
+> proj
+
+= Puniq ⊗ Puniq , (5) prior to SCI diagonalization of the projected Hamiltonian ˆHS = ˆPS ˆH ˆPS. This proliferation step surfaces cross-paired configurations that were never explicitly sampled by hardware or generated by the RBM, and it is precisely these proliferation-discovered configurations which are validated by large CI coefficients |cμ |2 after diagonalization (Steps 8-9), that constitute the second, implicit entry pathway into the persistent determinant memory via Eq. (4) (Step 10). Notably, no physics-based perturbative augmentation (e.g., MP2- or higher-rank-seeded estimates) is introduced at any stage to supplement this proliferated space: direct inspection of the hardware excitation-order profiles (Section 4.7) shows that LUCJ-prepared samples already populate excitation orders roughly four through six relative to the HF reference with substantial shot density, a range inaccessible to a doubles-restricted perturbative seed such as MP2. Though whether these particular orders contribute meaningfully to the converged ground-state wavefunction is not separately established here and is left for future investigation. 
+
+2.2 Integration of QSCI-RBM within DMET 
+
+The theoretical background of DMET is provided in Section G.3 in the Supplementary Material for reference.The QSCI-RBM solver described above is invoked as the high-level impurity solver within the DMET self-consistency loop, in place of a conventional FCI or CCSD solver. Figure 2 summarizes the resulting combined workflow. Starting from a low-level Hartree-Fock calculation of the full system in the localized orbital basis, each fragment is embedded via bath orbital construction, and the resulting fragment Hamiltonian is passed to the QSCI-RBM solver, which returns the fragment energy and electron count. This embedding step is repeated for every fragment at the current global chemical potential μglob ; once all fragments have been solved, μglob is updated via the Newton-Secant procedure described in Section 2.3.2, and the loop is repeated until the total embedded electron count matches the true electron count to within εcon , at which point the DMET-QSCI-RBM energy is obtained. Within each fragment solve, the QSCI-RBM pipeline itself proceeds as detailed in Section 2.1: a single LUCJ layer of localized orbital rotations e± ˆT and spin-resolved Jastrow correlators ei ˆJ acts on the Hartree-Fock reference state, and 
+
+> 4/31 1 Quantum Sampling
+> LUCJ ansatz → raw bitstrings
+> 2
+> Post -Selection
+> Filter by electron number & spin
+> symmetry
+> 3
+> SCI Diagonalization
+> Classical eigensolve → E₀, CI
+> coefficients
+> 4
+> Determinant Memory
+> Store symmetry -valid dets (incl. HF
+> reference)
+> START
+> For n iterations
+> 5
+> RBM Training
+> Train on CI wavefunction
+> (uniform  det . weights )
+> 6
+> RBM Gibbs Sampling
+> Sample new candidate dets from
+> learned distribution
+> 7
+> Symmetry & Novelty Filter
+> Keep N -electron, spin -balanced
+> dets not already in memory
+> 8
+> SCI Diagonalization
+> memory  ∪ new dets → eigensolve
+> → updated E, coeffs
+> 9
+> CI Coefficient Thresholding
+> Discard dets with |cᵢ|² <
+> threshold ε
+> 10  Determinant  Memory Update
+> Add top -x new dets by |cᵢ|²
+> Return  (Energy, SCI Vector)
+
+Figure 1. Schematic of the QSCI-RBM iterative workflow: hardware-sampled bitstrings from the LUCJ ansatz are post-selected and diagonalized to seed a persistent determinant memory. Each iteration trains an RBM on the current wavefunction, Gibbs-samples novel symmetry-valid determinants, re-diagonalizes the combined set, and updates the memory with the top determinants by |ci|2 until convergence after n iterations. 
+
+> 5/31
+
+measurement of the α and β registers yields sampled configurations {| x⟩} . These define a projected Hamiltonian ˆHproj , a compact sub-block of the full fragment Hamiltonian ˆH, whose diagonalization yields the fragment energy Efinal together with eigenvector amplitudes {cI } used to train an RBM; the RBM’s generative sampling then proposes an enriched configuration subspace for the next diagonalization, and this diagonalization-RBM cycle repeats for n iterations before the converged fragment energy is returned to the outer DMET loop. 
+
+2.3 Experimental Details 
+
+This section documents the experimental scope, solver configurations, and hardware conditions underlying the Carmofur/M pro 
+
+and small-molecule benchmarks: Section 2.3.2 defines the three solver configurations compared, Section 2.3.2 justifies the εspb 
+
+threshold choices, Section 2.3.2 explains the shared hardware data across configurations, Section 4.2 details the error mitigation settings used. 
+
+> 2.3.1 Software and Computational Environment
+
+All classical and quantum-circuit components of the DMET-SQD and DMET-QSCI-RBM pipelines were implemented using the following software packages. DMET embedding, bath construction, and the chemical-potential self-consistency loop for both DMET-SQD and DMET-FCI were carried out using Tangelo v0.4.3 82 . Local Unitary Cluster Jastrow (LUCJ) circuits were generated using ffsim v0.10.0 83 , and the resulting quantum circuits were constructed, transpiled, and executed using Qiskit v1.4.2 84 together with Qiskit IBM Runtime v0.36.1 85 for submission to IBM Quantum hardware. All classical quantum-chemistry computations, including Hartree-Fock, CCSD, and Selected Configuration Interaction (SCI) diagonalization, were performed using PySCF v2.10.0 86 . The Restricted Boltzmann Machine component of QSCI-RBM was implemented in PyTorch v2.10.0 87 . The chemical-potential root-finding step of the DMET self-consistency loop used the Newton-Secant method from scipy v1.15.3 88 .
+
+> 2.3.2 Experimental Configuration: Solver Scope, Threshold Rationale, and Hardware Data Reuse
+
+Before presenting the obtained results, we clarify the scope of the Carmofur/M pro experimentation. Three distinct impurity-solver configurations were benchmarked against a common DMET self-consistency loop: (i) DMET-SQD with the εspb 
+
+threshold set to the heuristic bound εspb = p|S|/2; (ii) DMET-SQD with εspb = 10 8, effectively unbounded; and (iii) DMET-QSCI-RBM. Unless otherwise specified, all quantum sampling across all three configurations used 100 ,000 shots per fragment per iteration; hardware error mitigation settings for this and all other experiments in this work are detailed in Section 4.2.    
+
+> Rationale for εspb Threshold Selection.
+
+The first configuration, εspb = p|S|/2 , was motivated by the observation that although SQD is presented in the literature as a comparatively compact sampling-based diagonalization scheme 16 , the spin-string proliferation step of Eq. 5 can substantially inflate the post-configuration-recovery diagonalization subspace beyond what was actually sampled on hardware 89 . We therefore sought a hard, a priori bound on the size of the proliferated subspace 
+
+Sproj relative to the full symmetry space dimension |S|, considering the worst-case scenario in which the sampled α- and 
+
+β -configurations are entirely disjoint rather than exhibiting the overlap one would expect for a closed-shell system. A full derivation of this bound is provided in Section C of the Supplementary Material, where we show that capping the number of configurations retained after configuration recovery at p|S|/2 is both necessary and sufficient to guarantee that the worst-case proliferated subspace does not exceed |S|, with no redundant over-allocation of the diagonalization subspace. This is the reasoning underlying the choice of εspb = p|S|/2 as a practical engineering safeguard, rather than a threshold derived from any energetic convergence criterion. The second configuration, εspb = 10 8, imposes no meaningful constraint on the number of configurations retained after recovery and instead allows DMET-SQD to access the full symmetry-valid shot distribution at each fragment. This regime was included specifically to establish the case in which DMET-SQD is most likely to succeed: with no subspace truncation whatsoever, any residual failure to reach chemical accuracy could not be attributed to an overly aggressive εspb , and any successful convergence serves as an upper-bound reference against which the compactness of the truncated and RBM-guided cases can be fairly judged. For both εspb settings, the S-CoRe configuration-recovery loop was run for two iterations for each individual impurity, as this was found to be sufficient for the accessed subspace and resulting energy to stabilize. The third configuration, DMET-QSCI-RBM, was then benchmarked against both DMET-SQD baselines under identical hardware and basis-set conditions, as detailed in Section 4.3 and Section 4.4.  
+
+> Reuse of Hardware Sampling Data Across Solver Configurations.
+
+A further methodological point bears clarification where the raw hardware sampling data corresponding to the first two DMET chemical-potential iterations, μchem = 0.0 and 
+
+μchem = 10 −4, is identical across all three solver configurations, DMET-SQD ( εspb = p|S|/2 ), DMET-SQD ( εspb = 10 8), and DMET-QSCI-RBM. This reuse is possible, and indeed principled, because the DMET self-consistency loop iterates over the chemical potential μchem using a Newton-Secant root-finding procedure, in which the first two evaluation points are predetermined seed values rather than being derived from any prior solver output; in Tangelo’s implementation of the DMET 
+
+> 6/31 Full System
+> - Low -level HF Calculation
+> - AO Basis to Localized
+> Orbital Basis
+> For the current  𝝁 𝒈𝒍𝒐𝒃 :
+> For each fragment:
+> Bath Orbital
+> Construction
+> High -level Solver
+> (QSCI -RBM)
+> Fragment Energy +
+> no. of electrons
+> 𝑵 𝒕𝒐𝒕  − 𝑵 𝒕𝒓𝒖𝒆  < 𝝐 𝒄𝒐𝒏 ?
+> No
+> Yes
+> update  𝝁 𝒈𝒍𝒐𝒃
+> DMET -QSCI -RBM  Energy obtained
+> 𝝁 𝒈𝒍𝒐𝒃  addition +
+> SCF Calculation
+
+Figure 2. The DMET-QSCI-RBM workflow: the outer DMET self-consistency loop (top) with QSCI-RBM as the per-fragment high-level solver (bottom). 
+
+> 7/31
+
+μchem -loop, these seed values are fixed at μchem = 0.0 and μchem = 10 −4 regardless of which impurity solver is subsequently used to evaluate the fragment energies and 1-RDMs at those points. Consequently, the quantum circuits, shot counts, and raw hardware bitstrings collected at these first two μchem values are solver-agnostic: only the classical post-processing applied downstream, εspb truncation for DMET-SQD, or spin-string proliferation combined with RBM-guided subspace expansion for DMET-QSCI-RBM, differs between the three configurations. It is only from the third Newton-Secant iterate onward, where the next μchem value is determined by the residual returned by the specific solver in use, that the three configurations’ trajectories diverge and require independent hardware sampling. 
+
+## 3 Validation on Small Molecules 
+
+As a benchmark prior to the full protein-ligand simulation, we first validate the QSCI-RBM framework on two small molecules of increasing size and correlation complexity: ethylene (C 2H4) and methanolamine (CH 5NO), both in the STO-3G basis and run on the IBM Heron Fez quantum processor. 
+
+3.1 Hardware Error Mitigation for Small-Molecule Validation 
+
+For the two small-molecule validation systems of this section, C 2H4 and CH 5NO, both dynamical decoupling 90 and Pauli twirling 91 were enabled to maximize measurement fidelity, since each system required only a single fragment (no DMET embedding) and could therefore absorb the additional QPU overhead of twirling. For C 2H4, twirling was configured with 200 randomizations at 100 shots per randomization (active-circuit strategy). For CH 5NO, the twirling budget was adjusted to 700 randomizations at 64 shots per randomization, again using the active-circuit strategy; dynamical decoupling (XpXm sequence) was applied identically in both cases. This higher-fidelity regime was computationally affordable at the single-fragment scale of these validation runs. The exact details of the execution dates and the hardware calibration data pertaining to the IBM Quantum processors used is provided in Section A in the Supplementary Material. 
+
+3.2 Ethylene (C 2H4)
+
+The complete active space for C 2H4 in the STO-3G basis comprises 9,018,009 determinants, providing a non-trivial test of subspace compactness while remaining amenable to exact FCI reference calculations. The energy convergence and fraction of symmetry space accessed as a function of self-consistency iteration are shown in Figure 3, using 100K shots. The absolute energy error with respect to FCI decreases monotonically over the first ∼25 iterations, spanning nearly four orders of magnitude from ∼200 mHa at iteration 1 to sub-chemical-accuracy at iteration 28, where the error reaches 1.11 mHa, which is well below the chemical accuracy threshold of 1.6 mHa and also below the CCSD reference error of 1.22 mHa. This is a notable result: the RBM-guided hardware sampling recovers more correlation energy than a classical coupled-cluster singles and doubles treatment. Convergence thereafter remains stable, with the error settling to ∼0.4 mHa in the final iterations, demonstrating that the RBM-guided subspace expansion consistently recovers correlation energy beyond what is accessible to CCSD. Concurrently, the fraction of symmetry space accessed grows monotonically from ∼0.5% at the first iteration, reflecting the progressive incorporation of new high-probability determinants generated by Gibbs sampling from the trained RBM. This growth saturates around iteration 28-30, beyond which the subspace size exhibits mild oscillations around a plateau of ∼2.4%, indicating that the RBM has effectively exhausted the dominant sector of the Hilbert space and is sampling near the boundary of the physically relevant subspace. Crucially, chemical accuracy is first achieved while accessing only 2.12% of the full symmetry space, underscoring the compactness of the RBM-guided subspace relative to the total configuration space of over nine million determinants. 
+
+3.3 Methanolamine (CH 5NO) 
+
+To assess scalability to a larger active space, we next apply QSCI-RBM to CH 5NO in STO-3G, with a CAS of (26e, 20o), corresponding to a full symmetry-preserving Hilbert space of dimension ≈ 6.01 × 10 9, roughly 670 × larger than the C 2H4
+
+case. The convergence profile is shown in Figure 4. The energy error again exhibits a clear monotonic decrease on a log scale across the 40 iterations, dropping from ∼200 mHa at iteration 1 to 1.47 mHa at iteration 29, where chemical accuracy is first crossed. The CCSD reference error for this system falls just inside the chemical accuracy region, making the QSCI-RBM result directly competitive with the classical coupled-cluster benchmark. Unlike the C 2H4 case, the energy error does not plateau sharply after crossing chemical accuracy but continues to decrease gradually, suggesting that the RBM has not yet fully saturated the dominant subspace by iteration 40. The subspace growth profile for CH 5NO differs qualitatively from C 2H4: after an initial dip over the first few iterations, likely reflecting transient RBM training instability before the model has seen sufficient symmetry-valid configurations, the symmetry space accessed grows monotonically and continuously throughout the full 40 iterations, reaching ∼0.085% by                
+
+> 8/31 010 20 30 40 50
+> Iteration
+> 10 1
+> 10 0
+> 10 1
+> 10 2
+> 10 3
+> |EQSCI  RBM  EFCI | (mHa)
+> Iter 28
+> 1.11 mHa
+> 2.12% SS
+> Energy Convergence
+> C2H4STO-3G · QSCI-RBM · IBM Heron Fez
+> |EQSCI RBM EFCI |
+> Chemical accuracy (1.6 mHa)
+> CCSD (1.22 mHa)
+> 1st chem. acc. (iter 28, 2.12% SS)
+> 010 20 30 40 50
+> Iteration
+> 0.0
+> 0.5
+> 1.0
+> 1.5
+> 2.0
+> 2.5
+> 3.0
+> Symmetry Space Accessed (%)
+> Subspace Compactness
+> C2H4STO-3G · QSCI-RBM · IBM Heron Fez
+> QSCI-RBM SS%
+> Chem. acc. crossed (iter 28)
+> 2.12% SS at chem. acc.
+
+Figure 3. QSCI-RBM convergence for C 2H4 (STO-3G, CAS = 9,018,009, 100K shots, IBM Heron Fez). Left : Absolute energy error with respect to FCI as a function of self-consistency iteration (log scale). The dashed red line marks chemical accuracy (1.6 mHa) and the dotted grey line marks the CCSD reference error (1.22 mHa); the green diamond indicates the first iteration at which chemical accuracy is achieved (iteration 28, 1.11 mHa). Right : Fraction of the symmetry space accessed at each iteration. The subspace grows monotonically until saturating near iteration 28-30, after which mild oscillations are observed around a plateau of ∼2.4%. Chemical accuracy is reached while accessing only 2.12% of the full configuration space. iteration 40 with no clear saturation. Strikingly, chemical accuracy is first achieved at iteration 29 while accessing only 0.06% 
+
+of the full symmetry space of 6 .01 × 10 9 determinants. This represents a substantially more compact subspace than the C 2H4
+
+result (0.06% vs. 2.12%), reflecting the increasingly favourable compactness-accuracy trade-off of the RBM-guided selection as the Hilbert space grows: the physically dominant determinants constitute an ever-smaller fraction of the total space, and the RBM is able to identify and concentrate on this compact, chemically relevant sector. 
+
+3.4 Comparison and Hyperparameter Considerations 
+
+Taken together, the results on C 2H4 and CH 5NO establish two consistent findings. First, QSCI-RBM achieves chemical accuracy in both systems while accessing a remarkably small fraction of the full symmetry space, 2.12% and 0.06% respectively, confirming the compactness of the RBM-guided subspace expansion across qualitatively different system sizes and correlation landscapes. Second, the energy convergence profiles are smooth and monotonic throughout, with no signs of instability or collapse, suggesting that the self-consistency loop between RBM training and QSCI diagonalization is robust under current hyperparameter settings. We note that the hyperparameters used in both studies, including the RBM learning rate, number of hidden units, Gibbs sampling chain length, singular value threshold - were selected empirically without any systematic hyperparameter optimisation. A dedicated grid search or Bayesian optimisation over this parameter space would be expected to yield a more compact subspace, faster convergence, and potentially sub-mHa accuracy at an earlier iteration, leaving meaningful room for further improvement beyond the results presented here. With these benchmarks establishing the validity and compactness of the QSCI-RBM approach, we proceed to the full DMET-QSCI-RBM treatment of the Carmofur/SARS-CoV-2 M pro protein-ligand complex. 
+
+## 4 QSCI-RBM within DMET Framework - Simulation of Carmofur-M pro Complex 
+
+This section applies the DMET-QSCI-RBM framework to the Carmofur/SARS-CoV-2 M pro protein-ligand complex. Section 4.1 describes the fragmentation of the system into 11 DMET impurities and the active-space and basis-set choices common to all solver configurations. Section 4.2 details the error mitigation settings used for these DMET-embedded hardware runs. Section 4.3 establishes the DMET-SQD baseline under two εspb truncation regimes, contrasting a fully converged but essentially untruncated configuration against a more compact, non-converged one. Section 4.4 presents the DMET-QSCI-RBM results at a halted μ-self-consistency point, together with a cross-method comparison of subspace compactness and final energies against 
+
+9/31 0 5 10 15 20 25 30 35 40            
+
+> Iteration
+> 10 0
+> 10 1
+> 10 2
+> |EQSCI  RBM  EFCI | (mHa)
+> Iter 29
+> 1.47 mHa
+> 0.06% SS
+> Energy Convergence
+> |EQSCI RBM EFCI |
+> Chemical accuracy region ( 1.6 mHa)
+> 1st chem. acc. (iter 29, 0.06% SS)
+> CCSD
+> 0510 15 20 25 30 35 40
+> Iteration
+> 0.00
+> 0.02
+> 0.04
+> 0.06
+> 0.08
+> Symmetry Space Accessed (%)
+> Subspace Compactness
+> QSCI-RBM SS%
+> Chem. acc. crossed (iter 29)
+> 0.06% SS at chem. acc.
+
+Figure 4. QSCI-RBM convergence for CH 5NO (STO-3G, |S| ≈ 6.01 × 10 9, IBM Heron Fez). Left : Absolute energy error with respect to FCI as a function of self-consistency iteration (log scale). The shaded green band marks chemical accuracy (1.59 mHa) and the dashed red line marks the CCSD reference error, which itself falls just inside the chemical accuracy region; the green diamond indicates the first iteration at which chemical accuracy is achieved (iteration 29, 1.47 mHa). Right : Fraction of the symmetry space accessed at each iteration. The subspace grows monotonically after an initial dip over the first few iterations, with no sharp saturation point, continuing to expand gradually through iteration 40. Chemical accuracy is first reached while accessing only 0.06% of the full symmetry space. both DMET-SQD baselines. Section 4.6 analyzes the quantum hardware resources, circuit depth and QPU execution time, consumed by each solver configuration. Finally, Section 4.7 examines the excitation-order composition of the hardware-sampled configurations and how subspace compactness relates to correlation-energy capture across RBM iterations. 
+
+4.1 Carmofur - M pro PL Complex - Fragmentation Details 
+
+As the target biological application, we consider the SARS-CoV-2 main protease (M pro ) in complex with the covalent inhibitor Carmofur, as shown in Figure 5(a). To define a tractable QM region, the molecular fractionation with conjugate caps (MFCC) method 92 was employed, retaining all protein residues within a 3 ˚ A isosurface distance of the ligand. The resulting QM region encompasses the chemically active binding pocket together with the full ligand and is illustrated in Figure 5(b). This region was subsequently partitioned into 11 DMET fragments (F1-F11), with fragment boundaries placed along single bonds to minimise inter-fragment entanglement as much as possible. While more refined partitioning schemes respecting the full bond topology and molecular geometry exist 60, 93 , the present manual fragmentation suffices to rigorously benchmark the DMET-QSCI-RBM framework on a realistic biological system. The capping procedure ensures that dangling valences at each boundary are saturated, preserving the local electronic structure of every fragment 92 . Fragment sizes range from 2 to 7 atoms, with the majority containing 5-6 atoms, as summarised in Figure 5(c). Each fragment is treated as an independent DMET impurity problem and solved using the QSCI-RBM solver described above, with DMET self-consistency enforced through iterative adjustment of the correlation potential until the fragment one-particle reduced density matrices match their mean-field counterparts 55, 57 .The QM region was treated using the 6-31G basis set 94 , yielding impurity sizes ranging from 44 to 152 spin orbitals across the 11 fragments, as shown in Figure 6. To render each fragment amenable to quantum simulation within current hardware constraints, an active space comprising the 8 highest occupied molecular orbitals (HOMO) and 8 lowest unoccupied molecular orbitals (LUMO) was selected for every impurity Hamiltonian, yielding a uniform active space of exactly 16 spatial orbitals and 8α + 8β electrons - equivalently, 32 qubits per fragment under the Jordan-Wigner mapping 95 . This (16e, 16o) active space defines a symmetry-preserving Hilbert space of dimension  16 8
+
+2 = 165 ,636 ,900 for each fragment. The remaining occupied and virtual orbitals outside this active window are treated at the Hartree-Fock level, effectively frozen, and their contributions folded into the one-body core Hamiltonian as a constant energy offset 96 . This uniform active space construction ensures that each fragment circuit has an identical qubit footprint, greatly simplifying resource estimation and circuit compilation across all 11 fragments 60 . The resulting fragment ( Ay), bath ( By), and frozen core/virtual orbital counts for all 11 fragments are 
+
+10/31 summarized in Section B in the Supplementary Material. F1 
+
+> F2
+> F3
+> F4
+> F5
+> F11
+> F10
+> F9 F8
+> F6
+> F7
+
+# Protein  Ligand 
+
+# a b
+
+# c
+
+Figure 5. System setup for the Carmofur-M pro protein-ligand complex. (a) Ribbon representation of the SARS-CoV-2 main protease with Carmofur bound at the active site (dashed circle); red spheres indicate explicit water molecules. (b) The QM region constructed via the conjugate-cap method ( 3 ˚ A isosurface cutoff), partitioned into 11 DMET fragments F1-F11; the dashed boundary separates the protein (left) and ligand (right) moieties. (c) Distribution of fragment sizes by atom count. F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 
+
+Fragments 
+
+0
+
+20 
+
+40 
+
+60 
+
+80 
+
+100 
+
+120 
+
+140 
+
+160 
+
+> Impurity Size (Spin Orbitals)
+
+44 q 
+
+96 q 
+
+152 q 
+
+96 q 
+
+60 q 
+
+116 q 124 q 132 q 
+
+104 q 104 q 112 q 
+
+> 32 qubits
+> 32 qubits
+> 32 qubits
+> 32 qubits
+> 32 qubits
+> 32 qubits
+> 32 qubits
+> 32 qubits
+> 32 qubits
+> 32 qubits
+> 32 qubits
+
+8 HOMO 8 LUMO Inactive / Frozen orbitals 
+
+Figure 6. Active space selection for the DMET fragments of the Carmofur-M pro complex (6-31G basis 94 ). Each bar shows the total impurity size in spin orbitals for fragments F1-F11, with the active space (8 HOMO + 8 LUMO, purple and blue respectively) highlighted within each impurity. The remaining orbitals are frozen at the Hartree-Fock level (hatched teal). The active space selection yields a uniform 32-qubit quantum circuit per fragment, corresponding to a symmetry-preserving Hilbert space of dimension  16 8
+
+2 = 165 ,636 ,900, irrespective of the total impurity size. 
+
+11/31 0 10 20 30 40          
+
+> Eigenvalue index (descending )
+> 10 15
+> 10 13
+> 10 11
+> 10 9
+> 10 7
+> 10 5
+> 10 3
+> 10 1
+> = min( , 2  )
+
+(a)                    
+
+> F1 (env=274)
+> F2 (env=261)
+> F3 (env=247)
+> F4 (env=261)
+> F5 (env=270)
+> F6 (env=256)
+> F7 (env=254)
+> F8 (env=252)
+> F9 (env=259)
+> F10 (env=259)
+> F11 (env=257)
+> <occ (10 13 )
+> 1
+> 2
+> 3
+> 4
+> 5
+> 6
+> 7
+> 8
+> Eigenvalue index (descending )
+> 10 4
+> 10 3
+> 10 2
+> 10 1
+> 10 0
+> = min( , 2  )
+
+(b) Figure 7. Environment 1-RDM eigenvalue fractionality spectrum δ = min (ε, 2 − ε) for the 11 DMET fragments of the Carmofur-M pro complex (6-31G basis). (a) Spectrum per fragment ( δ > 10 −13 ), sorted in descending δ ; shaded region marks δ
+
+below the occupation threshold εocc = 10 −13 . (b) Zoomed view of the leading 8 eigenvalues per fragment, corresponding to the 8 bath orbitals retained in the (16e, 16o) active space used throughout this work. Figure 7 shows the environment 1-RDM eigenvalue fractionality spectrum for each of the 11 Carmofur fragments, where 
+
+δ = min (ε, 2 − ε) measures the deviation of each environment natural-orbital occupation from the nearest integer, with δ → 1indicating strong fragment-bath entanglement and δ → 0 indicating a nearly unentangled orbital. The total environment size or the number of spatial orbitals outside each fragment from which bath orbitals are drawn, ranges from 247 (F3) to 274 (F1) spatial orbitals across the 11 fragments. Panel (a) of Figure 7 shows the full spectrum, with all fragments exhibiting a small number of strongly fractional eigenvalues followed by a steep roll-off toward the numerical noise floor; the shaded region marks eigenvalues below the occupation threshold εocc = 10 −13 , below which orbitals are treated as unentangled and excluded from the impurity problem. Panel (b) of Figure 7 zooms in on the leading 8 eigenvalues per fragment, corresponding to the top 8 bath orbitals ranked by fractionality. This window was chosen to match the fixed (16e, 16o) active space (8 HOMO + 8 LUMO, 32 qubits) adopted for every impurity, a size selected so that each fragment circuit remains within current hardware constraints while still admitting an exact FCI reference for benchmarking. Given total environment sizes of 247-274 spatial orbitals per fragment, retaining only the top 8 bath orbitals by fractionality means that the remaining ∼239-266 environment orbitals per fragment are approximated as frozen at the mean-field level. This truncation is consistent with the low fractionality ( δ ≲ 10 −2) already reached by the 8th eigenvalue across all fragments in panel (b). More broadly, εocc functions as a physically grounded, entanglement-aware control parameter governing the trade-off between impurity size and captured correlation, an effect shown to be especially pronounced in low-symmetry molecular systems where fragment-bath entanglement is strongly geometry-dependent 61 .Having established the compactness and accuracy of QSCI-RBM on isolated small molecules, we now apply the full DMET-QSCI-RBM framework to the active region of the Carmofur/SARS-CoV-2 M pro protein-ligand complex, fragmented into the 11 conjugate-capped impurities F1-F11 described in Section 4.1. Each fragment carries a uniform (16e, 16o) active space, corresponding to a symmetry-preserving subspace of dimension |S| =  16 8
+
+2 = 165 ,636 ,900 , and all quantum sampling was performed on the IBM Heron R3 QPU ( ibm boston ). We first characterize the baseline DMET-SQD solver under two 
+
+εspb regimes to establish the accuracy-subspace-size trade-off inherent to configuration-recovery-based QSCI, before turning to the DMET-QSCI-RBM results and a direct cross-method comparison. 
+
+> 12/31
+
+4.2 Hardware Error Mitigation for DMET-Embedded Runs 
+
+All quantum sampling on the Carmofur-M pro complex in this work was performed on the IBM Boston Heron R3 processor. For all DMET-embedded experiments, DMET-SQD with εspb = p|S|/2 , DMET-SQD with εspb = 10 8, and DMET-QSCI-RBM, only dynamical decoupling (XpXm) was retained, and Pauli twirling was deliberately disabled. This reflects a deliberate trade-off between per-shot fidelity and total QPU execution time, in contrast to the higher-fidelity regime affordable in the single-fragment validation runs of Section 3.1. We note this was a resource-driven decision rather than a reflection of mitigation efficacy: twirling was observed to substantially increase QPU execution time per circuit, an overhead that becomes difficult to justify at the scale of the DMET experiments, where each chemical-potential iteration requires sampling all 11 fragments at 100 ,000 shots each, and every solver configuration requires multiple such iterations to reach (or approach) self-consistency. This total sampling cost scales as 11 fragments × 100 ,000 shots × Nμchem −iterations per configuration, repeated across three independent solver configurations. Given the limited QPU allocation available for this work, dynamical decoupling alone was used to provide adequate error suppression for the DMET-scale experiments, while reserving the additional twirling overhead for the single-fragment validation systems where it was affordable. The exact details of the execution dates and the hardware calibration data pertaining to the IBM Quantum processors used is provided in Section A in the Supplementary Material. 
+
+4.3 DMET-SQD Baseline: εspb and Self-Consistency 
+
+The DMET-SQD solver admits configurations into the SCI diagonalization space via a εspb that controls how aggressively the symmetry-valid hardware shot distribution is truncated prior to spin-string proliferation. Two limiting regimes were investigated. In the first, εspb = 10 8 was set to an effectively unbounded value, allowing the solver to retain the full symmetry-valid shot distribution at each fragment. As shown in Figure D1 in the Supplementary Material, this drives an average of ∼94% of the full symmetry space to be accessed per fragment, with modest fragment-to-fragment variation reflecting the similar active-space sizes and correlation character shared across the conjugate-capped fragments. This near-complete coverage of S is sufficient to drive the DMET self-consistency loop to convergence within four μ-iterations, as confirmed by the sharp drop in both energy error and chemical-potential residual in Figure 8 by iteration 4, |EDMET −CASCI − EDMET −SQD | falls to ∼ 6 × 10 −6 Ha, well inside the chemical-accuracy threshold, and |μchem − μDMET −FCI | correspondingly collapses to ∼ 2 × 10 −7. This regime therefore serves as a fully converged DMET-SQD reference, obtained at the cost of an εspb setting that imposes essentially no compactness constraint on the sampled subspace. 1 2 3 4 5
+
+Niters 
+
+10 6
+
+10 5
+
+10 4
+
+10 3
+
+10 2
+
+10 1
+
+10 0
+
+> |EDMET  CASCI  EDMET  SQD | (Ha)
+
+1 2 3 4 5
+
+Niters 
+
+10 7
+
+10 6
+
+10 5
+
+10 4
+
+10 3         
+
+> | chem  DMET  FCI |
+> spb =S.S/2 Not Converged spb = 10 8Converged Chemical Accuracy
+
+Figure 8. DMET-SQD self-consistency trajectories for the Carmofur/SARS-CoV-2 M pro complex under two 
+
+εspb thresholds ( εspb ), IBM Heron Fez. Left : Absolute energy error with respect to DMET-CASCI as a function of Niters (log scale), with the shaded region marking chemical accuracy ( ≤1.6 mHa), for εspb =
+
+√|S| 
+
+> 2
+
+(red) and εspb = 10 8 (purple). Right :Absolute deviation of the chemical potential from the DMET-FCI reference value over the same iterations, for both εspb 
+
+settings. 
+
+> 13/31
+
+In the second, more practically motivated regime, the εspb was instead set according to the heuristic εspb = 
+
+> √S
+> 2
+
+, a probabilistic bound on the SCI dimension rather than a threshold derived from any convergence criterion. Figure D2 in the Supplementary Material shows that this truncated threshold still forces a average of ∼16.6% of the full symmetry space to be accessed per fragment per μ-iteration, almost an order of magnitude more compact than the εspb = 10 8 case, but still far from the sub-5% regime achieved by DMET-QSCI-RBM below. The run was halted after five μ-iterations owing to the prohibitive QPU time cost of continued hardware sampling under this truncation. Critically, as seen in the red curves of Figure 8 left panel, the energy error under this regime does not decrease monotonically: it drops through iterations 2-4 but rises again after iteration 4, remaining stuck at ∼ 10 −2-10 −3 Ha, well outside chemical accuracy, at the point the run was terminated. This non-monotonic behavior of E(μ) under a truncated SCI subspace is an expected consequence of the solver operating on an incompletely converged determinant selection at each μ-iteration: because the accessible subspace itself changes from one μ-iteration to the next, the resulting energy sequence is not guaranteed to be monotonic in μ, in contrast to the idealized picture in which the impurity solver is assumed exact. A particularly instructive feature of Figure 8 is the decoupling between the chemical-potential residual and the energy error under this truncated regime. By iteration 4, |μchem − μDMET −FCI | has fallen to the order of 10 −5- 10 −6, comparable in magnitude to the fully converged εspb = 10 8 trajectory, while the corresponding energy error remains stuck at 10 −3 Ha or worse. This demonstrates that the μ-residual is not, by itself, a reliable proxy for energy accuracy once the impurity solver operates on a truncated SCI subspace: a well-converged chemical potential can coexist with a poorly converged energy whenever the determinant memory underlying the SCI diagonalization is insufficiently compact or insufficiently complete. This observation motivates the subspace-quality-centric evaluation adopted for DMET-QSCI-RBM in the following subsection, rather than treating μ-convergence alone as the benchmark of solver adequacy. 
+
+4.4 DMET-QSCI-RBM: Compact Subspace Access at Halted Self-Consistency 1.0 1.5 2.0 2.5 3.0 
+
+## Niters 
+
+10 4
+
+10 3
+
+10 2
+
+10 1
+
+10 0
+
+> |EDMET  CASCI  EDMET  QSCI  RBM | (Ha)
+
+1.0 1.5 2.0 2.5 3.0 
+
+## Niters 
+
+10 4
+
+10 3  
+
+> | chem  DMET  FCI |
+> Run 1 (error = 9.3247e-4) Run 2 (error = 4.257e-4) Chemical Accuracy
+
+Figure 9. DMET-QSCI-RBM energy and chemical potential trajectory for the Carmofur/SARS-CoV-2 M pro complex (IBM Heron Fez). The chemical potential search was halted after three values ( μ = 0.0, 1 × 10 −4, and 9.7 × 10 −4) rather than carried to self-consistency. Left : Absolute energy error with respect to DMET-CASCI as a function of Niters (log scale), with the shaded region marking chemical accuracy ( ≤1.6 mHa). Two independent solves at the same final μ (Run 1, solid; Run 2, dashed) are shown, with errors of 9 .325 × 10 −4 Ha and 4 .257 × 10 −4 Ha respectively. Right : Absolute deviation of the chemical potential from the DMET-FCI reference value over the same halted trajectory (Run 1). For DMET-QSCI-RBM, the chemical-potential search was deliberately halted after three values ( μ = 0.0 , μ = 10 −4, and 
+
+μ ≈ 9.7 × 10 −4) rather than carried to full self-consistency, reflecting the practical constraint that each additional μ-iteration 
+
+> 14/31
+
+requires a fresh round of hardware sampling and RBM-guided subspace expansion across all 11 fragments. Figure D3 in the Supplementary Material shows the fragment-resolved symmetry space accessed across these three μ-iterations; the first two, corresponding to early-stage exploration of the chemical-potential landscape, are shown at reduced opacity, while the halted final value μ ≈ 9.7 × 10 −4 is the chemically meaningful operating point. To assess reproducibility at this final μ, two independent hardware re-solves (Run 1 and Run 2) were performed for every fragment. Both runs access at average ∼3.4% of the full symmetry space, more than an order of magnitude more compact than the non-converged DMET-SQD baseline of Section 4.3, despite DMET-QSCI-RBM’s μ-search itself being less converged. The energy consequence of this compact subspace is shown in Figure 9. Despite the halted μ-trajectory, both independent solves at the final μ land within chemical accuracy relative to DMET-CASCI, with absolute errors of 9.325 × 10 −4 Ha (Run 1) and 4.257 × 10 −4 Ha (Run 2). The chemical-potential residual (Figure 9, right panel) remains at the 10 −3 level through the first two μ-iterations before dropping to ∼ 1.4 × 10 −4 at the final point, itself not fully converged in the sense of the εspb = 10 8
+
+DMET-SQD reference, yet sufficient, in combination with the RBM-guided subspace, to deliver chemically accurate energies at both independent hardware re-solves. This result reinforces the central finding of Section 4.3: under DMET-QSCI-RBM, energy accuracy is governed primarily by the quality and compactness of the accumulated determinant memory rather than by the degree of μ-self-consistency achieved, allowing the framework to reach chemically meaningful results at a fraction of the quantum sampling cost that full μ-convergence would otherwise demand. 
+
+4.5 Cross-Method Comparison of Subspace Compactness 
+
+The consolidation of the fragment-resolved symmetry space accessed per fragment by all the three solver configurations is provided in Figure 10 as discussed in the previous sections. For each fragment, the run-averaged S.S. accessed is computed as the mean over the sampled μ-iterations, and we report the maximum of these per-fragment averages across all eleven fragments for each solver configuration. This choice of statistic is deliberate: taking the maximum over per-fragment averages reports the largest subspace that is reliably accessed across μ-iterations, whereas taking the maximum over individual runs would instead reflect a single, potentially anomalous, worst-case sample rather than a statistically representative bound. By this measure, DMET-SQD with εspb =
+
+√|S| 
+
+> 2
+
+accesses at most ∼19.0% of the symmetry space (maximum, across fragments, of the per-fragment run-averaged S.S. accessed) yet fails to reach chemical accuracy within the iterations attempted; DMET-SQD with εspb = 10 8 reaches convergence but at the cost of accessing at most ∼97.4% of the symmetry space by the same measure, approaching the full configuration space per fragment. DMET-QSCI-RBM, by contrast, achieves chemical accuracy while accessing at most ∼3.9% of the symmetry space by the same measure, a roughly 5 × reduction relative to the non-converged DMET-SQD run and a ∼25 × reduction relative to the converged DMET-SQD run, despite using substantially fewer hardware samples overall. This comparison isolates subspace compactness, rather than raw convergence speed in 
+
+μ-iterations, as the primary practical advantage of RBM-guided configuration generation: DMET-QSCI-RBM reaches an energy regime that DMET-SQD only attains by accessing nearly the entire symmetry-valid Hilbert space, and does so without recourse to perturbative seeding of any kind. Table 1 consolidates the absolute final DMET energies underlying the subspace-compactness comparison above. The fully converged DMET-SQD reference ( εspb = 10 8) recovers the DMET-CASCI energy to within 6.49 × 10 −6 Ha, as expected given its near-complete ( ∼97.4%) coverage of the symmetry space. The truncated DMET-SQD configuration ( εspb = p|S|/2 ), by contrast, remains at an absolute error of 2.213 × 10 −2 Ha at the point its self-consistency loop was halted, well outside the chemical-accuracy threshold, consistent with the non-monotonic E(μ) behavior discussed above. DMET-QSCI-RBM, despite its own halted μ-trajectory, lands within chemical accuracy at both independent hardware re-solves, with absolute errors of 9.325 × 10 −4 Ha (Run 1) and 4.257 × 10 −4 Ha (Run 2) with errors roughly an order of magnitude smaller than the truncated DMET-SQD baseline, obtained while accessing a substantially more compact subspace ( ∼3.9% vs. ∼19.0% of the symmetry space, respectively). This absolute-energy view reinforces the picture established via relative errors above: subspace compactness and energy accuracy are only loosely coupled to μ-self-consistency, and DMET-QSCI-RBM achieves the tightest accuracy to subspace-size trade-off of the three configurations examined. 
+
+> 15/31 F1
+> F2
+> F3
+> F4
+> F5
+> F6
+> F7
+> F8
+> F9
+> F10
+> F11
+
+Fragments 
+
+0
+
+20 
+
+40 
+
+60 
+
+80 
+
+100        
+
+> S.S Accessed (%)
+> 19.0%
+> 3.9%
+> 97.4%
+> DMET-SQD ( spb =||2)
+> DMET-QSCI-RBM
+> DMET-SQD ( spb = 10 8)
+> Full S.S (100%)
+
+Figure 10. Fragment-resolved symmetry-space ( S) accessed by each method for the Carmofur/SARS-CoV-2 M pro 
+
+complex (11 fragments, F1-F11). DMET-SQD with εspb = √S.S/2 (red, dashed, not converged within chemcial accuracy threshold), DMET-SQD with εspb = 10 8 (purple, converged), approaching the full configuration space (100%, dashed black line), and DMET-QSCI-RBM (teal, obtained energies within chemical accuracy threshold in the 3 rd μchem iteration). Shaded bands indicate the standard deviation across repeated evaluations per fragment. 
+
+Table 1. Absolute final DMET energies for the Carmofur-M pro complex across all solver configurations. Errors are reported relative to the DMET-CASCI/FCI reference energy of −1572 .7637084753 Ha. 
+
+Method Energy (Ha) |∆E| vs. DMET-FCI 
+
+DMET-CASCI/FCI (reference) −1572 .7637084753 –DMET-SQD ( εspb = 10 8, converged) −1572 .7637019868 6.49 × 10 −6 Ha DMET-SQD ( εspb = p|S|/2, not converged) −1572 .7858389342 2.213 × 10 −2 Ha DMET-QSCI-RBM (Iteration 3 - Run 1) −1572 .7646409427 9.325 × 10 −4 Ha DMET-QSCI-RBM (Iteration 3 - Run 2) −1572 .7632827791 4.257 × 10 −4 Ha 
+
+4.6 Quantum Resources Analysis for DMET-SQD and DMET-QSCI-RBM 
+
+Figures F1 and F2 in the Supplementary Section report the per-fragment transpiled circuit depth and QPU execution time, respectively, across all six DMET-SQD and DMET-QSCI-RBM runs on Carmofur-M pro (ibm boston ). Circuit depths across all configurations and fragments fall predominantly in the 450-1000 range, with occasional outliers (e.g., F3 at C4 under 
+
+εspb = 10 8, depth 1110) reflecting fragment-specific LUCJ layer requirements rather than any systematic trend across solver configurations or chemical-potential iterations. Execution times are similarly consistent, clustering around 28-32 s per fragment per iteration, with isolated exceptions (F3 at C3 under εspb = 10 8, 85.5 s; F9 at later iterations under εspb = √S/2, up to 36.5 s) that we attribute to queue-time variability on shared hardware rather than to any dependence on the εspb or solver configuration. Taken together, these figures show that per-fragment circuit depth and execution time are essentially uniform across DMET-SQD and DMET-QSCI-RBM, both solvers sample the same LUCJ circuits at the same shot budget, so neither approach carries an inherent per-circuit cost advantage over the other. The resource advantage of DMET-QSCI-RBM instead comes entirely from the number of chemical-potential iterations, and therefore rounds of fresh hardware sampling, required to reach a chemically accurate result: DMET-QSCI-RBM reuses the two shared iterations (C1, C2) common to all three configurations and requires only two further rounds of fresh sampling (Run 1, Run 2) at the halted final μ, whereas DMET-SQD with εspb = 10 8
+
+requires two further converged iterations (C3, C4) and DMET-SQD with εspb = p|S|/2 requires three further iterations (C3-C5) without ever reaching chemical accuracy. Cumulative QPU time therefore scales with Nμ-iterations rather than with any per-circuit cost differential, and DMET-QSCI-RBM’s markedly smaller iteration count, achieved without recourse to perturbative seeding, is the direct source of its quantum hardware efficiency. 
+
+> 16/31
+
+4.7 Excitation-Order Structure of Hardware Samples and Subspace Compactness post Diagonalization 
+
+Figure E1 in the Supplementary Material shows the raw, symmetry-filtered excitation order distribution of hardware shots for each of the 11 Carmofur fragments, comparing two independent runs (Run 1, Run 2) taken at the same halted chemical potential value ( μ-iter 3). Across all fragments, the dominant shot density lies well beyond the MP2-accessible region (excitation orders 0-2, marked by the dashed boundary), typically peaking at orders 4-7, direct evidence that the LUCJ-prepared hardware state samples multi-reference character far outside what a perturbative, doubles-restricted seeding scheme such as MP2 could access. The degree of agreement between the two independent runs varies considerably by fragment: F1, F4, F8, and F10 show strong reproducibility ( L1 < 11% ), with closely overlapping histograms across the full excitation range, while F2, F3, F5, F6, F7, F9, and F11 show substantially larger L1 distances (29-57%), reflecting genuine run-to-run variation in which excitation orders dominate the symmetry-valid shot population. This variation is consistent with genuine near-degeneracy among several excitation orders, though more plausibly reflects noise-induced diffusion of the sampled distribution into symmetry-preserving but non-physical neighboring configurations, thus warranting further study. Critically, this divergence in excitation-order composition does not translate into divergence in downstream energetic accuracy. As established separately in Section 4.4, both runs at this same μ-iter 3 point converge to final DMET energies within chemical accuracy. This decoupling underscores that SCI energy convergence is governed by whether the accumulated and proliferated determinant memory adequately spans the relevant correlation space, not by which specific excitation orders dominate the raw shot statistics feeding into that memory, as there are many statistically distinct but energetically equivalent sampling paths through the dense Hilbert space. This same decoupling is echoed within each individual μ-iteration’s RBM-guided subspace expansion: despite the first QSCI iteration accessing the largest subspace fraction of the five, the energy drop realized by every subsequent iteration is strictly larger even as the subspace accessed is lower and only slowly recovers. In other words, the subspace accessed at the first iteration is the least effective per unit size at capturing correlation energy, while the comparatively smaller subspaces accessed at later iterations recover more correlation energy despite their reduced size. This is consistent with the RBM component of the framework learning, iteration over iteration, to propose a subspace that is more compact yet more concentrated in physically dominant configurations, rather than simply proposing a larger pool of candidate determinants. 
+
+## 5 Conclusion 
+
+In this work, we introduced DMET-QSCI-RBM, a machine-learned compact subspace generation protocol that integrates Restricted Boltzmann Machine-guided configuration recovery directly into the Quantum Selected Configuration Interaction pipeline within a Density Matrix Embedding Theory framework. Rather than relying on symmetry filtering alone or on pertur-bative anchoring schemes such as MP2-seeded configuration recovery, DMET-QSCI-RBM learns the underlying distribution of dominant determinants directly from hardware-sampled bitstrings, enabling the targeted generation of high-probability configu-rations without recourse to any perturbative approximation. Applied to the simulation of the Carmofur/SARS-CoV-2 M pro 
+
+protein-ligand complex across 11 DMET fragments, DMET-QSCI-RBM achieved chemically accurate energies while accessing only ∼3.9% of the symmetry-preserving configuration subspace on average, compared to ∼19.0% for a spin-bin-truncated DMET-SQD baseline that nevertheless failed to reach chemical accuracy, and ∼97.4% for a fully converged, effectively untruncated DMET-SQD reference. Beyond confirming the compactness advantage anticipated in the abstract, the results presented here surface several additional insights that refine our understanding of when and why this compactness translates into practical efficiency. First, we found that the chemical-potential residual is not, on its own, a reliable proxy for energy accuracy once the impurity solver operates on a truncated SCI subspace: a well-converged μ can coexist with a persistently large energy error, and the DMET-SQD trajectory under the εspb = √S/2 heuristic exhibited exactly this decoupling, with E(μ) failing to decrease monotonically even as |μchem − μDMET −FCI | fell to the same order of magnitude as the fully converged reference. This indicates that energy accuracy under RBM-guided subspace expansion is governed primarily by the quality and compactness of the accumulated determinant memory, not by the extent of μ-self-consistency achieved. This distinction thus allowed DMET-QSCI-RBM to reach chemically meaningful results at a halted, three-iteration μ-search rather than requiring full convergence. Second, we found that run-to-run reproducibility in the raw excitation-order composition of hardware samples varied considerably across fragments, from L1 < 11% to L1 > 50% between independent hardware re-solves. This did not translate into divergence in downstream energetic accuracy, underscoring that the dense, multi-reference Hilbert space of a realistic protein-ligand system admits many statistically distinct but energetically equivalent sampling paths. Taken together, these findings support compact, learned subspace generation as a practically meaningful addition to fragmentation-based quantum embedding frameworks. As pharmaceutically and biologically relevant targets grow beyond what any single quantum embedding fragment can directly address, techniques such as DMET 16 increasingly depend on keeping the classical diagonalization cost per fragment low, since this cost is repeated across every fragment and every self-consistency iteration of the embedding loop. The embedded wavefunction (EWF) framework 64 similarly restricts quantum 
+
+> 17/31
+
+resource requirements to fixed local fragment problems, and although it does not impose an analogous self-consistency criterion between fragment and environment, its fragment problems still grow expensive to diagonalize as active-space size increases. RBM-guided compact subspace expansion is therefore a natural addition to both DMET- and EWF-based fragmentation strategies, since it directly targets this shared bottleneck. This reduces the quantum sampling burden via classical fragmentation and the classical diagonalization cost per fragment using QSCI-RBM, rather than competing with either fragmentation scheme itself. Recent demonstrations have shown that EWF-based SQD workflows can already be scaled to biological systems spanning several thousand atoms 97 , and RBM-guided compact subspace generation offers a direct path toward extending such simulations further without sacrificing chemical accuracy, helping pave the way toward classically tractable quantum simulations of protein-ligand complexes and other biomolecular systems in their full pharmacological context, rather than in the truncated active-site models to which such simulations are often restricted today. Several directions remain open for future work. Chief among these is a comparative assessment of the present framework alongside other compact subspace-generation strategies such as those that anchor configuration recovery in perturbative estimates or exchange configuration data iteratively between quantum and classical solvers 43, 53 . In parallel, as noted in Section 3 and Section 4.4, the RBM component of QSCI-RBM, whose learning rate, hidden-layer size, Gibbs sampling chain length, and coefficient thresholds were selected empirically rather than optimized systematically, is the source of the tunable hyperparameters in this framework. A dedicated hyperparameter search over the RBM’s architecture and training settings, informed by chemistry-based knowledge such as known features of the target system’s correlation structure (e.g., its dominant excitation-order profile or spin-coupling pattern), represents a promising avenue for pushing subspace compactness and energy accuracy further beyond the results reported here. A further direction lies in extending sample-based algorithms of this kind, currently designed around NISQ-era sampling constraints, toward the fault-tolerant quantum computing era 67 . Together, these directions point toward scalable, automated, economically and commercially deployable molecular simulation pipelines, in which the fraction of the subspace accessed or the classical diagonalization cost can be fixed a priori to suit the accuracy and throughput demands of a specific industrial application. 
+
+## Data Availability 
+
+The data that support the findings of this study are available from the corresponding author upon reasonable request. 
+
+## Acknowledgements 
+
+We acknowledge the use of IBM Quantum Credits via the IBM Quantum Startups Program for this work. The views expressed are those of the authors and do not reflect the official policy or position of IBM or the IBM Quantum Platform team. The authors would also like to extend their appreciation to the advisors of Qclairvoyance Quantum Labs for their support, constructive discussions, and inspiration throughout the preparation of this work. 
+
+## Funding 
+
+No funding was received for this research. 
+
+## Competing interests 
+
+R.M. is a paid consultant at Qclairvoyance Quantum Labs. The other authors declare no competing interests. 
+
+## References 
+
+1. Jensen, F. Introduction to Computational Chemistry (Wiley, 2007), 2 edn. See Sec. 4.2.2, p. 141. 
+
+2. Gao, H., Imamura, S., Kasagi, A. & Yoshida, E. Distributed implementation of full configuration interaction for one trillion determinants. J. Chem. Theory Comput. 20 , 1185–1192, DOI: 10.1021/acs.jctc.3c01190 (2024). 
+
+3. Vogiatzis, K. D., Ma, D., Olsen, J., Gagliardi, L. & de Jong, W. A. Pushing configuration-interaction to the limit: Towards massively parallel mcscf calculations. The J. Chem. Phys. 147 , 184111, DOI: 10.1063/1.4989858 (2017). 
+
+4. Shayit, A. et al. Numerically exact configuration interaction at quadrillion-determinant scale. Nat. Commun. 16 , 11016, DOI: 10.1038/s41467-025-65967-7 (2025). 
+
+5. Bartlett, R. J. & Musiał, M. Coupled-cluster theory in quantum chemistry. Rev. Mod. Phys. 79 , 291–352, DOI: 10.1103/RevModPhys.79.291 (2007). 
+
+6. Evangelista, F. A. Adaptive multiconfigurational wave functions. The J. Chem. Phys. 140 , 124114, DOI: 10.1063/1. 4869192 (2014). 
+
+> 18/31
+
+7. Kitaev, A. Quantum measurements and the abelian stabilizer problem. arXiv:quant-ph/9511026 DOI: 10.48550/arXiv. quant-ph/9511026 (1995). 
+
+8. Preskill, J. Quantum computing in the nisq era and beyond. Quantum 2, 79, DOI: 10.22331/q-2018-08-06-79 (2018). 
+
+9. Peruzzo, A. et al. A variational eigenvalue solver on a photonic quantum processor. Nat. Commun. 5, 4213, DOI: 10.1038/ncomms5213 (2014). 
+
+10. Anurag, K. S. V. et al. Resource estimation for vqe on small molecules: Impact of fermion mappings and hamiltonian reductions. J. Comput. Chem. 47 , e70379, DOI: https://doi.org/10.1002/jcc.70379 (2026). 
+
+11. Belaloui, N. E. et al. Ground-state energy estimation on current quantum hardware through the variational quantum eigensolver: A practical study. J. Chem. Theory Comput. 21 , 6777–6792, DOI: 10.1021/acs.jctc.4c01657 (2025). 
+
+12. Kirsopp, J. J. M. et al. Quantum computational quantification of protein–ligand interactions. Int. J. Quantum Chem. 122 ,e26975, DOI: https://doi.org/10.1002/qua.26975 (2022). 
+
+13. Kawashima, Y. et al. Optimizing electronic structure simulations on a trapped-ion quantum computer using problem decomposition. Commun. Phys. 4, 245, DOI: 10.1038/s42005-021-00751-9 (2021). 
+
+14. McClean, J. R., Boixo, S., Smelyanskiy, V. N., Babbush, R. & Neven, H. Barren plateaus in quantum neural network training landscapes. Nat. Commun. 9, 1 (2018). 
+
+15. Wang, S. et al. Noise-induced barren plateaus in variational quantum algorithms. Nat. Commun. 12 , 6961, DOI: 10.1038/s41467-021-27045-6 (2021). 
+
+16. Robledo-Moreno, J. et al. Chemistry beyond the scale of exact diagonalization on a quantum-centric supercomputer. Sci. Adv. 11 , eadu9991, DOI: 10.1126/sciadv.adu9991 (2025). 
+
+17. Kanno, K. et al. Quantum-selected configuration interaction: Classical diagonalization of hamiltonians in subspaces selected by quantum computers. Phys. Rev. Res. 8, 023268, DOI: 10.1103/dmn4-snfx (2026). 
+
+18. Davidson, E. R. The iterative calculation of a few of the lowest eigenvalues and corresponding eigenvectors of large real-symmetric matrices. J. Comput. Phys. 17 , 87–94, DOI: 10.1016/0021-9991(75)90065-0 (1975). 
+
+19. Shirakawa, T. et al. Closed-loop calculations of electronic structure on a quantum processor and a classical supercomputer at full scale (2025). 2511.00224. 
+
+20. Nakagawa, Y. O., Kamoshita, M., Mizukami, W., Sudo, S. & Ohnishi, Y.-y. Adapt-qsci: Adaptive construction of an input state for quantum-selected configuration interaction. J. Chem. Theory Comput. 20 , 10817–10825, DOI: 10.1021/acs.jctc.4c00846 (2024). 
+
+21. Sugisaki, K., Kanno, S., Itoko, T., Sakuma, R. & Yamamoto, N. Hamiltonian simulation-based quantum-selected configuration interaction for large-scale electronic structure calculations with a quantum computer. Phys. Chem. Chem. Phys. 27 , 20869–20884, DOI: 10.1039/D5CP02202A (2025). 
+
+22. Mikkelsen, M. & Nakagawa, Y. O. Quantum-selected configuration interaction with time-evolved state. Phys. Rev. Res. 7,043043, DOI: 10.1103/75pv-hbrx (2025). 
+
+23. Barison, S., Robledo Moreno, J. & Motta, M. Quantum-centric computation of molecular excited states with extended sample-based quantum diagonalization. Quantum Sci. Technol. 10 , 025034, DOI: 10.1088/2058-9565/adb781 (2025). 
+
+24. Liepuoniute, I. et al. Quantum-centric computational study of methylene singlet and triplet states. J. Chem. Theory Comput. 21 , 5062–5070, DOI: 10.1021/acs.jctc.5c00075 (2025). 
+
+25. Kaliakin, D., Shajan, A., Liang, F. & Merz, K. M. J. Implicit solvent sample-based quantum diagonalization. The J. Phys. Chem. B 129 , 5788–5796, DOI: 10.1021/acs.jpcb.5c01030 (2025). 
+
+26. Kaliakin, D. et al. Accurate quantum-centric simulations of intermolecular interactions. Commun. Phys. 8, 396, DOI: 10.1038/s42005-025-02305-9 (2025). 
+
+27. Alexeev, Y. et al. Quantum-centric supercomputing for materials science: A perspective on challenges and future directions. Futur. Gener. Comput. Syst. 160 , 666–710, DOI: 10.1016/j.future.2024.04.060 (2024). 
+
+28. Elgammal, K. & Maußner, M. Additive binding energies in asphalt on a quantum processor via quantum-selected configuration interaction (qsci) (2026). 2605.27640. 
+
+29. Yu, J. et al. Quantum-centric algorithm for sample-based krylov diagonalization (2025). 2501.09702. 
+
+30. Yoshioka, N. et al. Krylov diagonalization of large many-body hamiltonians on a quantum processor. Nat. Commun. 16 ,5014, DOI: 10.1038/s41467-025-59716-z (2025). 
+
+> 19/31
+
+31. Piccinelli, S. et al. Quantum chemistry with provable convergence via randomized sample-based quantum diagonalization. 2508.02578 (2025). 
+
+32. Asthana, A. Quantum krylov algorithm using unitary decomposition for exact eigenstates of fermionic systems using quantum computers (2025). 2512.11788. 
+
+33. Huggins, W. J. et al. Unbiasing fermionic quantum monte carlo with a quantum computer. Nature 603 , 416–420, DOI: 10.1038/s41586-021-04351-z (2022). 
+
+34. Yoshida, Y. et al. Auxiliary-field quantum monte carlo method with quantum selected configuration interaction (2025). 2502.21081. 
+
+35. Danilov, D., Robledo-Moreno, J., Sung, K. J., Motta, M. & Shee, J. Enhancing the accuracy and efficiency of sample-based quantum diagonalization with phaseless auxiliary-field quantum monte carlo (2025). 2503.05967. 
+
+36. Walkup, R. et al. Scaling sample-based quantum diagonalization on gpu-accelerated systems using openmp offload (2026). 2601.16169. 
+
+37. Doi, J., Shirakawa, T., Kawashima, Y., Yunoki, S. & Horii, H. Gpu-accelerated selected basis diagonalization with thrust for sqd-based algorithms (2026). 2601.16637. 
+
+38. Vaquero-Sabater, N. et al. Noise and configuration recovery impact on quantum selected configuration interaction (2026). 2605.23697. 
+
+39. Kirby, W. et al. Observation of improved accuracy over classical sparse ground-state solvers using a quantum computer (2026). 2603.03496. 
+
+40. Reinholdt, P. et al. Critical limitations in quantum-selected configuration interaction methods. J. Chem. Theory Comput. 
+
+21 , 6811–6822, DOI: 10.1021/acs.jctc.5c00375 (2025). 
+
+41. Raisuddin, O. M., Zhang, H., Motta, M. & Faulstich, F. M. From promise to practice: Benchmarking quantum chemistry on quantum hardware (2025). 2512.01012. 
+
+42. Weaving, T., Mingare, A., Ralli, A. & Coveney, P. V. Towards compact wavefunctions from quantum-selected configuration interaction (2025). 2509.02525. 
+
+43. Pellow-Jarman, A. et al. Hivqe: Handover iterative variational quantum eigensolver for efficient quantum chemistry calculations. 2503.06292 (2025). 
+
+44. Yoo, P. et al. Extending the handover-iterative vqe to challenging strongly correlated systems: n2 and fe-s cluster (2026). 
+
+45. Ghasemi, F., Kang, Y., Kawashima, Y. & Moon, K. Hybrid quantum algorithms for computational chemistry: Application to the pyridine-li ion complex (2026). 2601.10002. 
+
+46. Smith, T. et al. Quantum-centric simulation of hydrogen abstraction by sample-based quantum diagonalization and entanglement forging (2025). 2508.08229. 
+
+47. McFarthing, S., Pellow-Jarman, A. & Petruccione, F. Noise-resilient quantum chemistry with half the qubits (2026). 2602.01165. 
+
+48. Yoshida, Y., Murokoshi, T., Kuroda, N. & Mizukami, W. Doubling the size of quantum selected configuration interaction based on seniority-zero space and its application to qc-qsci-afqmc (2026). 2602.07912. 
+
+49. Carleo, G. & Troyer, M. Solving the quantum many-body problem with artificial neural networks. Science 355 , 602–606, DOI: 10.1126/science.aag2302 (2017). https://www.science.org/doi/pdf/10.1126/science.aag2302. 
+
+50. Nomura, Y., Darmawan, A. S., Yamaji, Y. & Imada, M. Restricted boltzmann machine learning for solving strongly correlated quantum systems. Phys. Rev. B 96 , 205152, DOI: 10.1103/PhysRevB.96.205152 (2017). 
+
+51. Herzog, B., Casier, B., Leb `egue, S. & Rocca, D. Solving the schr ¨odinger equation in the configuration space with generative machine learning. J. Chem. Theory Comput. 19 , 2484–2490, DOI: 10.1021/acs.jctc.2c01216 (2023). 
+
+52. Coe, J. P. Machine learning configuration interaction. J. Chem. Theory Comput. 14 , 5739–5749, DOI: 10.1021/acs.jctc. 8b00849 (2018). 
+
+53. Patra, C. et al. Physics informed generative machine learning for accelerated quantum-centric supercomputing (2025). 2512.06858. 
+
+54. Møller, C. & Plesset, M. S. Note on an approximation treatment for many-electron systems. Phys. Rev. 46 , 618–622, DOI: 10.1103/PhysRev.46.618 (1934). 
+
+> 20/31
+
+55. Knizia, G. & Chan, G. K.-L. Density matrix embedding: A simple alternative to dynamical mean-field theory. Phys. Rev. Lett. 109 , 186404, DOI: 10.1103/PhysRevLett.109.186404 (2012). 
+
+56. Georges, A., Kotliar, G., Krauth, W. & Rozenberg, M. J. Dynamical mean-field theory of strongly correlated fermion systems and the limit of infinite dimensions. Rev. Mod. Phys. 68 , 13–125, DOI: 10.1103/RevModPhys.68.13 (1996). 
+
+57. Wouters, S., Jim ´enez-Hoyos, C. A., Sun, Q. & Chan, G. K.-L. A practical guide to density matrix embedding theory in quantum chemistry. J. Chem. Theory Comput. 12 , 2706–2719, DOI: 10.1021/acs.jctc.6b00316 (2016). 
+
+58. Canc `es, E., Faulstich, F. M., Kirsch, A., Letournel, E. & Levitt, A. Analysis of density matrix embedding theory around the non-interacting limit. Commun. on Pure Appl. Math. 78 , 1359–1410, DOI: https://doi.org/10.1002/cpa.22244 (2025). 
+
+59. Negre, A. et al. New perspectives on density-matrix embedding theory (2025). 2503.09881. 
+
+60. Shajan, A. et al. Towards quantum-centric simulations of extended molecules: sample-based quantum diagonalization enhanced with density matrix embedding theory. 2411.09861 (2024). 
+
+61. Patra, A. K. et al. Quantum simulation of ligand-like molecules through sample-based quantum diagonalization in density matrix embedding framework (2026). 2511.22158. 
+
+62. Wang, Q. et al. Sample-based quantum diagonalization as parallel fragment solver for the localized active space self-consistent field method (2025). 2512.14936. 
+
+63. Bierman, J. & Liu, Y. Towards utility-scale electronic structure with sample-based quantum bootstrap embedding. Digit. Discov. –, DOI: 10.1039/D5DD00416K (2026). 
+
+64. Shajan, A. et al. Molecular quantum computations on a protein (2026). 2512.17130. 
+
+65. Nusspickel, M. & Booth, G. H. Systematic improvability in quantum embedding for real materials. Phys. Rev. X 12 ,011046, DOI: 10.1103/PhysRevX.12.011046 (2022). 
+
+66. Iijima, N. et al. Towards accurate quantum chemical calculations on noisy quantum computers (2023). 2311.09634. 
+
+67. Anurag, K. S. V. et al. Bridging the nisq and fault-tolerant regimes: Generative-ml-assisted quantum selected ci for molecular simulations (2026). 2606.30551. 
+
+68. Bauman, N. P. & Kowalski, K. Coupled cluster downfolding methods: The effect of double commutator terms on the accuracy of ground-state energies. The J. Chem. Phys. 156 , 094106, DOI: 10.1063/5.0076260 (2022). 
+
+69. Bauman, N. P. et al. Coupled cluster downfolding theory in simulations of chemical systems on quantum hardware. arXiv 
+
+DOI: 10.48550/arXiv.2507.01199 (2025). 
+
+70. Kowalski, K. & Bauman, N. P. Resource-adaptive quantum flow algorithms for quantum simulations of many-body systems: sub-flow embedding procedures. arXiv DOI: 10.48550/arXiv.2410.11992 (2024). 
+
+71. Hermes, M. R., Pandharkar, R. & Gagliardi, L. Variational localized active space self-consistent field method. J. Chem. Theory Comput. 16 , 4923–4937, DOI: 10.1021/acs.jctc.0c00222 (2020). 
+
+72. Otten, M. et al. Localized quantum chemistry on quantum computers. J. Chem. Theory Comput. 18 , 7205–7217, DOI: 10.1021/acs.jctc.2c00388 (2022). 
+
+73. Lim, H. et al. Fragment molecular orbital-based variational quantum eigensolver for quantum chemistry in the age of quantum computing. Sci. Reports 14 , 2422, DOI: 10.1038/s41598-024-52926-3 (2024). 
+
+74. Ma, H. et al. Multiscale quantum algorithms for quantum chemistry. Chem. Sci. 14 , 3190–3205, DOI: 10.1039/ D2SC06875C (2023). 
+
+75. Xu, E., Shimomoto, Y., Ten-no, S. L. & Tsuchimochi, T. Many-body-expansion based on variational quantum eigensolver and deflation for dynamical correlation. The J. Phys. Chem. A 128 , 2507–2521, DOI: 10.1021/acs.jpca.4c00351 (2024). 
+
+76. Blumenthal, E. Building intuition for dynamical mean-field theory: A simple model and the cavity method. arXiv DOI: 10.48550/arXiv.2507.16654 (2025). 
+
+77. Ye, H.-Z., Tran, H. K. & Van Voorhis, T. Bootstrap embedding for large molecular systems. J. Chem. Theory Comput. 16 ,5035–5046, DOI: 10.1021/acs.jctc.0c00438 (2020). 
+
+78. Liu, Y. et al. Bootstrap embedding on a quantum computer. J. Chem. Theory Comput. 19 , 2230–2247, DOI: 10.1021/acs. jctc.3c00012 (2023). 
+
+79. Hardikar, T. et al. Quanta-bind: A quantum computing pipeline for modeling strongly correlated metal-protein interactions. In 2024 IEEE International Conference on Quantum Computing and Engineering (QCE) , 538–544 (2024), DOI: 10.1109/ QCE60285.2024.00069 (2024). 
+
+> 21/31
+
+80. Cho, M. et al. Quemb: A toolbox for bootstrap embedding calculations of molecular and periodic systems. J. Phys. Chem. A 129 , 6538–6551, DOI: 10.1021/acs.jpca.5c02983 (2025). 
+
+81. Fujii, K. et al. Deep variational quantum eigensolver: A divide-and-conquer method for solving a larger problem with smaller size quantum computers. PRX Quantum 3, 010346, DOI: 10.1103/PRXQuantum.3.010346 (2022). 
+
+82. Senicourt, V. et al. Tangelo: An open-source python package for end-to-end chemistry workflows on quantum computers. 2206.12424 (2022). 
+
+83. The ffsim developers. ffsim: Faster simulations of fermionic quantum circuits, v0.0.56 . qiskit-community (2025). Accessed: 2025-11-11. 
+
+84. Javadi-Abhari, A. et al. Quantum computing with qiskit. 2405.08810 (2024). 
+
+85. IBM Quantum. Qiskit ibm runtime v0.36.1. https://github.com/Qiskit/qiskit-ibm-runtime (2025). Accessed: 2026-05-01. 
+
+86. Sun, Q. et al. The python-based simulations of chemistry framework (pyscf). 1701.08223 (2017). 
+
+87. Paszke, A. et al. PyTorch: An imperative style, high-performance deep learning library. In Advances in Neural Information Processing Systems 32 , 8024–8035 (2019). 
+
+88. Virtanen, P. et al. SciPy 1.0: Fundamental Algorithms for Scientific Computing in Python. Nat. Methods 17 , 261–272, DOI: 10.1038/s41592-019-0686-2 (2020). 
+
+89. Anurag, K. S. V. et al. Towards chemically accurate and scalable quantum simulations on iqm quantum hardware: A quantum-hpc hybrid approach (2026). 2604.01983. 
+
+90. Rahman, A., Egger, D. J. & Arenz, C. Learning how to dynamically decouple by optimizing rotational gates. Phys. Rev. Appl. 22 , 054074, DOI: 10.1103/PhysRevApplied.22.054074 (2024). 
+
+91. Wallman, J. J. & Emerson, J. Noise tailoring for scalable quantum computation via randomized compiling. Phys. Rev. A 
+
+94 , 052325, DOI: 10.1103/PhysRevA.94.052325 (2016). 
+
+92. Zhang, D. W. & Zhang, J. Z. H. Molecular fractionation with conjugate caps for full quantum mechanical calculation of protein–molecule interaction energy. The J. Chem. Phys. 119 , 3599–3605, DOI: 10.1063/1.1591727 (2003). 
+
+93. Bowling, P. E., Broderick, D. R. & Herbert, J. M. Convergent protocols for computing protein–ligand interaction energies using fragment-based quantum chemistry. J. Chem. Theory Comput. 21 , 951–966, DOI: 10.1021/acs.jctc.4c01429 (2025). 
+
+94. Hehre, W. J., Ditchfield, R. & Pople, J. A. Self—consistent molecular orbital methods. xii. further extensions of gaussian—type basis sets for use in molecular orbital studies of organic molecules. The J. Chem. Phys. 56 , 2257–2261, DOI: 10.1063/1.1677527 (1972). 
+
+95. Jordan, P. & Wigner, E. ¨Uber das paulische ¨aquivalenzverbot. Zeitschrift f ¨ur Physik 47 , 631–651, DOI: 10.1007/ BF01331938 (1928). 
+
+96. Szabo, A. & Ostlund, N. S. Modern Quantum Chemistry: Introduction to Advanced Electronic Structure Theory . Dover Books on Chemistry (Dover Publications, 1996). See Section 2.4.1, pp. 89–95. 
+
+97. Kenneth M. Merz, J. et al. Crossing the 12,000-atom barrier with heterogeneous quantum-classical supercomputing: quantum chemistry of protein-ligand complexes (2026). 2605.01138. 
+
+98. Fock, V. N ¨aherungsmethode zur l ¨osung des quantenmechanischen mehrk ¨orperproblems. Zeitschrift f ¨ur Physik 61 ,126–148, DOI: 10.1007/BF01340294 (1930). 
+
+99. Helgaker, T., Jørgensen, P. & Olsen, J. Molecular Electronic-Structure Theory (John Wiley & Sons, Ltd, 2000), 1st edn. 
+
+100. MacDonald, J. K. L. Successive approximations by the rayleigh–ritz variation method. Phys. Rev. 43 , 830–833, DOI: 10.1103/PhysRev.43.830 (1933). 
+
+101. Papakonstantinou, J. M. & Tapia, R. A. Origin and evolution of the secant method in one dimension. The Am. Math. Mon. 
+
+120 , 500–518, DOI: 10.4169/amer.math.monthly.120.06.500 (2013). 
+
+> 22/31
+
+## SUPPLEMENTARY MATERIAL A Execution Dates and Hardware Calibration Data 
+
+The DMET-SQD experiments corresponding to the εspb = 10 8 and εspb = p|S|/2 configuration recovery schemes were executed over the span of April 27-29, 2026, on the Heron R3 processor ( ibm boston ). The two QSCI-RBM runs (iter-3, run 1 and run 2) were subsequently executed on May 1 and May 2, 2026, also on ibm boston . The hardware calibration snapshots recorded immediately prior to each of these six runs are provided in Table A1 of the Supplementary Material. The methoxyamine (CH 5NO) simulation was carried out on January 23, 2026, on the Heron R1 processor ( ibm torino ). As this backend was retired on 1 April 2026, the pre-execution calibration snapshot for this specific run could not be recovered from the IBM Quantum API post-retirement, and is therefore omitted from the Supplementary Material. The C 2H4 simulation was carried out on January 14, 2026, on the Heron processor ( ibm fez ), with calibration data provided in Table A2 of the Supplementary Material. As with the Boston runs discussed above, these calibration snapshots represent the pre-execution device state and should not be interpreted as a continuous record of hardware performance across the full duration of each experiment. 
+
+Table A1. Calibration metrics for the Heron processor (IBM Boston) recorded prior to each of the six DMET-SQD/QSCI-RBM experiments discussed in Sec. 3.2, spanning April 27-29 and May 1-2, 2026. Each column corresponds to the device’s pre-execution calibration snapshot for that specific run, including coherence times ( T1, T2), readout assignment errors, gate error rates, and gate durations. Parameter Apr 27 Apr 28 Apr 29 May 1 May 2 May 2 22:41:45 IST 14:04:01 IST 09:43:51 IST 14:15:34 IST 11:49:54 IST 13:34:02 IST 
+
+T1 (μs) 276.824018 276.824018 280.345541 280.448691 274.121707 274.121707 
+
+T2 (μs) 334.818703 334.818703 330.736774 328.714677 315.990742 315.990742 Readout assignment error 0.005005 0.005249 0.005005 0.005371 0.005127 0.005127 
+
+P(0 | 1) 0.005127 0.005371 0.005371 0.005371 0.005859 0.005859 
+
+P(1 | 0) 0.003662 0.003906 0.004150 0.003906 0.003906 0.003906 Readout length (ns) 2200.0 2200.0 2200.0 2200.0 2200.0 2200.0 Identity gate error 0.000152 0.000152 0.000152 0.000151 0.000140 0.000140 
+
+Rz gate error 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 √X (Sx) gate error 0.000152 0.000152 0.000152 0.000151 0.000140 0.000140 Pauli-X gate error 0.000152 0.000152 0.000152 0.000151 0.000140 0.000140 CZ gate error 0.001220 0.001220 0.001098 0.001155 0.001155 0.001170 Gate time (CZ) (ns) 68.0 68.0 68.0 68.0 68.0 68.0 
+
+Table A2. Calibration metrics for the Heron processor (IBM Fez) recorded on 14 January 2026 at 12:29:02 IST. These values correspond to the device’s pre-execution calibration snapshot, including coherence times ( T1, T2), readout assignment errors, gate error rates, and gate durations. Parameter Value 
+
+T1 145.142198 μs
+
+T2 104.489980 μsReadout assignment error 0.009460 
+
+P(0 | 1) 0.012939 
+
+P(1 | 0) 0.006592 Readout length 1560.0 ns Identity gate error 0.000283 
+
+Rz gate error 0.000000 √X (Sx) gate error 0.000283 Pauli-X gate error 0.000283 CZ gate error 0.002510 Gate time (CZ) 68.0 ns 
+
+> 23/31
+
+## B Orbital Decomposition of Carmofur-M pro PL complex 
+
+Table B1. Per-impurity orbital decomposition for fragments of the Carmofur–M pro complex (6-31G basis, DMET-HF). For each fragment y, Ay is the number of fragment (impurity) orbitals, By is the number of bath orbitals (entangled environment orbitals with natural-orbital fractionality δ > εocc = 10 −13 ), Cor y is the number of unentangled, doubly occupied environment orbitals, and Vir y is the number of unentangled, unoccupied environment orbitals, such that Ay + By + Cor y + Vir y equals the total number of spatial orbitals (285) for every fragment. For the current experiment, an active space containing 8 Ay (HOMO) and 8 By (LUMO) was selected, for each fragment. Fragment Ay By Cor y Vir y
+
+F1 11 11 90 173 F2 24 24 77 160 F3 38 38 63 146 F4 24 24 77 160 F5 15 15 86 169 F6 29 29 72 155 F7 31 31 70 153 F8 33 33 68 151 F9 26 26 75 158 F10 26 26 75 158 F11 28 28 73 156 
+
+## C Derivation of the Worst-Case Samples-per-Batch Bound εspb = p|S|/2 
+
+> Setup.
+
+Consider a closed-shell fragment whose active space comprises M spatial orbitals and Ne electrons per spin sector (Nα = Nβ = Ne). The particle-number- and spin-z-conserving symmetry space onto which any valid determinant must fall is 
+
+S = A ⊗ B, |S| =
+
+ MNα
+
+ MNβ
+
+
+
+=
+
+MNe
+
+2
+
+≡ D2, (C1) where A (B) denotes the space of α- ( β -) spin strings of Hamming weight Ne, each of dimension D =  MNe
+
+. The closed-shell identity 
+
+D = p|S| (C2) is the structural fact from which the bound follows: the single-spin string space has dimension exactly p|S|. 
+
+> Configuration retention.
+
+After configuration recovery, the post-selection and subsampling step retains at most Ns config-urations per batch, where Ns is the samples-per-batch parameter εspb . Each retained configuration is a spin-resolved pair 
+
+|αk⟩ ⊗ | βk⟩, k = 1, . . . , Ns, from which the unique spin-string sets are extracted: 
+
+Auniq = {| αk⟩} Ns
+
+> k=1
+
+, Buniq = {| βk⟩} Ns
+
+> k=1
+
+, |Auniq | ≤ Ns, |Buniq | ≤ Ns. (C3)  
+
+> Proliferation.
+
+Following Eq. (16), the diagonalization subspace is not spanned by the sampled pairs themselves but by the tensor square of the pooled set 
+
+Puniq = Auniq ∪ Buniq , Sproj = Puniq ⊗ Puniq , |Sproj | = |Puniq |2. (C4) By inclusion-exclusion, 
+
+|Puniq | = |Auniq | + |Buniq | − | Auniq ∩ Buniq |. (C5) For a closed-shell system one expects substantial overlap |Auniq ∩ Buniq | > 0, since a bitstring sampled in the α sector is highly likely to also appear in the β sector. The worst case for subspace inflation, however, is the fully disjoint limit Auniq ∩ Buniq = ∅
+
+with no repeated strings within either sector, for which Eqs. (C3) and (C5) give 
+
+|Puniq |wc = 2Ns. (C6) Independently of sampling, the pool can never exceed the single-spin string space itself, so combining Eq. (C6) with Eq. (C2) ,
+
+|Puniq | ≤ min 
+
+
+
+2Ns, p|S|
+
+
+
+, |Sproj | ≤ min 
+
+
+
+2Ns, p|S|
+
+2
+
+. (C7)  
+
+> 24/31 Non-inflation condition.
+
+Requiring that the proliferated subspace never exceed the full symmetry space even in the worst-case disjoint limit, 
+
+|Sproj |wc = ( 2Ns)2 = 4N2 
+
+> s
+
+≤ | S|, (C8) immediately yields the cap 
+
+Ns ≤
+
+p|S|
+
+2 = εspb . (C9)  
+
+> Tightness and non-redundancy.
+
+The value εspb = p|S|/2 is not merely a sufficient cap but the unique threshold at which two regimes meet. For Ns ≤ p|S|/2 the worst-case proliferated dimension 4N2 
+
+> s
+
+≤ | S| is controlled by the retention budget, and every retained configuration can, in the worst case, enlarge Sproj . Conversely, for Ns > p|S|/2 the minimum in Eq. (C7) is attained by p|S|: the worst-case pool already saturates the full single-spin string space, and any configuration retained beyond p|S|/2 is provably incapable of enlarging the worst-case diagonalization subspace, constituting redundant over-allocation of the diagonalization budget. At exactly Ns = p|S|/2 the worst-case pool satisfies 2Ns = p|S| = D and the proliferated subspace saturates the symmetry space, |Sproj |wc = |S|, with equality and no excess. Hence εspb = p|S|/2 is simultaneously the largest retention guaranteeing |Sproj | ≤ | S| under the disjoint worst case and the smallest retention at which the worst-case pool exhausts the single-spin space. We emphasize that this is a combinatorial engineering bound on subspace allocation, independent of any energetic convergence criterion; in practice, closed-shell α-β overlap in Eq. (C5) renders the bound conservative, so that realized subspace dimensions typically satisfy |Sproj | < |S| strictly. 
+
+## D Subspace accessed for the DMET-SQD and DMET-QSCI-RBM experiments F1 
+
+> F2
+> F3
+> F4
+> F5
+> F6
+> F7
+> F8
+> F9
+> F10
+> F11
+
+Fragments 
+
+80 
+
+85 
+
+90 
+
+95 
+
+100     
+
+> S.S Accessed (%)
+> 94.0%
+> -iter 1 -iter 2 -iter 3 -iter 4 Full S.S (100%)
+
+Figure D1. Fragment-resolved symmetry space ( |S|) accessed by DMET-SQD ( εspb = 10 8, converged) across four 
+
+μ-iterations for the Carmofur/SARS-CoV-2 M pro complex (11 fragments, F1-F11). Each curve corresponds to one 
+
+μ-iteration, with opacity and linewidth increasing progressively toward the final converged iteration. The dotted line marks the mean S accessed at the final converged iteration. 
+
+> 25/31 F1
+> F2
+> F3
+> F4
+> F5
+> F6
+> F7
+> F8
+> F9
+> F10
+> F11
+
+Fragments 
+
+10 
+
+12 
+
+14 
+
+16 
+
+18 
+
+20 
+
+22      
+
+> S.S Accessed (%)
+> 16.6%
+> -iter 1 -iter 2 -iter 3 -iter 4 -iter 5 Full S.S (100%)
+
+Figure D2. Fragment-resolved symmetry space ( S) accessed by DMET-SQD ( εspb =
+
+√|S| 
+
+> 2
+
+, not converged) across five 
+
+μ-iterations for the Carmofur/SARS-CoV-2 M pro complex (11 fragments, F1-F11). Each curve corresponds to one μ-iteration, with opacity and linewidth increasing progressively so that the final iteration is most visually prominent. Shaded bands denote the standard deviation of S accessed across repeated evaluations. F1 
+
+> F2
+> F3
+> F4
+> F5
+> F6
+> F7
+> F8
+> F9
+> F10
+> F11
+
+Fragments 
+
+2
+
+3
+
+4
+
+5       
+
+> S.S Accessed (%)
+> 3.4%
+> -iter 1 ( = 0.0 )
+> -iter 2 ( = 10 4)
+> -iter 3, Run 1 ( 9.7 × 10 4)
+> -iter 3, Run 2 ( 9.7 × 10 4)
+
+Figure D3. Fragment-resolved symmetry space ( S) accessed by DMET-QSCI-RBM across the three halted μ-iterations for the Carmofur/SARS-CoV-2 M pro complex (11 fragments, F1-F11). μ-iterations 1 ( μ = 0.0) and 2 ( μ = 10 −4) are shown at reduced opacity as early-stage chemical potential search points; the final halted value ( μ ≈ 9.7 × 10 −4) is shown for two independent hardware re-solves (Run 1, solid; Run 2, dashed). The dotted line marks the mean S accessed at the final μ.
+
+26/31 E Analysis of Excitation-Orders of the DMET-QSCI-RBM final runs 0 2 4 6 8 10 12 14 
+
+Ex. order 
+
+0
+
+5
+
+10 
+
+15 
+
+> Shot %
+
+L1=9.8% 
+
+F1 
+
+0 2 4 6 8 10 12 14 
+
+Ex. order 
+
+0
+
+5
+
+10 
+
+15 L1=29.7% 
+
+F2 
+
+0 2 4 6 8 10 12 14 
+
+Ex. order 
+
+0
+
+5
+
+10 
+
+15 L1=46.8% 
+
+F3 
+
+0 2 4 6 8 10 12 14 
+
+Ex. order 
+
+0
+
+5
+
+10 
+
+15 L1=10.8% 
+
+F4 
+
+0 2 4 6 8 10 12 14 
+
+Ex. order 
+
+0
+
+5
+
+10 
+
+15 
+
+> Shot %
+
+L1=38.5% 
+
+F5 
+
+0 2 4 6 8 10 12 14 
+
+Ex. order 
+
+0
+
+5
+
+10 
+
+15 L1=34.0% 
+
+F6 
+
+0 2 4 6 8 10 12 14 
+
+Ex. order 
+
+0
+
+5
+
+10 
+
+15 
+
+L1=57.4% 
+
+F7 
+
+0 2 4 6 8 10 12 14 
+
+Ex. order 
+
+0
+
+5
+
+10 
+
+15 L1=7.5% 
+
+F8 
+
+0 2 4 6 8 10 12 14 
+
+Ex. order 
+
+0
+
+5
+
+10 
+
+15 
+
+> Shot %
+
+L1=50.4% 
+
+F9 
+
+0 2 4 6 8 10 12 14 
+
+Ex. order 
+
+0
+
+5
+
+10 
+
+L1=10.3% 
+
+F10 
+
+0 2 4 6 8 10 12 14 
+
+Ex. order 
+
+0
+
+5
+
+10 
+
+15 L1=31.2% 
+
+F11 
+
+Run 1 
+
+Run 2 
+
+Figure E1. Per-fragment excitation order histograms of symmetry-valid hardware shots, Run 1 vs. Run 2, at the halted μ-iter 3 point. The dashed line marks the MP2-accessible boundary ( ≤2 excitations); L1 denotes the total variation distance between the two runs’ distributions. 
+
+27/31 F Quantum Resource Utilization for DMET-SQD and DMET-QSCI-RBM experiments F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11                     
+
+> C1
+> C2
+> Chemical Potential
+> Iteration  522 649 456 877 753 897 511 754 638 461 574
+> 788 774 456 917 461 996 825 861 807 605 490
+
+Shared hardware runs (reused across all DMET experiments)                               
+
+> F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11
+> C3
+> C4
+> Chemical Potential
+> Iteration  502 859 485 999 491 814 460 786 818 794 748
+> 845 783 1110 846 903 796 573 507 832 543 736
+
+DMET-SQD spb = 10 8                                        
+
+> F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11
+> C3
+> C4
+> C5
+> Chemical Potential
+> Iteration
+> 993 754 1176 590 768 969 944 506 877 499 607
+> 611 698 948 650 809 901 465 524 770 762 814
+> 600 865 765 880 493 908 533 985 565 518 782
+
+DMET-SQD spb = 2 = 6435           
+
+> F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11
+
+Fragment Number                     
+
+> Run 1
+> Run 2
+> Run
+> 717 1130 758 792 853 550 485 815 860 491 500
+> 557 531 1193 672 487 647 775 881 549 764 475
+
+DMET-QSCI-RBM C3 (iter-3) 
+
+> 500
+> 600
+> 700
+> 800
+> 900
+> 1000
+> 1100
+> 1200
+> Circuit Depth
+
+P-L Complex DMET-SQD / DMET-QSCI-RBM Circuit Depth 
+
+Figure F1. Transpiled circuit depth per fragment across the DMET-SQD and DMET-QSCI-RBM experiments on the Carmofur-M pro complex ( ibm boston ). Top : the two shared chemical-potential iterations (C1, C2) reused across all three solver configurations. Middle : solver-specific iterations for DMET-SQD ( εspb = 10 8 and εspb = √S/2). Bottom : the two independent DMET-QSCI-RBM re-solves (Run 1, Run 2) at the halted final μ.
+
+28/31 F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 
+
+C1 
+
+C2 
+
+> Chemical Potential
+> Iteration
+
+28.2 28.8 28.1 29.4 29.0 29.5 28.2 29.2 28.7 28.0 28.4 
+
+29.2 29.3 28.0 29.7 28.0 30.2 29.4 29.9 29.5 28.6 28.0 
+
+Shared hardware runs (reused across all DMET experiments) 
+
+F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 
+
+C3 
+
+C4 
+
+> Chemical Potential
+> Iteration
+
+30.8 32.8 85.5 37.8 30.8 32.0 30.6 32.0 32.2 29.2 32.0 
+
+32.2 29.2 33.1 36.6 29.6 29.5 28.5 31.1 29.5 28.4 29.0 
+
+DMET-SQD spb = 10 8
+
+F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 
+
+C3 
+
+C4 
+
+C5 
+
+> Chemical Potential
+> Iteration
+
+29.9 29.2 30.5 28.5 29.1 30.6 32.5 28.2 29.6 29.0 28.5 
+
+28.5 31.7 29.5 28.8 29.3 29.7 28.0 31.0 36.5 34.1 29.4 
+
+28.5 29.7 29.1 29.4 28.1 29.7 28.2 29.7 35.7 31.0 31.8 
+
+DMET-SQD spb = 2 = 6435 
+
+F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 
+
+Fragment Number 
+
+Run 1 
+
+Run 2 
+
+> Run
+
+28.4 28.2 30.8 28.8 28.1 28.7 29.2 29.7 28.2 29.0 28.0 
+
+29.0 30.4 29.0 29.3 29.5 28.8 28.1 29.7 32.2 31.0 28.1 
+
+DMET-QSCI-RBM C3 (iter-3) 
+
+28 
+
+30 
+
+32 
+
+34 
+
+36 
+
+38 
+
+> Time Taken (s)
+
+## P-L Complex DMET-SQD / DMET-QSCI-RBM Time Taken Figure F2. QPU execution time per fragment across the same set of DMET-SQD and DMET-QSCI-RBM experiments (ibm boston ), with panel layout matching Figure F1: shared chemical-potential iterations at top, solver-specific DMET-SQD iterations in the middle, and the two independent DMET-QSCI-RBM re-solves at bottom. 
+
+29/31 G Theoretical Framework 
+
+G.1 Electronic Structure Hamiltonian and Selected Configuration Interaction 
+
+The electronic Hamiltonian in second quantization 10, 95, 98 is written as ˆH = ∑
+
+> pq
+
+hpq a†
+
+> p
+
+aq + 12 ∑
+
+> pqrs
+
+hpqrs a†
+
+> p
+
+a†
+
+> q
+
+aras, (G1) where hpq and hpqrs are the one- and two-electron integrals in the molecular orbital basis, and a†
+
+> p
+
+, ap are fermionic creation and annihilation operators 95, 96 . The exact ground-state wavefunction expands over Slater determinants as |Ψ⟩ = ∑i ci |Di⟩96, 99 ; Full Configuration Interaction (FCI) diagonalizes ˆ H exactly in this basis but scales exponentially with system size, while Selected CI (SCI) methods instead construct a compact determinant subspace capturing the dominant correlation 6.Quantum Selected Configuration Interaction (QSCI) 16, 17 constructs this subspace by sampling bitstrings from a quantum device preparing an approximate trial state ˜Ψ ,
+
+S = span {| Di⟩} , (G2) projecting the Hamiltonian onto S, and diagonalizing classically via the Davidson algorithm 18 to obtain an upper bound on the ground-state energy by the MacDonald-Rayleigh-Ritz theorem 100 . Because the quantum device is used purely for sampling rather than variational optimization, QSCI’s accuracy is governed entirely by the quality of the sampled subspace S, and critical limitations of this dependence - sensitivity to subspace dimension and shot budget - have recently been characterised in detail 40 .
+
+G.2 Configuration Recovery 
+
+Hardware noise causes a fraction of sampled bitstrings to violate the particle-number and spin-projection symmetries expected of physically valid configurations. Configuration recovery techniques 16 restore physical validity by projecting or filtering sampled configurations into the correct symmetry sector, but symmetry filtering alone does not guarantee that the retained configurations are the energetically dominant ones: recovered subspaces may be unnecessarily inflated, and hardware noise can systematically bias sampling away from high-excitation-order configurations that require deeper, more entangling circuits to prepare 40 .In practice, the number of configurations admitted from the recovered set SCR into the subsequent proliferation and diagonalization steps is controlled by a user-defined sampling threshold εspb . Given the recovered configurations ranked in descending order of their observed shot probability (or shot count) pi,
+
+p1 ≥ p2 ≥ · · · ≥ p|SCR |, (G3) only the top-εspb configurations are retained for the proliferation step, 
+
+Sεspb  
+
+> CR
+
+= |φi⟩ ∈ SCR i ≤ εspb , εspb ≤ | SCR |. (G4) Because εspb is fixed independently of the actual size of SCR , it functions as a hard, tunable cap on the number of dominant configurations carried forward: a small εspb aggressively restricts recovery to only the highest-probability configurations, while a large εspb (in the limit εspb → | SCR |) imposes no effective truncation and admits the full recovered set. This truncation, however, does not guarantee that the retained configurations are the energetically dominant ones: recovered subspaces may be unnecessarily inflated, and hardware noise can systematically bias sampling away from high-excitation-order configurations that require deeper, more entangling circuits to prepare 40 . This motivates augmenting or replacing configuration-recovery heuristics of this kind with a generative model that learns and concentrates on the dominant configuration distribution directly from hardware samples 51–53 , as detailed in Section G.4 below. 
+
+G.3 Density Matrix Embedding Theory 
+
+Density Matrix Embedding Theory (DMET) 55, 57 partitions the full electronic Hilbert space into an impurity and an environment, 
+
+H = Himp ⊕ Henv , where the impurity captures strong local correlation and the environment is represented by a finite set of bath orbitals obtained from the Schmidt decomposition of the mean-field reference state |Φ0⟩55 . Given a user-defined set of fragment orbitals Ay, the remaining environment orbitals Env y decompose as Env y = By ∪ Cor y ∪ Vir y, (G5) where By are the entangled bath orbitals reproducing fragment-environment entanglement at the mean-field level, and Cor y,Vir y are unentangled occupied and virtual orbitals, respectively, whose contributions enter only as a mean-field correction and 
+
+> 30/31
+
+are excluded from the embedded problem. The embedded impurity Hamiltonian is constructed by projecting the full electronic Hamiltonian onto the fragment +bath subspace ˆ P,ˆHemb = ˆP ∑
+
+> pq
+
+hpq a†
+
+> p
+
+aq + 12 ∑
+
+> pqrs
+
+vpqrs a†
+
+> p
+
+a†
+
+> q
+
+asar
+
+!
+
+ˆP. (G6) In standard DMET, ˆHemb is solved via FCI or high-level classical solvers such as CCSD 5; in this work it is instead solved with QSCI-RBM, enabling larger embedded active spaces while preserving tractability through compact subspace selection 17, 60 .We adopt the one-shot DMET embedding strategy 55, 57 , in which bath orbitals are constructed once from the initial mean-field reference and are not iteratively updated. Self-consistency is instead enforced through a single scalar chemical potential μ
+
+introduced into the embedded Hamiltonian, ˆHemb (μ) = ˆHemb − μ ∑p∈frag a†
+
+> p
+
+ap, adjusted via a secant-method root-find 101 so that the trace of the embedded 1-RDM over the fragment orbitals, 
+
+γemb  
+
+> pq
+
+(μ) = ⟨Ψemb (μ)|a†
+
+> p
+
+aq|Ψemb (μ)⟩, (G7) matches the target active-electron count for that fragment, where |Ψemb (μ)⟩ is the correlated impurity ground state obtained from QSCI-RBM diagonalization of ˆHemb (μ). Recent theoretical analyses have further characterised the convergence behaviour of this self-consistency loop in the non-interacting limit 58, 59 .
+
+G.4 Restricted Boltzmann Machines for Configuration Generation 
+
+Restricted Boltzmann Machines (RBMs) are energy-based generative models comprising a layer of visible units ⃗v ∈ { 0, 1} nv
+
+and a layer of hidden units ⃗ h ∈ { 0, 1}nh , with no intra-layer connections 49, 50 . The joint energy function is, 
+
+E(⃗v,⃗ h) = −⃗a ·⃗v −⃗ b ·⃗ h −⃗v T W⃗ h, (G8) where ⃗a and ⃗ b are visible and hidden bias vectors respectively, and W ∈ Rnv×nh is the weight matrix. The marginal distribution over visible units, 
+
+P(⃗v) = 1
+
+Z ∑⃗
+
+> h
+
+e−E(⃗v,⃗ h), (G9) is trained to approximate the ground-state amplitude distribution of the quantum state 49 ,
+
+P(⃗v) ≈ | c⃗ v |2. (G10) The RBM is trained on the symmetry-valid hardware samples via contrastive divergence 50 , and once trained, new configurations are generated by Gibbs sampling from the learned distribution. Because the RBM concentrates probability mass on the dominant correlation subspace identified by the hardware, it enables compact subspace construction that goes beyond the raw symmetry-filtered shot list. In particular, this leads to the capturing high-excitation-order determinants that carry significant weight in multi-reference systems but may appear infrequently in finite hardware shot budgets 53 .

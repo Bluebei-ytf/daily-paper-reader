@@ -1,346 +1,40 @@
 {
-  "generated_at": "2026-07-25T07:33:28.888535+00:00",
-  "updated_date": "20260716-20260725",
+  "generated_at": "2026-07-25T22:29:35.836005+00:00",
+  "updated_date": "20260725",
   "carryover_days": 9,
   "tag_states": {
     "aichem-map": {
-      "updated_date": "20260716-20260725",
+      "updated_date": "20260725",
       "carryover_days": 9,
       "items": [
         {
-          "id": "2607.20935v1",
+          "id": "2607.21425v1",
           "source": "arxiv",
-          "title": "Chemical Chain-of-Thought Functions as a Hallucination-Prone Molecular Scratchpad",
-          "abstract": "Chemical reasoning language models are expected to derive molecular answers through faithful chain-of-thought (CoT). However, across four reasoning model families and twelve chemistry tasks, hallucination is widespread and largely decoupled from answer correctness: correct answers often coexist with fabricated structural claims absent from the relevant molecules. Yet this does not make the reasoning trace computationally irrelevant. Attribution analyses suggest a shared scratchpad function expressed in model-specific forms: Chem-R and ether-0 rely on fragmented SMILES drafts, whereas ChemDFM-R emphasizes scaffold, positional, and naming cues. Notably, perturbing Chem-R's SMILES sketches degrades generation, showing that structural drafts can be causally load-bearing even when verbal structural claims are largely inert. Together, these results show that chemical CoT is neither a faithful explanation nor merely a post-hoc rationalization, but a hallucination-prone molecular scratchpad. This finding cautions against treating CoT as direct evidence of faithful reasoning and motivates process-level supervision beyond answer-only evaluation.",
+          "title": "Approximating committor functions: Objective functions and training data sampling",
+          "abstract": "Many molecular dynamics simulations aim at studying transitions between two states (from reactants to products). In this context, the committor function (which gives for a given molecular configuration the probability to reach the product state before the reactant state) is a pivotal quantity, in particular because it is the optimal importance function for rare event simulation methods such as importance sampling or splitting techniques. These methods are used to sample the reactive path ensemble, and estimate for example the transition rate. However, learning such a function is generally a challenging task due to the high dimensionality of the configuration space. In this work, after reviewing the existing methodologies to construct approximate committor functions, a new loss function based on the application of Itō's formula is proposed to learn the committor function with a minimization procedure on the parameters of a neural network. After comparing this novel approach to existing procedures on the Müller--Brown potential, we introduce a coupling strategy with the Adaptive Multilevel Splitting method to better approximate the committor function using a better sampling of the reactive trajectories. This methodology in which the committor function is iteratively learned only requires initially the knowledge of the reactant and product states.",
           "authors": [
-            "Jiatong Li",
-            "Yuxuan Ren",
-            "Weida Wang",
-            "Xiaoyong Wei",
-            "Yatao Bian"
-          ],
-          "primary_category": "cs.CE",
-          "categories": [
-            "cs.CE",
-            "cs.CL"
-          ],
-          "published": "2026-07-23T05:30:45+00:00",
-          "link": "https://arxiv.org/pdf/2607.20935v1",
-          "tags": [
-            "keyword:aichem-map",
-            "query:aichem-map"
-          ],
-          "llm_score": 8.0,
-          "llm_evidence_en": "analysis of chain-of-thought hallucination in chemical language models",
-          "llm_evidence_cn": "化学语言模型思维链幻觉分析",
-          "llm_evidence": "化学语言模型思维链幻觉分析",
-          "canonical_evidence": "化学语言模型思维链幻觉分析",
-          "llm_tldr_en": "Chemical reasoning LMs hallucinate structural claims in CoT even when answers are correct, but the scratchpad function aids generation.",
-          "llm_tldr_cn": "研究了化学推理语言模型在思维链（CoT）中的幻觉现象，发现幻觉在四个推理模型家族和十二个化学任务中普遍存在，且正确答案常伴随虚构结构断言。归因分析表明CoT轨迹扮演了临时草稿本角色，不同模型依赖不同线索（如SMILES碎片、骨架提示）。扰动草稿本会降低生成质量，提示应关注推理过程的保真度。",
-          "llm_tldr": "研究了化学推理语言模型在思维链（CoT）中的幻觉现象，发现幻觉在四个推理模型家族和十二个化学任务中普遍存在，且正确答案常伴随虚构结构断言。归因分析表明CoT轨迹扮演了临时草稿本角色，不同模型依赖不同线索（如SMILES碎片、骨架提示）。扰动草稿本会降低生成质量，提示应关注推理过程的保真度。",
-          "llm_tags": [
-            "query:aichem-map"
-          ],
-          "matched_query_tag": "query:aichem-map",
-          "matched_query_text": "large language models for chemistry applications",
-          "matched_requirement_id": "req-5",
-          "selection_source": "carryover_cache",
-          "paper_id": "2607.20935v1",
-          "carry_days": 1
-        },
-        {
-          "id": "2607.18144v1",
-          "source": "arxiv",
-          "title": "Do Language Models Dream of Binding Molecules? Benchmarking LLMs under Spatial Constraints",
-          "abstract": "Structure-based drug design (SBDD) leverages the 3D structure of protein targets, often complemented by other spatial constraints, to generate candidate binding molecules. While diffusion models have dominated as a leading paradigm for high-quality 3D molecule generation, LLM-based methods are rapidly emerging in molecular design and have shown competitive performance in pocket-conditioned molecular generation. However, their ability to reason about physics and 3D spatial environments is largely underexplored. In this work, we systematically analyze whether current general-purpose LLMs are capable of navigating complex 3D constraints compared to established baselines such as specialized diffusion models. We consider 3D ligand generation conditioned on protein pockets together with ligand- and interaction-derived spatial constraints, including anchor fragments, pharmacophore points, and mandatory pocket-ligand interactions. To enable this evaluation, we introduce 3D-Fit - a token-efficient benchmarking strategy for assessing LLM performance on multi-conditioned spatial molecule generation. Our findings reveal a clear pattern in LLM spatial capabilities: while they still lag behind state-of-the-art approaches, they are promising and can handle multiple spatial constraints simultaneously, enabling scaling to heterogeneous setups.",
-          "authors": [
-            "Thomas MacDougall",
-            "Maksim Kuznetsov",
-            "Roman Schutski",
-            "Rim Shayakhmetov",
-            "Maxim Malkov",
-            "Vladimir Aladinskiy",
-            "Alex Aliper",
-            "Alex Zhavoronkov"
-          ],
-          "primary_category": "cs.LG",
-          "categories": [
-            "cs.LG",
-            "cs.AI",
-            "cs.CL"
-          ],
-          "published": "2026-07-20T16:43:54+00:00",
-          "link": "https://arxiv.org/pdf/2607.18144v1",
-          "tags": [
-            "keyword:aichem-map",
-            "query:aichem-map"
-          ],
-          "llm_score": 8.0,
-          "llm_evidence_en": "benchmarking LLMs for 3D molecular generation under spatial constraints",
-          "llm_evidence_cn": "评估LLMs在空间约束下的三维分子生成能力",
-          "llm_evidence": "评估LLMs在空间约束下的三维分子生成能力",
-          "canonical_evidence": "评估LLMs在空间约束下的三维分子生成能力",
-          "llm_tldr_en": "Systematically analyzes whether general-purpose LLMs can handle 3D spatial constraints in molecule generation, comparing them to specialized diffusion models on 3D ligand generation tasks.",
-          "llm_tldr_cn": "结构基于药物的设计（SBDD）中，扩散模型在三维分子生成方面占据主导地位，而LLM方法正在兴起但缺乏对空间约束的评估。本文系统比较了通用LLM与专用扩散模型在口袋条件下的三维配体生成能力。实验表明，当前LLM在物理和三维空间推理方面仍落后于专用模型。该工作为LLM在分子生成中的能力提供了重要基准。",
-          "llm_tldr": "结构基于药物的设计（SBDD）中，扩散模型在三维分子生成方面占据主导地位，而LLM方法正在兴起但缺乏对空间约束的评估。本文系统比较了通用LLM与专用扩散模型在口袋条件下的三维配体生成能力。实验表明，当前LLM在物理和三维空间推理方面仍落后于专用模型。该工作为LLM在分子生成中的能力提供了重要基准。",
-          "llm_tags": [
-            "query:aichem-map"
-          ],
-          "matched_query_tag": "query:aichem-map",
-          "matched_query_text": "molecular generation and optimization with machine learning",
-          "matched_requirement_id": "req-2",
-          "selection_source": "carryover_cache",
-          "paper_id": "2607.18144v1",
-          "carry_days": 1
-        },
-        {
-          "id": "2607.17417v1",
-          "source": "arxiv",
-          "title": "Grounded verification of chemical and materials reasoning: detection is the bottleneck",
-          "abstract": "Large language models confabulate chemical objects (molecular formulas, space groups, formation energies) in fluent reasoning traces, concentrated on long-tail entities where confidence is least trustworthy. Deterministic, database-grounded verification can catch and repair such errors without the coverage cost of blanket retrieval; the binding constraint, we find, is detection, not repair. Our tiered verifier extracts each checkable claim, checks it against authoritative databases and physics, and feeds the reference into a gated correction loop. Across four models and 528 condition-pinned prompts, gated correction cuts committed-formula error from 22% to 4% at $3.2\\times$ fewer retrievals than blanket augmentation, beating a conversational oracle. Repair succeeds wherever a flag fires (80--97%); the bottleneck is in-loop detection recall. Grounding improves the final answer only when the verifier's scope reaches the deliverable (83% to 90%), and the lift appears only where extractable long-tail error exists: absent on near-ceiling physical constants, large on isotope half-lives (11% to 0%).",
-          "authors": [
-            "Can Polat",
-            "Mustafa Kurban",
-            "Erchin Serpedin",
-            "Hasan Kurban"
-          ],
-          "primary_category": "cs.LG",
-          "categories": [
-            "cs.LG",
-            "physics.chem-ph",
-            "physics.comp-ph",
-            "quant-ph"
-          ],
-          "published": "2026-07-19T21:44:47+00:00",
-          "link": "https://arxiv.org/pdf/2607.17417v1",
-          "tags": [
-            "keyword:aichem-map",
-            "query:aichem-map"
-          ],
-          "llm_score": 8.0,
-          "llm_evidence_en": "LLM chemical reasoning verification with database grounding",
-          "llm_evidence_cn": "基于数据库验证的LLM化学推理校正",
-          "llm_evidence": "基于数据库验证的LLM化学推理校正",
-          "canonical_evidence": "基于数据库验证的LLM化学推理校正",
-          "llm_tldr_en": "Proposes a tiered verifier for LLM chemical reasoning that extracts and checks claims against databases, achieving error reduction from 22% to 4% with fewer retrievals.",
-          "llm_tldr_cn": "大型语言模型在化学推理中容易编造分子式等实体，现有验证方法成本高。本文提出一种分层验证器，提取每个可核查的化学声明并与权威数据库和物理规则核对，通过门控校正循环修复错误。在四个模型和528个提示上的实验表明，该方法将公式错误率从22%降至4%，且检索次数比全量增强少3.2倍。这为提升LLM在化学领域的可信度提供了高效方案。",
-          "llm_tldr": "大型语言模型在化学推理中容易编造分子式等实体，现有验证方法成本高。本文提出一种分层验证器，提取每个可核查的化学声明并与权威数据库和物理规则核对，通过门控校正循环修复错误。在四个模型和528个提示上的实验表明，该方法将公式错误率从22%降至4%，且检索次数比全量增强少3.2倍。这为提升LLM在化学领域的可信度提供了高效方案。",
-          "llm_tags": [
-            "query:aichem-map"
-          ],
-          "matched_query_tag": "query:aichem-map",
-          "matched_query_text": "large language models for chemistry applications",
-          "matched_requirement_id": "req-5",
-          "selection_source": "carryover_cache",
-          "paper_id": "2607.17417v1",
-          "carry_days": 1
-        },
-        {
-          "id": "2607.19198v1",
-          "source": "arxiv",
-          "title": "ATLAS: A Foundation Neural Sampler for Amorphous Materials",
-          "abstract": "Amorphous materials exhibit exceptional mechanical and functional properties, yet their rugged energy landscapes are notoriously difficult to sample. Below the glass-transition temperature, conventional molecular dynamics and Monte Carlo become inefficient because equilibration relies on rare barrier-crossing events, while data-driven generative models are constrained by scarce and biased reference ensembles. Here, we introduce ATLAS, an efficient sampler that learns a diffusion process to generate Boltzmann-distributed amorphous structures directly from a target energy function. Parameterized by an equivariant graph neural network, ATLAS generalizes across system size, temperature, and composition. By exploiting the time reversal of the diffusion process, it enables efficient estimation of thermodynamic quantities and steering toward target observables. In two-dimensional Kob-Andersen systems, ATLAS reproduces parallel tempering Markov chain Monte Carlo structural distributions, free energies and entropies, achieving below 0.2% free energy error in the low-temperature glass regime with over 500-fold fewer energy evaluations. In Cu-Zr and Cr-Co-Ni metallic glasses, ATLAS recovers experimentally observed short-range-order trends and steers structures toward prescribed order parameters and optimized bulk moduli. Moreover, composition-amortized pretraining outperforms composition-specific training from scratch, reduces inverse-design costs by several hundred-fold, and enables sampling with expensive universal machine learning interatomic potentials. Coupled to a large language model agent, ATLAS searches an eight-element space for high-entropy metallic glasses balancing stiffness and ductility, identifying a converged Pareto frontier within 480 oracle evaluations. Together, these results establish ATLAS as a foundation model for sampling, steering and designing amorphous materials.",
-          "authors": [
-            "Mouyang Cheng",
-            "Denis Blessing",
-            "Botao Yu",
-            "Gerhard Neumann",
-            "Mingda Li",
-            "Carles Domingo-Enrich",
-            "Yuanqi Du"
-          ],
-          "primary_category": "cond-mat.mtrl-sci",
-          "categories": [
-            "cond-mat.mtrl-sci",
-            "cs.LG",
-            "physics.comp-ph"
-          ],
-          "published": "2026-07-21T15:31:49+00:00",
-          "link": "https://arxiv.org/pdf/2607.19198v1",
-          "tags": [
-            "keyword:aichem-map",
-            "query:aichem-map"
-          ],
-          "llm_score": 8.0,
-          "llm_evidence_en": "Diffusion generative model for amorphous material structures",
-          "llm_evidence_cn": "用于非晶材料结构的扩散生成模型",
-          "llm_evidence": "用于非晶材料结构的扩散生成模型",
-          "canonical_evidence": "用于非晶材料结构的扩散生成模型",
-          "llm_tldr_en": "Introduces ATLAS, a foundation neural sampler using diffusion process to generate Boltzmann-distributed amorphous structures, generalizing across system size, temperature, and composition.",
-          "llm_tldr_cn": "针对非晶材料能量景观采样难题，本文提出ATLAS，一种基于扩散过程的生成采样器，通过时间反转扩散方程直接生成玻尔兹曼分布的非晶结构；采用等变图神经网络参数化，可跨体系尺寸、温度和成分泛化，为非晶材料的结构生成和性质预测提供了高效的机器学习工具。",
-          "llm_tldr": "针对非晶材料能量景观采样难题，本文提出ATLAS，一种基于扩散过程的生成采样器，通过时间反转扩散方程直接生成玻尔兹曼分布的非晶结构；采用等变图神经网络参数化，可跨体系尺寸、温度和成分泛化，为非晶材料的结构生成和性质预测提供了高效的机器学习工具。",
-          "llm_tags": [
-            "query:aichem-map"
-          ],
-          "matched_query_tag": "query:aichem-map",
-          "matched_query_text": "molecular generation and optimization with machine learning",
-          "matched_requirement_id": "req-2",
-          "selection_source": "carryover_cache",
-          "paper_id": "2607.19198v1",
-          "carry_days": 1
-        },
-        {
-          "id": "2607.19237v1",
-          "source": "arxiv",
-          "title": "DBMol: Design of High-Affinity, Target-Specific Small Molecules through Structure Prediction Models",
-          "abstract": "Designing small molecule ligands that bind with high affinity to specific protein pockets is a fundamental goal in drug discovery, as small molecules constitute a major fraction of approved therapeutics. Recent breakthroughs in structure prediction, such as AlphaFold-3 and Boltz-2, enable accurate biomolecular interaction prediction and show promise as foundation models for downstream tasks, including binding affinity prediction. We propose to leverage these models and introduce DBMol, a new structure predictor-guided framework for de novo small molecule design. DBMol formulates an alternating optimization and projection process. In the optimization stage, DBMol starts from an initial molecule and uses gradient-based optimization to improve pocket-specific interactions and predicted binding affinity using a structure prediction model. In the projection stage, a flow-matching model maps the optimized molecular graph to discrete and chemically valid molecules. Experiments show that DBMol effectively optimizes the Boltz-2 affinity proxy and generates molecules with strong predicted affinity and specificity under Boltz-2 evaluation. To reduce self-confirmation bias, we further evaluate generated molecules using held-out metrics, including AF3-based evaluation. DBMol substantially improves pocket coverage while maintaining molecular diversity over unconditional generation, and is competitive under held-out metrics despite the absence of reference-ligand supervision. These results support the promise of structure prediction models as effective optimization signals for de novo molecular design.",
-          "authors": [
-            "Yiming Qin",
-            "Kai Yi",
-            "Miruna Cretu",
-            "Sjors H. W. Scheres",
-            "Pietro Liò",
-            "Pascal Frossard"
-          ],
-          "primary_category": "cs.LG",
-          "categories": [
-            "cs.LG"
-          ],
-          "published": "2026-07-21T16:07:07+00:00",
-          "link": "https://arxiv.org/pdf/2607.19237v1",
-          "tags": [
-            "keyword:aichem-map",
-            "query:aichem-map"
-          ],
-          "llm_score": 8.0,
-          "llm_evidence_en": "structure prediction guided de novo molecule design",
-          "llm_evidence_cn": "基于结构预测的从头分子设计",
-          "llm_evidence": "基于结构预测的从头分子设计",
-          "canonical_evidence": "基于结构预测的从头分子设计",
-          "llm_tldr_en": "DBMol uses structure prediction models like AlphaFold-3 to guide de novo small molecule design via alternating optimization.",
-          "llm_tldr_cn": "小分子配体设计是药物发现的核心目标。DBMol利用AlphaFold-3等结构预测模型作为基础，通过交替优化和投影过程从头设计高亲和力分子。该方法在优化阶段梯度更新分子，并利用结构预测进行约束，有效生成靶向特定蛋白口袋的候选分子，展示了结构预测模型在分子生成中的潜力。",
-          "llm_tldr": "小分子配体设计是药物发现的核心目标。DBMol利用AlphaFold-3等结构预测模型作为基础，通过交替优化和投影过程从头设计高亲和力分子。该方法在优化阶段梯度更新分子，并利用结构预测进行约束，有效生成靶向特定蛋白口袋的候选分子，展示了结构预测模型在分子生成中的潜力。",
-          "llm_tags": [
-            "query:aichem-map"
-          ],
-          "matched_query_tag": "query:aichem-map",
-          "matched_query_text": "molecular generation and optimization with machine learning",
-          "matched_requirement_id": "req-2",
-          "selection_source": "carryover_cache",
-          "paper_id": "2607.19237v1",
-          "carry_days": 1
-        },
-        {
-          "id": "2607.18182v1",
-          "source": "arxiv",
-          "title": "Machine Learning Potential-Driven Molecular Dynamics Simulations of Dehydrogenation in Pristine and Doped MgH$_2$",
-          "abstract": "Machine learning potential-driven molecular dynamics simulations (ML-MD) were employed to provide atomistic insights into the dehydrogenation kinetics of pristine and doped MgH2. Through systematic investigation of distinct surface orientations, the MgH2 (100) surface was identified as the most active low-index surface for hydrogen release. For pristine MgH2, our simulations revealed a novel H2 formation mechanism characterized by H2 generation in the subsurface region followed by diffusion to the surface for desorption, highlighting the critical role of subsurface processes beyond conventional surface-driven pathways. Comprehensive screening of 22 doping elements identified Ni as the most effective dopant. Among several descriptors, machine learning analysis identified the time-coupled Miedema electron density as the critical descriptor, underscoring the role of electronic properties. Consequently, a volcano-shaped relationship was uncovered between the intrinsic Miedema electron density ( nws ) and total hydrogen release (optimal window: 4.0 < nws < 5.4x10-2 e/bohr3). Dopants within this range serve a dual function: acting as thermodynamic sinks for H attraction while maintaining a balanced interaction strength to facilitate H-H coupling and H2 release. This atomistic-level validation provides strong theoretical support for the experimentally observed \"hydrogen pump\" effect of catalytic phases. The present study demonstrates the strong capability of ML- MD in navigating through complex catalytic mechanisms and establishing quantitative property-activity relationships, providing a robust framework for rational design of high-performance catalysts for MgH2 and other hydrogen storage materials.",
-          "authors": [
-            "Bo Han",
-            "Jianchuan Wang",
-            "Rui Zhang",
-            "Martin Matas",
-            "Elias Vigl",
-            "Jing Tang",
-            "Yong Du",
-            "Christian Weiss",
-            "David Holec"
-          ],
-          "primary_category": "cond-mat.mtrl-sci",
-          "categories": [
-            "cond-mat.mtrl-sci"
-          ],
-          "published": "2026-07-20T17:18:11+00:00",
-          "link": "https://arxiv.org/pdf/2607.18182v1",
-          "tags": [
-            "keyword:aichem-map",
-            "query:aichem-map"
-          ],
-          "llm_score": 8.0,
-          "llm_evidence_en": "ML potential-driven MD simulations for dehydrogenation mechanism",
-          "llm_evidence_cn": "机器学习势驱动的分子动力学模拟研究脱氢机制",
-          "llm_evidence": "机器学习势驱动的分子动力学模拟研究脱氢机制",
-          "canonical_evidence": "机器学习势驱动的分子动力学模拟研究脱氢机制",
-          "llm_tldr_en": "ML-MD simulations reveal novel subsurface H2 formation mechanism in MgH2 and identify Ni as best dopant for dehydrogenation.",
-          "llm_tldr_cn": "基于机器学习势的分子动力学模拟揭示了MgH2脱氢的新机制：氢气在亚表面生成后扩散至表面脱附。通过筛选22种掺杂元素，发现Ni是最有效的掺杂剂。该方法为储氢材料设计提供了原子级见解。",
-          "llm_tldr": "基于机器学习势的分子动力学模拟揭示了MgH2脱氢的新机制：氢气在亚表面生成后扩散至表面脱附。通过筛选22种掺杂元素，发现Ni是最有效的掺杂剂。该方法为储氢材料设计提供了原子级见解。",
-          "llm_tags": [
-            "query:aichem-map"
-          ],
-          "matched_query_tag": "query:aichem-map",
-          "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
-          "matched_requirement_id": "req-6",
-          "selection_source": "carryover_cache",
-          "paper_id": "2607.18182v1",
-          "carry_days": 1
-        },
-        {
-          "id": "2607.19977v1",
-          "source": "arxiv",
-          "title": "Rem3Di: Learning smooth, chiral 3D molecular descriptors from atomistic foundation models",
-          "abstract": "Foundation machine-learned interatomic potentials (MLIPs) are trained on large quantum-mechanical datasets and generalise across broad regions of chemical and configurational space. Beyond their usual role in accelerating sampling-based simulations, their internal representations encode chemically rich local atomic environments. Here, we introduce Rem3Di, a representation-learning framework that repurposes latent features from atomistic foundation models as transferable molecular descriptors for property prediction and virtual screening. Rem3Di combines a potential's per-atom features into a single fixed-length descriptor of the whole molecule that varies smoothly with three-dimensional structure and is invariant to the ordering of the atoms. The descriptor can be used directly or fine-tuned for specific prediction tasks. To capture molecular handedness, Rem3Di constructs pseudoscalar features, which are unchanged by rotation but reverse sign under mirror reflection. This lets the descriptor distinguish enantiomers, which can differ in activity and toxicity. The transformer is pretrained on large molecular datasets by reconstructing corrupted atom features, so no experimental labels are required. Across public drug-property benchmarks, Rem3Di matches or exceeds published baselines without relying on classical 2D fingerprints. Additionally, the same descriptor yields chemically meaningful differentiation of transition-metal complexes without predefined bonding rules or handcrafted representations. Rem3Di therefore provides a route from simulation-trained atomistic representations to transferable, chirality-aware molecular representations for chemical machine learning.",
-          "authors": [
-            "Steffen Wedig",
-            "Felix Burton",
-            "Rokas Elijošius",
-            "Christoph Schran",
-            "Lars L. Schaaf"
+            "Thomas Pigeon",
+            "Gabriel Stoltz",
+            "Tony Lelièvre"
           ],
           "primary_category": "physics.chem-ph",
           "categories": [
-            "physics.chem-ph",
-            "physics.atm-clus",
-            "physics.comp-ph"
+            "physics.chem-ph"
           ],
-          "published": "2026-07-22T10:05:09+00:00",
-          "link": "https://arxiv.org/pdf/2607.19977v1",
+          "published": "2026-07-23T15:27:17+00:00",
+          "link": "https://arxiv.org/pdf/2607.21425v1",
           "tags": [
             "keyword:aichem-map",
             "query:aichem-map"
           ],
           "llm_score": 8.0,
-          "llm_evidence_en": "molecular descriptors from atomistic foundation models",
-          "llm_evidence_cn": "从原子基础模型提取分子描述符",
-          "llm_evidence": "从原子基础模型提取分子描述符",
-          "canonical_evidence": "从原子基础模型提取分子描述符",
-          "llm_tldr_en": "Rem3Di repurposes latent features from atomistic foundation models as transferable molecular descriptors for property prediction.",
-          "llm_tldr_cn": "原子基础模型内含丰富的化学环境表征。本文提出Rem3Di框架，将原子势模型的潜在特征转化为平滑、手性感知的3D分子描述符，用于性质预测和虚拟筛选中，实现了良好的可迁移性。",
-          "llm_tldr": "原子基础模型内含丰富的化学环境表征。本文提出Rem3Di框架，将原子势模型的潜在特征转化为平滑、手性感知的3D分子描述符，用于性质预测和虚拟筛选中，实现了良好的可迁移性。",
-          "llm_tags": [
-            "query:aichem-map"
-          ],
-          "matched_query_tag": "query:aichem-map",
-          "matched_query_text": "chemical foundation model pre-training and transfer learning",
-          "matched_requirement_id": "req-1",
-          "selection_source": "carryover_cache",
-          "paper_id": "2607.19977v1",
-          "carry_days": 1
-        },
-        {
-          "id": "2607.20585v1",
-          "source": "arxiv",
-          "title": "Machine-Learned Compact Subspace Generation for Quantum Selected Configuration Interaction within Density Matrix Embedding Framework",
-          "abstract": "Sample-based Quantum Diagonalization (SQD), an extension of Quantum Selected Configuration Interaction (QSCI), has emerged as a promising hybrid quantum-classical paradigm for computing molecular ground state energies. By leveraging quantum sampling instead of variational optimization, QSCI avoids barren plateaus and enables direct reconstruction of correlated electronic wavefunctions. However, existing configuration recovery techniques primarily enforce symmetry constraints without guaranteeing optimal selection of the most physically relevant configurations, often leading to unnecessarily large subspaces and increased classical diagonalization costs. In this work, we introduce a machine-learned compact subspace generation protocol based on Restricted Boltzmann Machines (RBMs), termed QSCI-RBM, and integrate it within the Density Matrix Embedding Theory (DMET) framework. The RBM is trained on quantum-sampled configurations to learn the underlying probability distribution of dominant determinants, enabling the targeted generation of high-probability configurations. We apply this framework to the simulation of a protein-ligand complex involving the inhibitor Carmofur bound to the SARS-CoV-2 main protease ($M^{\\text{pro}}$). Our results demonstrate that DMET-QSCI-RBM achieves energies within the chemical accuracy threshold by accessing only approximately 4% of the configuration subspace. In contrast, standard DMET-SQD simulations failed to reach chemical accuracy while accessing up to 20% of the subspace, even as the chemical potential itself nearly converged. These findings highlight that RBM-assisted configuration generation produces significantly more compact subspaces while preserving physical accuracy, thereby reducing classical computational overhead and enabling the scalable quantum embedding simulation of complex biological systems.",
-          "authors": [
-            "Ashish Kumar Patra",
-            "Anurag K. S. V.",
-            "Ruchika Bhat",
-            "Sai Shankar P.",
-            "Rahul Maitra",
-            "Jaiganesh G"
-          ],
-          "primary_category": "quant-ph",
-          "categories": [
-            "quant-ph",
-            "cs.ET",
-            "cs.LG",
-            "physics.chem-ph",
-            "q-bio.BM"
-          ],
-          "published": "2026-07-22T12:58:46+00:00",
-          "link": "https://arxiv.org/pdf/2607.20585v1",
-          "tags": [
-            "keyword:aichem-map",
-            "query:aichem-map"
-          ],
-          "llm_score": 8.0,
-          "llm_evidence_en": "machine learning for generating compact subspaces in quantum chemistry calculations",
-          "llm_evidence_cn": "机器学习用于量子化学计算中的紧凑子空间生成",
-          "llm_evidence": "机器学习用于量子化学计算中的紧凑子空间生成",
-          "canonical_evidence": "机器学习用于量子化学计算中的紧凑子空间生成",
-          "llm_tldr_en": "Introduces a machine-learned method to generate compact subspaces for quantum selected configuration interaction, reducing classical diagonalization cost.",
-          "llm_tldr_cn": "针对量子选构型相互作用（QSCI）中经典对角化成本过高的问题，本文提出一种机器学习方法自动生成紧凑的构型子空间。该方法通过机器学习优化选择最相关的构型，避免传统对称性约束导致的冗余。在密度矩阵嵌入框架下，显著降低了后处理计算量，为混合量子-经典计算提供更高效的方案。",
-          "llm_tldr": "针对量子选构型相互作用（QSCI）中经典对角化成本过高的问题，本文提出一种机器学习方法自动生成紧凑的构型子空间。该方法通过机器学习优化选择最相关的构型，避免传统对称性约束导致的冗余。在密度矩阵嵌入框架下，显著降低了后处理计算量，为混合量子-经典计算提供更高效的方案。",
+          "llm_evidence_en": "machine learning approximation of committor functions for molecular dynamics rare events",
+          "llm_evidence_cn": "机器学习近似committor函数用于分子动力学稀有事件",
+          "llm_evidence": "机器学习近似committor函数用于分子动力学稀有事件",
+          "canonical_evidence": "机器学习近似committor函数用于分子动力学稀有事件",
+          "llm_tldr_en": "Reviews and advances objective functions and training data sampling for approximating committor functions, key for rare event simulations in molecular dynamics.",
+          "llm_tldr_cn": "Commitor函数是分子动力学稀有事件模拟的核心量，但高维构型空间学习困难。本文系统综述现有构建近似方法，并探索新的目标函数和数据采样策略。该工作为加速过渡路径采样和反应速率估计提供机器学习方案，推动分子动力学与AI的结合。",
+          "llm_tldr": "Commitor函数是分子动力学稀有事件模拟的核心量，但高维构型空间学习困难。本文系统综述现有构建近似方法，并探索新的目标函数和数据采样策略。该工作为加速过渡路径采样和反应速率估计提供机器学习方案，推动分子动力学与AI的结合。",
           "llm_tags": [
             "query:aichem-map"
           ],
@@ -348,49 +42,7 @@
           "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
           "matched_requirement_id": "req-6",
           "selection_source": "carryover_cache",
-          "paper_id": "2607.20585v1",
-          "carry_days": 1
-        },
-        {
-          "id": "2607.18591v1",
-          "source": "arxiv",
-          "title": "GQD-AdsNet: Graph Neural Networks Unlock Rapid Exploration of Transition Metal Adsorption on Graphene Quantum Dots",
-          "abstract": "In recent years, interest in single-atom catalysts supported on carbon-based structures has grown considerably due to their high catalytic activity and efficient uses of metal atoms. However, the design and characterization of these materials through first-principles calculations are computationally expensive, limiting the exploration of a large number of possible configurations. Here, we developed a framework based on graph neural networks (GNNs) to predict the adsorption energies of transition metals on graphene quantum dots (GQDs). The model was trained using data obtained from density functional theory calculations and achieved an $R^2$ of 0.906 with an MAE of 0.101 eV, while reducing computational cost by roughly six orders of magnitude relative to DFT. This methodology provides an efficient tool for the accelerated screening and rational design of new catalysts based on carbon nanostructures.",
-          "authors": [
-            "Lara Goncebat",
-            "Rodrigo Echeveste",
-            "Matías Gerard",
-            "Frederik Tielens",
-            "Gustavo Belletti",
-            "Paola Quaino"
-          ],
-          "primary_category": "cond-mat.mtrl-sci",
-          "categories": [
-            "cond-mat.mtrl-sci",
-            "cs.LG"
-          ],
-          "published": "2026-07-20T23:56:51+00:00",
-          "link": "https://arxiv.org/pdf/2607.18591v1",
-          "tags": [
-            "keyword:aichem-map",
-            "query:aichem-map"
-          ],
-          "llm_score": 8.0,
-          "llm_evidence_en": "graph neural networks to predict adsorption energies for transition metals on GQDs, accelerating DFT",
-          "llm_evidence_cn": "图神经网络预测过渡金属在石墨烯量子点上的吸附能，加速DFT",
-          "llm_evidence": "图神经网络预测过渡金属在石墨烯量子点上的吸附能，加速DFT",
-          "canonical_evidence": "图神经网络预测过渡金属在石墨烯量子点上的吸附能，加速DFT",
-          "llm_tldr_en": "Develops GNN-based framework GQD-AdsNet to predict adsorption energies of transition metals on GQDs, achieving R2 0.906 with MAE 0.101 eV, reducing cost.",
-          "llm_tldr_cn": "针对单原子催化剂中吸附能计算昂贵的问题，本文提出基于图神经网络的GQD-AdsNet框架。该框架利用DFT计算数据训练，预测过渡金属在石墨烯量子点上的吸附能，决定系数达0.906，平均绝对误差仅0.101 eV。大幅降低了第一性原理计算成本，加速了碳基单原子催化剂的高通量筛选。",
-          "llm_tldr": "针对单原子催化剂中吸附能计算昂贵的问题，本文提出基于图神经网络的GQD-AdsNet框架。该框架利用DFT计算数据训练，预测过渡金属在石墨烯量子点上的吸附能，决定系数达0.906，平均绝对误差仅0.101 eV。大幅降低了第一性原理计算成本，加速了碳基单原子催化剂的高通量筛选。",
-          "llm_tags": [
-            "query:aichem-map"
-          ],
-          "matched_query_tag": "query:aichem-map",
-          "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
-          "matched_requirement_id": "req-6",
-          "selection_source": "carryover_cache",
-          "paper_id": "2607.18591v1",
+          "paper_id": "2607.21425v1",
           "carry_days": 1
         }
       ]
