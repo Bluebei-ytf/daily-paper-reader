@@ -1,0 +1,894 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-25T07:33:28.886726+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 24,
+    "deep_cap": 6,
+    "deep_selected": 11,
+    "quick_candidates": 28,
+    "quick_skim_target": 11,
+    "quick_selected": 11
+  },
+  "deep_dive": [
+    {
+      "id": "2607.14512v2",
+      "source": "arxiv",
+      "title": "RetroAgent: Harnessing LLMs to Search Over Structured Memory for Agentic Retrosynthesis Planning",
+      "abstract": "Multi-step retrosynthesis planning seeks to decompose a target molecule into commercially available building blocks through a sequence of feasible reactions. The vast combinatorial search space makes this task challenging even for expert chemists. Traditional methods combine tree search with offline-trained value networks that score candidates in isolation, without reasoning about complete multi-step routes. Recent work leverages Large Language Models (LLMs) for this task, but relies on simple interfaces that limit exploration of the full search space. We introduce RetroAgent, an LLM agent that bridges symbolic search and neural reasoning through a harness with structured memory. Through memory and chemistry tools, the agent observes the full search state, including explored routes, available alternatives, and properties of intermediates, enabling informed decisions grounded in both global progress and domain knowledge. Experiments on in-distribution and out-of-distribution benchmarks demonstrate that RetroAgent delivers strong performance and generalization.",
+      "authors": [
+        "Yanqiao Zhu",
+        "Jingru Gan",
+        "Xiaoqi Sun",
+        "Fang Sun",
+        "Yidan Shi",
+        "Md Mofijul Islam",
+        "Chao Shang",
+        "Wenhao Gao",
+        "Connor W. Coley",
+        "Yizhou Sun",
+        "Wei Wang"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.CL",
+        "cs.LG"
+      ],
+      "published": "2026-07-16T03:05:38+00:00",
+      "link": "https://arxiv.org/pdf/2607.14512v2",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "LLM agent for retrosynthesis planning",
+      "llm_evidence_cn": "用于逆合成规划的LLM代理",
+      "llm_evidence": "用于逆合成规划的LLM代理",
+      "canonical_evidence": "用于逆合成规划的LLM代理",
+      "llm_tldr_en": "RetroAgent is an LLM agent that combines symbolic search with structured memory for efficient multi-step retrosynthesis planning.",
+      "llm_tldr_cn": "多步逆合成规划因搜索空间巨大而极具挑战。本文提出RetroAgent，利用大语言模型代理结合结构化记忆与化学工具，实现符号搜索与神经推理的融合。实验证明其搜索效率和解质量优于传统方法。",
+      "llm_tldr": "多步逆合成规划因搜索空间巨大而极具挑战。本文提出RetroAgent，利用大语言模型代理结合结构化记忆与化学工具，实现符号搜索与神经推理的融合。实验证明其搜索效率和解质量优于传统方法。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "retrosynthesis and synthetic route planning with AI",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.15535v1",
+      "source": "arxiv",
+      "title": "Symbolic Predicate-Guided Language Agents for Inverse Design of Perovskite Oxides",
+      "abstract": "Efficient discovery of high-performance materials has been pursued through a variety of data- and AI-driven strategies, among which inverse design, generating materials from desired target properties, has emerged as an important paradigm. Large language models (LLMs) offer a complementary route for inverse materials design because their reasoning and in-context learning capability can be used not only to propose candidates but also to demonstrate interpretable design principles. In this work, we introduce a domain specific language (DSL)-guided strategy to improve the reasoning and design capability of LLM agents by translating natural language design rules into symbolic predicates encoded in a predefined chemistry DSL. These predicates allow the LLM agent to obtain statistical evidence from the accumulated materials data, enabling the agent to evaluate and refine its own reasoning during the design loop. Based on this strategy, we developed a multi-agent materials design framework, called Operational Rule-grounded CHEmical Search Through Reasoning Agents (ORCHESTRA), and applied it to the inverse design of double perovskite oxides under multiple target-property objectives. The results show that symbolic predicates help the LLM identify unsupported rules, validate newly proposed rules and improve the rule store over iterative design cycles. Compared with a strategy relying only on natural language rules, the DSL-guided framework showed the potential to improve materials design performance, particularly for challenging target properties. These findings suggest that mathematical and statistical grounding can enhance the reasoning capability of LLM agents in materials science and that LLM-based inverse design can be performed effectively without large task-specific datasets or additional model training.",
+      "authors": [
+        "Dong Hyeon Mok",
+        "Seoin Back",
+        "Victor Fung",
+        "Guoxiang Hu"
+      ],
+      "primary_category": "cond-mat.mtrl-sci",
+      "categories": [
+        "cond-mat.mtrl-sci"
+      ],
+      "published": "2026-07-17T01:11:27+00:00",
+      "link": "https://arxiv.org/pdf/2607.15535v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "LLM agent with symbolic predicates for inverse design of perovskite oxides",
+      "llm_evidence_cn": "使用符号谓词引导的LLM代理进行钙钛矿氧化物逆向设计",
+      "llm_evidence": "使用符号谓词引导的LLM代理进行钙钛矿氧化物逆向设计",
+      "canonical_evidence": "使用符号谓词引导的LLM代理进行钙钛矿氧化物逆向设计",
+      "llm_tldr_en": "Symbolic predicate-guided language agents for inverse design of perovskite oxides, using a domain-specific language to encode design rules into predicates for improved LLM reasoning and interpretability.",
+      "llm_tldr_cn": "针对高效材料逆向设计的需求，该论文提出一种领域特定语言引导的LLM代理策略，将自然语言设计规则编码为符号谓词。代理利用这些谓词进行推理和候选生成，在钙钛矿氧化物设计任务中展示了可解释的设计原理和良好的性能，为LLM在材料科学中的应用提供了新范式。",
+      "llm_tldr": "针对高效材料逆向设计的需求，该论文提出一种领域特定语言引导的LLM代理策略，将自然语言设计规则编码为符号谓词。代理利用这些谓词进行推理和候选生成，在钙钛矿氧化物设计任务中展示了可解释的设计原理和良好的性能，为LLM在材料科学中的应用提供了新范式。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "large language models for chemistry applications",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.15918v1",
+      "source": "arxiv",
+      "title": "Atomic Design Transformer: Scaffold-Conditioned 3D Molecule Generation via xTB-Reward Reinforcement Learning",
+      "abstract": "We present an SE(3)-invariant transformer for 3D-molecule generation,   the Atomic Design Transformer (ADT). ADT places atoms one   at a time, autoregressively. SE(3) invariance is achieved by   tokenization: each new atom's position is encoded in the local   coordinate frame of a previously placed atom. The backbone is a plain   causal transformer. The token stream fully specifies a 3D structure   together with its chemical-bond graph G, without any bond-order   assignment. To score generated molecules we introduce the xTB   topology-preservation rate (XTP): the fraction of molecules for   which an xTB GFN2 relaxation preserves G specified by the token stream.   For XTP-accepted molecules we also report the   relaxation energy and the root mean square of the atomic displacement (RMSD). We evaluate   two ADT models. The first is ADT pretrained on the GEOM-Drugs   $\\le\\!30$-heavy-atom dataset; we benchmark scaffold-conditioned 3D   generation across seven drug-like scaffolds from the model. It   reaches an XTP of ${\\sim}54\\%$ and a valid-molecule yield   $N^{\\mathrm{gen}}/N$ of ${\\sim}50\\%$, where $N^{\\mathrm{gen}}/N$ is the   fraction of samples that are distinct, topology-preserving, and   chemically valid. The second model continues from the first by   reinforcement learning against the verifiable xTB reward (RLVR), using   no external molecules. RLVR raises XTP to ${\\sim}98\\%$ and   $N^{\\mathrm{gen}}/N$ to ${\\sim}95\\%$, while approximately preserving the   GEOM-Drugs size and composition distributions. Finally, we present   an Inverse-Kinematics Transformer that recovers XTP for large molecules, where discretization error accumulates. ADT thus enables direct 3D generation.",
+      "authors": [
+        "Takao Kotani"
+      ],
+      "primary_category": "physics.comp-ph",
+      "categories": [
+        "physics.comp-ph"
+      ],
+      "published": "2026-07-17T12:48:57+00:00",
+      "link": "https://arxiv.org/pdf/2607.15918v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "3D molecule generation with reinforcement learning",
+      "llm_evidence_cn": "三维分子生成与强化学习",
+      "llm_evidence": "三维分子生成与强化学习",
+      "canonical_evidence": "三维分子生成与强化学习",
+      "llm_tldr_en": "ADT generates 3D molecules autoregressively using an SE(3)-invariant transformer and xTB-reward reinforcement learning, achieving high topology preservation.",
+      "llm_tldr_cn": "现有3D分子生成方法面临结构复杂性挑战。本文提出原子设计变换器(ADT)，利用SE(3)不变性自回归放置原子，通过xTB拓扑保持率奖励强化学习优化生成。实验表明ADT能生成高质量3D分子结构，为药物设计提供新工具。",
+      "llm_tldr": "现有3D分子生成方法面临结构复杂性挑战。本文提出原子设计变换器(ADT)，利用SE(3)不变性自回归放置原子，通过xTB拓扑保持率奖励强化学习优化生成。实验表明ADT能生成高质量3D分子结构，为药物设计提供新工具。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "molecular generation and optimization with machine learning",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.17033v1",
+      "source": "arxiv",
+      "title": "ChemFusion: A Multimodal Cross-Attention Network for Reaction Yield Prediction",
+      "abstract": "Forecasting the outcomes of transition-metal-catalyzed reactions is notoriously complex due to the interplay of diverse physical and chemical variables. A persistent computational bottleneck has been effectively merging broad electronic descriptors with the localized, three-dimensional geometry of the reactive site. To bridge this representation gap, we present ChemFusion, a hybrid neural network that fuses conventional electronic features with explicit 3D atomic coordinates. Using a cross-attention mechanism, the model enables global electronic states to dynamically attend to specific spatial constraints within un-pooled molecular point clouds. When benchmarked against a diverse library of cross-couplings, this approach delivers exceptional predictive performance, decisively surpassing traditional single-modality frameworks. Importantly, extracting the attention matrices reveals that the architecture autonomously learns to identify and penalize restrictive steric hindrances. This provides a physically grounded interpretability, demonstrating that spatially aware networks can navigate complex reaction sterics that standard statistical models typically miss.",
+      "authors": [
+        "Qiwei Han",
+        "Chi Zhou"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "physics.chem-ph"
+      ],
+      "published": "2026-07-19T02:31:29+00:00",
+      "link": "https://arxiv.org/pdf/2607.17033v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "reaction yield prediction using cross-attention fusion of electronic and 3D features",
+      "llm_evidence_cn": "使用交叉注意力融合电子特征和3D特征进行反应产率预测",
+      "llm_evidence": "使用交叉注意力融合电子特征和3D特征进行反应产率预测",
+      "canonical_evidence": "使用交叉注意力融合电子特征和3D特征进行反应产率预测",
+      "llm_tldr_en": "ChemFusion is a hybrid neural network that fuses conventional electronic features with explicit 3D atomic coordinates via cross-attention for reaction yield prediction, delivering exceptional performance on a diverse library of cross-coupling reactions.",
+      "llm_tldr_cn": "针对过渡金属催化反应产率预测难的问题，该论文提出ChemFusion混合神经网络，利用交叉注意力机制将全局电子描述符与局部3D原子坐标融合，动态关注空间约束。在多样化的交叉偶联反应库上，该方法取得了优异的预测性能，解决了多变量物理化学因素交织的瓶颈。",
+      "llm_tldr": "针对过渡金属催化反应产率预测难的问题，该论文提出ChemFusion混合神经网络，利用交叉注意力机制将全局电子描述符与局部3D原子坐标融合，动态关注空间约束。在多样化的交叉偶联反应库上，该方法取得了优异的预测性能，解决了多变量物理化学因素交织的瓶颈。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "chemical reaction prediction using artificial intelligence",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.17463v1",
+      "source": "arxiv",
+      "title": "Going Beyond the d-band Center to Design Intermetallic Catalysts for Nitrogen Reduction: A High-Throughput DFT and Machine Learning Study",
+      "abstract": "This study combines high-throughput DFT calculations with machine learning techniques to uncover the key descriptors governing the nitrogen reduction reaction (NRR) in intermetallic compounds (IMCs). A dataset of 47 bimetallic IMCs was constructed, and the adsorption energies of key intermediates (N2, N2H, and NH3) were systematically evaluated across all accessible surface sites, yielding approximately 1,200 data points. By incorporating intrinsic material properties along with electronic descriptors including s-, p- and d-band centers and fillings, as well as Bader charges of atoms neighboring the adsorbate, predictive ML models were developed with mean absolute errors of 0.26 eV for N2, 0.39 eV for N2H, and 0.17 eV for NH3 adsorption. Importantly, accurate predictions are obtained with only 20 key features, enabling the use of simple and computationally efficient ML models. SHAP analysis indicates that p- and s-band characteristics play a more prominent role in determining adsorption strength than the traditionally used d-band center, particularly for N2 and N2H intermediates. Beyond their established importance in systems containing p-block elements or nearly filled d-band metals, s- and p-orbitals are also found to contribute significantly to transition-metal alloys activity such as Fe-Co, driven by adsorption-induced sp-d hybridization. By challenging the d-band-centric paradigm and identifying s- and p-band descriptors as critical yet overlooked contributors, this work redefines the electronic descriptor space for intermetallic NRR catalysts and lays the groundwork for DFT-ML-guided discovery of non-noble materials for sustainable ammonia synthesis.",
+      "authors": [
+        "Parastoo Agharezaei",
+        "Kulbir Kaur Ghuman"
+      ],
+      "primary_category": "cond-mat.mtrl-sci",
+      "categories": [
+        "cond-mat.mtrl-sci"
+      ],
+      "published": "2026-07-20T01:28:13+00:00",
+      "link": "https://arxiv.org/pdf/2607.17463v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "machine learning combined with high-throughput DFT for catalyst design",
+      "llm_evidence_cn": "机器学习与高通量DFT结合用于催化剂设计",
+      "llm_evidence": "机器学习与高通量DFT结合用于催化剂设计",
+      "canonical_evidence": "机器学习与高通量DFT结合用于催化剂设计",
+      "llm_tldr_en": "Uses high-throughput DFT and ML to predict adsorption energies for NRR on intermetallic compounds, achieving MAE 0.26 eV and identifying key descriptors.",
+      "llm_tldr_cn": "本研究针对氮还原反应催化剂筛选耗时的问题，构建了包含47种金属间化合物和约1200个吸附能数据点的数据集。采用高通量DFT计算结合机器学习方法，引入s、p、d带中心及填充等电子描述符，训练出高精度预测模型（MAE仅0.26 eV）。该方法不仅加速了催化剂初筛，还揭示了超越传统d带中心的新描述符，为合理设计催化剂提供了新途径。",
+      "llm_tldr": "本研究针对氮还原反应催化剂筛选耗时的问题，构建了包含47种金属间化合物和约1200个吸附能数据点的数据集。采用高通量DFT计算结合机器学习方法，引入s、p、d带中心及填充等电子描述符，训练出高精度预测模型（MAE仅0.26 eV）。该方法不仅加速了催化剂初筛，还揭示了超越传统d带中心的新描述符，为合理设计催化剂提供了新途径。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.18403v1",
+      "source": "arxiv",
+      "title": "Towards a universal model for spin-orbit coupled Wannier Hamiltonians",
+      "abstract": "While machine learning interatomic potentials (MLiPs) have matured to revolutionize material science, deep learning models for electronic structure are just beginning to emerge and restricted, almost exclusively, to non-orthogonal basis Hamiltonians. We introduce G(Wa)NN, the first deep-learning model capable of generating the electronic Hamiltonian of solid-state systems in an orthogonal Wannier basis. G(Wa)NN is trained on an unprecedented, diverse dataset of more than 111K Wannier Hamiltonians (150M+ hopping matrices) spanning 69 elements. The combination of optimized inference and linear-scaling methods for orthogonal Hamiltonians unlock transport simulations at massive scales (10K+ atoms). Crucially, the framework supports local finetuning, allowing users to adapt the base model to custom Wannier Hamiltonian datasets. To seamlessly translate these predictions into physical observables, we introduce Tailwater, a Python package providing an API interface to G(Wa)NN alongside a high performance post-processing library. Tailwater enables automated projection of the predicted Hamiltonian into an arbitrary low-energy subspace-directly mirroring familiar Wannier90 workflows-and includes a suite of Kernel Polynomial Method (KPM) functions that exploit the orthogonal basis to achieve strict linear scaling for spectral observables. The Tailwater ecosystem, with the G(Wa)NN model at its core, aims to help bridge the gap between deep learning and macro-scale quantum transport simulations.",
+      "authors": [
+        "Alexander C. Tyner"
+      ],
+      "primary_category": "cond-mat.mtrl-sci",
+      "categories": [
+        "cond-mat.mtrl-sci"
+      ],
+      "published": "2026-07-20T18:00:35+00:00",
+      "link": "https://arxiv.org/pdf/2607.18403v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "deep learning model for electronic Hamiltonians in quantum chemistry",
+      "llm_evidence_cn": "用于量子化学电子哈密顿量的深度学习模型",
+      "llm_evidence": "用于量子化学电子哈密顿量的深度学习模型",
+      "canonical_evidence": "用于量子化学电子哈密顿量的深度学习模型",
+      "llm_tldr_en": "G(Wa)NN is the first deep-learning model generating orthogonal Wannier Hamiltonians, enabling large-scale transport simulations with local finetuning.",
+      "llm_tldr_cn": "深度学习在电子结构建模中局限于非正交基。本文提出G(Wa)NN，首个可生成正交Wannier哈密顿量的深度学习模型，基于111K数据集训练，支持局部微调，实现10K+原子体系的输运模拟。",
+      "llm_tldr": "深度学习在电子结构建模中局限于非正交基。本文提出G(Wa)NN，首个可生成正交Wannier哈密顿量的深度学习模型，基于111K数据集训练，支持局部微调，实现10K+原子体系的输运模拟。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.19044v1",
+      "source": "arxiv",
+      "title": "Adopting Reinforcement Learning with Verifiable Rewards for Molecular Generation",
+      "abstract": "Leveraging large language models (LLMs) for molecular generation has shown remarkable potential in chemical and drug design. Current methods primarily rely on supervised training or fine-tuning with limited datasets, which are insufficient to capture complex molecular design objectives. While some approaches attempt to guide generation toward specific goals, they often lack direct optimization mechanisms, making it difficult to align generated molecules with desired properties. To tackle these challenges, we propose \\textbf{LLMol}, a principled reinforcement learning framework that directly incorporates verifiable rewards for targeted molecule generation. The key insight is to formulate molecular design as a goal-conditioned sequence prediction task, where verifiable rewards serve as explicit supervision to drive generation toward desired objectives. LLMol follows a two-stage training paradigm combining supervised learning and reinforcement learning. In the first stage, large language models are supervised fine-tuned to capture chemical syntax and molecular distributions. In the second stage, we introduce Reinforcement Learning with Verifiable Rewards (RLVR), which directly integrates property-based reward signals to guide molecular generation toward task-specific objectives. To address the high variance and instability common in discrete sequence optimization, we adopt Group Relative Policy Optimization (GRPO), a stable on-policy algorithm that smooths reward signals and improves training robustness. This framework enables LLMol to effectively handle a range of molecular design tasks, including single-property targeting (e.g., penalized logP, QED) and structure-constrained optimization. Experimental results demonstrate that LLMol consistently outperforms existing methods, achieving higher success rates and improved efficiency across diverse molecular benchmarks.",
+      "authors": [
+        "Mingxuan Ouyang",
+        "Hao Lan",
+        "Wanyu Lin"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-07-21T12:34:59+00:00",
+      "link": "https://arxiv.org/pdf/2607.19044v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "molecular generation with reinforcement learning",
+      "llm_evidence_cn": "使用强化学习进行分子生成",
+      "llm_evidence": "使用强化学习进行分子生成",
+      "canonical_evidence": "使用强化学习进行分子生成",
+      "llm_tldr_en": "LLMol uses reinforcement learning with verifiable rewards to directly optimize molecule generation, overcoming limitations of supervised fine-tuning.",
+      "llm_tldr_cn": "现有分子生成方法依赖监督微调，难以捕捉复杂目标。LLMol提出一种基于强化学习的框架，通过可验证奖励直接优化生成过程，将分子设计建模为目标条件序列预测。该方法在药物分子生成任务中显著提升属性匹配度，为分子优化提供了新范式。",
+      "llm_tldr": "现有分子生成方法依赖监督微调，难以捕捉复杂目标。LLMol提出一种基于强化学习的框架，通过可验证奖励直接优化生成过程，将分子设计建模为目标条件序列预测。该方法在药物分子生成任务中显著提升属性匹配度，为分子优化提供了新范式。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "molecular generation and optimization with machine learning",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.19519v1",
+      "source": "arxiv",
+      "title": "Boltzmann-Expected Molecular Design with Decoupled Annealing Flows",
+      "abstract": "Most 3D properties relevant to molecular design, including free energies and shape descriptors, are $\\textit{expectations}$ over the Boltzmann distribution over 3D configurations of a molecular graph. However, existing property-guided generative models tie each property to a single structure, ignoring the underlying ensemble. We recast 3D molecular design as $\\textbf{Boltzmann-expected design}$ and realise it with $\\textbf{DECAF}$ (Decoupled Annealing Flows), which factorise the joint distribution over graphs and coordinates into two conditional flow models: a graph-conditioned flow $p(x\\mid\\mathcal{G})$, acting as a $\\textit{Boltzmann emulator}$, and a coordinate-conditioned flow $p(\\mathcal{G}\\mid x)$, proposing new graphs from 3D information. By alternating the two flows, DECAF optimises molecular graphs with a simulated-annealing acceptance rule whose scoring function is evaluated on ensembles drawn from $p(x\\mid\\mathcal{G})$, making ensemble statistics, not single-conformer properties, the design target. The resulting loop requires no retraining to change objectives. On GEOM-Drugs, we show that ensemble-aware optimisation produces graphs whose mean radius of gyration and solvent-accessible surface area consistently shift toward targets, while single-conformer optimisation degrades on larger drug-like molecules where Boltzmann distributions are broadest. DECAF extends to multi-objective trade-offs and, uniquely among 3D generative models, to $\\textbf{higher-moment design}$: jointly optimising an ensemble property's variance and skewness to produce flexible molecules biased to a prescribed conformational regime: we verify the conformational distributions of these higher-moment designs with all-atom MD simulations.",
+      "authors": [
+        "Selma Moqvist",
+        "Richard Beckmann",
+        "Ross Irwin",
+        "Rocío Mercado",
+        "Simon Olsson"
+      ],
+      "primary_category": "stat.ML",
+      "categories": [
+        "stat.ML",
+        "cs.LG"
+      ],
+      "published": "2026-07-21T19:08:50+00:00",
+      "link": "https://arxiv.org/pdf/2607.19519v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "molecular design with Boltzmann distribution, decoupled annealing flows for property-guided generation",
+      "llm_evidence_cn": "基于玻尔兹曼分布的分子设计，解耦退火流用于性质引导生成",
+      "llm_evidence": "基于玻尔兹曼分布的分子设计，解耦退火流用于性质引导生成",
+      "canonical_evidence": "基于玻尔兹曼分布的分子设计，解耦退火流用于性质引导生成",
+      "llm_tldr_en": "Proposes Boltzmann-expected molecular design and DECAF, using decoupled annealing flows to factorize graph-coordinate joint distribution into two conditional models for property-guided molecular generation.",
+      "llm_tldr_cn": "针对现有性质引导分子生成模型忽略构象系综的问题，该论文提出玻尔兹曼期望分子设计，并实现DECAF解耦退火流。该方法将图与坐标的联合分布分解为图条件流（构象模拟器）和坐标条件流（从3D信息提出新分子），通过交替采样生成符合目标性质的分子。实验证明了其在性质优化和多样化方面的有效性。",
+      "llm_tldr": "针对现有性质引导分子生成模型忽略构象系综的问题，该论文提出玻尔兹曼期望分子设计，并实现DECAF解耦退火流。该方法将图与坐标的联合分布分解为图条件流（构象模拟器）和坐标条件流（从3D信息提出新分子），通过交替采样生成符合目标性质的分子。实验证明了其在性质优化和多样化方面的有效性。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "molecular generation and optimization with machine learning",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.20194v1",
+      "source": "arxiv",
+      "title": "OLEDLM: A Unified Language Model for OLED Molecular Design",
+      "abstract": "The development of organic light-emitting diode (OLED) materials faces the compounded challenges of an astronomically large chemical space, stringent quantum-chemical constraints, and a scarcity of labeled data. Although the question of OLED generation is important, few models have been trained effectively for this specific domain. We propose an inverse molecular design framework based on causal language models: given target optoelectronic properties (e.g., excitation energy, oscillator strength), our model directly generates OLED SMILES sequences satisfying the specified constraints. We employ a multi-stage strategy: first, we establish a foundational chemical language model using a LLaMA-style transformer architecture. To the best of our knowledge, this represents the first successful adaptation of LLMs specifically for the OLED domain, bridging the gap between generic molecular generation and the stringent structural requirements of optoelectronic materials. Second, we fine-tune property predictors based on a BERT model pre-trained on our large-scale OLED dataset. Then, we perform Reinforcement Learning on our fine-tuned model, leveraging our property predictor, for better SMILES generation. Finally, through DFT verification, we demonstrate that our framework can efficiently navigate the OLED chemical space, generating novel candidates with high structural validity and optimized optoelectronic properties.",
+      "authors": [
+        "Fukang Wen",
+        "Yuchong Tang",
+        "Jingyuan Li",
+        "Beichen Wang",
+        "Yixuan Jiang",
+        "Xiaoyi Jiang",
+        "Yaxuan Liu",
+        "Shunyu Wang",
+        "Zuoqiang Shi",
+        "Yi Zhu",
+        "Yanan Zhu",
+        "Pipi Hu"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-07-22T14:16:54+00:00",
+      "link": "https://arxiv.org/pdf/2607.20194v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "molecular generation using causal language models for OLED design",
+      "llm_evidence_cn": "使用因果语言模型进行OLED分子生成",
+      "llm_evidence": "使用因果语言模型进行OLED分子生成",
+      "canonical_evidence": "使用因果语言模型进行OLED分子生成",
+      "llm_tldr_en": "Proposes OLEDLM, a causal language model for inverse molecular design of OLED materials, generating SMILES sequences conditioned on target optoelectronic properties.",
+      "llm_tldr_cn": "针对OLED材料设计中的化学空间巨大且标记数据稀缺的问题，提出了一种基于因果语言模型的逆分子设计框架OLEDLM。该模型采用LLaMA风格transformer架构，通过学习目标光电子性质（如激发能、振子强度）直接生成满足约束的OLED SMILES序列。实验结果表明，该模型能够有效生成性质可控的OLED分子。这项工作为特定功能材料的分子生成提供了新的范式。",
+      "llm_tldr": "针对OLED材料设计中的化学空间巨大且标记数据稀缺的问题，提出了一种基于因果语言模型的逆分子设计框架OLEDLM。该模型采用LLaMA风格transformer架构，通过学习目标光电子性质（如激发能、振子强度）直接生成满足约束的OLED SMILES序列。实验结果表明，该模型能够有效生成性质可控的OLED分子。这项工作为特定功能材料的分子生成提供了新的范式。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "molecular generation and optimization with machine learning",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.21369v1",
+      "source": "arxiv",
+      "title": "Graph Neural Network Force Fields (GPTFF-mol) for Organic Molecules from Optimization Trajectories (OpenGEM26)",
+      "abstract": "Density functional theory (DFT) serves as a reliable tool for atomistic molecular simulations, while machine learning potentials have become powerful complements to balance accuracy and efficiency. In this work, we release OpenGEM26 (Open Generated Ensemble of Molecules, 2026), a large-scale dataset comprising 200,000 unique molecules and 4.4 million conformations composed of H, C, N, O, S and Cl with up to ten heavy atoms. All calculations are carried out at the ωB97X-D/Def2-SVP and Def2-TZVP levels with dispersion corrections, and complete structural optimization trajectories and abundant non-equilibrium structures are recorded. Statistical analyses confirm that this dataset covers a broader conformational space than QM9 in terms of energy, bond lengths and bond angles. A graph neural network-based potential GPTFF-mol is trained using the new dataset, achieving an energy mean absolute error of 16 meV/molecule, which is equivalent to 0.82meV/atom, and superior force prediction performance compared with ANI-2x. Validated by butane rotation and keto-enol tautomerization tests, the model accurately describes molecular dynamical behaviors and reaction barriers at distorted geometries. This work provides a high-quality resource and robust ML potential for efficient simulations of sulfur- and chlorine-containing organic molecules.",
+      "authors": [
+        "Yifan Huang",
+        "Fankai Xie",
+        "Jiangnan Zheng",
+        "Tenglong Lu",
+        "Sheng Meng",
+        "Miao Liu"
+      ],
+      "primary_category": "physics.chem-ph",
+      "categories": [
+        "physics.chem-ph",
+        "cond-mat.mtrl-sci",
+        "cs.CE",
+        "physics.comp-ph"
+      ],
+      "published": "2026-07-23T14:35:45+00:00",
+      "link": "https://arxiv.org/pdf/2607.21369v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "large-scale dataset and GNN force field for accelerating molecular dynamics",
+      "llm_evidence_cn": "大规模数据集和图神经网络力场加速分子动力学模拟",
+      "llm_evidence": "大规模数据集和图神经网络力场加速分子动力学模拟",
+      "canonical_evidence": "大规模数据集和图神经网络力场加速分子动力学模拟",
+      "llm_tldr_en": "Releases OpenGEM26 dataset with 200k molecules and 4.4M conformations, and introduces GPTFF-mol, a GNN force field trained on optimization trajectories for accelerated molecular simulations.",
+      "llm_tldr_cn": "密度泛函理论（DFT）可靠但计算昂贵，机器学习力场成为有效补充。本文发布了OpenGEM26数据集，包含20万独特分子和440万构象，并基于优化轨迹训练了图神经网络力场GPTFF-mol。该力场在多种有机分子上达到DFT精度，同时大幅降低计算成本，为分子动力学模拟提供了高效工具。",
+      "llm_tldr": "密度泛函理论（DFT）可靠但计算昂贵，机器学习力场成为有效补充。本文发布了OpenGEM26数据集，包含20万独特分子和440万构象，并基于优化轨迹训练了图神经网络力场GPTFF-mol。该力场在多种有机分子上达到DFT精度，同时大幅降低计算成本，为分子动力学模拟提供了高效工具。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.21561v1",
+      "source": "arxiv",
+      "title": "Graph Learning on Ensembles of Cyclic Peptides: An Investigation of Molecular Ensemble Modeling",
+      "abstract": "Molecular property prediction from structure often uses a single representative conformation, even though many molecules exist as conformational ensembles in solution. We introduce EnsembleEGNN, a molecular ensemble foundation model that encodes an ensemble by first encoding each conformer with shared Equivariant Graph Neural Network (EGNN) layers, then pooling the resulting conformer representations with a Set Attention Block. We pretrain the model on CREMP, a cyclic peptide ensemble dataset, using a multi-task self-supervised objective combining masked token recovery, noisy-coordinate reconstruction, and pairwise distance reconstruction. On the CREMP-CycPeptMPDB dataset, training EnsembleEGNN from scratch fails entirely ($R^2=0.005$). However, the pretrained model reaches $R^2=0.477$ and Pearson $r=0.699$, outperforming the sequence-only BERT baseline ($R^2=0.439$, Pearson $r=0.667$). When EnsembleEGNN is co-trained end-to-end with the BERT sequence encoder, the hybrid model improves further to $R^2=0.538$ and Pearson $r=0.737$. These results demonstrate that encoding conformational ensembles into a single thermodynamically informed embedding improves cyclic-peptide property prediction.",
+      "authors": [
+        "Aaron Feller",
+        "Kris Deibler",
+        "Maxim Secor"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "q-bio.BM"
+      ],
+      "published": "2026-07-23T17:42:51+00:00",
+      "link": "https://arxiv.org/pdf/2607.21561v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "molecular ensemble foundation model with pretraining on cyclic peptides",
+      "llm_evidence_cn": "分子构象系综基础模型，在环肽上预训练",
+      "llm_evidence": "分子构象系综基础模型，在环肽上预训练",
+      "canonical_evidence": "分子构象系综基础模型，在环肽上预训练",
+      "llm_tldr_en": "Introduces EnsembleEGNN, a molecular ensemble foundation model pretrained on cyclic peptide ensembles, encoding conformer sets.",
+      "llm_tldr_cn": "针对分子属性预测常忽略构象系综的问题，本文提出分子系综基础模型EnsembleEGNN。该模型通过共享等变图神经网络编码每个构象，再用集合注意力池化得到系综表征。在环肽数据集CREMP上进行多任务自监督预训练，包括掩码令牌恢复、噪声坐标重建等。实验表明，该模型从零训练会失败，但预训练后能有效预测环肽性质，验证了系综建模的重要性。",
+      "llm_tldr": "针对分子属性预测常忽略构象系综的问题，本文提出分子系综基础模型EnsembleEGNN。该模型通过共享等变图神经网络编码每个构象，再用集合注意力池化得到系综表征。在环肽数据集CREMP上进行多任务自监督预训练，包括掩码令牌恢复、噪声坐标重建等。实验表明，该模型从零训练会失败，但预训练后能有效预测环肽性质，验证了系综建模的重要性。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "chemical foundation model pre-training and transfer learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2607.14486v1",
+      "source": "arxiv",
+      "title": "Full-data accuracy with fewer labels for training and fine-tuning machine-learning force fields",
+      "abstract": "Machine-learning force fields (MLFFs) are reliable only near their training distribution, making efficient construction of diverse training sets a major bottleneck for both train-from-scratch and foundation fine-tuning workflows. Active learning can reduce this cost, but standard model-committee uncertainty is impractical for foundation MLFFs because each committee member requires a separate fine-tuning run. We present an active-learning workflow based on last-layer-projection regression (LLPR), a forward-pass-cheap per-configuration uncertainty estimator. Across molecular, condensed-phase, and electrolyte systems, LLPR identifies compact, high-value training sets that recover full-data accuracy using only a small fraction of electronic-structure labels. In foundation-model fine-tuning, LLPR-selected configurations reach the full-pool fine-tuning ceiling with substantially fewer labels than random selection. In iterative electrolyte fine-tuning, LLPR detects unphysical local coordination before DFT labelling, provides an absolute force-error threshold, and enables automatic termination of the learning loop. The resulting models reproduce reference density and ion-coordination structure, providing a scalable uncertainty-quantification strategy across MLFF training regimes.",
+      "authors": [
+        "Sheng Bi",
+        "Yi-Ze Wang",
+        "Jun Cheng"
+      ],
+      "primary_category": "physics.chem-ph",
+      "categories": [
+        "physics.chem-ph",
+        "cond-mat.mtrl-sci",
+        "cs.LG"
+      ],
+      "published": "2026-07-16T01:59:47+00:00",
+      "link": "https://arxiv.org/pdf/2607.14486v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "active learning for machine-learning force fields",
+      "llm_evidence_cn": "机器学习力场的主动学习",
+      "llm_evidence": "机器学习力场的主动学习",
+      "canonical_evidence": "机器学习力场的主动学习",
+      "llm_tldr_en": "An active learning workflow using last-layer projection regression reduces training data needs for ML force fields.",
+      "llm_tldr_cn": "机器学习力场依赖训练数据分布，但使用委员会不确定性进行主动学习在基础模型场景下代价高昂。该工作提出基于最后一层投影回归的主动学习流程，可高效识别高价值训练集。在分子、凝聚相和电解质系统中，仅用少量数据即可恢复全数据精度，显著降低了力场训练和微调成本。",
+      "llm_tldr": "机器学习力场依赖训练数据分布，但使用委员会不确定性进行主动学习在基础模型场景下代价高昂。该工作提出基于最后一层投影回归的主动学习流程，可高效识别高价值训练集。在分子、凝聚相和电解质系统中，仅用少量数据即可恢复全数据精度，显著降低了力场训练和微调成本。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2607.17910v1",
+      "source": "arxiv",
+      "title": "Chemical filters for ultra-high-throughput materials screening and generation",
+      "abstract": "Generative artificial intelligence is rapidly transforming materials design by enabling de novo exploration of immense chemical spaces. Yet a large proportion of AI-generated compositions remain implausible, violating established chemical principles, which limits the reliability and interpretability of generative materials design. Here, we introduce a chemical validity operator that recasts heuristic chemical rules as a configurable algorithmic prior for evaluating and guiding generative materials discovery. Built on the open-source SMACT package, a data-informed oxidation-state model exposes tunable thresholds, allowing users to interpolate continuously between permissive and conservative chemical constraints, while supporting both exploratory and conservative materials-design workflows. Benchmarking six state-of-the-art generative models for inorganic crystals shows that most reproduce stoichiometry but under-represent realistic oxidation-state combinations, and that filtering removes compositions reliant on rarely observed oxidation states while preserving low-energy compounds near the convex hull. Beyond screening, the same operator can also serve as a reinforcement-learning reward, steering a latent diffusion model towards chemically grounded compositions. By encoding chemical heuristics and observations, this work establishes a foundation for oxidation-state-aware generative models.",
+      "authors": [
+        "Kinga O. Mastej",
+        "Panyalak Detrattanawichai",
+        "Hyunsoo Park",
+        "Anthony Onwuli",
+        "Masahiro Negishi",
+        "Aron Walsh"
+      ],
+      "primary_category": "cond-mat.mtrl-sci",
+      "categories": [
+        "cond-mat.mtrl-sci",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-07-20T13:06:54+00:00",
+      "link": "https://arxiv.org/pdf/2607.17910v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "chemical filters for guiding generative materials design, relevant to molecular generation and optimization",
+      "llm_evidence_cn": "用于指导生成材料设计的化学过滤器，与分子生成和优化相关",
+      "llm_evidence": "用于指导生成材料设计的化学过滤器，与分子生成和优化相关",
+      "canonical_evidence": "用于指导生成材料设计的化学过滤器，与分子生成和优化相关",
+      "llm_tldr_en": "Introduces chemical validity operator as algorithmic prior for generative materials design, filtering implausible compositions.",
+      "llm_tldr_cn": "针对AI生成材料时大量不合理成分的问题，本文提出一种化学有效性算子。该算子将启发式化学规则重构成可配置算法先验，基于SMACT包的数据驱动氧化态模型，允许用户调节过滤宽松度。作为筛选器，它可嵌入到生成流程中实时过滤不可行候选，显著提高生成材料的可靠性。",
+      "llm_tldr": "针对AI生成材料时大量不合理成分的问题，本文提出一种化学有效性算子。该算子将启发式化学规则重构成可配置算法先验，基于SMACT包的数据驱动氧化态模型，允许用户调节过滤宽松度。作为筛选器，它可嵌入到生成流程中实时过滤不可行候选，显著提高生成材料的可靠性。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "molecular generation and optimization with machine learning",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.15686v1",
+      "source": "arxiv",
+      "title": "S1-Omni: A Unified Multimodal Reasoning Model for Scientific Understanding, Prediction, and Generation",
+      "abstract": "We present S1-Omni, a unified multimodal reasoning model for scientific understanding, prediction, and generation. AI for Science (AI4S) has advanced significantly through domain-specific models, tool-augmented LLMs, and scientific language models. However, model capabilities remain highly fragmented, limiting the joint modeling of heterogeneous data, scientific laws, and expert knowledge. S1-Omni addresses this gap by consolidating these capabilities into a single, coherent scientific reasoning model. The architecture of S1-Omni is built upon three core components: unified representation of scientific data, natural-world knowledge alignment, and decoding for domain-specific tasks. First, S1-Omni maps natural-language instructions and scientific objects, including CIF, SMILES, protein sequences, spectra, and scientific images, into a shared representation space. Second, it incorporates scientific laws and expert knowledge into data construction and training, enabling the model to reason from scientific evidence. Third, it performs task-specific decoding to support a broad range of applications, including property prediction, spectrum-to-molecular generation, protein site and structure prediction, and scientific image generation and editing. S1-Omni is trained on S1-Omni-Corpus, which covers 200 scientific tasks and contains millions of reasoning samples, and is evaluated on over 60 scientific benchmarks. It outperforms GPT-5.5 and Gemini-3.1-Pro on most benchmarks and matches or surpasses domain-specific models on several benchmarks. Overall, S1-Omni provides a practical path toward unified scientific modeling.",
+      "authors": [
+        "Jiahao Zhao",
+        "Junyi Liu",
+        "Lifeng Xu",
+        "Nan Xu",
+        "Qingli Wang",
+        "Qingxiao Li",
+        "Tianle Chen",
+        "Xiaoyu Wu",
+        "Yawen Zheng",
+        "Zikai Wang",
+        "Guanming Liu",
+        "Hequn Zhou",
+        "Jingyi Wang",
+        "Jingyuan Shu",
+        "Keqi Wang",
+        "Li He",
+        "Songyang Diao",
+        "Wenhui Xu",
+        "Xinyu Ren",
+        "Yaqin Fan",
+        "Yujin Zhou",
+        "Zhanao Yao"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-07-17T06:56:08+00:00",
+      "link": "https://arxiv.org/pdf/2607.15686v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "unified multimodal LLM for scientific tasks, applicable to chemistry",
+      "llm_evidence_cn": "统一多模态LLM用于科学任务，可应用于化学",
+      "llm_evidence": "统一多模态LLM用于科学任务，可应用于化学",
+      "canonical_evidence": "统一多模态LLM用于科学任务，可应用于化学",
+      "llm_tldr_en": "S1-Omni is a unified multimodal reasoning model for scientific understanding, prediction, and generation, consolidating domain-specific models.",
+      "llm_tldr_cn": "针对AI for Science领域模型碎片化问题，提出S1-Omni统一多模态推理模型。该模型将科学数据统一表征、自然世界知识对齐和领域解码三个核心组件整合在一起，能够同时处理科学理解、预测和生成任务。在多个科学基准上，S1-Omni展现出优于碎片化模型的效果，为构建通用科学AI提供了新范式。",
+      "llm_tldr": "针对AI for Science领域模型碎片化问题，提出S1-Omni统一多模态推理模型。该模型将科学数据统一表征、自然世界知识对齐和领域解码三个核心组件整合在一起，能够同时处理科学理解、预测和生成任务。在多个科学基准上，S1-Omni展现出优于碎片化模型的效果，为构建通用科学AI提供了新范式。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "large language models for chemistry applications",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.14827v3",
+      "source": "arxiv",
+      "title": "SevenNet-Polar for MultiTask Prediction of Energy, Forces, Stress, and Born Effective Charges: Development and Application to ZrO$_2$, Li$_3$PO$_4$, and Perovskites",
+      "abstract": "Accurate prediction of the Born effective charge (BEC) tensor is crucial for modeling materials under electric fields but remains computationally expensive. To bridge this gap, we present SevenNet-Polar, an equivariant graph neural network framework based on the SevenNet architecture for fast and accurate BEC predictions. Our BEC-only predictors can achieve an RMSE as low as 0.0043 e on ZrO$_2$, Li$_3$PO$_4$, and perovskites, despite the presence of high-temperature (up to 2,000 K) and defect-laden training data. Our all-in-one multitask models for predicting energy, forces, stress, and BEC in ZrO$_2$ and Li$_3$PO$_4$ achieve high accuracy with an RMSE of 1.0 meV/atom for energy, 12 meV/angstrom for forces, 0.05 GPa for stress, and 0.0029 e for BEC. BEC accuracy is not degraded by multitask training. Scaling analysis reveals distinct exponents for diagonal and off-diagonal BEC components, both of which exhibit less favorable scaling than energy, force and stress errors. SevenNet-Polar generalizes robustly when tested on scenarios containing structural environments absent from the training set, such as along nudged elastic band (NEB) trajectories or grain boundaries in ZrO$_2$. Accelerated by FlashTP, SevenNet-Polar enables simulations containing up to 1.5 million atoms on multi-GPU supercomputers and up to approximately 15,000 atoms on a single consumer-grade GPU. This makes charge-aware molecular dynamics simulations under electric fields more accessible.",
+      "authors": [
+        "Anh Khoa Augustin Lu",
+        "Shungo Arai",
+        "Yutack Park",
+        "Seungwu Han",
+        "Tsuyoshi Miyazaki",
+        "Satoshi Watanabe"
+      ],
+      "primary_category": "cond-mat.mtrl-sci",
+      "categories": [
+        "cond-mat.mtrl-sci",
+        "cond-mat.dis-nn",
+        "physics.comp-ph"
+      ],
+      "published": "2026-07-16T10:46:35+00:00",
+      "link": "https://arxiv.org/pdf/2607.14827v3",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "equivariant GNN for multitask prediction of energy, forces, stress, BEC",
+      "llm_evidence_cn": "等变图神经网络用于能量、力、应力和玻恩有效电荷的多任务预测",
+      "llm_evidence": "等变图神经网络用于能量、力、应力和玻恩有效电荷的多任务预测",
+      "canonical_evidence": "等变图神经网络用于能量、力、应力和玻恩有效电荷的多任务预测",
+      "llm_tldr_en": "SevenNet-Polar extends SevenNet to predict Born effective charges alongside energy, forces, stress using equivariant GNN, achieving low RMSE on oxides and perovskites.",
+      "llm_tldr_cn": "针对材料在电场下的建模需求，提出SevenNet-Polar框架，基于等变图神经网络在结构、能量和力预测基础上增加了玻恩有效电荷（BEC）预测。在ZrO2、Li3PO4和钙钛矿等材料上，BEC预测RMSE低至0.0043 e，多任务模型同时预测能量、力、应力和BEC精度高。该方法大幅降低了BEC计算成本，有望加速电场响应材料的高通量筛选。",
+      "llm_tldr": "针对材料在电场下的建模需求，提出SevenNet-Polar框架，基于等变图神经网络在结构、能量和力预测基础上增加了玻恩有效电荷（BEC）预测。在ZrO2、Li3PO4和钙钛矿等材料上，BEC预测RMSE低至0.0043 e，多任务模型同时预测能量、力、应力和BEC精度高。该方法大幅降低了BEC计算成本，有望加速电场响应材料的高通量筛选。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2607.18092v1",
+      "source": "arxiv",
+      "title": "Correcting DFT formation energies towards experimental accuracy using foundational MLIPs and latent-feature delta-learning",
+      "abstract": "Crystal structure databases curated by high-throughput density functional theory calculations typically serve as the starting point for computational materials discovery efforts. Thermodynamic stability data, such as formation energies and the energy above the convex hull, are important quantities to guide the search for novel materials, enabling filtering for (meta)stable structures. Here, we present the thermodynamic stability of the fully open-source, reproducible, and experimentally focused Materials Cloud three-dimensional crystals database (MC3D). We compare against two other DFT databases, the Open Quantum Materials Database (OQMD) and the Materials Project (MP), as well as against experimental formation enthalpies. We then demonstrate how recent foundational machine learning interatomic potentials (MLIPs) trained at the r$^2$SCAN level (specifically, we test PET-OMATPES here) can be leveraged to improve the agreement of formation energies with experiment, reducing the mean absolute error by more than 40% relative to GGA without requiring any additional DFT calculation. Our results validate and extend the established practice of combining PBEsol geometries with meta-GGA energies to the era of foundational MLIPs. Finally, we train classical machine learning models to further correct the formation energies in a delta-learning framework, where we use the information-rich latent features of the foundational MLIP. These models further reduce the mean absolute error below 50 meV/atom, bringing it down to values comparable with the experimental uncertainty itself. Notably, compared to purely compositional features, the latent features (combined with carefully tuned regularization) simultaneously reduce the prediction error and limit the impact of the learned corrections on the relative phase stability.",
+      "authors": [
+        "Timo Reents",
+        "Marnik Bercx",
+        "Giovanni Pizzi"
+      ],
+      "primary_category": "cond-mat.mtrl-sci",
+      "categories": [
+        "cond-mat.mtrl-sci"
+      ],
+      "published": "2026-07-20T15:55:37+00:00",
+      "link": "https://arxiv.org/pdf/2607.18092v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "correcting DFT formation energies using MLIPs and delta-learning",
+      "llm_evidence_cn": "使用机器学习势和增量学习校正DFT形成能",
+      "llm_evidence": "使用机器学习势和增量学习校正DFT形成能",
+      "canonical_evidence": "使用机器学习势和增量学习校正DFT形成能",
+      "llm_tldr_en": "Using foundational MLIPs and latent-feature delta-learning to correct DFT formation energies towards experimental accuracy, demonstrated on Materials Cloud database.",
+      "llm_tldr_cn": "DFT形成能与实验值存在偏差，限制材料稳定性预测。本文利用基础机器学习势（MLIPs）和潜特征增量学习，将MC3D数据库的形成能校正至实验精度，提高了凸包能量预测的可靠性，为材料筛选提供更准确热力学数据。",
+      "llm_tldr": "DFT形成能与实验值存在偏差，限制材料稳定性预测。本文利用基础机器学习势（MLIPs）和潜特征增量学习，将MC3D数据库的形成能校正至实验精度，提高了凸包能量预测的可靠性，为材料筛选提供更准确热力学数据。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.16544v1",
+      "source": "arxiv",
+      "title": "AIMS: An uncertainty-aware AI experimentalist for quantum matter",
+      "abstract": "Autonomous scientific agents are beginning to accelerate discovery, but most demonstrations operate in digital or highly structured settings where the objects, actions, and objectives are largely predefined. Quantum materials experiments pose a harder problem where uncertainties involve: the instrument state can drift, the useful signal may occupy only rare regions of an inhomogeneous sample, and the physical mechanism is often under-determined. Here we introduce the AI agent for Inference and Measurement in Science (AIMS), an uncertainty-aware closed-loop AI experimentalist for cryogenic microwave impedance microscopy that converts uncertainty into experimental action. AIMS links three nested loops: navigation under uncertain perception, measurement selection under sample inhomogeneity, and scale-resolved mechanism attribution under ambiguous physics. In navigation, it relocates the sample after cryogenic displacement, flags unreliable position estimates, and invokes recovery strategies, significantly reducing sample-locating time. In measurement, it maps twist angle distribution and generalized Wigner crystal score of twisted bilayer MoSe$_2$ to identify regions with the strongest correlated response. In discovery, AIMS asks not whether melting is simply classical or quantum, but how the competition of Coulomb repulsion, hopping, and other energy scales shapes the observed hierarchy. By testing the classical limit, varying hopping and Coulomb scales, and preserving sample morphology as a secondary testable variable, AIMS prioritizes a quantum-fluctuation-renormalized origin of the anomalously robust $ν= 1/2$ crystal. AIMS demonstrates uncertainty-aware experimental agency for quantum matter with perception recovery, measurement choice, and energy-scale-resolved mechanism attribution in one closed loop.",
+      "authors": [
+        "Siyuan Qiu",
+        "Philip D. Suh",
+        "Nhat Huy Tran",
+        "Xirui Wang",
+        "Heonjoon Park",
+        "Kutay Akin",
+        "Kevin K. S. Multani",
+        "Seungwon Jung",
+        "Wenkai Cai",
+        "Xinyu Liu",
+        "Ziyan Zhu",
+        "Chunjing Jia",
+        "Zhantao Chen",
+        "Zhixun Shen",
+        "Zhurun Ji"
+      ],
+      "primary_category": "cond-mat.str-el",
+      "categories": [
+        "cond-mat.str-el",
+        "cond-mat.mes-hall"
+      ],
+      "published": "2026-07-17T22:36:17+00:00",
+      "link": "https://arxiv.org/pdf/2607.16544v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "AI experimentalist agent for quantum materials",
+      "llm_evidence_cn": "AI实验代理用于量子材料",
+      "llm_evidence": "AI实验代理用于量子材料",
+      "canonical_evidence": "AI实验代理用于量子材料",
+      "llm_tldr_en": "AIMS: an uncertainty-aware closed-loop AI agent for cryogenic microwave impedance microscopy experiments, accelerating quantum matter discovery.",
+      "llm_tldr_cn": "量子材料实验面临仪器漂移、信号稀有问题。本文提出AIMS，一个不确定性感知的闭环AI实验代理，通过三个嵌套循环将不确定性转化为实验动作，在低温微波阻抗显微实验中自主导航和测量选择，实现高效材料物性推断。",
+      "llm_tldr": "量子材料实验面临仪器漂移、信号稀有问题。本文提出AIMS，一个不确定性感知的闭环AI实验代理，通过三个嵌套循环将不确定性转化为实验动作，在低温微波阻抗显微实验中自主导航和测量选择，实现高效材料物性推断。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "What are the latest advances in retrosynthesis, synthesis planning, and AI agents for chemistry, and how are these systems evaluated?",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.15101v1",
+      "source": "arxiv",
+      "title": "Accelerated descriptor-free path sampling for protein-ligand binding kinetics",
+      "abstract": "The kinetics of protein-ligand binding systems are increasingly recognized as a key determinant of drug efficacy, yet remain far harder to compute than binding affinities. Existing kinetics methods either bias the dynamics along a collective variable (CV), demanding careful system-specific CV design, or use path sampling, which keeps the dynamics unbiased but can struggle to converge rates out of deep free-energy wells and often relies on hand-engineered descriptors. By combining the `best of both worlds', we propose a method to compute accurate kinetics for general ligand-unbinding problems at modest computational expense and minimal fine tuning, building on the AI for Molecular Mechanism Discovery (AIMMD) path sampling framework. To avoid the need for feature engineering, we opt for modelling the committor with a single descriptor-free, equivariant graph neural network shared across all systems. We also partially flatten deep bound-state wells with a static, basin-restricted bias potential. This improves convergence by lifting the path sampling state boundary out of regions, where the committor is hard to learn, while leaving the reactive region strictly unbiased. Across host-guest and protein-ligand systems spanning roughly 17 orders of magnitude in residence time, the method robustly recovers rates in line with reference and experimental values. Simultaneously, and without further sampling, it also reconstructs the underlying unbinding mechanisms. We additionally find that accurate rates do not require globally accurate committor models, allowing for efficient kinetics estimation even in a low-data training regime. Requiring little system-specific setup, our approach offers an efficient and broadly generalizable route to binding kinetics, and its shared committor architecture lays crucial groundwork for probing structure-kinetics relationships across ligand series in drug discovery.",
+      "authors": [
+        "Simon M. Lichtinger",
+        "Roberto Covino"
+      ],
+      "primary_category": "physics.chem-ph",
+      "categories": [
+        "physics.chem-ph"
+      ],
+      "published": "2026-07-16T15:13:03+00:00",
+      "link": "https://arxiv.org/pdf/2607.15101v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "accelerated path sampling for protein-ligand binding kinetics",
+      "llm_evidence_cn": "加速蛋白质-配体结合动力学路径采样",
+      "llm_evidence": "加速蛋白质-配体结合动力学路径采样",
+      "canonical_evidence": "加速蛋白质-配体结合动力学路径采样",
+      "llm_tldr_en": "A descriptor-free path sampling method accelerates protein-ligand binding kinetics computation by combining AIMMD with unbiased dynamics.",
+      "llm_tldr_cn": "蛋白质-配体结合动力学计算困难。本文结合AIMMD路径采样框架，提出无需集体变量的加速方法，在合理计算成本下准确计算解离速率，避免了繁琐的降维设计。",
+      "llm_tldr": "蛋白质-配体结合动力学计算困难。本文结合AIMMD路径采样框架，提出无需集体变量的加速方法，在合理计算成本下准确计算解离速率，避免了繁琐的降维设计。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2607.18177v1",
+      "source": "arxiv",
+      "title": "BCover: An Electronic Structure-Based Scoring Suite for Reaction-Aware Covalent Docking",
+      "abstract": "Covalent virtual screening requires ranking compounds according to both noncovalent recognition and their ability to adopt a reaction-competent geometry with an appropriately reactive warhead. Here, we introduce BCover, a reaction-aware scoring suite that combines pre-reactive docking with quantum-chemistry-derived ligand reactivity descriptors, the electrostatic properties of the protein pocket. Quantum-chemical descriptors are aggregated using a nonlinear tree-based scoring model. BCover was evaluated retrospectively on the COValid benchmark, comprising nine targets and ten reactive sites, and compared with AutoDock, DOCK6, DOCKovalent, AlphaFold3 with Rosetta rescoring, and AlphaFold3 confidence-based ranking. BCover achieved an average adjusted LogAUC of 31% (57% max), an average ROC-AUC of 0.88 (0.96 max), an average EF1 of 18 (33 max). Its average LogAUC exceeded those of the classical docking methods and AlphaFold3-Rosetta, although AlphaFold3-mPAE provided the strongest overall enrichment. At an average runtime of about 10~s per ligand, BCover was approximately 25-fold faster than the evaluated AlphaFold3 workflows and achieved the highest average time-adjusted virtual-screening productivity index. Redocking experiments further showed that the method recovered near-native ligand conformations. These results demonstrate that combining docking-derived geometry with ligand local electronic reactivity and pocket electrostatics provides an efficient and interpretable strategy for covalent ligand prioritization. BCover is intended as a high-throughput screening method that complements more computationally demanding QM/MM and free-energy calculations during subsequent lead optimization.",
+      "authors": [
+        "Emil Zak",
+        "Michał Szczepanik"
+      ],
+      "primary_category": "physics.chem-ph",
+      "categories": [
+        "physics.chem-ph"
+      ],
+      "published": "2026-07-20T17:15:02+00:00",
+      "link": "https://arxiv.org/pdf/2607.18177v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Reaction-aware scoring suite for covalent docking using quantum chemistry descriptors",
+      "llm_evidence_cn": "结合量子化学描述符的反应感知共价对接评分套件",
+      "llm_evidence": "结合量子化学描述符的反应感知共价对接评分套件",
+      "canonical_evidence": "结合量子化学描述符的反应感知共价对接评分套件",
+      "llm_tldr_en": "Introduces BCover, a reaction-aware scoring suite combining pre-reactive docking with quantum-chemistry reactivity descriptors for covalent virtual screening.",
+      "llm_tldr_cn": "针对共价药物虚拟筛选需要同时考虑非共价识别和反应活性的问题，本文提出BCover评分套件，融合预对接、量子化学反应性描述符和蛋白口袋静电性质，采用非线性树模型聚合；在COValid基准上平均排名优于多个经典对接方法，为共价对接提供了更准确的评分方案。",
+      "llm_tldr": "针对共价药物虚拟筛选需要同时考虑非共价识别和反应活性的问题，本文提出BCover评分套件，融合预对接、量子化学反应性描述符和蛋白口袋静电性质，采用非线性树模型聚合；在COValid基准上平均排名优于多个经典对接方法，为共价对接提供了更准确的评分方案。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "chemical reaction prediction using artificial intelligence",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.17100v1",
+      "source": "arxiv",
+      "title": "Auto Research for Materials: Auditable AI-Scientist Workflows with Held-Out Transfer",
+      "abstract": "An AI research agent can improve the score it sees without finding a modelling change that works on new materials. We ask a stricter question. After repeated experiments, does the selected change survive on data that never entered the loop, and can its code be reused? We separate the search into changes to features, models, representations, and training data. Seven searches produce 701 evaluated changes across ten Matbench endpoints. Agents receive only the mean over five inner folds, reducing reliance on any single development split. We then freeze the selected code and evaluate it once on an untouched holdout. Nine of ten choices remain the best tested single intervention. The surviving changes reveal two materials modelling regimes. With composition alone, feature, model, and representation changes provide comparable routes to improvement. They include held-out MAE reductions of 17.4\\% for band gap and 18.6\\% for steel strength, as well as gains on both classification endpoints, while screened external data adds little. For structure tasks, richer geometry descriptors and model or calibration changes lower mean held-out MAE by 14.6\\% and 7.1\\% and lead on different property families, whereas composition embeddings do not transfer. Combining separately found feature and model changes yields a 26.3\\% mean held-out improvement. These results show in materials prediction that closed-loop agents can produce decisions that survive unseen evidence and code changes that can be reused across tasks and combined. More broadly, they provide an evaluation design for testing executable discoveries beyond the feedback loop.",
+      "authors": [
+        "Jingjie Ning",
+        "Xiaochuan Li",
+        "Shanshan Zhong",
+        "Ji Zeng",
+        "Guolin Ke"
+      ],
+      "primary_category": "cs.MA",
+      "categories": [
+        "cs.MA",
+        "cs.AI",
+        "cs.SE"
+      ],
+      "published": "2026-07-19T07:02:44+00:00",
+      "link": "https://arxiv.org/pdf/2607.17100v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "AI scientist for materials modeling",
+      "llm_evidence_cn": "材料科学中的AI研究代理",
+      "llm_evidence": "材料科学中的AI研究代理",
+      "canonical_evidence": "材料科学中的AI研究代理",
+      "llm_tldr_en": "An auditable AI agent searches feature and model changes for materials, with held-out validation showing transferability.",
+      "llm_tldr_cn": "该研究构建了一个可审计的AI研究代理，在Matbench数据集上自动搜索特征、模型、表示和训练数据的变化。通过预留验证集评估，九成选择在未见数据上仍保持最优，揭示了材料建模的两种模式。该方法加速了材料科学中的模型优化流程。",
+      "llm_tldr": "该研究构建了一个可审计的AI研究代理，在Matbench数据集上自动搜索特征、模型、表示和训练数据的变化。通过预留验证集评估，九成选择在未见数据上仍保持最优，揭示了材料建模的两种模式。该方法加速了材料科学中的模型优化流程。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.16129v1",
+      "source": "arxiv",
+      "title": "Nonadiabatic excited-state dynamics with quantum Monte Carlo-trained machine learning: azomethane as a stringent test",
+      "abstract": "We introduce quantum Monte Carlo (QMC)-trained multi-state machine-learned (ML) force fields for nonadiabatic excited-state dynamics, targeting photochemical processes in which the electronic character changes along the reaction path and a consistent correlated description is required. In this framework, variational Monte Carlo wave functions combine compact selected configuration-interaction expansions with a Jastrow factor that explicitly accounts for dynamical correlation, while neural networks convert the stochastic QMC data into smooth potential energy surfaces for large surface-hopping ensembles. We apply this approach to azomethane, a demanding test case involving torsional relaxation through conical-intersection regions and C--N bond dissociation on the hot ground state. Benchmark calculations support the accuracy of the QMC reference data and show robust force convergence across isomerization and dissociation geometries. The QMC-trained dynamics preserves the expected photoisomerization mechanism, strongly reduces the excessive C--N breaking obtained with complete active space self-consistent field, and predicts a small but non-negligible prompt dissociation component after internal conversion, with a timescale consistent with femtosecond-resolved mass-spectrometry experiments. These results establish QMC-ML as a practical route to nonadiabatic photochemical dynamics with accurate wave-function reference data.",
+      "authors": [
+        "Alfonso Annarelli",
+        "Emiel Slootman",
+        "Claudia Filippi"
+      ],
+      "primary_category": "physics.chem-ph",
+      "categories": [
+        "physics.chem-ph",
+        "physics.comp-ph"
+      ],
+      "published": "2026-07-17T17:10:29+00:00",
+      "link": "https://arxiv.org/pdf/2607.16129v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "ML force fields for nonadiabatic dynamics accelerate quantum chemistry",
+      "llm_evidence_cn": "机器学习力场加速非绝热动力学量子化学",
+      "llm_evidence": "机器学习力场加速非绝热动力学量子化学",
+      "canonical_evidence": "机器学习力场加速非绝热动力学量子化学",
+      "llm_tldr_en": "Introduces QMC-trained multi-state ML force fields for nonadiabatic excited-state dynamics, enabling efficient surface-hopping simulations on azomethane.",
+      "llm_tldr_cn": "针对非绝热激发态动力学模拟中量子化学计算成本高的问题，本文提出用量子蒙特卡洛训练的多状态机器学习力场，结合神经网络将随机数据转换为光滑势能面，在azomethane的锥形交叉动力学测试中展示了高效而准确的模拟能力，显著降低了计算代价。",
+      "llm_tldr": "针对非绝热激发态动力学模拟中量子化学计算成本高的问题，本文提出用量子蒙特卡洛训练的多状态机器学习力场，结合神经网络将随机数据转换为光滑势能面，在azomethane的锥形交叉动力学测试中展示了高效而准确的模拟能力，显著降低了计算代价。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2607.18524v1",
+      "source": "arxiv",
+      "title": "Data-Efficient Training of Linear ACE Potentials through Leverage-Guided Subset Selection of ASSYST Structure Pools",
+      "abstract": "The construction of machine-learned interatomic potentials (MLIPs) is often limited by the cost of generating large density-functional-theory (DFT) training datasets. For systematically generated structure pools such as ASSYST, a central practical question is how many configurations must be labeled to achieve reliable accuracy. Here we assess geometry-based, label-free subset selection for training linear Atomic Cluster Expansion (ACE) potentials. Using statistical leverage scores and CUR-type sampling, we compare leverage-guided selection against random, energy-based, and force-based baselines under controlled iterative protocols. Elemental Al provides the primary benchmark, with Cu and Al-Cu alloys used for transfer validation. Leverage-guided subsets recover plateau-level energy and force accuracy using substantially smaller labeled fractions (approximately 30-40%) than random sampling, corresponding to an effective 2-3x reduction in DFT labeling for the systems studied. In alloy tests, defect energetics remain comparable across strategies once sufficient chemical diversity is included, while leverage selection maintains competitive accuracy at reduced training size.   These results demonstrate that descriptor-space-guided, label-free subsampling can significantly reduce DFT workload for linear ACE models trained on ASSYST structure pools without degrading defect-level fidelity.",
+      "authors": [
+        "Aynour Khosravi",
+        "Marvin Poul",
+        "Jörg Neugebauer",
+        "Chad Sinclair"
+      ],
+      "primary_category": "cond-mat.mtrl-sci",
+      "categories": [
+        "cond-mat.mtrl-sci"
+      ],
+      "published": "2026-07-20T21:35:06+00:00",
+      "link": "https://arxiv.org/pdf/2607.18524v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "data-efficient training of machine-learned interatomic potentials via subset selection",
+      "llm_evidence_cn": "通过子集选择高效训练机器学习原子间势",
+      "llm_evidence": "通过子集选择高效训练机器学习原子间势",
+      "canonical_evidence": "通过子集选择高效训练机器学习原子间势",
+      "llm_tldr_en": "Uses leverage scores for subset selection to train linear ACE potentials with fewer DFT labels, achieving comparable accuracy on Al, Cu, Al-Cu alloys.",
+      "llm_tldr_cn": "针对机器学习原子间势训练中DFT标记成本高的问题，提出基于统计杠杆得分的几何无标签子集选择方法，用于线性原子团簇展开（ACE）势的训练。在Al、Cu及Al-Cu合金上，与随机、基于能量和基于力的基线相比，杠杆引导选择能在更少标记下达到同等精度。该方法可显著降低势函数构建的数据成本。",
+      "llm_tldr": "针对机器学习原子间势训练中DFT标记成本高的问题，提出基于统计杠杆得分的几何无标签子集选择方法，用于线性原子团簇展开（ACE）势的训练。在Al、Cu及Al-Cu合金上，与随机、基于能量和基于力的基线相比，杠杆引导选择能在更少标记下达到同等精度。该方法可显著降低势函数构建的数据成本。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}
