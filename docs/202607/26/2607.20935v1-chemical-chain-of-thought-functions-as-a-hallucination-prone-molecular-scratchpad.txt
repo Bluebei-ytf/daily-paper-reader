@@ -1,0 +1,749 @@
+Title: Chemical Chain-of-Thought Functions as a Hallucination-Prone Molecular Scratchpad
+
+URL Source: https://arxiv.org/pdf/2607.20935v1
+
+Published Time: Fri, 24 Jul 2026 00:30:40 GMT
+
+Number of Pages: 16
+
+Markdown Content:
+Preprint 
+
+# Chemical Chain-of-Thought Functions as a Hallucination-Prone Molecular Scratchpad 
+
+Jiatong Li 1,2 Yuxuan Ren 1 Weida Wang 3 Xiao-yong Wei 2 Yatao Bian 1†
+
+> 1
+
+Blue Whale Lab, National University of Singapore 
+
+> 2
+
+Hong Kong Polytechnic University 
+
+> 3
+
+Fudan University 
+
+> †
+
+Corresponding to: ybian@nus.edu.sg 
+
+Abstract 
+
+Chemical reasoning language models are expected to derive molecular answers through faithful chain-of-thought (CoT). However, across four reasoning model families and twelve chemistry tasks, hallucination is widespread and largely de-coupled from answer correctness: correct answers often coexist with fabricated structural claims absent from the relevant molecules. Yet this does not make the reasoning trace computationally irrelevant. Attribution analyses suggest a shared scratchpad function expressed in model-specific forms: Chem-R and ether-0 rely on fragmented SMILES drafts, whereas ChemDFM-R emphasizes scaffold, posi-tional, and naming cues. Notably, perturbing Chem-R’s SMILES sketches degrades generation, showing that structural drafts can be causally load-bearing even when verbal structural claims are largely inert. Together, these results show that chem-ical CoT is neither a faithful explanation nor merely a post-hoc rationalization, but a hallucination-prone molecular scratchpad. This finding cautions against treating CoT as direct evidence of faithful reasoning and motivates process-level supervision beyond answer-only evaluation. 
+
+1 Introduction 
+
+Chain-of-thought (CoT) reasoning (Wei et al., 2022; Yeo et al., 2025; Chen et al., 2026) has become a widely adopted paradigm for eliciting intermediate reasoning process in large language models (LLMs). In science, it is appealing because a model returns not only an answer but also a rationale that a human expert can inspect (Zhao et al., 2025a; Li et al., 2025; Wang et al., 2025a; Zhao et al., 2025b). However, whether that rationale can be trusted is difficult to test. In natural-language reasoning, claims may be fact-checkable, but intermediate rationales are rarely grounded in a formal object that permits systematic verification (Jacovi & Goldberg, 2020; Lyu et al., 2023; Turpin et al., 2023; Lanham et al., 2023). Chemistry provides such a referent: when a model claims that a molecule contains a carboxylic acid or retains an amide, the statement can be checked directly against the molecular graph (Li et al., 2024). Chemical reasoning therefore offers CoT traces whose explicit claims can be verified against molecular structures, providing a direct test of whether these models reason as their explanations suggest. Here we treat chemical rationales as collections of testable molecular structural claims. We mainly focus on functional-group-level claims, which are frequent in chemical rationales and can be evaluated reliably by exact structure matching. We developed a molecular claim-grounding framework that parses each response into a reasoning trace and a final answer, extracts chemical claims from the trace, and checks each claim against the task-relevant structures. The framework isolates a particularly diagnostic failure: a functional group asserted in the trace but absent from the input, predicted molecule and reference. We term this an extrinsic reasoning fabrication (ER), which directly exposes a mismatch between the model’s stated reasoning and the task-relevant molecular structures. Applied to four reasoning model families (Guo et al., 2025; Zhao et al., 2025b; Wang et al., 2025a; Narayanan et al., 2025) across twelve generative chemical tasks, the framework shows that these hallucinations are widespread, arising even in responses whose final molecule is exactly correct. In the text-based molecule generation task of the ChEBI-20 benchmark (Edwards et al., 2022; 2021), 1arXiv:2607.20935v1 [cs.CE] 23 Jul 2026 Preprint 
+
+13% of all Chem-R (Wang et al., 2025a) responses are both exactly correct and accompanied by at least one fabricated functional-group claim, and fabrication has a negligible linear association with correctness ( |r| < 0.02 between the fabrication score and exact match). Thus, a model can get the molecule right while misstating the chemistry used to justify it. Answer-level metrics cannot reveal this mismatch: they score the molecular output but leave the stated chemical reasoning path unobserved. The verifiable content of the reasoning trace can therefore be decoupled from the correctness of the final answer. Direct intervention explains how the two coexist. Corrupting a verified functional-group claim inside the reasoning trace flips only 1–11% of originally-correct answers, close to a synonym control, whereas applying the same corruption to the input has a much larger effect, flipping 16 –79% . The model anchors on input-grounded evidence while treating its own functional-group assertions as largely inert. Yet the trace is not disposable: removing it or substituting another problem’s trace changes generation and increases answer uncertainty. The trace therefore may still carry answer-relevant information even though its explicit claims are unreliable. The resolution is that the useful content of chemical chain-of-thought lies less in its verbal explanations than in its function as a molecular scratchpad. Before producing the final answer, the model writes intermediate structural cues, such as fragments, positions or ring systems, that remain available during answer generation. The complete target structure is absent from most traces; incomplete structural drafts can nevertheless support generation. The form of this scratchpad is model-specific. Chem-R (Wang et al., 2025a) and ether-0 (Narayanan et al., 2025) draft fragmented SMILES structures that affect its answer, whereas attribution analyses suggest that ChemDFM-R (Zhao et al., 2025b) places more weight on scaffold-level, positional and nomenclature cues. Perturbing the SMILES sketches degrades Chem-R’s generation, while perturbing functional-group claims has little effect. Together, chemical CoT is neither a faithful explanation nor merely a post-hoc rationalization, but a hallucination-prone molecular scratchpad. Its readable prose is often unsupported, whereas structural drafts can contribute to generation. Answer-only evaluation cannot distinguish traces that reach the same answer through differently grounded claims. To test process-level supervision, we continued training from the released Chem-R checkpoint with GRPO using a verification-grounded reward that pays the answer-accuracy term only for traces without ER fabrications; we call the resulting model Chem-R-Faithful. This intervention reduces ER while preserving reported performance. 
+
+2 Results 
+
+We first formalize how explicit molecular claims can be checked (Fig. 1), then measure their fab-rication and relation to answer correctness (Figs. 2 and 3). Subsequent experiments test whether verbal claims or drafted structures affect the answer and characterize model-specific scratchpad forms (Figs. 4–6). 
+
+2.1 Reasoning hallucination is a chemically checkable grounding failure 
+
+Chemical reasoning traces often assign functional groups to task-relevant molecules. Because these claims are decidable from the corresponding molecular graphs, we treat the rationale as a set of testable claims rather than as fluent text. We anchor the analysis on functional-group-level claims, which are frequent in chemical rationales and reliably decidable by exact RDKit SMARTS matching (Landrum et al., 2013). Our molecular claim-grounding framework parses a response into a reasoning trace and a final answer, extracts the chemical entities and transformations asserted in the trace, and checks each against the task-relevant structures (Fig. 1). The framework separates two axes that answer-level metrics conflate: whether an error appears in the reasoning or in the output, and whether a claim contradicts an external reference or the model’s own generated content. The most diagnostic cell is extrinsic reasoning fabrication 
+
+(ER): a functional group asserted in the trace that is absent from the input, the predicted molecule and the reference alike. Because such a group is present in neither the question nor any answer, the claim is not merely a disagreement with an imperfect reference. We report the per-response ER score and, as finer probes, claim precision (the fraction of structural claims that verify) and the count of grounded claims. 2Preprint a The promise vs the reality of CoT 
+
+c Real worked example 
+
+b Molecular claim grounding framework 
+
+> Intrinsic Reasoning ( IR)
+> (Self-contradiction )
+> Intrinsic Output ( IO)
+> (Structural validity )
+> Extrinsic Reasoning ( ER)
+> (Factual fabrication )
+> Extrinsic Output ( EO)
+> (Phantom structure )
+
+The ideal, 
+
+transparent 
+
+CoT 
+
+The observed, 
+
+corrupted CoT 
+
+vs 
+
+Molecular I nput 
+
+Correct  Answer 
+
+Molecule Caption 
+
+Generated CoT 
+
+Rationale 
+
+Predicted Answer       
+
+> The molecule is a member of the class of tetralins
+> that is tetralin in which oxo groups replace
+> the hydrogens at positions 1, 2, 3, and 4. It is a
+> member of tetralins and an aromatic ketone.
+> 1. Identify the core structure : The molecule is
+> described as a tetralin, which is a type of tricyclic
+> aromatic compound consisting of a benzene ring
+> fused to a pyrrolidine ring. The core structure can be
+> visualized as a benzene ring (C6H5) fused to a four-
+> membered ring containing a nitrogen atom …
+> C1=CC=C2C(=C1)C(=O)C(=O)C(=O)C2=O
+> Correct Answer, but no nitrogen atom is present!
+
+Molecular I nput 
+
+Correct  Answer 
+
+Reasoning 
+
+Hallucinations 
+
+The promise  The reality       
+
+> ER Rule : Check each functional-group structural claim in CoT via
+> RDKit against input and output
+> Structural
+> Claims
+> in CoT
+> Is
+> the claim
+> mentioned in
+> input?
+> Is
+> the claim
+> referenced in
+> output?
+> Fabricated
+> Claims
+> No No
+
+Per-claim 
+
+fabrication rate     
+
+> The molecule has a hydroxyl
+> ... It does not contain any
+> oxygen atom ...
+> C1CCCC2C(O
+> Incorrect ring number;
+> Missing right bracket
+> GT: c1ccccc1
+> Pred: C1CCCCC1
+> The molecule has a benzene
+> ring ...
+> Pred: CCC1CCCCC1 Faithful
+> ChemDFM-R
+> Chem-R
+> ether-0
+> R1-Distill
+> 0
+> 10
+> 20
+> 30
+> 40
+> 50
+> 60
+> 70
+> score
+
+d  
+
+> 8.9
+> 12.5 12.6
+> 22.4
+> 50.2
+> 61
+> 49
+> 59
+> 49
+> 14
+> Hallucination vs performance
+> hallucination performance
+> Faithful
+> ChemDFM-R
+> Chem-R
+> ether-0
+> R1-Distill
+> 0
+> 20
+> 40
+> 60
+> 80
+> 100
+> share of overall (%)
+
+e        
+
+> 12 988
+> 13
+> 26
+> 715
+> 21
+> 20
+> 13
+> 85 80
+> 70
+> 55 52
+> Hallucination composition
+> IR IO ER EO
+
+Figure 1: Chemical chain-of-thought can contain structurally verifiable hallucinations even when the answer is correct. a , The promise of transparent chain-of-thought (CoT) is contrasted with the observed failure mode: a corrupted rationale can still lead to the correct answer. b, Molecular claim-grounding framework. Crossing the location of an error (reasoning or output) with its grounding (intrinsic or extrinsic) yields intrinsic reasoning (IR), intrinsic output (IO), extrinsic reasoning (ER) and extrinsic output (EO) errors. The schematic illustrates these categories with a self-contradictory reasoning claim, an invalid output SMILES, a fabricated benzene-ring claim and a phantom output structure, respectively. For ER, each functional-group claim in the CoT is checked with RDKit against the input and predicted output; a claim supported by neither is labelled fabricated, and the per-claim fabrication rate is the fraction of structural claims so labelled. c, Worked caption-to-molecule example. The input describes a tetralin bearing four oxo groups. The CoT invents a pyrrolidine ring and a nitrogen atom, whereas the predicted SMILES is exactly correct and contains no nitrogen, exposing a reasoning fabrication invisible to answer-only evaluation. d, Aggregate hallucination score and task performance (both on a 0–100 scale) for the four released reasoning models and Chem-R-Faithful (“Faithful”). e, Within-model percentage composition of aggregate hallucination across IR, IO, ER and EO; each stacked bar is normalized to 100%. Figure 1c illustrates why a separate reasoning metric is needed. Chem-R returns the exact tetralin-derived tetraone but invents a pyrrolidine ring and a nitrogen atom in its trace, although the predicted molecule contains no nitrogen. Only a reasoning-side check exposes the fabrication. At the model level, hallucination does not simply mirror task performance (Fig. 1d). Chem-R and ChemDFM-R have nearly identical aggregate hallucination scores despite a ten-point performance 3Preprint cap2mol 
+
+> mol2cap
+> retro
+> MC-Atom
+> MC-Bond
+> MC-FG
+> ME-Add
+> ME-Del
+> ME-Sub
+> MO-LogP
+> MO-MR
+> MO-QED
+> Chem-R
+> Chem-R-Faithful
+> ChemDFM-R
+> ether-0
+> DeepSeek-R1-Distill
+
+a                                                           
+
+> 7715 19 22 12 76310 910
+> 221810 4011010
+> 47924 14 5322965
+> 810 13 37 29 28 11 11 622 20 20
+> 14 20 34 46 40 30 20 15 13 29 28 28
+> Fabrication spans every model and task family
+> 0
+> 10
+> 20
+> 30
+> 40
+> ER fabrication
+> 1.0 1.1 1.2 1.3 1.4
+> semantic entropy (confidence)
+> 10
+> 20
+> 30
+> 40
+> 50
+> overall hallucination
+
+b         
+
+> Chem-R
+> Chem-R-Faithful
+> ChemDFM-R
+> ether-0
+> DeepSeek-R1-Distill
+> r= −0.54
+> Confidence ≠faithfulness
+> 010 20 30 40 50 60
+> per-claim fabrication rate (%)
+> Chem-R-Faithful
+> ChemDFM-R
+> Chem-R
+> ether-0
+> DeepSeek-R1-Distill
+
+c 
+
+> 4
+> 14
+> 23
+> 38
+> 55
+> Even the most faithful fabricates
+> 10 310 4
+> reasoning length (chars)
+> 5
+> 10
+> 15
+> 20
+> 25
+> ER fabrication
+
+d     
+
+> Chem-R
+> Chem-R-Faithful
+> ChemDFM-R
+> ether-0
+> DeepSeek-R1-Distill
+> Length ≠faithfulness
+> base SFT Chem-R Faithful
+> 0
+> 5
+> 10
+> 15
+> 20
+> 25
+> 30
+> per-claim fabrication (%)
+
+e 
+
+> 29
+> 19 19
+> 2
+> Fabrication starts in the base model
+> 0
+> 10
+> 20
+> 30
+> 40
+> 50
+> 60
+> performance (%)
+
+Figure 2: Reasoning hallucination is pervasive and not decided by confidence or length. a ,Per-response ER, a bounded fabrication score (0–100) that increases with the fraction of a trace’s claimed functional groups that are unsupported, averaged over traces, across the four released models and Chem-R-Faithful on twelve generative task variants. b, Each released model and Chem-R-Faithful as one point in (semantic entropy, overall hallucination), with marker area proportional to ER; all three quantities are averaged over the twelve generative task variants. Confidence does not separate faithfulness from fabricating models. c, Among the released models, even the most faithful fabricates approximately 14% of its claims; our verification-grounded Chem-R-Faithful is the exception, reducing the rate to 4% . d, ER likewise does not follow reasoning length: the longest reasoner is the least faithful, whereas Chem-R-Faithful has the lowest ER. e, Training lineage from the pre-chemistry-SFT starting model through chemistry supervised fine-tuning (SFT) and answer-only GRPO (Chem-R) to verification-grounded GRPO. The final transition continues training from the released Chem-R checkpoint and yields Chem-R-Faithful. Per-claim fabrication (purple) is highest before chemistry SFT and falls to 2–3% only after the verification-grounded stage, while task performance (green) is preserved. gap, whereas Chem-R-Faithful combines the lowest hallucination with the highest performance. The four error classes also contribute differently across models (Fig. 1e): output-side errors account for most of the aggregate score, but ER remains present in every model, motivating the reasoning-side analyses below. 
+
+2.2 Reasoning hallucination is pervasive and not decided by confidence or length 
+
+Applying the framework to four released reasoning models and the Chem-R-Faithful checkpoint across twelve generative task variants shows that fabrication is common (Fig. 2a). Chemistry-specialized models score substantially lower on both overall hallucination and ER than the general reasoners, but none are clean. Among the released models, mean ER across tasks ranges from 7.6 to 4Preprint 
+
+26 .4; verification-grounded training lowers Chem-R-Faithful to 2.4 but does not eliminate fabrication. The largest failures occur on constrained structure-editing tasks. Two intuitive proxies fail to explain the pattern. Semantic entropy, a sampling-based uncertainty measure used to detect hallucination (Kuhn et al., 2023; Farquhar et al., 2024), spans only approx-imately 1.08 –1.37 while hallucination varies several-fold. Across the five models its descriptive correlation also opposes a simple confidence account (Pearson −0.54 ; confidence does not reflect faithfulness; Fig. 2b). Meanwhile, reasoning length is not necessarily related to faithfulness: although models generally exhibit a “more reasoning, more fabrication” pattern, Chem-R-Faithful substantially reduces hallucinations while preserving reasoning length (Fig. 2d). Neither uncertainty nor length accounts for the cross-model differences in fabrication. The per-claim fabrication rate, by contrast, tracks the released-model ranking ( 14 → 23 → 38 → 55% ;Fig. 2c), showing that even the most faithful released model fabricates about one claim in seven. Our Chem-R-Faithful checkpoint is the exception, reducing the rate to 4% , or approximately one claim in twenty-five. A comparison along one Chem-R lineage further suggests that hallucination predates chemistry-specific fine-tuning: the per-claim rate is highest in the original backbone model, is reduced by supervised fine-tuning and answer-only reinforcement learning, and falls to 2–3% only once the reward grounds the trace’s claims, even as task performance saturates far earlier (Fig. 2e). 
+
+2.3 Answer correctness is a poor proxy for extrinsic reasoning hallucination 
+
+Answer correctness provides little information about whether a reasoning trace contains extrinsic hallucinations. On the full caption-to-molecule test set for Chem-R ( n = 3300 ), the ER distributions of exactly correct and incorrect responses are nearly indistinguishable, with mean ER scores of 6.4
+
+and 6.8, respectively. Consistently, the correlation between ER and the exact-match indicator is close to zero ( |Pearson(ER , exact match )| < 0.02 ; Fig. 3a). Similarly weak associations are observed for molecule-to-caption ( −0.04 ) and retrosynthesis ( −0.05 ). The joint distribution makes the distinction between answer correctness and trace groundedness concrete. Of all caption-to-molecule responses, 28% are both exactly correct and clean ( ER = 0 ), whereas 13% are exactly correct but contain at least one detected fabrication ( ER > 0). Thus, the overall exact-match rate is 41% , and approximately 31% of exactly correct responses contain a fabrication. Conversely, most incorrect responses still have clean traces (Fig. 3b). Correctness therefore neither guarantees a clean trace nor does incorrectness imply a fabricated one. The same qualitative pattern appears at the task-family level. When official task performance is computed separately for clean and fabricating traces, the resulting points generally remain near the equality line (Fig. 3c). On the S 2-Bench (Li et al., 2024) tasks, Chem-R is even marginally more accurate among responses whose traces contain fabrications, further illustrating that the relation is not monotonic. This decoupling should not be interpreted as implying that clean traces are universally common: across the released models, especially on harder tasks, their absolute prevalence is often low. By contrast, Chem-R-Faithful raises the clean-trace rate to approximately 84 –91% across the four task families (Fig. 3d). Thus, many correct answers produced without verification-grounded training still contain unsupported intermediate claims. Answer-level metrics are therefore insufficient for evaluating the reasoning trace. They assess the molecular output, but not whether the chemical claims used to justify that output are supported. The near-zero associations in Fig. 3 show that answer correctness is a poor proxy for claim-level groundedness: a correct answer may contain fabricated reasoning, while an incorrect answer may still have a trace with no detected fabrications. 
+
+2.4 Functional-group claims in the reasoning trace exert little causal influence on the final answer 
+
+How can a correct answer coexist with a reasoning trace that contains a fabricated claim? One possibility is that the verbal claims in the trace do not materially determine the final answer. We tested this possibility using targeted interventions on functional-group mentions. 5Preprint correct answer wrong answer               
+
+> 0
+> 5
+> 10
+> 15
+> 20
+> 25
+> 30
+> ER fabrication
+> a
+> Pearson( ER , exact) = −0.02; n= 3300
+> Correct and wrong answers fabricate alike
+> mean 6.4 mean 6.8
+> fabricating faithful
+> b
+> 13%
+> right-yet
+> fabricating
+> 22%
+> wrong &
+> fabricating
+> 28%
+> right &
+> faithful
+> 37%
+> wrong-yet
+> faithful
+> Correct ≠faithful
+> 010 20 30 40 50 60 70
+> performance, clean traces (ER = 0)
+> 0
+> 10
+> 20
+> 30
+> 40
+> 50
+> 60
+> 70
+> performance,
+> fabricating traces (ER > 0)
+> cFabrication barely moves accuracy
+> task
+> cap2mol
+> mol2cap
+> retro
+> s2
+> Chem-R
+> Chem-R-Faithful
+> ChemDFM-R
+> ether-0
+> DeepSeek-R1-Distill
+> cap2mol
+> mol2cap
+> retro
+> s2
+> 0
+> 20
+> 40
+> 60
+> 80
+> 100
+> clean traces (%)
+> d
+> Clean traces are scarce on hard tasks
+
+Figure 3: Fabrication is decoupled from answer correctness. a , On caption-to-molecule ( n =3300 ), the ER distributions of correct and wrong answers nearly coincide (means 6.4 versus 6.8;
+
+|Pearson | < 0.02 ). b, The joint distribution of correctness and faithfulness: right-yet-fabricating and wrong-yet-faithful cases are both common. c, Across the four released models and Chem-R-Faithful, performance on clean ( ER = 0 ) and fabricating ( ER > 0) traces lies close to the equality line across task families. d, The clean-trace rate (ER = 0 ) varies widely: it is lowest for the general reasoners and on difficult tasks for the released chemistry models, but reaches approximately 84 –91% for Chem-R-Faithful. Starting from clean caption-to-molecule traces, we selected a functional-group mention that was verified to be present in the target molecule and replaced it with a random incorrect group. We then measured the teacher-forced log-probability of the original correct answer. As a matched comparison, we applied the same corruption to the functional-group in the input caption; synonym substitutions also served as a meaning-preserving control. Corrupting the trace had a negligible effect on the answer log-probability ( ∆ log p = −0.0007 for Chem-R), comparable to the synonym control. By contrast, corrupting the input produced reductions in log-probability that were two to three orders of magnitude larger in absolute value ( −0.20 for Chem-R and −0.13 for ChemDFM-R; Fig. 4a). A complementary answer-flip test showed the same asymmetry. Among examples that Chem-R originally answered correctly, corrupting the functional-group claim in the trace caused only 7% of the answers to become incorrect, again close to the synonym control. Corrupting the correspond-ing information in the input, however, caused approximately 40% to become incorrect (Fig. 4b). Across models and tasks, the answer-flip rate was 1–11% for trace corruption and 16 –79% for input corruption, yielding paired gaps of 15 –68 percentage points ( p < 10 −15 ). The weak effect of trace corruption persisted both for claims restated from the input ( ∆ log p =
+
+−0.009 to −0.001 ) and for claims derived by the model ( −0.0013 to −0.0004 ). Thus, the result cannot be explained solely by trace claims redundantly repeating information from the input. Attention patterns provide complementary descriptive evidence: when a functional-group term appeared in both the input and the trace, answer tokens assigned 20 × more attention to its input occurrence for Chem-R and 4× more for ChemDFM-R (Fig. 4c). Together, these interventions indicate that, for the functional-group claims tested here, the final answer is substantially more sensitive to information in the input than to the corresponding verbal claim in the reasoning trace. This asymmetry seems consistent with parts of the trace serving as post-hoc rationalization (Turpin et al., 2023; Lanham et al., 2023), but it does not establish that every claim, or the trace as a whole, is generated post hoc. 6Preprint −0.20 −0.15 −0.10 −0.05 0.00 0.05         
+
+> Δlog p(correct answer)
+> corrupt claim
+> in trace
+> synonym
+> control
+> corrupt fact
+> in input
+> a
+> -0.20
+> -0.13
+> both |Δlog p| < 0.001
+> (the claim is inert)
+> Corrupt the claim vs the input
+> Chem-R
+> ChemDFM-R
+> synonym
+> (ctrl)
+> FG claims
+> in trace
+> whole trace
+> swapped
+> 0
+> 5
+> 10
+> 15
+> 20
+> 25
+> 30
+> 35
+> flip-to-wrong among
+> originally-correct (%)
+> bClaims inert; whole trace is not
+> Chem-R
+> ChemDFM-R
+> 050 100
+> attention on the input (dark)
+> vs trace (light) copy, %
+> Chem-R
+> Faithful
+> ChemDFM-R
+> c
+> 95% 20×
+> 95% 21×
+> 81% 4×
+> Same word: answer looks at input
+
+Figure 4: The answer is more sensitive to functional-group information in the input than in the trace (caption-to-molecule; Chem-R and ChemDFM-R in a,b, with Chem-R-Faithful also shown in c). a, Corrupting a verified functional-group claim inside the trace barely changes the correct answer’s log-probability and matches a synonym control, whereas corrupting the same fact in the input lowers it by two to three orders of magnitude more. b, Behaviourally, corrupting the claim in the trace flips few originally-correct answers (near the synonym control), whereas corrupting it in the input flips many; error bars are 95% bootstrap intervals. c, For the same functional-group word, answer tokens attend far more to the input than to the trace occurrence. 
+
+2.5 SMILES drafts can be causally load-bearing in the Chem-R lineage 
+
+We argue that the trace is not entirely post-hoc. Although corrupting its functional-group names has little effect (Fig. 4), replacing the whole trace with another molecule’s trace raises answer entropy by 0.05 –0.32 ; corrupting only the functional-group names changes it by approximately 0.03 . Some answer-relevant information therefore remains outside the verbal claims. A prominent non-verbal element in Chem-R traces is the drafted SMILES. We tested this structural component directly by perturbing only the SMILES written in the trace, leaving the functional-group prose intact and regenerating the answer on originally-correct responses that contain such a draft (Fig. 5). Every condition was scored on this same draft-writing subset. Replacing the draft with a valid-but-wrong structure flips more answers than corrupting the functional-group claims: 11 .4% versus 5.7% for Chem-R ( 2×) and 31 .9% versus 1.8% for Chem-R-Faithful ( 18 ×; Fig. 5a). Corruption also flips more answers than masking the draft, indicating that the replacement redirects generation rather than merely removing useful context. The result is not explained by complete answers being written early in the trace. Although we do find that the complete SMILES strings appear in 14 –22% of Chem-R and Chem-R-Faithful traces (Fig. 5d), most draft-writing traces contain only partial structure ( 77% for Chem-R and 65% for Chem-R-Faithful). On this partial-only subset, corrupting the draft still flips 11 .5% and 34 .6% of answers, respectively, matching the rates on the full draft-writing subset (Fig. 5e). ChemDFM-R provides a negative control for the role of drafted SMILES. It drafts a SMILES in only 8% of correct traces, and corrupting that draft flips 7.3% of originally correct answers (Fig. 5b). Across the three models, the corrupt-draft flip rate follows the independently measured SMILES-saliency enrichment reported in the next section (Fig. 5c). This three-point comparison is descriptive, but its agreement with the perturbation results supports the localization of a load-bearing SMILES component in the Chem-R lineage. The tested draft effects remain smaller than the input effect, for which corruption flips 40 –79% of answers. Thus, the trace can serve as a working draft while the input remains the primary source of the answer. 
+
+2.6 Attribution analyses suggest model-specific forms of the molecular scratchpad 
+
+Having established that drafted SMILES can affect generation in the Chem-R lineage, we next asked whether the same scratchpad form is prominent across models. We use gradient ×input saliency (Ancona et al., 2018) to measure the answer’s sensitivity to each trace token in Chem-R, Chem-R-Faithful, ChemDFM-R and ether-0 (Fig. 6). 7Preprint FG-name        
+
+> claim
+> mask
+> draft
+> corrupt
+> draft
+> swap
+> trace
+> 0
+> 10
+> 20
+> 30
+> 40
+> 50
+> 60
+> flip-to-wrong among
+> originally-correct (%)
+> aCorrupting the draft flips answers
+> Chem-R
+> Faithful
+> Chem-R
+> Faithful
+> ChemDFM-R
+> 0
+> 20
+> 40
+> 60
+> 80
+> 100
+> correct traces that
+> draft a SMILES (%)
+> b
+> 72%
+> 65%
+> 8%
+> ChemDFM-R barely drafts
+> 1.0 1.5 2.0 2.5 3.0 3.5
+> trace SMILES saliency enrichment
+> 5
+> 10
+> 15
+> 20
+> 25
+> 30
+> corrupt-draft
+> flip-to-wrong (%)
+> c
+> Chem-R
+> Faithful
+> ChemDFM-R
+> Two probes agree
+> Chem-R
+> Faithful
+> ChemDFM-R
+> 0.00
+> 0.05
+> 0.10
+> 0.15
+> 0.20
+> 0.25
+> complete answer SMILES
+> in trace (fraction)
+> d
+> 0.14
+> 0.22
+> 0.00
+> Answer can be written early
+> Chem-R Faithful
+> 0
+> 5
+> 10
+> 15
+> 20
+> 25
+> 30
+> 35
+> corrupt-draft
+> flip-to-wrong (%)
+> e
+> 11
+> 27
+> 12
+> 35
+> Not just early answers
+> early answer
+> partial only
+
+Figure 5: SMILES drafts affect generation in the Chem-R lineage. a, Flip-to-wrong rate among originally-correct answers that contain a drafted SMILES (all conditions scored on this same subset) under trace perturbations. Corrupting the drafted SMILES flips more answers than corrupting functional-group names or masking the draft for both Chem-R and Chem-R-Faithful. b, ChemDFM-R drafts a SMILES in only 8% of correct traces and serves as a negative control for the role of drafted SMILES. c, Across models, the corrupt-draft flip rate follows the SMILES-saliency enrichment of Fig. 6b. d, The complete answer SMILES appears within the trace (early or complete answering) in 
+
+14 –22% of Chem-R and Chem-R-Faithful traces, and in approximately zero ChemDFM-R traces. e,The corrupt-draft effect is not an early-answer artefact: among draft-writing traces that contain only partial structure and never the complete answer ( 77% /65% for Chem-R/Chem-R-Faithful), corrupting the draft flips 11 .5% /34 .6% of answers, matching the rates on the full draft-writing subset. For Chem-R and Chem-R-Faithful, the most salient token type per token is the SMILES fragments (enrichment 2.5× and 3.2× above the average trace token), while functional-group words are depleted (0.71 –0.77 ×; Fig. 6a,b). Within-trace attention shows the same preference: answer tokens attend more to SMILES fragments than to functional-group words (Fig. 6c). These convergent attribution measures independently localize the SMILES component tested in Fig. 5, similar to the use of generated tokens as an intermediate-computation scratchpad (Nye et al., 2022). Meanwhile, ether-0 shows a weaker but still SMILES-oriented profile. Its example trace drafts the reactants as SMILES fragments; across traces, SMILES tokens are enriched 1.6× in answer saliency while functional-group words are depleted to 0.6×, and within-trace attention to SMILES is about twice that to functional-group words (Fig. 6a–c). This extends the attribution pattern beyond the Chem-R lineage, which suggests that this attribution asymmetry is not unique to the Chem-R lineage. In this limited sense, ChemDFM-R exhibits a more conservative scratchpad profile, with less reliance on explicit SMILES fragments and a more distributed use of chemically descriptive cues. SMILES fragments account for little trace saliency ( 1.0% of the total mass; 1.2× per-token enrichment), and within-trace attention favours functional-group terms over SMILES (Fig. 6c). Its answer-sensitive spans instead contain scaffold, positional, and nomenclature cues, suggesting that answer-relevant information is distributed across chemically descriptive language rather than concentrated in an explicit SMILES scratchpad. Taken together, the models appear to use their traces as scratchpads in different forms: Chem-R and ether-0 are more strongly SMILES-oriented, whereas ChemDFM-R adopts a more linguistically distributed representation. The evidence remains asymmetric. Saliency and attention clearly localize the SMILES-oriented components, whereas the positive account of 8Preprint a          
+
+> Answer-saliency where each model proposes the reactant answer
+> Chem-R-Faithful —drafts the reactants as partial SMILES fragments (each attended)
+> ChemDFM-R —proposes them in words and naming; no SMILES
+> ether-0 —also drafts the reactants as SMILES fragments
+> SMILES string FG token
+> SMILES FG word position
+> 0.0
+> 0.5
+> 1.0
+> 1.5
+> 2.0
+> 2.5
+> 3.0
+> saliency enrichment
+> (>1 = above average)
+> b
+> 2.5
+> 0.8
+> 1.6
+> 3.2
+> 0.7
+> 1.7
+> 1.2
+> 0.9
+> 1.4
+> 1.6
+> 0.6
+> 0.7
+> What the answer keys on
+> Chem-R
+> Faithful
+> ChemDFM-R
+> ether-0
+> Chem-R
+> Faithful
+> ChemDFM-R
+> ether-0
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> within-trace attention (×10 −3 )
+> cWhere trace attention goes
+> to SMILES
+> to FG word
+
+Figure 6: Attribution analyses suggest model-specific forms of the molecular scratchpad. a ,Per-token answer-saliency in the region of a retrosynthesis trace where each model proposes the reactant answer (colour, answer-saliency; shaded spans mark drafted SMILES fragments, ticks functional-group tokens). Chem-R-Faithful drafts the reactants as two dispersed partial SMILES fragments with high answer-saliency; ether-0 also drafts SMILES fragments, whereas ChemDFM-R writes no SMILES and instead expresses the reactants through positional and naming cues. b, Per-token answer-saliency enrichment by trace token type (values > 1 carry more answer-sensitivity than the average trace token): SMILES fragments are most enriched for Chem-R and Chem-R-Faithful ( 2.5–3.2×), remain enriched for ether-0 ( 1.6×), and are weakest for ChemDFM-R ( 1.2×). Functional-group words are depleted ( < 1) for all four checkpoints. c, Within-trace attention from the answer favours SMILES fragments for Chem-R, Chem-R-Faithful and ether-0, but reverses to functional-group words for ChemDFM-R. ChemDFM-R’s alternative cues rests on broader attribution and entropy patterns because the current token categories do not isolate those cues cleanly. To summarize, the results support a view of chemical chain-of-thought as a hallucination-prone molecular scratchpad. Its functional-group explanations are often unsupported and weakly coupled to the answer. Fragmented SMILES drafts can influence generation in the Chem-R lineage, attribution suggests that ether-0 also prioritizes SMILES fragments, and ChemDFM-R appears to rely on different candidate cues. As a proof of concept, continuing Chem-R training with the same verifier as an online process reward reduces mean ER by 73 –95% across the four task families without a measurable loss on the reported task metrics (caption-to-molecule ER 6.7 → 1.8, retrosynthesis 15 .1 → 0.8; Fig. 2e). Chem-R-Faithful also shows greater SMILES-saliency enrichment ( 2.5× → 3.2×) and a higher draft-copy rate ( 0.14 → 0.22 ; Fig. 5d), changes that are consistent with the scratchpad account. 
+
+3 Discussions 
+
+The experiments reveal a mismatch between what a chemical trace says and which parts of that trace affect the answer. Functional-group explanations are often unsupported and weakly coupled to 9Preprint 
+
+generation. Structural fragments are less readable as an explanation, but targeted perturbations show that SMILES drafts can affect the output in the Chem-R lineage. Chemical CoT is therefore neither a faithful deduction nor entirely post-hoc rationalization. It behaves as an externalized workspace for intermediate computation, although the prose in that workspace should not be read as a reliable derivation. The contrast between Chem-R and ChemDFM-R also matters methodologically. Chem-R and ether-0 externalize fragmented SMILES, whereas attribution analyses suggest that ChemDFM-R places more weight on scaffold, positional and nomenclature cues. A probe restricted to SMILES would therefore miss candidate signals in ChemDFM-R. This model dependence echoes the low consistency reported across chemical representations (Yan et al., 2025) and argues against assuming a universal CoT format. In our analysis, saliency nominates answer-sensitive trace elements and perturbation tests whether changing them affects generation. The causal claim for the Chem-R SMILES draft comes from the intervention; attention and saliency provide supporting localization and a descriptive account of the alternative ChemDFM-R cues (Ancona et al., 2018; Jain & Wallace, 2019). This account does not conflict with the empirical success of reasoning models in molecular mod-elling (Wang et al., 2025a; Narayanan et al., 2025; Li et al., 2025; Zhao et al., 2025a). A trace may improve performance by providing space to draft partial structure even when some of its verbal claims are false. Better accuracy, by itself, says little about whether the accompanying rationale is faithful. In molecular design, retrosynthesis and drug discovery, a natural-language rationale may be the main surface available for human review (M. Bran et al., 2024; Mirza et al., 2025). A chemist could reasonably interpret a fabricated group as evidence for the answer, even if the model did not use that claim. We did not test downstream decisions, so this remains a plausible risk rather than a measured harm. For oversight, chemical CoT is better treated as a report whose checkable claims require verification. The Chem-R-Faithful training experiment also provides a proof of concept for improving faithfulness in molecular reasoning. An answer-only objective cannot distinguish two traces that reach the same answer, even if one contains fabricated claims, consistent with evidence that outcome-based reinforce-ment learning does not necessarily ensure faithful reasoning traces (Chen et al., 2025). Fabrication is already prevalent before chemistry SFT (Fig. 2e). Gating the answer reward on ER = 0 provides a way to distinguish otherwise answer-equivalent traces: a correct answer receives no accuracy reward when its reasoning trace fabricates external facts. This connects process supervision (Cobbe et al., 2021; Uesato et al., 2022; Lightman et al., 2024) with domain-grounded verification and tool use in scientific agents (M. Bran et al., 2024; Wang et al., 2025b). Under this intervention, Chem-R-Faithful produces fewer fabricated claims and places greater emphasis on structural drafts. However, the intervention is not a complete fix: Chem-R-Faithful also writes the complete answer within the trace more often than the released model (draft-copy 0.14 → 0.22 ; Fig. 5d). This increase in early or complete answering may itself constitute a mild form of reward hacking: the model commits to a structure early so that subsequent functional-group claims can be verified against it, rather than necessarily performing more faithful step-by-step reasoning. The reduction in fabrication should therefore be interpreted alongside this behavioral shift, and structure-grounded process rewards warrant explicit monitoring for such shortcuts. Whether the same pattern generalizes to other model families remains open. Our analysis is scoped to structurally checkable claims. The verifier audits functional groups, ring systems and molecular classes that can be decided from a molecular graph; it does not certify a complete chemical argument and is less informative for broad mechanistic reasoning, implicit domain knowledge or answers with little molecular structure. Once a rule maps an explicit claim to its referent and structural category, the graph-side verdict is deterministic. The operational scope is therefore set by the claim library and its context rules: phrasings outside that vocabulary are not scored, and ER is conditional on the recovered claims. We manually observed 97 .3% pooled extraction precision among recovered claims, but the claim-stratified audit does not estimate recall because it did not exhaustively annotate claims missed by the extractor. We accordingly interpret ER as a fabrication rate over the explicit, structurally decidable claims covered by the verifier, rather than as a recall-complete audit of all chemical reasoning in the trace. The mechanistic evidence rests on probes of differing strength, and we have tried to match each claim to the probe that supports it. The gradient ×input saliency and attention analyses are descriptive: 10 Preprint 
+
+they show what the answer keys on, not a counterfactual. The causal weight of the scratchpad claim therefore rests on the perturbation experiments, corrupting the drafted SMILES and swapping the whole trace, and on the metric-free conditional-entropy test, with saliency corroborating at token resolution. For this reason the SMILES-draft finding in Chem-R, which every probe agrees on, is on firmer ground than the account of scaffold, positional and nomenclature cues in ChemDFM-R. The present gradient categories cannot cleanly separate those cues, so their localization rests on attribution and entropy rather than a cue-specific intervention. Attention magnitudes throughout are read only as supporting evidence, never as proof of computational influence. The draft interventions establish dependence on the structural sequence as a whole; they do not identify which atom-level change within a replacement is responsible for the effect. Some measurements are bounded rather than exact. For the structured S 2-Bench tasks, success does not yet weight edits and optimizations by similarity to the source molecule, which slightly affects the S2-Bench fabrication and performance numbers, consistently across models. Two models contribute only where they are informative: the pre-chemistry-SFT starting model reaches near-zero accuracy, so it enters the fabrication and entropy analyses but not the drift analysis, and DeepSeek-R1-Distill produces too few valid perturbable generations to support a mechanism claim. Finally, the process-level training intervention is centered on a single model lineage, Chem-R-8B. We therefore treat the training result as a proof of concept for this lineage rather than evidence that the same intervention will behave identically in other model families. Chemistry offers an unusual advantage for studying CoT: many statements in a trace can be checked directly against a molecular graph. That comparison shows why a trace can be useful without being a faithful explanation. The same approach could be tested in other scientific domains where intermediate claims refer to formal objects, such as reaction graphs, proofs or physical constraints. Chemical CoT should therefore be evaluated at both the answer and process levels. Answer metrics measure the final product, whereas structure-grounded verification tests whether the trace’s explicit claims are supported. The scratchpad may remain computationally useful even when its verbal account is unreliable, which is precisely the failure that answer-only evaluation cannot detect. 
+
+4 Methods 
+
+Models and tasks. We evaluated four off-the-shelf reasoning models: Chem-R-8B (Wang et al., 2025a), ChemDFM-R-14B (Zhao et al., 2025b), ether-0-24B (Narayanan et al., 2025) and DeepSeek-R1-Distill-Llama-8B (Guo et al., 2025). The main evaluation covers twelve generative task variants grouped into four families: caption-to-molecule generation (cap2mol), molecule-to-caption gen-eration (mol2cap), retrosynthesis, and nine S 2-Bench structured molecule generation, editing and optimization subtasks. Cap2mol and mol2cap use ChEBI-20 (Edwards et al., 2022); retrosynthesis uses USPTO-50k (Liu et al., 2017); S 2-Bench is from Li et al. (2024). Cap2mol, mol2cap and retrosynthesis use the full test sets, and S 2-Bench uses 500 prompts (mini size) per subtask for tractability. 
+
+Response parsing. Most models delimit reasoning and answer spans with <think> . . . </think> 
+
+and <answer> . . . </answer> tokens. We normalize equivalent markup before diagnosis, includ-ing the delimiter variants used by ether-0, so that all models are scored on a comparable trace and answer span. 
+
+Claim extraction and verification. The diagnoser uses a deterministic rule pipeline. A curated library first maps explicit chemical mentions and their synonyms to functional-group, ring-system or molecular-class categories and identifies transformation statements. Rule-based derivation context then retains claims about the task-relevant molecule while excluding, for example, precursor groups mentioned only as sources of a transformation. Each retained category is assigned an RDKit SMARTS query or an exact structural check (Landrum et al., 2013). Generic features such as “ring” or “aromatic” use broad graph predicates, whereas specific groups such as carboxylic acid, ester, phosphate, pyridine or thiophene use tighter substructure definitions. The structural verdict uses exact graph matching rather than a generative judge or semantic similarity. The library provides explicit extraction and verification rules for every category evaluated in this study. Phrasings outside this operational vocabulary are not scored, so the reported ER is conditional on the explicit claims recovered by the rule library. 11 Preprint 
+
+Task-aware grounding. The grounding set depends on the task. For cap2mol, claims may be grounded by groups named in the input caption, the predicted molecule or the reference molecule. For mol2cap, claims are checked against the input molecule. For retrosynthesis, claims may refer to the product or predicted reactants. For S 2-Bench, the source molecule, instruction-named groups and predicted molecule are all grounding evidence. A claim counts as extrinsic reasoning fabrication only when it is absent from the relevant input evidence, the prediction and the reference. 
+
+Hallucination score and derived metrics. Each response receives four scores in [0 , 100] on a 2 × 2
+
+taxonomy that crosses a grounding axis (intrinsic versus extrinsic) with a location axis (reasoning versus output): IR for self-contradiction in the trace, IO for answer invalidity or prompt-constraint failure, ER for fabricated reasoning claims, and EO for output-level structural deviation from the reference or task constraints. The aggregate hallucination score is 0.15 IR + 0 .25 IO + 0 .25 ER + 0.35 EO , and EO is set to zero on exact-match responses to avoid false positives. Claim precision is the fraction of extracted structural claims that verify, and grounded claims is the number of distinct verified specific claims per response; per-claim fabrication rate is the fraction of category-deduplicated claimed groups that are fabricated. 
+
+Chemical evidence path. Let x be the task input, T the generated reasoning trace, A the generated answer and K the task-specific chemical knowledge used by the verifier. The claim extractor maps the trace to a set of chemical claims C(T ) = {ci}mi=1 . A support function g(ci; x, A, K) ∈ { 0, 1}
+
+indicates whether claim ci is grounded by the input, the answer, the reference when available, and the task context. The extrinsic reasoning fabrication score is a bounded penalty that increases with the unsupported-claim rate: 
+
+u(T ; x, A, K) = 1 − 1
+
+m
+
+> m
+
+X
+
+> i=1
+
+g(ci; x, A, K), ER = min(100 , κ u ) ∈ [0 , 100] ,
+
+where κ is a fixed per-task scale, so ER saturates at 100 and is not a raw percentage; fabricated molecular-class claims incur an analogous penalty, and responses with no extractable structural claims receive task-specific handling. A trace is clean when ER = 0 (equivalently u = 0 ). Trace–answer coupling is reported by the clean-minus-fabricating answer-score gap, ∆couple = E[s(A) | ER = 0] − E[s(A) | ER > 0] , and by the correlation between ER and the task answer score s(A).
+
+Answer-level unidentifiability. An answer-only objective has expected reward Jans (π) =
+
+Ex,T,A ∼π [rans (A, y )] . Because this reward does not depend on T , any two policies with the same answer marginal π(A | x) obtain the same Jans even if their expected trace fabrica-tion differs. Answer-level reward therefore cannot distinguish faithful from fabricating traces among answer-equivalent responses; it does not create hallucination but leaves it unselected whenever the answer can be produced through an input-to-answer route. A process-level term 
+
+Jproc (π) = E[rans (A, y ) + λ r trace (T ; x, A, K)] separates these otherwise-equivalent traces. 
+
+Semantic entropy. For semantic entropy (Kuhn et al., 2023; Farquhar et al., 2024) we sample ten responses per prompt at temperature 0.8, top-p 0.95 , and cluster them by task-aware semantic equivalence: Morgan-fingerprint Tanimoto similarity (threshold 0.85 ) for molecule generation, reactant-set equivalence for retrosynthesis and caption-level equivalence for text generation. Entropy is the Shannon entropy H = − P 
+
+> c
+
+pc log pc of the cluster distribution, with pc the fraction of the ten samples in cluster c; it measures confidence, not truth. 
+
+Causal perturbation and behavioural drift. Two interventions test whether the trace’s functional-group claims cause the answer. The first is teacher-forced: on clean cap2mol traces in which a functional-group claim was verified, we replaced one trace mention with an incorrect group and measured ∆ log p, the change in the answer’s mean per-token log-probability log P (A | x, T )/|A|
+
+under teacher forcing. A synonym replacement is the negative control and the same corruption applied to the input caption is the positive control. The second is behavioural: from a perturbed prefix we regenerate the answer greedily and record the flip-to-wrong rate among originally-correct responses. The conditions are a synonym control, corrupting every functional-group-name claim in the trace, replacing the whole trace with another molecule’s real trace, dropping the trace, and corrupting the group in the input. We report 95% bootstrap intervals (2000 resamples) and paired 12 Preprint 
+
+McNemar tests for the input-versus-trace contrast, and we separate trace claims that are restated from the input from those derived by the model. 
+
+Conditional entropy. As a metric-free complement, for each example we drew eight answer samples (temperature 0.8, top-p 0.95 ) under three trace conditions, empty, real and functional-group-corrupted, and, for the main models, a fourth condition that swaps in another molecule’s whole trace. Answer entropy is the Shannon entropy over canonical-SMILES clusters. We report information gains relative to the real-trace condition: presence ( HnoCoT − HrealCoT ), content ( Hcorrupt − HrealCoT )and swap ( Hswap − HrealCoT ). This isolates whether corrupting the verbal claims, versus replacing the whole trace, carries answer information without reference to any accuracy metric. 
+
+Token-type saliency. To localize which trace tokens the answer depends on we use gradient ×input saliency (Ancona et al., 2018) with the model parameters frozen. Let ej be the input embedding of trace token j and log P (A | x, T ) = P 
+
+> t
+
+log p(at | a<t , x, T ) the teacher-forced log-probability of the model’s own answer A (used whether right or wrong). We attribute to token j the saliency 
+
+sj = ej · ∇ ej log P (A | x, T ) ,
+
+normalize s to sum to one over the trace tokens, and label each token as a SMILES fragment, functional-group word, position digit, other word or punctuation. For a token type τ we report its saliency share P 
+
+> j∈τ
+
+sj and its enrichment, the share divided by the fraction of trace tokens of type 
+
+τ , so a value above one marks above-average answer-sensitivity per token. SMILES fragments are tokens covered by an RDKit-parseable substring of at least six characters; functional-group words are tokens covered by any functional-group synonym in the verifier’s library. 
+
+Attention attribution. The attention analyses, which we treat as descriptive rather than causal (Jain & Wallace, 2019), use teacher forcing on the full sequence 
+
+[ x ∥ <think> T </think> ∥ <answer> A </answer> ] in a single forward pass (eager attention, bfloat16, no sampling) and read the post-softmax self-attention. For layer l of L with H
+
+heads let A(l) ∈ [0 , 1] H×S×S be the attention and ¯a(l) = 1
+
+> H
+
+PHh=1 A(l) 
+
+> h
+
+its head-mean. With A the answer-token positions (the span inside <answer> ), the answer’s attention to a key position j, and to a key-token set T , are the query- and set-averages 
+
+att (l)(j) = 1
+
+|A| 
+
+X
+
+> q∈A
+
+¯a(l) 
+
+> q,j
+
+, att (l)(T ) = 1
+
+|T | 
+
+X
+
+> j∈T
+
+att (l)(j).
+
+The per-token (rather than summed) form removes the confound that the trace is several times longer than the input. Every attention statistic is read at the fixed middle layer l⋆ = ⌊L/ 2⌋, rather than at a layer selected to maximize the reported contrast. In a layerwise sensitivity check, the input-versus-trace asymmetry has the same direction at every layer except the first and peaks in the middle of the network. Regions are the input-caption span and the <think> trace span, and within each we evaluate att( T ) for T equal to all tokens, SMILES fragments and functional-group words (defined as above); this region and within-trace salience uses the full evaluation volume ( n ≈ 16 ,100 per model across all task families, stratified by ER). The matched-token control and the causal perturbation below are reported on cap2mol, the natural-language-input task in which a functional-group word can occur in both the input and the trace: we pick such a word and compare att at its input occurrence against its trace occurrence; the two are the identical string, so their ratio isolates location from content and length. The draft-copy rate is the fraction of responses whose RDKit-canonical answer SMILES equals the canonical form of some SMILES substring in the trace. 
+
+Draft-SMILES perturbation. To test the drafted structure causally we perturbed only the SMILES a model writes in its trace, leaving functional-group prose intact, on originally-correct examples that actually draft a SMILES. The mask condition replaces the draft with a placeholder (a presence test) and the corrupt condition replaces it with a valid but structurally wrong SMILES (a content/direction test); we compare against corrupting a functional-group name and swapping the whole trace on the same subset. ChemDFM-R, which drafts a SMILES in only 8% of its correct traces, is the negative control. 13 Preprint 
+
+Process-supervised training. Starting from the released Chem-R-8B checkpoint, we continued training with GRPO (Shao et al., 2024); the resulting checkpoint is Chem-R-Faithful (Fig. 2e). The reward combines format compliance, the task’s answer metric, the anti-hallucination score and a grounded-claim term, with weights (λf , λ a, λ h, λ g ) = (0 .1, 0.4, 0.4, 0.2) :
+
+˜r = λf rformat + λaranswer + λh(1 − hallucination /100) + λg rgrounded .
+
+We gate the answer-accuracy term on trace faithfulness, paying it only when the trace is clean: 
+
+r = λf rformat + 1[ER = 0] λaranswer + λh (1 − hallucination /100) + λg rgrounded .
+
+Thus a response with a fabricated reasoning claim earns no accuracy reward, even if its answer is correct, while the format, anti-hallucination and grounded terms are still paid. This prevents the reward hacking in which the policy trades fabrication against answer accuracy or additional claim volume. The grounded term rewards naming more verified groups while staying precise, 
+
+rgrounded = 2 min( nver , C )
+
+Cnver 
+
+nver + nfab 
+
+∈ [0 , 2] , where nver and nfab count verified and fabricated specific functional groups and the count is capped at C = 5 ; groups are de-duplicated by category, so the reward cannot be farmed by repetition. Cap2mol and retrosynthesis use exact match, mol2cap uses caption similarity, and OpenMolIns uses official task success including property-direction success for optimization tasks. We trained one joint model over all four families (twelve variants, 80k balanced examples) and call it Chem-R-Faithful. The same verifier used for evaluation supplies ER, the anti-hallucination score and the grounded-claim counts during training. 
+
+Training-stage ladder. To locate the origin of fabrication, we evaluated matched-prompt gener-ations at four points on a single lineage, each scored on the full task suite: the pre-chemistry-SFT starting model (Llama-3.1-8B-Instruct), the chemistry SFT model, the released answer-only GRPO model (Chem-R), and Chem-R-Faithful. For each stage, we measured the per-claim fabrication rate, ER, clean-trace fraction, task performance, and trace-level hedging and abstention rates identified by regular expressions. Figure 2e reports the per-claim fabrication rate and task performance along this lineage. 
+
+Data availability 
+
+The benchmark datasets analysed in this study are publicly available from their original sources: ChEBI-20, USPTO-50k and S 2-Bench. The corresponding dataset publications and access routes are cited in the Methods. No new primary dataset was collected. Upon publication, the study-generated data, including the evaluation inputs, model responses, parsed reasoning and answer spans, extracted claim records, grounding verdicts, perturbation outputs and source data underlying the figures, will be made publicly available at https://github.com/phenixace/MolReHallu .Redistribution of third-party data will remain subject to the licences of the original datasets and model providers. The study-generated data will be made available to editors and reviewers during peer review upon request. 
+
+Code availability 
+
+Upon publication, all custom code used for response parsing, chemical-claim extraction and verifica-tion, task-aware grounding, hallucination scoring, causal perturbation, conditional-entropy analysis, token-level saliency, attention analysis, process-supervised training and figure generation will be made publicly available at https://github.com/phenixace/MolReHallu . The reposi-tory will include the model and dataset configuration files, dependency specifications, inference and training parameters, random seeds, and scripts required to reproduce the reported analyses and figures. The version corresponding to this Article will be identified by a tagged release. The code will be made available to editors and reviewers during peer review upon request. 
+
+References 
+
+Marco Ancona, Enea Ceolini, Cengiz ¨Oztireli, and Markus Gross. Towards better understanding of gradient-based attribution methods for deep neural networks. In International Conference on Learning Representations , 2018. 14 Preprint 
+
+Qiguang Chen, Libo Qin, Jinhao Liu, Dengyun Peng, Jiannan Guan, Peng Wang, Mengkang Hu, Yuhang Zhou, Te Gao, and Wanxiang Che. Towards reasoning era: A survey of long chain-of-thought for reasoning large language models. Science China Information Sciences , 69(6):161101, 2026. Yanda Chen, Joe Benton, Ansh Radhakrishnan, Jonathan Uesato, Carson Denison, John Schulman, Arushi Somani, Peter Hase, Misha Wagner, Fabien Roger, et al. Reasoning models don’t always say what they think. arXiv preprint arXiv:2505.05410 , 2025. Karl Cobbe, Vineet Kosaraju, Mohammad Bavarian, Mark Chen, Heewoo Jun, Lukasz Kaiser, Matthias Plappert, Jerry Tworek, Jacob Hilton, Reiichiro Nakano, et al. Training verifiers to solve math word problems. arXiv preprint arXiv:2110.14168 , 2021. Carl Edwards, ChengXiang Zhai, and Heng Ji. Text2mol: Cross-modal molecule retrieval with natural language queries. In Proceedings of the 2021 conference on empirical methods in natural language processing , pp. 595–607, 2021. Carl Edwards, Tuan Lai, Kevin Ros, Garrett Honke, Kyunghyun Cho, and Heng Ji. Translation between molecules and natural language. In Proceedings of the 2022 Conference on Empirical Methods in Natural Language Processing , pp. 375–413, 2022. Sebastian Farquhar, Jannik Kossen, Lorenz Kuhn, and Yarin Gal. Detecting hallucinations in large language models using semantic entropy. Nature , 630(8017):625–630, 2024. Daya Guo, Dejian Yang, Haowei Zhang, Junxiao Song, Peiyi Wang, Qihao Zhu, Runxin Xu, Ruoyu Zhang, Shirong Ma, Xiao Bi, et al. Deepseek-r1: Incentivizing reasoning capability in llms via reinforcement learning. arXiv preprint arXiv:2501.12948 , 2025. Alon Jacovi and Yoav Goldberg. Towards faithfully interpretable nlp systems: How should we define and evaluate faithfulness? In Proceedings of the 58th annual meeting of the association for computational linguistics , pp. 4198–4205, 2020. Sarthak Jain and Byron C Wallace. Attention is not explanation. In Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, Volume 1 (Long and Short Papers) , pp. 3543–3556, 2019. Lorenz Kuhn, Yarin Gal, and Sebastian Farquhar. Semantic uncertainty: Linguistic invariances for uncertainty estimation in natural language generation. In The Eleventh International Conference on Learning Representations , 2023. Greg Landrum et al. Rdkit documentation. Release , 1(1-79):4, 2013. Tamera Lanham, Anna Chen, Ansh Radhakrishnan, Benoit Steiner, Carson Denison, Danny Hernan-dez, Dustin Li, Esin Durmus, Evan Hubinger, Jackson Kernion, et al. Measuring faithfulness in chain-of-thought reasoning. arXiv preprint arXiv:2307.13702 , 2023. Jiatong Li, Junxian Li, Weida Wang, Yunqing Liu, Changmeng Zheng, Yatao Bian, Dongzhan Zhou, Xiao-yong Wei, and Qing Li. Speak-to-structure: Evaluating llms in open-domain natural language-driven molecule generation. arXiv preprint arXiv:2412.14642 , 2024. Jiatong Li, Weida Wang, Qinggang Zhang, Junxian Li, Di Zhang, Changmeng Zheng, Shufei Zhang, Xiaoyong Wei, and Qing Li. Mol-r1: Towards explicit long-cot reasoning in molecule discovery. 
+
+arXiv preprint arXiv:2508.08401 , 2025. Hunter Lightman, Vineet Kosaraju, Yuri Burda, Harrison Edwards, Bowen Baker, Teddy Lee, Jan Leike, John Schulman, Ilya Sutskever, and Karl Cobbe. Let’s verify step by step. In International Conference on Learning Representations , volume 2024, pp. 39578–39601, 2024. Bowen Liu, Bharath Ramsundar, Prasad Kawthekar, Jade Shi, Joseph Gomes, Quang Luu Nguyen, Stephen Ho, Jack Sloane, Paul Wender, and Vijay Pande. Retrosynthetic reaction prediction using neural sequence-to-sequence models. ACS central science , 3(10):1103–1113, 2017. 15 Preprint 
+
+Qing Lyu, Shreya Havaldar, Adam Stein, Li Zhang, Delip Rao, Eric Wong, Marianna Apidianaki, and Chris Callison-Burch. Faithful chain-of-thought reasoning. In Proceedings of the 13th International Joint Conference on Natural Language Processing and the 3rd Conference of the Asia-Pacific Chapter of the Association for Computational Linguistics (Volume 1: Long Papers) , pp. 305–329, 2023. Andres M. Bran, Sam Cox, Oliver Schilter, Carlo Baldassari, Andrew D White, and Philippe Schwaller. Augmenting large language models with chemistry tools. Nature machine intelligence ,6(5):525–535, 2024. Adrian Mirza, Nawaf Alampara, Sreekanth Kunchapu, Marti ˜no R ´ıos-Garc ´ıa, Benedict Emoekabu, Aswanth Krishnan, Tanya Gupta, Mara Schilling-Wilhelmi, Macjonathan Okereke, Anagha Aneesh, et al. A framework for evaluating the chemical knowledge and reasoning abilities of large language models against the expertise of chemists. Nature Chemistry , 17(7):1027–1034, 2025. Siddharth M. Narayanan, James D. Braza, Ryan-Rhys Griffiths, Albert Bou, Geemi Wellawatte, Mayk Caldas Ramos, Ludovico Mitchener, Samuel G. Rodriques, and Andrew D. White. Training a scientific reasoning model for chemistry. arXiv preprint arXiv:2506.17238 , 2025. Maxwell Nye, Anders Johan Andreassen, Guy Gur-Ari, Henryk Michalewski, Jacob Austin, David Bieber, David Dohan, Aitor Lewkowycz, Maarten Bosma, David Luan, et al. Show your work: Scratchpads for intermediate computation with language models. In Deep Learning for Code Workshop , 2022. Zhihong Shao, Peiyi Wang, Qihao Zhu, Runxin Xu, Junxiao Song, Xiao Bi, Haowei Zhang, Mingchuan Zhang, YK Li, Yang Wu, et al. Deepseekmath: Pushing the limits of mathemat-ical reasoning in open language models. arXiv preprint arXiv:2402.03300 , 2024. Miles Turpin, Julian Michael, Ethan Perez, and Samuel Bowman. Language models don’t always say what they think: Unfaithful explanations in chain-of-thought prompting. Advances in Neural Information Processing Systems , 36:74952–74965, 2023. Jonathan Uesato, Nate Kushman, Ramana Kumar, Francis Song, Noah Siegel, Lisa Wang, Antonia Creswell, Geoffrey Irving, and Irina Higgins. Solving math word problems with process-and outcome-based feedback. arXiv preprint arXiv:2211.14275 , 2022. Weida Wang, Benteng Chen, Di Zhang, Wanhao Liu, Shuchen Pu, Ben Gao, Jin Zeng, Xiaoyong Wei, Tianshu Yu, Shuzhou Sun, et al. Chem-r: Learning to reason as a chemist. arXiv preprint arXiv:2510.16880 , 2025a. Zhizheng Wang, Qiao Jin, Chih-Hsuan Wei, Shubo Tian, Po-Ting Lai, Qingqing Zhu, Chi-Ping Day, Christina Ross, Robert Leaman, and Zhiyong Lu. Geneagent: self-verification language agent for gene-set analysis using domain databases. Nature Methods , 22(8):1677–1685, 2025b. Jason Wei, Xuezhi Wang, Dale Schuurmans, Maarten Bosma, Fei Xia, Ed Chi, Quoc V Le, Denny Zhou, et al. Chain-of-thought prompting elicits reasoning in large language models. Advances in neural information processing systems , 35:24824–24837, 2022. Bing Yan, Angelica Chen, and Kyunghyun Cho. Inconsistency of llms in molecular representations. 
+
+Digital Discovery , 4(10):2876–2892, 2025. Edward Yeo, Yuxuan Tong, Morry Niu, Graham Neubig, and Xiang Yue. Demystifying long chain-of-thought reasoning in llms. arXiv preprint arXiv:2502.03373 , 2025. Guojiang Zhao, Zixiang Lu, Yutang Ge, Sihang Li, Zheng Cheng, Haitao Lin, Lirong Wu, Hanchen Xia, Hengxing Cai, Wentao Guo, et al. Molreasoner: Toward effective and interpretable reasoning for molecular llms. arXiv preprint arXiv:2508.02066 , 2025a. Zihan Zhao, Ziping Wan, Lu Chen, Xuanze Lin, Shiyang Yu, Situo Zhang, Da Ma, Zichen Zhu, Danyang Zhang, Huayang Wang, et al. Chemdfm-r: A chemical reasoning llm enhanced with atomized chemical knowledge. arXiv preprint arXiv:2507.21990 , 2025b. 16

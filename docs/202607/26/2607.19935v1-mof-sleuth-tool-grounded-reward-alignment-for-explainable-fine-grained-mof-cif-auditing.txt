@@ -1,0 +1,1314 @@
+Title: MOF-Sleuth: Tool-Grounded Reward Alignment for Explainable Fine-Grained MOF CIF Auditing
+
+URL Source: https://arxiv.org/pdf/2607.19935v1
+
+Published Time: Thu, 23 Jul 2026 00:39:06 GMT
+
+Number of Pages: 21
+
+Markdown Content:
+# MOF-Sleuth : Tool-Grounded Reward Alignment for Explainable Fine-Grained MOF CIF Auditing 
+
+Yu Liu 1,2 ∗, Zhiwei Yang 1,2 ∗, Diandian Guo 1,2 , Kun Peng 1,2 , Fangfang Yuan 1†, Cong Cao 1,Chaozhuo Li 4, Zhiyuan Ma 5, Yanbing Liu 1,2 , Guobin Zhao 3†
+
+> 1
+
+Institute of Information Engineering, Chinese Academy of Sciences, Beijing, China 
+
+> 2
+
+School of Cyber Security, University of Chinese Academy of Sciences, Beijing, China 
+
+> 3
+
+National University of Singapore, Singapore 
+
+> 4
+
+Beijing University of Posts and Telecommunications, Beijing, China 
+
+> 5
+
+Huazhong University of Science and Technology, Wuhan, China liuyu@iie.ac.cn, guobinzhao@nus.edu.sg 
+
+Abstract 
+
+Large metal-organic framework (MOF) databases support simulation, screening, and machine learning through crystal-lographic information files (CIFs). Subtle chemical and struc-tural errors in these information-dense inputs can compromise downstream results and hinder manual inspection. Recent LLM advances in computational chemistry offer paths be-yond predictive screening toward fine-grained diagnosis with evidence-grounded explanations. However, two challenges re-main: (i) limited fine-grained attribution: MOF-specific val-idators and machine-learning models scale detection, but pro-vide fixed checks, scalar readiness scores, or coarse labels rather than evidence-grounded explanations; and (ii) unreli-able CIF reasoning: direct LLM auditing is costly and unre-liable because decisive chemical evidence is implicit across atom-site records and requires geometric, connectivity, occu-pancy, and charge calculations. Both stem from weak coupling between computable chemical evidence and language-model explanation. We introduce MOF-Sleuth , a reinforcement-guided CIF auditing agent with two modules: a deterministic 
+
+Forensic Lab and a Sleuth reasoning engine. The Lab de-rives composition, geometry, connectivity, occupancy, coor-dination, and charge evidence, and Sleuth uses this evidence to produce an evidence-grounded explanation, fine-grained error types, and a binary decision. Reward-guided reinforce-ment learning (RL) turns tool measurements into chemi-cal explanation-level supervision , rewarding not only the fi-nal answer but also cited chemical evidence and evidence-supported diagnoses . We introduce Chemically Grounded Diagnosis (Chem-GD), a deterministic metric that assesses whether a correct diagnosis is explained by factual, rele-vant CIF-derived evidence. Across four benchmarks, MOF-Sleuth establishes state-of-the-art performance among eval-uated LLM-based approaches and MOF-specific machine-learning methods, demonstrating gains in detection, attribu-tion, and grounded explanation quality. 
+
+1 Introduction 
+
+Metal-organic frameworks (MOFs) are modular porous crystals whose large design space has driven structure databases and high-throughput simulation and machine-learning (ML) methods (Furukawa et al. 2013; Zhao et al. 
+
+> ∗
+
+These authors contributed equally. 
+
+> †
+
+Corresponding author. IRMOF-1.cif — 239 lines, and the chemistry that matters is buried at the bottom                                  
+
+> ────────────────────────────────────────────────
+> 1│ data_IRMOF-1 # MOF-5 · Zn 4O(BDC) 3
+> 16 │ _cell_length_a 25.832
+> 17 │ _cell_length_b 25.832
+> 18 │ _cell_length_c 25.832
+> 24 │ _symmetry_space_group_name_H-M 'F m -3 m'
+> 30 │ loop_
+> 31 │ _symmetry_equiv_pos_as_xyz
+> 32 │ 'x,y,z'
+> 33 │ '-x,-y,z'
+> ⋮· · · 192 symmetry operations (lines 32–223) · · ·
+> 224 │ loop_
+> 225 │ _atom_site_label _atom_site_type_symbol _atom_site_fract_x _y _z
+> 231 │ Zn1 Zn 0.2934 0.2066 0.2066
+> ◄metal node (Zn 4O)
+> 232 │ O1 O0.2500 0.2500 0.2500
+> ◄central μ4-oxo
+> 233 │ O2 O0.2819 0.2181 0.1340
+> ◄carboxylate O
+> 234 │ C1 C0.2500 0.2500 0.1113
+> 235 │ C2 C0.2500 0.2500 0.0538
+> 236 │ C3 C0.2829 0.2171 0.0269
+> 237 │ H1 H0.3049 0.1951 0.0448
+> ────────────────────────────────────────────────
+> 7 atom sites
+> ×192 symmetry ops → 424 atoms.
+> No charge, no bonds, no error flags — every fact is implicit and scattered.
+
+LLM -based Machine learning-based 
+
+> Binary label
+> Lack of Fine-grained
+> Error Attribution
+> Rich natural-
+> language reasoning
+> High cost
+> Hallucination Lack of explainability
+
+Figure 1: MOF structure and CIF serialization. Existing machine-learning methods offer limited fine-grained error attribution, whereas LLMs struggle to reason over long, information-dense CIFs whose chemical validity is implicit across unit-cell fields and atom-site rows. 2025a); these workflows use crystallographic information files (CIFs) as primary structural inputs (Hall, Allen, and Brown 1991). Yet syntactically readable CIFs are not nec-essarily computation-ready: missing atoms, incorrect proto-nation, charge imbalance, disorder, abnormal occupancy, or implausible coordination can silently propagate into down-stream results (Gibaldi et al. 2025). As modern MOF collec-tions grow, improving both the efficiency and quality of CIF error detection becomes critical for reliable screening. Automated methods have begun to address CIF reliabil-ity at scale, but fine-grained attribution remains limited. MOFChecker (Jin et al. 2025) uses rule-based geometric arXiv:2607.19935v1 [cs.AI] 22 Jul 2026 and charge checks with scripted corrections. MOFClassi-fier (Zhao, Zhao, and Chung 2025) predicts computation readiness, whereas SETC (Gibaldi et al. 2025) predicts coarse error families. Recently, LitMOF (Kim, Kim, and Kim 2025) introduced an LLM-driven multi-agent workflow for multi-source MOF curation and structural repair. However, these systems improve detection, readiness scoring, or repair, but they do not provide a standardized closed-evidence set-ting for classifying fine-grained failure modes with evidence-grounded per-CIF explanations. LLMs offer a path from validity screening to explainable diagnosis (Boiko et al. 2023; Bran et al. 2024). But raw CIFs are long, table-heavy records whose decisive chemical evi-dence is implicit across atom-site fields and derived relations. Validity also depends on objective geometric, connectiv-ity, occupancy, and charge/protonation calculations (Gibaldi et al. 2025). Without explicit computational grounding, flu-ent explanations may therefore rest on hallucinated or irrel-evant evidence (Gao et al. 2023). How can MOF CIF audit-ing achieve fine-grained error classification and attribution while producing evidence-grounded chemical explanations? 
+
+To address this gap, we propose MOF-Sleuth , areinforcement-guided CIF auditing agent whose internal workflow separates deterministic evidence construction from fine-grained diagnosis and explanation. The agent contains two coordinated modules. A Forensic Lab tool library con-verts each CIF into a compact report of objective facts, hard flags, diagnostic signals, context, and citation aliases; a 
+
+Sleuth reasoning policy interprets the report and produces an initial evidence-grounded explanation, fine-grained error types, and a binary decision. A verdict-preserving inference stage further refines predicted-error attribution without alter-ing the initial decision. Unlike supervised adaptation, which imitates fixed target traces, our setting provides deterministic verifiers for the final audit. We therefore use reward-guided RL to optimize why a chemical audit is justified : audits are rewarded not only for correctness and type consistency, but also for whether LLM explanations cite verified chemi-cal evidence and support the predicted diagnoses . We also define Chemically Grounded Diagnosis (Chem-GD), a de-terministic, class-balanced metric that assesses whether a correct diagnosis is accompanied by a faithful explanation linking relevant CIF-derived evidence to its predicted error types. Our contributions are fourfold: 
+
+• We present a first systematic formulation of MOF CIF auditing beyond binary screening, defining it as 15-type fine-grained attribution with evidence-grounded explana-tions with RL-guided LLM agent. 
+
+• We propose MOF-Sleuth , a tool-grounded CIF auditing agent whose Forensic Lab builds deterministic chemical evidence and whose Sleuth policy outputs decisions, at-tributions, and evidence-citing explanations. 
+
+• We design evidence-facing rewards that convert deter-ministic tool outputs into chemical explanation-level su-pervision , beyond final-answer correctness. 
+
+• Across four benchmarks and blinded expert validation, 
+
+MOF-Sleuth outperforms evaluated LLM-based and MOF-specific baselines; ablations show complementary gains from tool evidence and reward-guided alignment. 
+
+2 Related Work 
+
+AI for MOFs and CIF reliability. Large-scale MOF dis-covery relies on computation-ready resources such as CoRE-MOF (Chung et al. 2014, 2019), ToBaCCo (Colón, Gómez-Gualdrón, and Snurr 2017), and QMOF (Rosen et al. 2021), but syntactic readability cannot ensure chemical reliabil-ity. Validators and chemistry-aware models address parts of it: MOFChecker applies geometric/charge checks (Jin et al. 2025), MOSAEC targets metal oxidation-state inconsisten-cies (White et al. 2025), MOFClassifier predicts a scalar readiness score (Zhao, Zhao, and Chung 2025), SETC clas-sifies proton, charge, and disorder families (Gibaldi et al. 2025), and LitMOF uses multi-source LLM agents for MOF curation and repair (Kim, Kim, and Kim 2025). However, these systems emphasize fixed checks, scalar scores, coarse families, or external-reference repair rather than a com-mon closed-evidence benchmark with standard verdicts, fine-grained attributions, and evidence-grounded explanations. 
+
+LLMs and agents for scientific reasoning. Chain-of-thought (Wei et al. 2022), self-consistency (Wang et al. 2023), ReAct (Yao et al. 2023b), Reflexion (Shinn et al. 2023), AutoGen (Wu et al. 2024), MetaGPT (Hong et al. 2024), and DSPy (Khattab et al. 2024) improve reasoning, tool use, and workflow composition. Chemistry agents and models extend this direction to search, planning, prediction, dialogue, molecular tasks, and text mining (Bran et al. 2024; Boiko et al. 2023; Jablonka et al. 2024; Zhao et al. 2025b; Yu et al. 2024; Zhang et al. 2024; Kim, Kim, and Kim 2025). However, closed-evidence CIF auditing requires explana-tions grounded in distributed structural evidence from long tables, where fluent generations may still make unsupported claims (Gao et al. 2023; Min et al. 2023). 
+
+Reinforcement learning for structured reasoning. Rein-forcement learning adapts language models beyond next-token likelihood through objectives such as PPO (Schulman et al. 2017) and GRPO for mathematical reasoning (Shao et al. 2024). DeepSeek-R1 shows that large-scale RL can elicit reflection and verification (Guo et al. 2025), and DAPO studies stable long-CoT RL (Yu et al. 2025). These settings emphasize general reasoning and final-answer performance, not chemical audits requiring error attribution, schema con-sistency, factual grounding, and diagnostic support. 
+
+3 Methodology 
+
+3.1 Problem Definition 
+
+MOF CIF auditing is a closed-evidence structural-diagnosis task. Its label space Y comprises 14 named types plus other 
+
+for supported structural errors outside them. For an input CIF x in the CIF space X , an auditor predicts an error-type set ˆY ⊆ Y and an evidence-grounded explanation using only CIF-derived evidence rather than external databases or literature. Because public MOF error datasets do not provide unified official labels for these fine-grained causes, the 15-type space is used as an actionable attribution vocabulary CIF 
+
+Raw MOF CIF File 
+
+CIF Reader Composition 
+
+& Cell Occupancy Geometry 
+
+Cutoff Graph Functional 
+
+Groups 
+
+Coordination 
+
+& Bridegs  
+
+> CIF
+
+C: 48 
+
+H: 32 
+
+O: 16 
+
+Zr: 6 
+
+formula, elements, 
+
+lattice parameters 
+
+Partial occupancy 
+
+and split sites 
+
+PBC distances, 
+
+overlaps, short 
+
+contacts 
+
+atom sites: 
+
+element, x,y,z, occ 
+
+connectivity, 
+
+fragments, 
+
+counter-ions 
+
+> COO -
+> OH PO 3
+> SO 3N
+
+Classify chemical 
+
+motifis 
+
+under-coordination 
+
+over-coordination 
+
+Negative net 
+
+charge 
+
+Forensic Lab-deterministic tools Sleuth Agent -reward-guided auditor 
+
+Structured Audit Output Evidence Report 
+
+Facts 
+
+Hard Flags 
+
+Signals 
+
+Context 
+
+Charge 
+
+Ledger 
+
+Sleuth Agent 
+
+Rationale Error Types Verdict 
+
+<reasoning> 
+
+cites report facts 
+
+(explanation )
+
+</ reasoning >
+
+<error_type> 
+
+[...] 
+
+(15 error types) 
+
+</ error_type >
+
+<answer> 
+
+0 | 1 
+
+(clean | error )
+
+</ answer >                 
+
+> DETERMINISTIC CIF TOOL REPORT
+> composition C24 H12 O16 Zn4
+> metal Zn
+> ×4(8-coordinate, OK)
+> linker 12
+> ×–COO⁻ (deprotonated)
+> geometry min dist 0.99 Å · no overlap
+> graph 1 component (connected)
+> metals + 8
+> carboxylate − 12
+> net − 4.0
+> ⚠
+> counte r-ions (none found)
+> ⚑SIGNAL charge.net = −4.0 (strong)
+> → anionic framework, cations missing
+
+Aliases 
+
+Answer 
+
+reward 
+
+Type 
+
+reward 
+
+Consistency 
+
+reward 
+
+... 
+
+Grounding reward 
+
+Evidence reward 
+
+explanation 
+
+grounded in 
+
+verified report 
+
+facts 
+
+diagnosis supported 
+
+by tool evidence 
+
+> Verifier Layer
+
+;Figure 2: Overview of the MOF-Sleuth agent. Forensic Lab constructs a structured evidence report from a CIF; Sleuth returns an evidence-grounded explanation, fine-grained error types, and a binary verdict. Conditional refinement improves predicted-error attribution while preserving the verdict. H     
+
+> Missing H
+> H
+> H
+> O
+> N
+> H+
+> Missing proton
+> Hydrogen /
+> Proronation
+> Charge
+> Compensation
+> Disorder /
+> Occupancy
+> Structural /
+> Completeness Coordination
+> Other
+> +
+> Missing cation
+> Missing anion
+> Imbalance
+> Me
+> －
+> +
+> -+
+> －
+> ++
+> +－
+> Atomic over lap
+> Partial
+> occup ancy
+> Split site /
+> disorder
+> Broken linker
+> Missing
+> fragment
+> Missing metal
+> Missing
+> organic
+> ?
+> ?
+> ?
+> ?
+> Other suppoorted
+> error
+> Me
+> Over-
+> coordination
+> Over-
+> coordination
+> Me
+
+... 
+
+Figure 3: The 15 fine-grained CIF error categories. and validated through expert judgment. Free solvent or guest molecules alone are not errors, so ˆY = ∅.
+
+Formalization. For a deterministic report r derived from x,the auditor fθ , with parameters θ, returns 
+
+fθ (r) = ( z, ˆY, ˆa). (1) Here z is the explanation and ˆa ∈ { 0, 1} the binary verdict ( 1
+
+erroneous and 0 clean). With I[·] denoting an indicator and 
+
+| · | set cardinality, audits must satisfy 
+
+ˆa = I
+
+h
+
+| ˆY| > 0
+
+i
+
+. (2) The 15 fine-grained types are organized under four par-ent families P = {charge , hydrogen , disorder , other }. The fixed multi-label map m : Y → 2P maps each fine type to its parent family or families, and extends to any set S ⊆ Y as 
+
+m(S) = S 
+
+> y∈S
+
+m(y). Training compares the predicted ver-dict with the reference verdict, compares m( ˆY) with avail-able parent-family annotations when present, and requires z
+
+to be grounded in r.
+
+3.2 Framework Overview 
+
+The MOF-Sleuth agent is built from Forensic Lab and Sleuth. As summarized in Figure 2, Forensic Lab converts each CIF into a structured evidence report, and Sleuth per-forms semantic reasoning over this chemical evidence. The output, shown in bottom-right of Figure 2, is a schema-constrained audit report containing an evidence-grounded explanation, a subset of the 15-type attribution space, and a binary verdict; the exact output contract is detailed in Ap-pendix A.3. Deterministic verification checks whether the ex-planation and attribution are supported by the report, and the same checks supply reward signals, filter verdict-preserving attribution refinement, and compute Chem-GD. 
+
+Fine-grained attribution is (i) emitted as 15-type labels, (ii) linked to tool diagnostic signals, and (iii) refined or rewarded only when supported by structural evidence. 
+
+Explanation is (i) emitted as evidence-grounded text, (ii) taught by reward-guided training to cite and use chemical evidence, and (iii) evaluated by Chem-GD together with the diagnosis. 
+
+3.3 Deterministic Evidence with Forensic Lab 
+
+Forensic Lab converts raw CIFs into structured evidence reports. Forensic Lab takes a raw CIF x and outputs a compact evidence report r, the only structural input read by Sleuth. This keeps calculation-heavy checks out of the language model. Its guiding principle is to push audit-relevant operations with objective computational criteria into Forensic Lab and expose them as citable chemical evidence . Forensic Lab runs CIF parsing, composition/cell accounting, occupancy analysis, periodic geometry, cutoff-graph connectivity, functional-group recognition, coordina-tion/bridge analysis, and charge-ledger checks. These tools compute reproducible facts and diagnostic signals without setting the final verdict. 
+
+The report separates facts, hard flags, signals, context, and aliases. Formally, let T = {Tk}Kk=1 be the K determin-istic chemistry tools, with K = 8 in our implementation. For each CIF x, they produce 
+
+r = T (x) = ( F, H, S, C, A) , (3) with 
+
+F = {(pi, v i)} objective field–value facts ,
+
+H = {(hℓ, τ ℓ, q ℓ)} hard flags ,
+
+S = {(sj , τ j , w j )} diagnostic signals ,
+
+C = {· · · } interpretation context ,
+
+A = {am 7 → (pm, v m)} citation aliases .
+
+(4) Here pi is a report field, vi its value, hℓ a deterministic flag, 
+
+τℓ ∈ Y its associated error type, and qℓ its supporting cited claim. A hard flag is a deterministic indicator whose support-ing field values directly map to candidate error types. sj is a softer structural cue, τj ∈ Y its associated error type, and 
+
+wj its evidence strength. F stores objective measurements such as atom counts, occupancies, distances, coordination summaries, and charge-ledger values. H stores determinis-tic hard flags, while S stores softer error-oriented cues. C
+
+records non-verdict context such as free solvent and ambigu-ous motifs, while A maps each machine-readable alias am
+
+to a canonical field pm and value vm. The automatically verifiable fact base is 
+
+B(r) = F ∪ { (am, v m) : am 7 → (pm, v m) ∈ A} . (5) 
+
+The report grounds claims in evidence. Thus, cited field– value claims can be grounded directly in the report. The same report also defines the tool-supported error-type set 
+
+Γ( r) = {τℓ : ( hℓ, τ ℓ, q ℓ) ∈ H} ∪ { τj : ( sj , τ j , w j ) ∈ S} ,
+
+(6) which records which diagnoses have explicit structural sup-port in the report. The hard-flag accessor used by the infer-ence protocol is hard( r) = H. Given an audit o = ( z, ˆY, ˆa),a deterministic Verifier Layer therefore checks whether Sleuth’s claims are anchored to the Forensic Lab output: 
+
+V(o, r ) = 
+
+h
+
+Q(z) ⊆ B (r), ˆY ⊆ Γ( r)
+
+i
+
+, (7) where Q(z) extracts cited claims from the explanation. Schema validity and type–verdict consistency are checked by the same layer. 
+
+The report is reused across training, inference, and eval-uation. Forensic Lab supplies reproducible evidence and graded diagnostic cues without setting a global verdict; Sleuth performs semantic reasoning over chemical evidence. The same report structure supports reward computation, verdict-preserving attribution filtering, and Chem-GD eval-uation. Appendix A.4 details the tools and report fields. 
+
+3.4 Reward-Guided Alignment 
+
+Tool-derived evidence becomes reward supervision for chemical explanations. Computational chemistry audits re-quire correct verdicts, taxonomy-aligned attributions, and explanations that follow from precise structural evidence. Prompting can impose the output schema, but cannot ensure that an explanation cites relevant facts or that the claimed error type is chemically supported. Forensic Lab therefore supplies the report read by Sleuth and enables determin-istic checks on whether the audit uses that report faith-fully. We train Sleuth with group-relative policy optimization (GRPO) (Shao et al. 2024) using a structured utility whose explanation-facing terms turn tool-derived evidence into chemical explanation-level supervision : Rgrd verifies cited chemical field–value claims against the report, and Revid 
+
+checks predicted error types against tool-derived structural signals. Thus, Rgrd tests whether cited evidence is real, while 
+
+Revid tests whether the diagnosis is structurally supported. They penalize two audit-critical failure modes in chemical explanations that prompting or supervised imitation can leave unresolved: fabricated or irrelevant evidence and plausible but unsupported chemical labels .Let D = {(ri, P⋆i , a i)}Ni=1 be the N -example training set, where ri is the Forensic Lab report for CIF i, P⋆i its reference parent-family set, and ai ∈ { 0, 1} its binary label. For each report, let oi,g = ( zi,g , ˆYi,g , ˆai,g ) denote candidate audit g ∈ { 1, . . . , G }. We organize six deterministic verifier rewards by their role before aggregation: 
+
+ri,g =
+
+
+
+Rans , R type 
+
+| {z }
+
+> task
+
+; Rfmt , R cons 
+
+| {z }
+
+> schema
+
+;
+
+Rgrd 
+
+|{z} 
+
+> ground
+
+; Revid 
+
+| {z } 
+
+> diagnosis
+
+⊤
+
+> i,g
+
+,Ri,g = Uλ (oi,g ; ri, P⋆i , a i) = λ⊤ri,g .
+
+(8) Here ri,g ∈ R6 is the reward vector and λ =(λans , λ type , λ fmt , λ cons , λ grd , λ evid )⊤ ∈ R6 
+
+> ≥0
+
+contains the weights. The task and schema blocks stabilize verdict correct-ness, parent-family agreement, parseability, and type–answer consistency; ground and diagnosis blocks implement the two explanation-facing checks above. Exact rules, weights, and GRPO objective are given in Appendix A.2. 
+
+3.5 Evaluation of Chemical Explanations 
+
+A sound explanation must connect a correct diagnosis to relevant CIF-derived evidence. Existing explanation-quality metrics (Gao et al. 2023; Min et al. 2023; Golovneva in-distribution out-of-distribution detection diagnosis                                                                                                                                                                                              
+
+> Method CoRE-MOF 2019 CoRE-MOF 2026 ToBaCCo QMOF Avg. Acc ↑Avg. Rec ↑Type-Hit Acc ↑Chem-GD ↑
+> Open-weight end-to-end LLMs
+> Qwen3-4B (Yang et al. 2025) 0.536 0.482 0.499 0.248 0.441 0.844 0.438 0.055 Qwen3-8B (Yang et al. 2025) 0.512 0.486 0.507 0.152 0.414 0.899 0.356 0.033 Qwen3-30B-A3B (Yang et al. 2025) 0.522 0.534 0.473 0.324 0.463 0.814 0.281 0.080 Gemma-4-31B (Google 2026) 0.523 0.692 0.480 0.587 0.571 0.617 0.292 0.227
+> API end-to-end LLMs
+> DeepSeek-v4-Pro (DeepSeek-AI 2026) 0.607 0.585 0.571 0.554 0.579 0.749 0.425 0.117 GPT-5.5 (OpenAI 2026) 0.686 0.683 0.585 0.839 0.698 0.413 0.617 0.418 Claude-Sonnet-4.6 (Anthropic 2026) 0.512 0.571 0.535 0.925 0.636 0.169 0.460 0.304
+> Agent-scaffold pipelines
+> Self-Consistency (Wang et al. 2023) 0.520 0.494 0.507 0.210 0.433 0.883 0.423 0.037 Reflexion (Shinn et al. 2023) 0.499 0.482 0.525 0.349 0.464 0.795 0.418 0.046 Tree-of-Thoughts (Yao et al. 2023a) 0.535 0.495 0.529 0.389 0.487 0.708 0.452 0.078 LATS (Zhou et al. 2024) 0.520 0.486 0.516 0.329 0.463 0.774 0.416 0.066 AutoGen (Wu et al. 2024) 0.542 0.490 0.497 0.309 0.460 0.836 0.435 0.052 CrewAI (CrewAI Inc. 2024) 0.522 0.524 0.468 0.357 0.468 0.770 0.404 0.044 MetaGPT (Hong et al. 2024) 0.516 0.470 0.494 0.267 0.437 0.821 0.428 0.053 LangGraph (LangChain 2024) 0.509 0.466 0.507 0.332 0.454 0.797 0.418 0.049 DSPy (Khattab et al. 2024) 0.518 0.487 0.478 0.456 0.485 0.638 0.441 0.086 GPTSwarm (Zhuge et al. 2024) 0.497 0.479 0.515 0.368 0.465 0.735 0.439 0.060 AFlow (Zhang et al. 2025) 0.532 0.502 0.457 0.150 0.410 0.858 0.411 0.045 AgentSquare (Shang et al. 2025) 0.525 0.507 0.452 0.221 0.426 0.740 0.439 0.089 ADAS (Hu, Lu, and Clune 2025) 0.532 0.490 0.525 0.288 0.459 0.818 0.442 0.068
+> Ours
+> MOF-Sleuth w/o RL 0.660 0.674 0.631 0.305 0.568 0.973 0.588 0.229
+> MOF-Sleuth 0.768 0.788 0.943 0.626 0.781 0.929 0.712 0.713
+
+Table 1: Main results on one in-distribution split and three OOD transfer suites. Type-Hit Acc measures parent-family attribution. 
+
+Bold marks the best result per column, light-green cells mark the strongest baseline, and arrows ( ↑) indicate that higher is better. et al. 2023; Prasad et al. 2023) often rely on entailment mod-els or LLM judges, whereas CIF auditing permits determinis-tic verification. For case i, let ri = T (xi) and let Bi = B(ri)
+
+be the canonical fact base used for verification; for raw-CIF baselines, this fact base is used only by the evaluator under the same rules. Let Q(zi) be the extractable chemical field– value and atom claims in explanation zi. A true but irrelevant fact cannot justify a chemical diagnosis ; write q ⇝i y when verified claim q is relevant to predicted type y. We define ci-tation fidelity gi and attributable evidence–diagnosis linkage 
+
+ℓi as 
+
+gi = I[Q(zi)̸ = ∅ ∧ Q (zi) ⊆ B i] ,ℓi = I
+
+h
+
+∀y ∈ ˆYi, ∃q ∈ Q (zi) ∩ B i : q ⇝i y
+
+i
+
+. (9) Thus, each predicted type must be supported by at least one verified and diagnosis-relevant cited claim. A frozen sup-port predicate ∆i( ˆYi) further checks whether the predicted type set is compatible with deterministic structural evidence, including competing signals. Type–answer consistency and support are combined as 
+
+di = I(ˆ ai = 0 ∧ ˆYi = ∅)
+
+∨ (ˆ ai = 1 ∧ ˆYi̸ = ∅ ∧ ∆i( ˆYi) = 1) . (10) Let Ic = {i : ai = c} contain cases of class c ∈ { 0, 1}.Chem-GD is a class-balanced strict conjunction of verdict correctness, citation fidelity, type–answer consistency, diag-nostic support, and attributable linkage: 
+
+Chem -GD = 12
+
+X
+
+> c∈{ 0,1}
+
+P 
+
+> i∈I c
+
+I[ˆ ai = ai]gidiℓi
+
+|I c| . (11) Thus, an erroneous case cannot pass with an empty type set, and an all-clean copier is capped at 0.5 regardless of class imbalance. Chem-GD objectively measures whether correct diagnoses are accompanied by evidence-grounded explana-tions, without a model-based judge. All methods are scored with the same deterministic parser and frozen predicates; Appendix A.5 gives component scores, normalization rules, support predicates, and validation details. 
+
+4 Experiments 
+
+4.1 Experimental Setup 
+
+Datasets. We train on human-annotated MOF CIFs and evaluate on CoRE-MOF 2019 (Chung et al. 2019; Gibaldi et al. 2025), CoRE-MOF 2026 (Zhao et al. 2025a), To-BaCCo (Colón, Gómez-Gualdrón, and Snurr 2017), and QMOF (Rosen et al. 2021). These cover in-distribution, bal-anced OOD and imbalanced. Split sizes, class distributions, and sampling procedures are in Appendix C.1. 
+
+Baselines. We evaluate four groups chosen to cover generic prompting, frontier proprietary models, reusable agent work-flows, and MOF-specific validators. (i) Open-weight raw-CIF LLMs: Qwen3 4B/8B/30B-A3B (Yang et al. 2025) and Gemma-4-31B (Google 2026) test accessible general mod-els on serialized CIF text. (ii) Latest flagship API mod-Setting Interface/adaptation Acc ↑ ∆ Chem-GD ↑ ∆                                                                                                
+
+> (a) Architectural effectiveness
+> Qwen3-4B raw CIF, no training 0.499 ↓0.132 0.014 ↓0.145 Tree-of-Thoughts raw CIF, agent scaffold 0.529 ↓0.102 0.041 ↓0.118 GPT-5.5 raw CIF, API model 0.585 ↓0.046 0.369 ↑0.210
+> MOF-Sleuth SFT teacher explanation 0.796 ↑0.165 0.023 ↓0.136
+> MOF-Sleuth GPT -5.5tool report, API model 0.894 ↑0.263 0.519 ↑0.360
+> MOF-Sleuth w/o RL tool report, frozen 0.631 –0.159 –
+> MOF-Sleuth single full reward, one pass 0.943 ↑0.312 0.640 ↑0.481
+> MOF-Sleuth conditional attribution 0.943 ↑0.312 0.866 ↑0.707
+> (b) Reward-guided training
+> w/o Rtype w/o label-parent reward 0.888 ↓0.055 ∗0.584 ↓0.056 ∗
+> w/o Rgrd w/o grounding reward 0.924 ↓0.019 ∗0.041 ↓0.599 ∗
+> w/o Revid w/o diagnostic-support 0.856 ↓0.087 ∗0.471 ↓0.169 ∗
+> MOF-Sleuth single full reward, λevid =0 .90 0.943 –0.640 –
+> (c) MOF-specific comparison
+> MOFChecker 2.0 geometry/charge checks 0.710 ↓0.233 N/A –MOFClassifier PU-CGCNN readiness 0.761 ↓0.182 N/A –SETC-GAT atomic three graph classifier 0.785 ↓0.158 N/A –0.15 0.30 0.60 0.90 1.20
+> λevid
+> 0.7
+> 0.8
+> 0.9
+> 1.0
+> score  ↑
+> 107 82 41 33 62
+> red: false positives (FP ↓)
+> Evidence-weight sweep
+> Acc CGD 0100 200 300
+> Training step
+> 2.00
+> 2.25
+> 2.50
+> 2.75
+> 3.00
+> reward
+> (a) Total reward
+> total
+> 0100 200 300
+> Training step
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> score
+> (b) Faithfulness rewards
+> Rgrd
+> Revid
+
+Table 2: Ablations and MOF-specific comparisons. The left table reports architecture, reward, and MOF-specific validator comparisons; the right-side panels show the evidence-weight sweep (top) and GRPO reward trajectories (bottom). ∆ denotes change from the corresponding MOF-Sleuth reference row, and ∗ denotes exact McNemar p < 0.05 .
+
+els: DeepSeek-v4-Pro (DeepSeek-AI 2026), GPT-5.5 (Ope-nAI 2026), and Claude-Sonnet-4.6 (Anthropic 2026) test the strongest generic raw-CIF prompting setting. (iii) General-purpose agent scaffolds: Self-Consistency (Wang et al. 2023), Reflexion (Shinn et al. 2023), Tree-of-Thoughts (Yao et al. 2023a), LATS (Zhou et al. 2024), AutoGen (Wu et al. 2024), CrewAI (CrewAI Inc. 2024), MetaGPT (Hong et al. 2024), LangGraph (LangChain 2024), DSPy (Khattab et al. 2024), GPTSwarm (Zhuge et al. 2024), AFlow (Zhang et al. 2025), AgentSquare (Shang et al. 2025), and ADAS (Hu, Lu, and Clune 2025) test reusable agent designs on evidence-intensive MOF auditing. (iv) MOF-specific validators: 
+
+MOFChecker 2.0 (Jin et al. 2025), MOFClassifier (Zhao, Zhao, and Chung 2025), and SETC-GAT (Gibaldi et al. 2025) test rule-based and learning-based chemistry systems. 
+
+Metrics. All metrics are deterministic. Acc and Avg. Rec measure binary detection, Type-Hit Acc measures four-parent-family attribution, and class-balanced Chemically Grounded Diagnosis jointly measures diagnostic correctness and grounded-explanation quality. Its definition and com-ponent analysis are in Appendices A.5 and C.4. Targeted ablations include false positives (FP); parseability and type-answer consistency are auxiliary diagnostics. 
+
+Implementation. Sleuth is initialized from Qwen3-4B-Instruct (Yang et al. 2025) and trained with full-parameter GRPO using only the CoRE-MOF 2019 training split. Each evaluation contributes 1,000 sampled CIFs with manually verified binary labels. Appendix Figure 6 shows that CoRE-MOF 2026 is structurally close to the CoRE-MOF reference, whereas QMOF is highly imbalanced and is therefore prop-erty testing with ToBaCCo. Reported results are checked with repeated complete runs; reward, optimization, decoding, and systems details are in Appendices A.2 and C.3. 
+
+4.2 Main Results 
+
+Directly reading CIF files is unreliable. Table 1 exposes this domain mismatch. Scaling raw-CIF Qwen models from 4B to 30B leaves average accuracy at 0.414 –0.463 , while thirteen generic agent scaffolds remain at 0.410 –0.487 . All must recover chemical evidence directly from long, low-level atom-site records, and neither additional scale nor generic reasoning removes this bottleneck. Even frontier API models reach only 0.698 average accuracy under direct CIF reading. 
+
+MOF-Sleuth instead leads three of four suites, achieves the strongest aggregate accuracy ( 0.781 ), Type-Hit Acc ( 0.712 ), and Chem-GD ( 0.713 ), demonstrating gains in detection, four-family attribution, and grounded explanation quality. Because QMOF has only 23/1,000 erroneous structures, its Acc is bias-sensitive (an all-clean classifier reaches 0.977 )and is interpreted with recall and Chem-GD. 
+
+MOF-Sleuth gains come from computable evidence and reward-guided evidence use. With the same frozen 4B au-ditor, replacing raw CIFs with the Forensic Lab report raises average accuracy from 0.441 to 0.568 and Chem-GD from 
+
+0.055 to 0.229 , isolating the benefit of deterministic evi-dence. Reward-guided alignment teaches the agent to turn this evidence into grounded explanations, while verdict-preserving refinement strengthens error attribution without changing binary decisions. Together, these stages raise aver-age accuracy to 0.781 , Type-Hit Acc to 0.712 , and Chem-GD to 0.713 . Ablation further isolates refinement, which raises Chem-GD from 0.640 to 0.866 at unchanged 0.943 accuracy. 
+
+4.3 Ablations and Comparisons 
+
+Table 2 reports architecture, reward, and domain-validator comparisons on ToBaCCo. 
+
+Architecture effectiveness. Table 2(a) separates evidence construction from attribution refinement. With a frozen GPT SETC w/o RL Sleuth      
+
+> 100
+> 200
+> 300
+> 400
+> FP count ↓
+> 122
+> 187
+> 355
+> 33
+> (a) Over-flagging control
+> GPT SETC w/o RL Sleuth
+> 100
+> 200
+> 300
+> 400
+> FN count ↓  285
+> 28 14 24
+> (b) Missed-error control
+
+Figure 4: Stress-mode comparison, including the strongest MOF-specific ML baseline. FP measures over-flagging and FN measures missed errors.                       
+
+> Method Avg. Acc ↑Tokens (M) ↓s/ex. ↓Cost ↓
+> DeepSeek-v4-Pro 0.579 70.81 11.95 $41.89 GPT-5.5 0.698 72.83 4.62 $919.08
+> Claude-Sonnet-4.6 0.636 49.86 13.82 $169.43
+> MOF-Sleuth 0.781 17.50 2.04 $0.00
+
+Table 3: Efficiency comparison. MOF-Sleuth uses fewer tokens, runs faster, and avoids API cost. Qwen3-4B auditor, the Forensic Lab report beats raw-CIF prompting and Tree-of-Thoughts. The interface also raises GPT-5.5 Acc/Chem-GD from 0.585 /0.369 to 0.894 /0.519 ,showing that its benefit is not backbone-specific. Verdict-preserving refinement increases Chem-GD from 0.640 to 
+
+0.866 at unchanged 0.943 accuracy. These controls identify evidence construction, rather than model scale or generic reasoning, as the main bottleneck. 
+
+Reward training effectiveness. With the evidence interface fixed, SFT reaches 0.796 /0.023 Acc/Chem-GD, whereas full-reward GRPO reaches 0.943 /0.640 . In Table 2(b), re-moving Rgrd reduces Chem-GD to 0.041 , removing Revid 
+
+lowers Acc/Chem-GD to 0.856 /0.471 , and removing Rtype 
+
+lowers them to 0.888 /0.584 . The λevid sweep shows that diagnostic-support weighting controls weak-signal false pos-itives, and training trajectories show rising total, grounding, and diagnostic-support rewards. Listed paired differences are significant ( p < 0.05 ). Thus, Rgrd aligns evidence citation, while Revid aligns chemically supported labeling. 
+
+Comparison with MOF-specific validators. Under failure-aware scoring, MOFChecker, MOFClassifier, and SETC-GAT reach 0.710 –0.785 accuracy, compared with 0.943 
+
+for MOF-Sleuth . These validators do not generate expla-nations, so Chem-GD is not applicable to them. Compared with standalone MOF-specific ML validators, the gain comes from using Forensic Lab as a structured evidence interface and training Sleuth to integrate deterministic signals into fine-grained, explainable attributions. 
+
+4.4 Analysis 
+
+Evidence and alignment address complementary errors. 
+
+Figure 4 isolates the precision–recall trade-off on the same                 
+
+> Audit claim Blinded expert evidence
+> Reliable verdict 0.930 agreement, κ=0.860 Fine-grained attribution 0.700 Type-Hit Acc, Jaccard =0.294 Attribution refinement Type-Hit Acc +0.240 , Jaccard +0.091
+> Chem-GD validity Chem-GD precision =0.938 , agreement =0.720
+
+Table 4: Expert validation. Blinded review supports verdict reliability, fine-grained attribution, refinement, and Chem-GD; details are in Appendix D. transfer suite. GPT-5.5 keeps false positives moderate but misses 285 errors on the same 500 erroneous cases. SETC-GAT reduces missed errors to 28 but still flags 187 clean structures. The frozen tool-report auditor has only 14 FN but over-flags 355 clean structures, showing that tool evidence improves sensitivity but needs calibration. Reward-guided alignment keeps missed errors low (24 FN) while reducing false positives to 33. RL turns tool sensitivity into cali-brated evidence use. This performance gain mainly reflects the evidence-support reward: Revid discourages weak-signal over-flagging while preserving the sensitivity provided by the tool report. The grounding reward is evaluated separately through Chem-GD and expert-judge validation. 
+
+Compact evidence improves the accuracy–cost trade-off for scalable auditing. Using compact reports and a local 4B auditor, MOF-Sleuth reaches 0.781 average accuracy with 17.50M tokens and 2.04 s/example (Table 3). API models reach 0.579 –0.698 using 49.86–72.83M tokens and 4.62– 13.82 s/example, costing $42–$919 for 4,000 audits under recorded OpenRouter prices (OpenRouter 2026a,b). Our to-ken total includes all refinement calls; the latency conser-vatively includes full-cohort refinement time although only 53.2% of cases trigger it. 
+
+4.5 Expert-Judge Validation 
+
+Experts confirm reliable verdicts and useful causes. We use blinded expert review to test whether the audit can support CIF curation. As shown in Table 4, MOF-Sleuth 
+
+reaches 0.930 verdict agreement ( κ = 0.860 ; Cohen’s kappa (Cohen 1960)), and its 15-type attributions reach 0.700 Type-Hit Acc on erroneous cases (Jaccard 0.294 (Jaccard 1901)). This directly supports the task formulation: the model does not only flag erroneous CIFs, but also gives chemically meaningful fine-grained attribution .
+
+Experts also support the explanation-centered design. 
+
+Verdict-preserving refinement improves Type-Hit Acc by +0.240 and Jaccard by +0.091 without changing the binary decision, showing that the second pass improves why the CIF is wrong rather than merely shifting the verdict. Unlike generic citation or rationale metrics (Gao et al. 2023; Min et al. 2023; Golovneva et al. 2023; Prasad et al. 2023), Chem-GD checks CIF-derived evidence and diagnosis together; it tracks expert-supported diagnoses (precision 0.938, agree-ment 0.720), supporting its use as a scalable, deterministic measure of evidence-grounded chemical explanations. 5 Conclusion 
+
+We present the first systematic LLM-based framework for MOF CIF auditing beyond binary validity screening. MOF-Sleuth combines a deterministic Forensic Lab, which con-verts raw CIFs into citable chemical evidence, with a Sleuth reasoning agent that produces binary verdicts, fine-grained error attributions, and evidence-grounded explanations. Ex-pert validation supports the usefulness of its fine-grained attribution and explanation quality, while large-scale experi-ments show that reward-guided alignment teaches the agent to use tool-derived evidence more reliably. Ablations further verify the architecture and reward design, and MOF-Sleuth 
+
+leads MOF-specific ML, API, and agent baselines. 
+
+References 
+
+Anthropic. 2026. Introducing Claude Sonnet 4.6. https: //www.anthropic.com/news/claude-sonnet-4-6. Accessed: 2026-06-23. Boiko, D. A.; MacKnight, R.; Kline, B.; and Gomes, G. 2023. Autonomous Chemical Research with Large Language Models. Nature , 624(7992): 570–578. Bran, A. M.; Cox, S.; Schilter, O.; Baldassari, C.; White, A. D.; and Schwaller, P. 2024. Augmenting Large Language Models with Chemistry Tools. Nature Machine Intelligence ,6(5): 525–535. Chung, Y. G.; Camp, J.; Haranczyk, M.; Sikora, B. J.; Bury, W.; Krungleviciute, V.; Yildirim, T.; Farha, O. K.; Sholl, D. S.; and Snurr, R. Q. 2014. Computation-Ready, Experi-mental Metal–Organic Frameworks: A Tool To Enable High-Throughput Screening of Nanoporous Crystals. Chemistry of Materials , 26(21): 6185–6192. Chung, Y. G.; Haldoupis, E.; Bucior, B. J.; Haranczyk, M.; Lee, S.; Zhang, H.; Vogiatzis, K. D.; Milisavljevic, M.; Ling, S.; Camp, J. S.; Slater, B.; Siepmann, J. I.; Sholl, D. S.; and Snurr, R. Q. 2019. Advances, Updates, and Analytics for the Computation-Ready, Experimental Metal–Organic Frame-work Database: CoRE MOF 2019. Journal of Chemical & Engineering Data , 64(12): 5985–5998. Cohen, J. 1960. A Coefficient of Agreement for Nominal Scales. Educational and Psychological Measurement , 20(1): 37–46. Colón, Y. J.; Gómez-Gualdrón, D. A.; and Snurr, R. Q. 2017. Topologically Guided, Automated Construction of Metal– Organic Frameworks and Their Evaluation for Energy-Related Applications. Crystal Growth & Design , 17(11): 5801–5810. CrewAI Inc. 2024. CrewAI: Framework for Orchestrating Role-Playing Autonomous AI Agents. https://github.com/ crewAIInc/crewAI. DeepSeek-AI. 2026. DeepSeek V4 Preview Release. https: //api-docs.deepseek.com/news/news260424/. Accessed: 2026-06-15. Furukawa, H.; Cordova, K. E.; O’Keeffe, M.; and Yaghi, O. M. 2013. The Chemistry and Applications of Metal-Organic Frameworks. Science , 341(6149): 1230444. Gao, T.; Yen, H.; Yu, J.; and Chen, D. 2023. Enabling Large Language Models to Generate Text with Citations. In Pro-ceedings of the 2023 Conference on Empirical Methods in Natural Language Processing , 6465–6488. Singapore: As-sociation for Computational Linguistics. Gibaldi, M.; Luo, J.; White, A. J.; Mayo, R. A.; Pereira, C.; and Woo, T. K. 2025. Generalizable classification of crystal structure error types using graph attention networks. Journal of Materials Chemistry A , 13: 32255–32270. Golovneva, O.; Chen, M. P.; Poff, S.; Corredor, M.; Zettle-moyer, L.; Fazel-Zarandi, M.; and Celikyilmaz, A. 2023. ROSCOE: A Suite of Metrics for Scoring Step-by-Step Rea-soning. In International Conference on Learning Represen-tations .Google. 2026. Gemma 4 Model Overview. https://ai.google. dev/gemma/docs/core/model_card_4. Accessed: 2026-06-15. Guo, D.; Yang, D.; Zhang, H.; Song, J.; Wang, P.; Zhu, Q.; Xu, R.; Zhang, R.; Ma, S.; Bi, X.; Zhang, X.; Yu, X.; Wu, Y.; Wu, Z. F.; Gou, Z.; Shao, Z.; Li, Z.; Gao, Z.; Liu, A.; et al. 2025. DeepSeek-R1 Incentivizes Reasoning in LLMs through Reinforcement Learning. Nature , 645(8081): 633– 638. Hall, S. R.; Allen, F. H.; and Brown, I. D. 1991. The Crystal-lographic Information File (CIF): A New Standard Archive File for Crystallography. Acta Crystallographica Section A ,47(6): 655–685. Hong, S.; Zhuge, M.; Chen, J.; Zheng, X.; Cheng, Y.; Wang, J.; Zhang, C.; Wang, Z.; Yau, S.; Lin, Z.; Zhou, L.; Ran, C.; Xiao, L.; Wu, C.; and Schmidhuber, J. 2024. MetaGPT: Meta Programming for A Multi-Agent Collaborative Framework. In International Conference on Learning Representations ,volume 2024, 23247–23275. Hu, S.; Lu, C.; and Clune, J. 2025. Automated Design of Agentic Systems. In International Conference on Learning Representations , volume 2025, 21344–21377. Jablonka, K. M.; Schwaller, P.; Ortega-Guerrero, A.; and Smit, B. 2024. Leveraging Large Language Models for Pre-dictive Chemistry. Nature Machine Intelligence , 6(2): 161– 169. Jaccard, P. 1901. Étude comparative de la distribution florale dans une portion des Alpes et des Jura. Bull Soc Vaudoise Sci Nat , 37: 547–579. Jin, X.; Jablonka, K. M.; Moubarak, E.; Li, Y.; and Smit, B. 2025. MOFChecker: A Package for Validating and Correct-ing Metal–Organic Framework (MOF) Structures. Digital Discovery , 4(6): 1560–1569. Khattab, O.; Singhvi, A.; Maheshwari, P.; Zhang, Z.; San-thanam, K.; A, S. V.; Haq, S.; Sharma, A.; Joshi, T.; Moazam, H.; Miller, H.; Zaharia, M.; and Potts, C. 2024. DSPy: Compiling Declarative Language Model Calls into Self-Improving Pipelines. In International Conference on Learn-ing Representations , volume 2024, 54928–54958. Kim, H.; Kim, D.; and Kim, J. 2025. LLM-Driven Multi-Agent Curation and Expansion of Metal–Organic Frame-works Database. arXiv:2512.01693. LangChain. 2024. LangGraph: Build Stateful, Multi-Actor Applications with LLMs. https://github.com/langchain-ai/ langgraph. Min, S.; Krishna, K.; Lyu, X.; Lewis, M.; Yih, W.-t.; Koh, P. W.; Iyyer, M.; Zettlemoyer, L.; and Hajishirzi, H. 2023. FActScore: Fine-grained Atomic Evaluation of Factual Pre-cision in Long Form Text Generation. In Proceedings of the 2023 Conference on Empirical Methods in Natural Lan-guage Processing , 12076–12100. Singapore: Association for Computational Linguistics. OpenAI. 2026. GPT-5.5 API Model. https://developers. openai.com/api/docs/models/gpt-5.5. Accessed: 2026-06-19. OpenRouter. 2026a. OpenRouter Model Catalog and Pricing. https://openrouter.ai/pricing. Accessed: 2026-06-23. OpenRouter. 2026b. OpenRouter Reasoning Tokens. https://openrouter.ai/docs/guides/best-practices/reasoning-tokens. Accessed: 2026-06-23. Prasad, A.; Saha, S.; Zhou, X.; and Bansal, M. 2023. Re-CEval: Evaluating Reasoning Chains via Correctness and Informativeness. In Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing , 10066– 10086. Singapore: Association for Computational Linguis-tics. Rosen, A. S.; Iyer, S. M.; Ray, D.; Yao, Z.; Aspuru-Guzik, A.; Gagliardi, L.; Notestein, J. M.; and Snurr, R. Q. 2021. Ma-chine Learning the Quantum-Chemical Properties of Metal– Organic Frameworks for Accelerated Materials Discovery. 
+
+Matter , 4(5): 1578–1597. Schulman, J.; Wolski, F.; Dhariwal, P.; Radford, A.; and Klimov, O. 2017. Proximal Policy Optimization Algorithms. arXiv:1707.06347. Shang, Y.; Li, Y.; Zhao, K.; Ma, L.; Liu, J.; Xu, F.; and Li, Y. 2025. AgentSquare: Automatic LLM Agent Search in Modular Design Space. In International Conference on Learning Representations , volume 2025, 3841–3865. Shao, Z.; Wang, P.; Zhu, Q.; Xu, R.; Song, J.; Bi, X.; Zhang, H.; Zhang, M.; Li, Y. K.; Wu, Y.; and Guo, D. 2024. DeepSeekMath: Pushing the Limits of Mathematical Rea-soning in Open Language Models. arXiv:2402.03300. Shinn, N.; Cassano, F.; Gopinath, A.; Narasimhan, K.; and Yao, S. 2023. Reflexion: Language Agents with Verbal Re-inforcement Learning. In Advances in Neural Information Processing Systems , volume 36, 8634–8652. Curran Asso-ciates, Inc. Wang, X.; Wei, J.; Schuurmans, D.; Le, Q. V.; Chi, E. H.; Narang, S.; Chowdhery, A.; and Zhou, D. 2023. Self-Consistency Improves Chain of Thought Reasoning in Lan-guage Models. In International Conference on Learning Representations .Wei, J.; Wang, X.; Schuurmans, D.; Bosma, M.; Ichter, B.; Xia, F.; Chi, E. H.; Le, Q. V.; and Zhou, D. 2022. Chain-of-Thought Prompting Elicits Reasoning in Large Language Models. In Advances in Neural Information Processing Sys-tems , volume 35, 24824–24837. Curran Associates, Inc. White, A. J.; Gibaldi, M.; Burner, J.; Mayo, R. A.; and Woo, T. K. 2025. High Structural Error Rates in “Computation-Ready” MOF Databases Discovered by Checking Metal Ox-idation States. Journal of the American Chemical Society ,147(21): 17579–17583. Wu, Q.; Bansal, G.; Zhang, J.; Wu, Y.; Li, B.; Zhu, E.; Jiang, L.; Zhang, X.; Zhang, S.; Liu, J.; Awadallah, A. H.; White, R. W.; Burger, D.; and Wang, C. 2024. AutoGen: Enabling Next-Gen LLM Applications via Multi-Agent Conversations. In First Conference on Language Modeling .Yang, A.; Li, A.; Yang, B.; Zhang, B.; Hui, B.; Zheng, B.; Yu, B.; Gao, C.; Huang, C.; Lv, C.; et al. 2025. Qwen3 Technical Report. arXiv:2505.09388. Yao, S.; Yu, D.; Zhao, J.; Shafran, I.; Griffiths, T.; Cao, Y.; and Narasimhan, K. 2023a. Tree of Thoughts: Deliberate Prob-lem Solving with Large Language Models. In Advances in Neural Information Processing Systems , volume 36, 11809– 11822. Curran Associates, Inc. Yao, S.; Zhao, J.; Yu, D.; Du, N.; Shafran, I.; Narasimhan, K. R.; and Cao, Y. 2023b. ReAct: Synergizing Reasoning and Acting in Language Models. In International Conference on Learning Representations .Yu, B.; Baker, F. N.; Chen, Z.; Ning, X.; and Sun, H. 2024. LlaSMol: Advancing Large Language Models for Chemistry with a Large-Scale, Comprehensive, High-Quality Instruc-tion Tuning Dataset. In First Conference on Language Mod-eling .Yu, Q.; Zhang, Z.; Zhu, R.; Yuan, Y.; Zuo, X.; Yue, Y.; Dai, W.; Fan, T.; Liu, G.; Liu, J.; Liu, L.; Liu, X.; Lin, H.; Lin, Z.; et al. 2025. DAPO: An Open-Source LLM Reinforcement Learning System at Scale. In Advances in Neural Information Processing Systems , volume 38, 113222– 113244. Curran Associates, Inc. Zhang, J.; Xiang, J.; Yu, Z.; Teng, F.; Chen, X.; Chen, J.; Zhuge, M.; Cheng, X.; Hong, S.; Wang, J.; Zheng, B.; Liu, B.; Luo, Y.; and Wu, C. 2025. AFlow: Automating Agen-tic Workflow Generation. In International Conference on Learning Representations , volume 2025, 34040–34077. Zhang, W.; Wang, Q.; Kong, X.; Xiong, J.; Ni, S.; Cao, D.; Niu, B.; Chen, M.; Li, Y.; Zhang, R.; Wang, Y.; Zhang, L.; Li, X.; Xiong, Z.; Shi, Q.; Huang, Z.; Fu, Z.; and Zheng, M. 2024. Fine-Tuning Large Language Models for Chemical Text Mining. Chemical Science , 15(27): 10600–10611. Zhao, G.; Brabson, L.; Chheda, S.; Huang, J.; Kim, H.; Liu, K.; Mochida, K.; Pham, T.; Prerna; Terrones, G.; Yoon, S.; Zoubritzky, L.; Coudert, F.-X.; Haranczyk, M.; Kulik, H. J.; Moosavi, S. M.; Sholl, D. S.; Siepmann, J. I.; Snurr, R. Q.; and Chung, Y. G. 2025a. CoRE MOF DB: A curated exper-imental metal–organic framework database with machine-learned properties for integrated material-process screening. 
+
+Matter , 8(6): 102140. Zhao, G.; Zhao, P.; and Chung, Y. G. 2025. MOFClassifier: A Machine Learning Approach for Validating Computation-Ready Metal–Organic Frameworks. Journal of the American Chemical Society , 147(37): 33343–33349. Zhao, Z.; Ma, D.; Chen, L.; Sun, L.; Li, Z.; Xia, Y.; Chen, B.; Xu, H.; Zhu, Z.; Zhu, S.; Fan, S.; Shen, G.; Yu, K.; and Chen, X. 2025b. Developing ChemDFM as a Large Language Foundation Model for Chemistry. Cell Reports Physical Science , 6(4): 102523. Zhou, A.; Yan, K.; Shlapentokh-Rothman, M.; Wang, H.; and Wang, Y.-X. 2024. Language Agent Tree Search Unifies Rea-soning, Acting, and Planning in Language Models. In Pro-ceedings of the 41st International Conference on Machine Learning , volume 235 of Proceedings of Machine Learning Research , 62138–62160. PMLR. Zhuge, M.; Wang, W.; Kirsch, L.; Faccio, F.; Khizbullin, D.; and Schmidhuber, J. 2024. GPTSwarm: Language Agents as Optimizable Graphs. In Proceedings of the 41st Inter-national Conference on Machine Learning , volume 235 of 
+
+Proceedings of Machine Learning Research , 62743–62767. PMLR. Appendix Guide SECTION A Extended Methodology A.1 Fine-Grained Diagnostic Vocabulary A.2 GRPO Objective and Exact Reward Specification A.3 Frozen Two-Pass Inference Protocol A.4 Forensic Lab and Evidence Report A.5 Components of Chemically Grounded Diagnosis 
+
+B Case Study 
+
+C Additional Experiments and Analysis C.1 Evaluation Datasets C.2 Structural Distribution Shift C.3 Implementation Details C.4 Accuracy Is Not Explanation Quality C.5 Detailed Error Analysis by Error Family 
+
+D Human Expert Validation D.1 Protocol D.2 Attribution Findings 
+
+E Interactive Audit Demo 
+
+A Extended Methodology 
+
+A.1 Fine-Grained Diagnostic Vocabulary 
+
+This subsection documents the fixed 15-type diagnostic vo-cabulary emitted by Sleuth. The labels are multi-label at-tribution outputs rather than mutually exclusive classes. As defined in the Problem Definition, the large-scale training labels and main benchmark metrics use four annotated par-ent families through the mapping m, while fine-label expert analyses evaluate the 15-type attribution directly when such annotations are available. Fixing this vocabulary also lets the parser, reward verifiers, and Chem-GD apply the same deterministic label constraints. 
+
+A.2 GRPO Objective and Exact Reward Specification 
+
+Group-relative normalization. For each report ri, the pol-icy πθ samples G audits {oi,g }Gg=1 . Using the utility in Eq. 8, GRPO normalizes their rewards within the same report: 
+
+μi = 1
+
+G
+
+> G
+
+X
+
+> g=1
+
+Ri,g , σi =
+
+vuut 1
+
+G
+
+> G
+
+X
+
+> g=1
+
+(Ri,g − μi)2, (12) where μi and σi are the within-group mean and standard deviation. The advantage is 
+
+ˆAi,g = Ri,g − μi
+
+σi + ϵA
+
+, (13) where ϵA > 0 is a numerical-stability constant; positive advantages indicate audits that outperform alternatives for the same CIF. 
+
+Policy update. The policy ratio is 
+
+ρi,g (θ) = πθ (oi,g |ri)
+
+πθold (oi,g |ri) , (14) 
+
+Algorithm 1 Frozen conditional attribution with an im-mutable verdict 
+
+Require: CIF x, G0, G+, fθ , I0, I+, Π, and M
+
+Ensure: Final structured audit o
+
+1: r0 ← G0(x)
+
+2: o0 ← fθ (I0, r 0)
+
+3: (z0, Y0, a 0) ← Π( o0)
+
+4: if a0 = 0 then 
+
+5: return o0 {retain the clean first-pass audit unchanged} 6: end if 
+
+7: r+ ← G+(x, r 0)
+
+8: o+ ← fθ (I+, r +)
+
+9: (z+, Y+, _) ← Π( o+) {discard the second-pass verdict} 10: if z+ = ∅ then 
+
+11: z+ ← z0
+
+12: end if 
+
+13: if Y+ = ∅ then 
+
+14: Y+ ← Y 0
+
+15: end if 
+
+16: H ← hard( r+)
+
+17: Y ← canonicalize  Y+ ∪ labels( H)
+
+18: z ← appendEvidence( z+, H )
+
+19: return M (z, Y, a 0) {the final verdict remains a0 = 1 }
+
+where πθold is the policy before the current update. We use the clipped surrogate 
+
+Lclip  
+
+> i,g
+
+(θ) = min {ρi,g (θ) ˆAi,g ,
+
+clip( ρi,g (θ), 1 − ϵ, 1 + ϵ) ˆAi,g }, (15) where ϵ is the clipping radius, and maximize 
+
+J (θ) = Ei,g 
+
+Lclip  
+
+> i,g
+
+(θ)
+
+− βD KL 
+
+ πθ (·| ri) ∥ πref (·| ri) , (16) where πref is a fixed reference policy, DKL is the Kullback– Leibler divergence, β controls the strength of the reference-policy penalty, and Ei,g averages over examples and within-report samples. The KL term discourages unstable drift from the reference auditor unless the structured audit reward sup-ports the change. 
+
+Exact verifier rewards. Table 6 gives the exact per-completion rules and selected weights. Let ˆP = m( ˆY) be the predicted parent-family set. A predicted fine label is effective 
+
+when it maps to at least one parent family. For grounding, let 
+
+bgrd = pcite min(1 , n field /2) , where pcite is the precision of extracted field–value citations against the report and nfield is the number of distinct cited field paths. 
+
+A.3 Frozen Two-Pass Inference Protocol 
+
+A deterministic parser extracts the first complete 
+
+<reasoning> , <error_type> , and <answer> 
+
+blocks, then normalizes only exact vocabulary labels. A method may use its declared, bounded same-model retry for a parse failure; any field still malformed or missing in the final stored output is counted as a failure. The merger copies the first-pass verdict. If that verdict is clean, the complete first-pass audit is retained; otherwise, the second-pass explanation and labels replace the initial attribution, after Fine Error Type Parent m(y) Description missing hydrogen hydrogen Hydrogen atoms are missing from chemically plausible sites. 
+
+wrong number of protons hydrogen, charge The protonation state is inconsistent with the local chemistry or charge. 
+
+terminal oxygen atom hydrogen, charge Terminal oxygen suggests missing H, unresolved protonation, or charge imbalance. 
+
+missing cations charge Charge-balancing cations are absent or underrepresented. 
+
+missing anions charge Charge-balancing anions are absent or underrepresented. 
+
+ion disorder disorder Ionic species are disordered or ambiguously placed. 
+
+occupancy disorder Atoms exhibit abnormal or partial occupancy patterns. 
+
+atoms overlapping disorder Atoms are placed unrealistically close to one another. 
+
+inverted conformers disorder Local conformers or linker orientations are geometrically inconsistent. 
+
+missing ligand other A ligand or substantial linker fragment is missing. 
+
+has over-coordinated atoms other Atoms exceed chemically plausible coordination environments. 
+
+has under-coordinated atoms other Atoms have incomplete or chemically implausible coordination envi-ronments. 
+
+without metal other The structure lacks metal atoms expected for a MOF. 
+
+without carbon other The structure lacks carbon atoms expected for organic linkers. 
+
+other other Other chemically meaningful CIF errors not covered above. 
+
+Table 5: The 15 structured audit error types and their fixed mapping to the four parent type families used by Rtype and Type-Hit Acc. Free solvent is context only and maps to no effective type.                                                                             
+
+> Component Exact per-completion scoring rule Weight
+> Rfmt −1if the answer is unparseable or the fine-label list is invalid; 0if the explanation is absent, has fewer than 30 characters, or uses the deprecated reasoning protocol; 1otherwise.
+> 0.05
+> Rans 1for a correct verdict, −1for an unparseable verdict, −0.85 for a false positive, and −0.25 for a false negative. 2.00
+> Rtype 0for an invalid fine-label list. If P⋆=∅, the score is 1when ˆP=∅and −0.85 otherwise. If P⋆̸=∅, the score is −0.25 when
+> ˆP=∅,−0.35 when the sets do not overlap, and their set F1 otherwise.
+> 1.25
+> Rcons 0if the answer or fine-label list is invalid; otherwise 1when ˆa= 1 ⇔ˆP̸ =∅and −1when this condition is violated. 0.05
+> Rgrd 0when bgrd = 0 or parsing fails; bgrd for a correct verdict; 0.25 bgrd for an incorrect verdict whose predicted and reference families overlap; and −0.2bgrd otherwise.
+> 0.15
+> Revid 0for an invalid fine-label list. With no effective predicted label, the score is 0.5if the report has no hard flag and −0.5otherwise. With effective labels, the score is 1if all pass their label-specific support rules, 0.25 if only some pass, and −1if none pass.
+> 0.90
+
+Table 6: Exact reward rules and selected weights. Citation values match numeric report values within 10 −4 and nonnumeric values after case-normalized exact matching. Label support is evaluated against frozen predicates over report facts, diagnostic signals, and hard flags. which every deterministic hard-flag label and its exact field–value citation are inserted. Assertions verify verdict identity for every merged example. Algorithm 1 specifies the deployed protocol after GRPO training; the auditor parameters remain frozen. Let G0 denote the base-report renderer, G+ the enriched forensic-report renderer, fθ the frozen auditor, I0 the base instruction, I+
+
+the attribution instruction, Π the deterministic XML parser, and M the deterministic schema merger. For a report r,
+
+hard( r) returns the H component of the report, i.e., typed hard-flag label–citation pairs, and labels extracts their labels. 
+
+canonicalize keeps only valid labels in the fixed output or-der; appendEvidence adds only missing hard-flag citations to an explanation. 
+
+A.4 Forensic Lab and Evidence Report 
+
+The Forensic Lab is a measurement layer, not another de-cision maker. Its role is to turn a dense CIF into a compact evidence report before any language-model reasoning. The tools read only parsed CIF content—atom types, coordinates, occupancies, cell parameters, and periodic geometry—and never use filenames, dataset labels, human notes, or model outputs. We distinguish fully objective measurements, such as composition and interatomic distances, from heuristic chemical summaries, such as functional-group assignment and formal charge ledgers. This distinction is important: the Forensic Lab exposes evidence and uncertainty, while the Sleuth agent decides whether the evidence supports an audit label. 
+
+The evidence report is a lab notebook that the model can cite. After the checkers run, their outputs are rendered through a fixed report interface used in training and evalu-ation: Machine-readable field aliases , Objective facts , Hard flags , Possible error signals , Co-occurring possible signals ,and Context for interpretation . Objective facts expose deter-ministic measurements; hard flags are deterministic label– citation pairs; possible signals remain weighted hypotheses rather than verdicts, and context records assumptions, un-certainty, and known false-positive modes. For conditional attribution, an additive forensic layer inserts hydrogen-host counts, heavy-atom contacts, coordination histograms, and fragmentation signals into these native sections without al-Forensic tool Evidence produced for the auditor CIF reader Parses atom sites, element symbols, coordinates, occupancies, periodic cell parameters, and formula-level metadata.         
+
+> Composition–cell checker Reports formula, atom count, element counts, H/Cratio, lattice lengths, angles, and cell volume as objective facts.
+> Occupancy checker Detects partial occupancies and split-site hints, exposing direct evidence for disorder or unre-solved crystallographic sites.
+> Geometry checker Computes PBC neighbor distances, minimum distances, heavy-atom overlaps, and short H–X contacts; this acts like a ruler for impossible local geometry.
+> Cutoff-graph analyzer Builds a distance-cutoff connectivity graph, then reports connected components, small non-metal fragments, possible counter-ions, and unidentified fragments.
+> Functional-group classifier Identifies chemically relevant motifs such as aromatic Clacking H, carboxylate/protonated carboxylate, phosphonate, sulfonate, O/Nenvironments, and halides.
+> Coordination–bridge analyzer Summarizes metal coordination shells, over/under-coordination cues, bridging O/halide/S atoms, and terminal-oxo warnings.
+> Charge-ledger checker Balances common metal oxidation states against anionic ligand contributions, returning positive charge, negative charge, net charge, assumptions, and uncertainty.
+> Evidence compiler Converts all measurements into candidate signals, co-occurrence signals, known failure modes, and machine-readable aliases for citation checking.
+
+Table 7: Forensic Lab components. The first eight rows are CIF-derived checkers; the final row compiles their outputs into the report read by the Sleuth agent. tering the base report. The auditor receives the corresponding plain-text report serialization. For legibility, the example be-low is a content-equivalent XML rendering of one held-out anionic framework ( C40 H16 Ag 2N8S8); the XML changes presentation only, not the fields, values, or model input. 
+
+The report grounds each explanation in checkable chem-ical evidence. This representation gives the auditor a small set of chemically meaningful handles instead of thou-sands of raw CIF tokens. If the Sleuth agent writes that 
+
+charge.net=-6.0 supports a missing-cation diagnosis, the parser can verify both parts of the claim: the cited field and value must exist in the machine-readable aliases or report fields, and that cited field must be relevant to the predicted type. The base report powers GRPO and first-pass inference; the enriched report supplies the additional evidence used by conditional attribution and final Chem-GD evaluation. 
+
+A.5 Components of Chemically Grounded Diagnosis 
+
+Chemically Grounded Diagnosis combines verdict correct-ness with the evidence, diagnosis, and evidence–label linkage predicates defined in the main text. All components use the recognized diagnostic set returned by the parser; context-only 
+
+has free solvents mentions and out-of-vocabulary strings do not enter this set, while parseability is reported separately. For diagnostic decomposition, Structural Evidence Fidelity (SEF) averages the evidence predicate over all N examples: 
+
+SEF = 1
+
+N
+
+> N
+
+X
+
+> i=1
+
+gi. (17) Chemical Diagnosis Support (CDS) is label-level precision over attributable links from verified cited evidence to pre-dicted error types: 
+
+CDS = 
+
+P
+
+> i
+
+P  
+
+> y∈ˆYi
+
+I[∃q ∈ Q (zi) : q ∈ B i ∧ q ⇝i y]
+
+P 
+
+> i
+
+| ˆYi| .
+
+(18) For report-based outputs, q ⇝i y holds only when the cited field–value pair matches the canonical report and its nor-malized field path matches a frozen relevant-field pattern for 
+
+y. These patterns are transcribed from the fields consulted by the label-specific report-support rules. For raw-CIF out-puts, the same explanation sentence must contain a verified CIF field or atom identifier and an explicit label-specific cue. The discriminative predicate ∆i first applies the frozen report-support rule to every predicted type. It then rejects diagnoses containing only missing anions or missing cations 
+
+when fragmentation, hostless hydrogen, heavy-atom clash, or linker mismatch is present but no structural type is predicted. These component metrics isolate failure sources without re-quiring a correct verdict; the main text therefore reports the stricter, class-balanced Chem-GD. 
+
+B Case Study 
+
+Tool grounding plus RL turns weak signals into correct verdicts. Figure 5 contrasts GPT-5.5—the strongest exter-nal baseline—reading the raw CIF end-to-end with the RL-trained tool-grounded auditor on the clean ToBaCCo frame-work tobmof-3359 , a Zr 6O4(OH) 4 node with twelve car-boxylate linkers. Because the CIF exposes only atom-site rows, the end-to-end model cannot reconstruct the bonding graph: it sees benzene-like rings carrying “only H7 and H8,” treats the four substituted ring carbons as unsubstituted, and flags missing hydrogen —a hallucinated defect on a clean structure. The tool-grounded auditor instead receives an ex-plicit charge ledger and integrates it: twelve deprotonated carboxylates ( −12 ), four μ-OH( −4), and four μ-oxo units FORENSIC EVIDENCE REPORT                                                                         
+
+> <forensic_report> <field_aliases> <field name="composition.formula" value="C40H16Ag2N8S8"/> <field name="geometry.min_distance_A" value="0.949"/> <field name="graph.n_components" value="1"/> <field name="metal_coordination.Ag.avg_N" value="4.0"/> <field name="charge.net" value="-6.0"/> </field_aliases> <objective_facts> <composition atom_count="74" H_to_C="0.4"> <elements Ag="2" C="40" H="16" N="8" S="8"/> </composition> <cell a="13.638" b="13.638" c="6.205" alpha="90.0" beta="90.0" gamma="90.0" volume_A3="1154.1"/> <geometry min_distance_A="0.949" partial_occupancy_count="0" heavy_overlap_count="0" short_HX_contact_count="0"/> <graph components="1" largest_component_atoms="74" small_nonmetal_components="0"/> <functional_groups aromatic_C="16" aromatic_C_lacking_H="0" azolate_like_metal_bound_N="8"/> <metal_coordination element="Ag" sites="2" avg_N="4.0" avg_O="0.0"> <site id="Ag72" shell="4 Nat 2.29 A"/> <site id="Ag73" shell="4 Nat 2.29 A"/> </metal_coordination> <bridging_atoms element="S" mu0="8"/> </objective_facts> <hard_error_flags count="0"/> <! -- Heuristic candidate; not afinal verdict. --><possible_error_signal id="E1" family="charge_or_h" weight="medium"> <evidence field="charge.net" value="-6.0"/> <rationale> Moderate net formal charge under common oxidation-state assumptions. </rationale> <candidate_interpretations >missing H | missing counter-ions |wrong oxidation states </ candidate_interpretations ></ possible_error_signal ><cooccurring_possible_signals count="0"/> <interpretation_context> <charge_ledger confidence="low"> <positive source="Ag(+1) x2">2</positive> <negative source="azolate-like N(-1) x8">8.0</ negative> <net >-6.0</ net ></charge_ledger> <uncertainty >N-donor classification may confuse neutral pyridyl and anionic azolate sites. </ uncertainty ><counter_ion_candidates count="0"/> <charge_correction target_abs_net_le="1.0" positive_correction_needed="about 6" candidates="none"/> <known_false_positive_contexts> mixed-valent metals |polyoxometalates |cationic frameworks with removed counter-anions |rare oxidation states | H-rider placement artifacts </known_false_positive_contexts> </interpretation_context> </forensic_report>
+
+(−8) supply the 24 negative charges that balance the +24 
+
+from the six Zr 4+ centers, and the aromatic-hydrogen check reports no ring carbon lacking H, so the sparse hydrogen count is expected substitution chemistry rather than a defect. It returns an empty error list and answer 0. This is the be-havior Revid targets: a diagnosis is emitted only when the surrounding structural facts support it, not whenever a scalar looks unusual. 
+
+The case also explains the ToBaCCo gain. ToBaCCo contains many large framework structures where weak lo-cal cues can be benign once charge balance, coordination, and functional-group accounting are considered jointly. The frozen auditor over-flags such cases, producing 355 false pos-itives on ToBaCCo, whereas the RL-trained auditor reduces this to 33 while adding only ten missed errors (false negatives 
+
+14 → 24 ). The ToBaCCo accuracy gain ( 0.631 → 0.943 ) is therefore not a mere threshold shift; it reflects a learned pol-icy for combining competing tool signals into a final audit decision. 
+
+C Additional Experiments and Analysis 
+
+C.1 Evaluation Datasets 
+
+The training split contains 8,006 human-annotated CIFs, in-cluding 3,959 erroneous and 4,047 clean structures. Separate development and internal held-out splits contain 1,000 and 1,002 examples, respectively. Evaluation uses CoRE-MOF 2019 (Chung et al. 2019; Gibaldi et al. 2025), CoRE-MOF 2026 (Zhao et al. 2025a), QMOF (Rosen et al. 2021), and ToBaCCo (Colón, Gómez-Gualdrón, and Snurr 2017). The suite composition and sampling rules are reported below. Parent-family type annotations are available for the CoRE-MOF 2019 evaluation split and are used for Type-Hit Acc; the external suites are evaluated with binary labels and de-terministic explanation-grounding metrics. 
+
+C.2 Structural Distribution Shift 
+
+To inspect covariate shift independently of labels and au-dit outcomes, we pool a seed-42 sample of 1,000 training structures with the four 1,000-structure evaluation suites and embed them jointly in Figure 6. Each structure is repre-sented only by 87 label-free descriptors comprising elemen-tal atomic fractions, atom count, unit-cell volume, an atom-density proxy, normalized cell lengths, and cell angles. We standardize the pooled descriptors, reduce them to 30 prin-cipal components, and fit one t-SNE projection with seed 42 and perplexity 40. The analysis uses neither labels nor audit outcomes. It characterizes structural coverage of the evalua-tion suites and is not used for training, threshold selection, or metric computation. We complement the visualization with an RBF maximum mean discrepancy permutation test in the original descriptor space, standardized using only the training reference. The held-out CoRE-MOF 2019 split shows no detectable shift from training under this representation ( MMD 2 = 0 .0011 ,
+
+p = 0 .646 ), whereas CoRE-MOF 2026 ( 0.0102 ), ToBaCCo (0.3455 ), and QMOF ( 0.0380 ) are each shifted with p =0.002 over 499 permutations. All three external compar-isons remain significant after Bonferroni correction for the three OOD tests. Thus, the external suites are statistically CASE tobmof-3359 STRUCTURE Zr 6O4(OH) 4 node + 12 carboxylate linkers REFERENCE clean ✓
+
+GPT-5.5 × FALSE POSITIVE 
+
+Raw-CIF end-to-end audit 
+
+INPUT           
+
+> C1 C0.4701 1.0011 -0.5557 C2 C0.5344 0.9901 -0.5577 H7 H0.3927 1.0026 -0.4957 ... 366 rows, no bonds
+
+substituted ring C 
+
+⇓
+
+inferred “missing H” 
+
+EXPLANATION EXCERPT 
+
+“C1–C6 form an isolated benzene-like ring , but only H7 and H8 are present; unsubstituted ring carbons . . . have no attached substituent atoms . . . indicating missing hydrogens .” 
+
+STRUCTURED AUDIT 
+
+<error_type> ["missing hydrogen"] <answer> 1
+
+Failure: linker substitution is mistaken for hydrogen deficiency. 
+
+MOF-Sleuth ✓ CORRECT 
+
+Tool-grounded, RL-aligned audit 
+
+FORENSIC EVIDENCE   
+
+> charge.net = 0.0 carboxylate.deprot = 12 mu_OH / mu_oxo = 4/4 aromatic_C.lackingH = 0
+
+12 COO − + 4 μ-OH − + 4 μ-O2−
+
+| {z }
+
+> 24 −
+
+= 6 Zr 4+ 
+
+| {z } 
+
+> 24 +
+
+EXPLANATION EXCERPT 
+
+“. . . deprotonated_carboxylate=12.0, mu_OH=4.0, mu_oxo_x2=8.0 sums to 24.0, matching positive=24.0 . . . no missing hydrogens .” 
+
+STRUCTURED AUDIT 
+
+<error_type> [] <answer> 0
+
+Verified: charge is balanced and no aromatic carbon lacks hydrogen. 
+
+Figure 5: Case study on clean ToBaCCo framework tobmof-3359 . GPT-5.5 infers missing hydrogen from raw atom-site rows, whereas MOF-Sleuth verifies charge balance and aromatic hydrogen occupancy before returning the correct clean verdict. Explanation excerpts are verbatim. 80 60 40 20 0 20 40 60 80 
+
+t-SNE dimension 1     
+
+> 60
+> 40
+> 20
+> 0
+> 20
+> 40
+> 60
+> t-SNE dimension 2
+> Training reference CoRE-MOF 2019 (ID) CoRE-MOF 2026 ToBaCCo QMOF
+
+Figure 6: Pooled t-SNE visualization of label-free structural descriptors for the training reference and four evaluation suites. Gray points denote a seed-matched sample of the training distribution. Blue points are the CoRE-MOF 2019 held-out in-distribution test, whereas orange, green, and purple points are the external CoRE-MOF 2026, ToBaCCo, and QMOF suites. All points use the same preprocessing and one joint projection. The external suites exhibit different structural coverage, most visibly the shifted ToBaCCo neighborhoods, relative to the training and held-out CoRE-MOF reference. This visualizes the external-suite diversity summarized in Table 8. Dataset Source / sampling rule Total Clean Error Purpose CoRE-MOF 2019 (Chung et al. 2019; Gibaldi et al. 2025) seed-42 sample from the CoRE-MOF 2019 held-out split 1000 481 519 in-distribution test CoRE-MOF 2026 (Zhao et al. 2025a) 500 clean + 500 erroneous structures 1000 500 500 external balanced test QMOF (Rosen et al. 2021) all 23 erroneous structures + seed-42 clean fill 1000 977 23 imbalanced stress test ToBaCCo (Colón, Gómez-Gualdrón, and Snurr 2017) 500 clean + 500 erroneous structures 1000 500 500 external balanced test 
+
+Table 8: Evaluation datasets. CGD     
+
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> Score
+> 0.713
+> 0.229
+> 0.418
+> CDS
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0 0.987 0.964
+> 0.195
+> MOF-Sleuth w/o RL GPT-5.5
+
+Figure 7: Grounded-explanation quality for GPT-5.5 and 
+
+MOF-Sleuth with and without RL. Tool evidence yields high CDS without RL, while reward-guided alignment raises the stricter Chem-GD score. shifted under label-free structural descriptors while the held-out CoRE-MOF split is not. 
+
+C.3 Implementation Details 
+
+Baseline implementation. All applicable baselines use a shared task interface and evaluation protocol. All LLM base-lines use the same output contract and parser. Agent scaffolds share the raw CIF input and frozen Qwen3-4B backbone, retain their method-specific multi-call behavior, and never receive our tools or weight updates. For MOF-specific val-idators, we evaluate released checkpoints on the ToBaCCo benchmark used in Table 2. We retain the MOFClassifier core ensemble (Zhao, Zhao, and Chung 2025) and SETC-GAT atomic checkpoint (Gibaldi et al. 2025), and compare them with MOFChecker 2.0 (Jin et al. 2025). ToBaCCo is a balanced external suite and shows the largest label-free descriptor shift from our training reference (Figure 6); un-supported inputs count as incorrect. 
+
+Training and inference configuration. Table 9 summarizes the hardware, selection, GRPO, and decoding settings used for the final auditor. 
+
+C.4 Chemically Grounded Diagnosis: Accuracy Is Not Explanation Quality 
+
+A correct verdict is not enough for CIF curation: the expla-nation must cite real chemical evidence and use it to support the diagnosis. Figure 7 contrasts GPT-5.5 with MOF-Sleuth 
+
+using the component scores defined in Appendix A.5. GPT-5.5 reaches Chem-GD 0.418 but only CDS 0.195 , indicating weak diagnosis support. The frozen tool-report auditor al-ready reaches CDS 0.964 , yet its Chem-GD remains 0.229 ;available tool-supported labels alone do not ensure a correct complete audit. Reward-guided alignment preserves CDS (0.987 ) while raising Chem-GD to 0.713 .Table 10 provides the complete SEF/CDS decomposition for all evaluated language-model and agent baselines. 
+
+Development, validation, and scope. The discriminative support rule was specified on a deterministic hash-split devel-opment half of the ToBaCCo expert study and frozen before scoring the other half. Agreement between automatic pass/-fail and expert attribution correctness rose from 0.519 for broad report compatibility to 0.722 on this held-out half. This is development evidence because both halves originate from the same ToBaCCo study. After freezing the complete pro-tocol, we applied it without modification to an independent 100-case panel with 25 examples from each evaluation suite. Final Chem-GD attains 0.720 agreement, 0.938 precision, and 0.714 recall for identifying expert-correct attributions on this cross-suite panel. Thus, the expert study provides initial external validation of Chem-GD as a high-precision deterministic proxy for expert-judged audit success. Chem-GD evaluates the complete tool-agent audit, includ-ing deterministic postprocessing, rather than unaided free-form LLM reasoning. It shares the frozen verifier family with training, but the roles are distinct: Rgrd trains evidence truthfulness, Revid trains diagnostic support, and Chem-GD tests the final correct audit for both. Reward ablations that improve Chem-GD therefore demonstrate alignment to this objective, while the blinded cross-suite panel checks metric meaningfulness independently. Chem-GD does not claim ex-act recovery of every fine-grained label or causal validity of every explanation statement, and it does not replace expert chemical ground truth. Item Setting Hardware Internal cluster with 64 NVIDIA H100 GPUs; the selected GRPO job uses eight H100 GPUs. Model and tuning Qwen3-4B-Instruct, full-parameter tuning, Qwen no-thinking chat template. Selection protocol Reward weights, hyperparameters, and checkpoints are selected only on a CoRE-MOF 2019 development subset disjoint from all reported test sets. All 4,000 binary test labels are manually verified. GRPO sampling Eight completions per report; four sample generations logged; temperature 1.1, top-p 0.9, top-k 20. Optimization 350 steps; learning rate 2 × 10 −6; cosine schedule; warmup ratio 0.1; KL coefficient β = 0 .04 ; checkpoints every 50 steps; selected checkpoint step 250. Length and batch Maximum context length 8192; maximum completion length 1024; per-device batch size 8; gradient accumulation 8. Systems settings bfloat16 precision; DeepSpeed ZeRO-2; gradient checkpointing; colocated vLLM; vLLM memory utilization 0.30; four dataloader workers; eight dataset workers; seed 42. Reward and inference Reward weights are listed in Table 6. Final inference uses greedy decoding. Sleuth first generates a complete audit; for predicted-error cases, the same LLM performs a verdict-preserving attribution pass to reduce unsupported attributions and hallucinated explanations. A deterministic merger keeps the original binary answer unchanged. 
+
+Table 9: Experimental configuration for the final MOF-Sleuth auditor. Fine-grained expert attribution is evaluated separately in Appendix D. 
+
+C.5 Detailed Error Analysis by Error Family 
+
+Because only CoRE-MOF 2019 (Chung et al. 2019; Gibaldi et al. 2025) provides human error-family annotations, we report per-family F1 to show where typed diagnosis remains difficult beyond binary detection. Remaining errors concentrate in overlapping charge, pro-tonation, and terminal-oxygen families, where several la-bels can be structurally plausible. This supports evidence-grounded attribution rather than binary detection alone. 
+
+D Human Expert Validation 
+
+Expert CIF review is time intensive because each case re-quires checking atom-site rows, charge/protonation, occu-pancy, connectivity, and coordination evidence. We therefore use blinded expert panels with fixed seeds to externally val-idate three claims: the verdicts are reliable, the fine-grained causes are chemically useful, and verdict-preserving attribu-tion refinement improves explanations after the protocol is                                                  
+
+> Method SEF ↑CDS ↑
+> End-to-end LLMs
+> Qwen3-4B (Yang et al. 2025) 0.527 0.071 Qwen3-8B (Yang et al. 2025) 0.686 0.016 Qwen3-30B-A3B (Yang et al. 2025) 0.786 0.056 Gemma-4-31B (Google 2026) 0.844 0.087 DeepSeek-v4-Pro (DeepSeek-AI 2026) 0.629 0.229 GPT-5.5 (OpenAI 2026) 0.940 0.195 Claude-Sonnet-4.6 (Anthropic 2026) 0.670 0.366
+> Agent-scaffold pipelines
+> Self-Consistency (Wang et al. 2023) 0.523 0.067 Reflexion (Shinn et al. 2023) 0.471 0.079 Tree-of-Thoughts (Yao et al. 2023a) 0.566 0.131 LATS (Zhou et al. 2024) 0.531 0.088 AutoGen (Wu et al. 2024) 0.547 0.067 CrewAI (CrewAI Inc. 2024) 0.502 0.103 MetaGPT (Hong et al. 2024) 0.511 0.067 LangGraph (LangChain 2024) 0.511 0.071 DSPy (Khattab et al. 2024) 0.525 0.145 GPTSwarm (Zhuge et al. 2024) 0.432 0.074 AFlow (Zhang et al. 2025) 0.646 0.093 AgentSquare (Shang et al. 2025) 0.672 0.081 ADAS (Hu, Lu, and Clune 2025) 0.602 0.071
+> Ours
+> MOF-Sleuth w/o RL 0.621 0.964
+> MOF-Sleuth 0.974 0.987
+
+Table 10: Complete component metrics underlying Chem-ically Grounded Diagnosis. SEF is Structural Evidence Fi-delity; CDS is Chemical Diagnosis Support. frozen. One stratified 100-case ToBaCCo panel freezes the refinement protocol, and an independent 100-case cross-suite panel tests transfer (Table 11). 
+
+D.1 Protocol 
+
+We randomly sampled 100 ToBaCCo structures with seed 42, stratified into 50 existing-error and 50 existing-clean cases. Two domain experts (Expert A and Expert B) in-dependently reviewed anonymized CIFs—without filename, database label, tool report, or model output—and recorded a verdict, fine-grained causes, confidence, and decisive atom-/site evidence. Free solvent alone remained context rather than an effective error. Disagreements were adjudicated into a consensus set. Model outputs and binary verdicts were hid-den until adjudication, preventing annotation anchoring. This first panel froze the verdict-preserving attribution-refinement protocol; the original verdicts remained immutable. We then applied the frozen protocol unchanged to a separately an-notated panel containing 25 examples from each evaluation suite. 
+
+D.2 Attribution Findings 
+
+Blinded experts confirm reliable verdicts and useful causes. Table 11(a) shows 0.930 verdict agreement and 
+
+κ = 0 .860 with consensus, with 47 TP, 46 TN, 4 FP, and 3 FN. The 15-label attribution task is intentionally stringent: exact-set expert agreement is 54%, and direct expert Jac-card/F1 is 0.252/0.389. Against the adjudicated consensus, 
+
+MOF-Sleuth reaches 0.700 Type-Hit Acc and 0.294/0.418 Charge      
+
+> (n=351)
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> Family-F1
+> 0.70
+> 0.58
+> 0.40
+> Hydrogen
+> (n=217)
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 0.49 0.46
+> 0.29
+> Disorder
+> (n=59)
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 0.03 0.00 0.05
+> MOF-Sleuth w/o RL Agent pipelines
+
+Figure 8: Per-family attribution F1 on CoRE-MOF 2019 (Chung et al. 2019; Gibaldi et al. 2025). MOF-Sleuth 
+
+improves the dominant charge and hydrogen families; “Agent pipelines” averages the 13 raw-CIF agent baselines, and the rare other family is omitted. Jaccard/F1, placing its fine-grained suggestions within the observed expert-disagreement range. This supports the 15-type vocabulary as an actionable attribution interface for database curation. 
+
+Conditional attribution improves explanations without changing answers. On ToBaCCo-100, refinement raises Type-Hit Acc from 0.260 to 0.700, Jaccard from 0.101 to 0.294, and fine-label F1 from 0.141 to 0.418 while every binary verdict remains fixed at 0.930 accuracy. The paired Jaccard gain is +0 .193 (95% bootstrap CI [0 .134 , 0.254] ), demonstrating that the improvement comes from recover-ing supported failure causes rather than shifting the decision threshold. 
+
+The resulting advice transfers and supports efficient ex-pert triage. On the independent cross-suite panel, the fi-nal audit supplies at least one expert-supported cause for 84% of erroneous structures, versus 60% for the sealed first pass; Jaccard also rises by +0 .091 (95% CI [0 .032 , 0.155] ). Chem-GD identifies expert-correct causes with 0.938 pre-cision and 0.714 recall. Operationally, each accepted audit names a likely failure mode and points to specific struc-tural evidence, turning open-ended inspection of a long CIF into targeted verification of a bounded recommendation. This supports practical curation efficiency without outsourcing the final chemical judgment.                                                           
+
+> (a) Blind verdict reliability
+> Comparison Agreement Cohen’s κ
+> Expert A vs. Expert B 0.980 0.960 Database label vs. consensus 1.000 1.000
+> MOF-Sleuth vs. consensus 0.930 0.860 (b) Fine-grained attribution on erroneous cases
+> Comparison Type-Hit Acc Jaccard Fine-label F1 Expert A vs. Expert B 0.480 0.252 0.389 Expert A vs. consensus 0.960 0.528 0.635 Expert B vs. consensus 1.000 0.702 0.839
+> MOF-Sleuth vs. consensus 0.700 0.294 0.418 (c) Conditional refinement and cross-suite transfer
+> Metric ToBaCCo-100 Cross-suite-100 Type-Hit Acc 0.260 →0.700 (+0.440) 0.600 →0.840 (+0.240) Error-case Jaccard 0.101 →0.294 (+0.193) 0.396 →0.487 (+0.091) Fine-label F1 0.141 →0.418 (+0.277) 0.219 →0.324 (+0.105) Chem-GD agreement
+> 0.700 →0.800 (+0.100) 0.600 →0.720 (+0.120)
+
+Table 11: Blinded expert validation of verdict reliability, fine-grained attribution, and cross-suite transfer. Panel (a) uses all ToBaCCo-100 cases, and panel (b) uses its adjudicated er-roneous cases. In (c), “single” is the sealed first-pass output and “final” is conditional attribution after freezing the pro-tocol; verdicts never change. Type-Hit Acc requires at least one predicted fine type to match an expert-supported cause, and Chem-GD agreement compares automatic pass/fail with expert attribution correctness. 
+
+E Interactive Audit Demo 
+
+We ship the framework as a local HTML demo. A dropped CIF is parsed locally, an evidence report is compiled from the Forensic Lab checks, and only that report is sent to a user-configured LLM endpoint under the paper’s evidence-report prompt. The returned audit is parsed into the reason-ing / error_type / answer schema, and each cited field– value pair is checked against the locally computed tool val-ues. The following three pages show one complete walk-through on the built-in sample case: case intake and tool-by-tool forensics, the compiled evidence report, the interroga-tion configuration, and the structured verdict. The examiner output shown is the verbatim GPT-5.5 response (API key masked, gateway URL replaced by a placeholder). N MOF-Sleuth Detective Agency · CIF Structure-Audit ✕ +
+
+← → ⟳ ⓘ localhost:8471/index.html ⋮
+
+1 Case Intake · Submit a CIF Drop a .cif file, or open the built-in sample case 
+
+> ¯
+
+Drop your .cif case material here, or click to choose a file 
+
+All parsing happens locally in your browser — the file never leaves your machine (only the Step-4 evidence report is sent to the API you configure). 
+
+> 
+
+Use built-in sample (with planted defects) ¹ Paste CIF text 
+
+> c
+
+Case accepted: demo_znbdc_missingH.cif 
+
+2 Crime-Scene Forensics · Tool-by-Tool Evidence 
+
+7 browser-side demo checks compute real values on your structure 
+
+CPK PALETTE C H O N M M = metal 
+
+> 
+
+,[| :| 
+
+> composition
+
+✔ evidence secured 
+
+atoms=16 H/C=0 metals: Zn 
+
+CC 88 OO 55 Zn Zn 22 NN 11
+
+> ¾
+
+G|-jfoGr 
+
+> cell
+
+✔ evidence secured 
+
+a=12.8 b=12.8 c=12.8 α=90 β=90 γ=90 V = 2097.15 Å³ 
+
+> b
+
+[ggOGf NGCV 
+
+> parser
+
+✔ evidence secured 
+
+16 atom sites / 31 file lines partial-occupancy sites: 1
+
+> ½
+
+Ogi:YCG-C:Y 
+
+> geometry
+
+✔ evidence secured 
+
+min interatomic distance 1.147 Åheavy-atom overlaps (<0.7 Å): 0H–X ultra-short contacts: 0
+
+> Q
+
+Gip[fV-pGGc 
+
+> graph
+
+✔ evidence secured 
+
+connected components: 4largest component: 7 atoms small non-metal components: 2 (O, N…) 
+
+> 
+
+f[jcOYGjc 
+
+> fg
+
+✔ evidence secured 
+
+carboxylate C: 0aromatic/organic C: 4avg metal coordination: 2
+
+⚡ N:fMGGEMGf 
+
+> charge
+
+✔ evidence secured 
+
+positive: +4 negative: 0net = 4
+
+> ï
+
+net=4 imbalance! N MOF-Sleuth Detective Agency · CIF Structure-Audit ✕ +
+
+← → ⟳ ⓘ localhost:8471/index.html ⋮
+
+3 Evidence Digest · Deterministic Tool Report Mirrors the paper’s Forensic Lab evidence-report layout 
+
+DETERMINISTIC CIF TOOL REPORT (browser demo re-implementation) Only parsed/derived CIF facts and heuristic signals; no filename, no label, no human notes. == Machine-readable field aliases == Use these exact aliases when citing evidence in reasoning. composition.n_atoms=16 composition.n_H=0 composition.n_C=8 composition.H_to_C_ratio=0 composition.metals=Zn cell.a=12.8 cell.b=12.8 cell.c=12.8 cell.volume_A3=2097.15 parser_metadata.partial_occupancy_sites=1 geometry.min_distance_A=1.147 geometry.heavy_overlap_lt_0_7_A.count=0 geometry.h_x_short_contacts_lt_0_7_A.count=0 graph.n_components=4 graph.largest_component_atoms=7 graph.small_nonmetal_components.count=2 functional_groups.carboxylate.count=0 functional_groups.aromatic_C.count=4 functional_groups.metal_coordination.avg=2 charge.positive=4 charge.negative=0 charge.net=4 == Objective facts == Formula: C8NO5Zn2 Elements: {"Zn":2,"O":5,"C":8,"N":1}; atom_count=16; H/C=0 Cell: a=12.8 b=12.8 c=12.8 alpha=90 beta=90 gamma=90 volume_A3=2097.15 Geometry: min_distance_A=1.147 heavy_overlap_0.7=0 h_x_short_0.7=0 Graph: components=4 largest_component_atoms=7 small_nonmetal_components=2 Functional groups: aromatic_C={"count":4}; carboxylate={"count":0} Charge ledger: positive=4 [Zn(2×+2)]; negative=0 [carboxylate(0×-1)]; net=4 == Per-metal coordination shells == Zn1: shell={"O":2} (CN=2) Zn2: shell={"O":2} (CN=2) == Hard error flags == These are direct deterministic flags. They usually map directly to ErrorType. (none) == Possible error signals == These are heuristic candidates, not verdicts. Use them with objective facts and context. - P1 | family=hydrogen | field=composition.n_H | value=0 rationale: 4 aromatic/organic carbons present but hydrogen count is 0; suspected missing hydrogen - P2 | family=charge | field=charge.net | value=4 rationale: charge ledger strongly positive: suspected missing anions or under-deprotonation - P3 | family=occupancy | field=parser_metadata.partial_occupancy_sites | value=1 rationale: partial-occupancy sites present; possible disorder/occupancy issue - P4 | family=solvent-context | field=graph.small_nonmetal_components.count | value=2 rationale: small isolated non-metal components present (free-solvent/guest context; not an ErrorType by itself) EVIDENCE_REPORT.txt N MOF-Sleuth Detective Agency · CIF Structure-Audit ✕ +
+
+← → ⟳ ⓘ localhost:8471/index.html ⋮
+
+4 Interrogation · Hand the Case to an LLM 
+
+Bring your own API key — any external LLM can examine the case file 
+
+PRESET 
+
+Custom gateway (OpenAI-compatible) 
+
+BASE URL 
+
+https://your-gateway.example/v1 
+
+API KEY 
+
+••••••••••••••••••• 
+
+MODEL 
+
+gpt-5.5 
+
+> N
+
+Start interrogation (send evidence report) Remember config 
+
+5 Verdict & Filing · Structured Audit Output Paper output schema: reasoning / error_type / answer 
+
+> Ê
+
+Audit opinion (reasoning, citations verified locally) 
+
+charge.net=4 with charge.positive=4 and 
+
+charge.negative=0 supports a missing negative component. 
+
+composition.n_H=0 with 
+
+functional_groups.aromatic_C.count=4 supports missing hydrogens on organic/aromatic atoms. Zn1 CN=2 and Zn2 CN=2 from 
+
+functional_groups.metal_coordination.avg=2 indicate under-coordinated metal sites. 
+
+✔ charge.net=4 — matches local tool value 
+
+✔ charge.positive=4 — matches local tool value 
+
+✔ charge.negative=0 — matches local tool value 
+
+✔ composition.n_H=0 — matches local tool value 
+
+✔ functional_groups.aromatic_C.count=4 — matches local tool value 
+
+✔ functional_groups.metal_coordination.avg=2 — matches local tool value 
+
+↑ Local SEF-style check: every field=value the model cites is compared against the browser tool layer's computed value. 
+
+Show raw model output 
+
+<reasoning> charge.net=4 with charge.positive=4 and charge.negative=0 supports a missing negative component. composition.n_H=0 with functional_groups.aromatic_C.count=4 supports missing hydrogens on organic/aromatic atoms. Zn1 CN=2 and Zn2 CN=2 from functional_groups.metal_coordination.avg=2 indicate under-coordinated metal sites. </reasoning> <error_type>["missing anions", "missing hydrogen", "has under-coordinated atoms"]</error_type> <answer>1</answer> 
+
+> ⚖
+
+Verdict 
+
+missing anions missing hydrogen 
+
+has under-coordinated atoms 
+
+{"reasoning": "charge.net=4 with charge.positive=4 and charge.negative=0 supports a missing negative component.\ncomposition.n_H=0 with functional_groups.aromatic_C.count=4 supports missing hydrogens on organic/aromatic atoms.\nZn1 CN=2 and Zn2 CN=2 from functional_groups.metal_coordination.avg =2 indicate under-coordinated metal sites.", "error_type": ["missing anions", "missing hydrogen", "has under-coordinated atoms" ], "answer": 1}

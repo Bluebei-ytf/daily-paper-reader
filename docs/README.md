@@ -41,17 +41,17 @@
 <section class="dpr-home-dashboard-card dpr-home-report-card">
   <div class="dpr-home-dashboard-header">
     <div>
-      <span class="dpr-home-dashboard-kicker">2026-07-25</span>
+      <span class="dpr-home-dashboard-kicker">2026-07-26</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">共 17 篇</strong>
+    <strong class="dpr-home-dashboard-count">共 8 篇</strong>
   </div>
   <dl class="dpr-home-dashboard-stats">
     <div class="dpr-home-dashboard-stat"><dt>累计更新</dt><dd>1 次</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>6</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>11</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>3</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>5</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-07-25 22:43:06 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-07-26 22:41:18 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -62,7 +62,7 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>今日共17篇论文，精读6篇、速读11篇，重点聚焦化学与材料科学中的AI验证与分子动力学应用。最值得关注：精读高分论文揭示化学推理验证中“检测是瓶颈”，以及机器学习势驱动MgH2脱氢模拟的突破。建议普通读者优先速读Rem3Di的3D分子描述符学习和AI模型在化学中的可解释性研究。</p>
+<p>今日推荐8篇论文，含3篇精读与5篇速读，聚焦AI在电池、化学反应及抗体设计中的应用。最值得关注精读中的AI驱动锂电池放电预测模型和化学思维链防幻觉研究；建议普通读者优先了解AI在物理化学交叉领域的前沿应用。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -71,12 +71,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">精读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">6 篇</strong>
+    <strong class="dpr-home-dashboard-count">3 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Grounded verification of chemical and materials reasoning: detection is the bottleneck">Grounded verification of chemical and materials reasoning: detection is the bottleneck</span></li><li><span class="dpr-home-dashboard-paper-title" title="Machine Learning Potential-Driven Molecular Dynamics Simulations of Dehydrogenation in Pristine and Doped MgH$_2$">Machine Learning Potential-Driven Molecular Dynamics Simulations of Dehydrogenation in Pristine and Doped MgH$_2$</span></li><li><span class="dpr-home-dashboard-paper-title" title="DBMol: Design of High-Affinity, Target-Specific Small Molecules through Structure Prediction Models">DBMol: Design of High-Affinity, Target-Specific Small Molecules through Structure Prediction Models</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="AI-Driven Surrogate Models for Predicting Electrode-Scale Discharge Behavior in Lithium-Ion Batteries">AI-Driven Surrogate Models for Predicting Electrode-Scale Discharge Behavior in Lithium-Ion Batteries</span></li><li><span class="dpr-home-dashboard-paper-title" title="Chemical Chain-of-Thought Functions as a Hallucination-Prone Molecular Scratchpad">Chemical Chain-of-Thought Functions as a Hallucination-Prone Molecular Scratchpad</span></li><li><span class="dpr-home-dashboard-paper-title" title="Approximating committor functions: Objective functions and training data sampling">Approximating committor functions: Objective functions and training data sampling</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>6</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>3</strong></span></div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-skim-card">
   <div class="dpr-home-dashboard-header">
@@ -84,12 +84,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">速读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">11 篇</strong>
+    <strong class="dpr-home-dashboard-count">5 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Rem3Di: Learning smooth, chiral 3D molecular descriptors from atomistic foundation models">Rem3Di: Learning smooth, chiral 3D molecular descriptors from atomistic foundation models</span></li><li><span class="dpr-home-dashboard-paper-title" title="Machine-Learned Compact Subspace Generation for Quantum Selected Configuration Interaction within Density Matrix Embedding Framework">Machine-Learned Compact Subspace Generation for Quantum Selected Configuration Interaction within Density Matrix Embedding Framework</span></li><li><span class="dpr-home-dashboard-paper-title" title="Toward Mechanistic Interpretability of an AI Foundation Model Fine-Tuned for Atmospheric Chemistry">Toward Mechanistic Interpretability of an AI Foundation Model Fine-Tuned for Atmospheric Chemistry</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="ABOPD: Antibody CDR Design via On-Policy Distillation">ABOPD: Antibody CDR Design via On-Policy Distillation</span></li><li><span class="dpr-home-dashboard-paper-title" title="Markov state models revisited: Principles and algorithms for unbiased observables">Markov state models revisited: Principles and algorithms for unbiased observables</span></li><li><span class="dpr-home-dashboard-paper-title" title="From MLIPs to Microstructure: A High-Throughput Computational Framework to Design Spinodal Alloys in High-Dimensional Composition Spaces via Analytic Derivatives of CALPHAD Model Predictions">From MLIPs to Microstructure: A High-Throughput Computational Framework to Design Spinodal Alloys in High-Dimensional Composition Spaces via Analytic Derivatives of CALPHAD Model Predictions</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>11</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>5</strong></span></div>
 </section>
 </div>
 

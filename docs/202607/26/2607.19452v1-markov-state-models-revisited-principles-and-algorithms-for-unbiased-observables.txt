@@ -1,0 +1,1141 @@
+Title: Markov state models revisited: Principles and algorithms for unbiased observables
+
+URL Source: https://arxiv.org/pdf/2607.19452v1
+
+Published Time: Thu, 23 Jul 2026 00:04:20 GMT
+
+Number of Pages: 25
+
+Markdown Content:
+# Markov state models revisited: Principles and algorithms for unbiased observables 
+
+## David Aristoff 1, Robert J. Webber 2, and Daniel M. Zuckerman 31Colorado State University, aristoff@rams.colostate.edu 
+
+> 2
+
+## University of California, San Diego, rwebber@ucsd.edu 
+
+> 3
+
+## Oregon Health and Science University, zuckermd@ohsu.edu July 23, 2026 
+
+Abstract 
+
+Markov state models (MSMs) have become ubiquitous tools for analyzing molecular dynamics (MD) simulations because of their simple, powerful premise: although complete MD sampling may be impos-sible, the MSM can “stitch together” transition probabilities derived from local sampling to provide a global picture of kinetics and mechanisms. In the standard MSM framework, the available MD data is organized into a single transition matrix, which is then used to estimate all observables at a lag time chosen so the coarse-grained dynamics are approximately Markovian. This approach leads to avoidable model bias and motivates long lag times that obscure short-timescale processes of interest. In contrast, this paper shows how to obtain unbiased coarse-grained observables at any fixed lag time and for any fixed coarse-graining in the limit of infinite, properly weighted data. The central idea is to replace the single-matrix framework with two transition matrices — one representing equilibrium dynamics and an-other representing source-sink recycling dynamics — and use the correct matrix or matrices to estimate the matched dynamical observables. 
+
+# 1 Introduction 
+
+For more than twenty years, researchers have used Markov state models (MSMs) to analyze molecular dynamics (MD) simulation data [39, 40]. From the beginning, their vision was to derive a single transition matrix, coarse-grained in space and discretized in time, which describes all the equilibrium, kinetic, and mechanistic features of a molecular system. Researchers have acknowledged that MSMs are inherently approximate [27, 24, 48], yet additional steps are needed to describe and address all sources of approximation error. See Fig. 1 for an overview of the MSM model building pipeline and its error sources. The goal of this perspective paper is to clearly set out principles and algorithms for “unbiased” estimates of both equilibrium and nonequilibrium observables. Here, an “unbiased” estimate is one that converges to a theoretically exact, coarse-grained observable in the limit of infinite, properly weighted data. We argue that the current literature has overlooked some of the capacity for MSMs to provide unbiased estimates. We will explain what to do and what not to do when using MSMs. Along the way, we will critically re-examine MSM approaches and emphasize three related themes. 1. Markovian dynamics do not lead to coarse-scale Markovian behavior. Traditional MSMs take literally the Markov assumption by using a single transition matrix to compute all observables. However, a coarse-grained system does not typically satisfy the Markov property at short lag times, leading to biased dynamical estimates. 2. Unbiased estimation requires two transition matrices. By using two transition matrices that repre-sent the equilibrium and nonequilibrium steady-state (NESS) conditions [30], we can provide unbiased 1arXiv:2607.19452v1 [cond-mat.stat-mech] 21 Jul 2026 Data 
+
+> Trajectories
+> Transition matrices
+> Equilibrium Non-equilibrium
+> Observables
+> Stationary distributions Rate constants Mechanisms
+> Limited sampling
+> Biased local distributions
+> Biased observable formulas
+> Markov state modeling
+> Error sources
+
+Figure 1: Markov state modeling pipeline and the corresponding sources of error. This perspective focuses on two systematic errors: errors from biased within-cluster sampling distributions and biased observable formulas. estimates of dynamical observables for any lag time and choice of coarse-graining. In this nontradi-tional approach, each observable can be estimated without bias from the matched transition matrix or matrices. 3. Unbiased estimation requires stationary local distributions. MSM estimates are sensitive to the local distributions within clusters [48], which must be stationary with respect to equilibrium or source-sink recycling dynamics for unbiased estimation of observables. While traditional MSM computations are locked into the data at hand, the newly introduced RiteWeight algorithm is designed to reweight trajectories toward the correct equilibrium or nonequilibrium distribution [19]. The rest of this introductory section will describe the three themes in more detail (Secs. 1.1–1.3) and then compare our approach against previous MSM analyses (Sec. 1.4). 
+
+## 1.1 Markovian dynamics do not lead to coarse-scale Markovian behavior 
+
+The heart of the MSM approach is the transition matrix T . The elements of this matrix, 
+
+Tij = Tij (τ ),
+
+specify the conditional transition probabilities between clusters or MSM “states”. Given a start point drawn from a specified distribution within cluster i, the element Tij is the conditional probability of being found in cluster j one lag time later. The transition probability only accounts for the location of the trajectory after the full lag time, without accounting for visits to j before the end of the interval. The MSM construction leads to a subtle point of confusion regarding the Markovian nature of the dynamics. In molecular simulation, the vast majority of computer algorithms that propagate dynamics are Markovian, since the current state is sufficient to generate the next state of a system. If a simulation algorithm uses auxiliary variables or a finite history, the state can be enlarged to include those variables so that the resulting dynamics are Markovian. However, once phase space points are grouped together into clusters, the Markov property no longer holds at short lag times [27]. We can understand the failure of Markovianity by considering the energy landscapes of biomacromolecules (Fig. 2). Full proteins contain hundreds or even thousands of residues, and even a simple tripeptide has > 100 energy basins [10]. Due to the finite availability of data and the complexity of configuration space, clusters must contain multiple energy basins [10, 46, 34]. Therefore, a trajectory’s specific location within a cluster affects the future probability to be in other clusters. Traditional MSMs employ long lag times to improve Markovian behavior and enhance the accuracy of observables. As the lag time grows, the original phase-space point or “microstate” of the trajectory becomes less determinative of the final cluster, so Markovian behavior is approached [6]. However, the Markovian behavior comes at a cost. A long lag time can degrade an MSM’s ability to provide mechanistic insights, since longer lag times jump over behaviors occurring at shorter timescales [38]. The challenge of MSM modeling can thus be understood in terms of two intrinsic timescales for each cluster i.2Configurational coordinate 
+
+> Probability density
+
+## Cluster i Cluster j
+
+Exact distribution 
+
+Sampled distribution Figure 2: Schematic rough energy landscape and clusters of an MSM. A biomacromolecule consists of thousands of atoms, so individual clusters i and j of the Markov state model inevitably contain many local energy basins. The finite available trajectory data (red histogram) will not typically match the targeted exact distribution internal to the clusters (blue line). 
+
+• ti 
+
+> relax
+
+is the timescale for a trajectory to relax to local equilibrium within cluster i.
+
+• ti 
+
+> exit
+
+is the timescale for the trajectory to exit cluster i, subsequent to relaxation. Ideally, a single lag time τ is chosen such that for all clusters i,
+
+ti 
+
+> relax
+
+≪ τ ≪ ti
+
+> exit
+
+. (1) Violations of the first inequality break Markovianity, while violations of the second inequality miss events that may be of physical interest. The two requirements may be impossible to satisfy simultaneously with a single lag time. 
+
+## 1.2 Unbiased estimation requires two transition matrices 
+
+A fundamental issue is that different types of observables correspond naturally to different ensembles. Equi-librium state probabilities are naturally associated with the equilibrium ensemble, whereas rate constants and fluxes can be represented conveniently through source–sink nonequilibrium ensembles [45, 11, 36, 38]. In most cases, qualitative differences between the ensembles cannot be captured by a single transition ma-trix [4]. To eliminate the bias in traditional MSMs, we will use two ensemble-specific transition matrices, one representing equilibrium conditions and one representing source-sink conditions. Tab. 1 identifies which matrix or matrices are needed for unbiased estimation of each observable. We will present detailed formulas for unbiased estimators in the later sections. 
+
+## 1.3 Unbiased estimation requires stationary local distributions 
+
+To estimate unbiased observables, we need local sampling within each cluster to match the appropriate equi-librium or non-equilibrium ensemble as described in Tab. 1. The key to correct local sampling is the principle of stationarity . Both the equilibrium and A → B steady state distributions are stationary distributions, after accounting for the appropriate recycling boundary conditions. This means the amount of probability mass flowing into each region matches the amount of probability mass leaving each region. Remarkably, as we show below, we can estimate stationary distributions for a coarse-grained system using only the microscopic 3Required distributions πequil  
+
+> i
+
+πA→Bi Committor qAi MFPT mA→B Flux Φ A→Bij 
+
+Equilibrium ✓ ✓
+
+A → B NESS ✓ ✓ ✓ ✓
+
+Table 1: Key observables and the distributions required for their unbiased estimation. Here πequil  
+
+> i
+
+is the equilibrium stationary probability for cluster i, πA→Bi is the stationary probability for cluster i in the A → B
+
+nonequilibrium steady state (NESS), qAi is the committor representing the probability of reaching state A
+
+before B, mA→B is the mean first-passage time (MFPT) from state A to state B starting from cluster i,and Φ A→Bij is the A → B probability flux from state i into state j over one lag interval. Markov property and the principle of stationarity. No Markov property for the coarse-scale model is required. In our discussion of computational approaches (Sec. 5), we will emphasize the newly introduced RiteWeight algorithm [19], which reweights trajectories in a self-consistent iteration designed to make their weighted distribution consistent with the target equilibrium or nonequilibrium stationary distribution. 
+
+## 1.4 Comparison to previous analyses 
+
+For general background on MSMs, the review paper [18] provides historical perspective, and the article [26] gives a user-friendly introduction. Two Python packages that made MSMs accessible to a wide audience are MSMBuilder [14] and PyEMMA [33]. While these packages are no longer actively maintained, many of their capabilities are now available through the deeptime package [16]. Beyond general introductions, several works analyze the error in MSM observables and discuss ways to reduce the error. Sarich, No´ e, and Sch¨ utte [31] and Prinz et al. [27] analyze projection errors and show how the coarse-grained MSM dynamics fail to satisfy the Markov property. N¨ uske et al. [24] analyze a different error source due to mismatched sampling distributions within MSM states. These early analyses motivate longer lag times, improved state definitions, and practical estimators for initial-distribution bias. The recommendations for improving MSMs are valuable, but they differ from our emphasis in the present work. In many applications, constructing states that accurately resolve the slowest dynamical modes is difficult, and increasing the lag time skips over short-timescale processes of biological significance. We therefore focus on unbiased estimation of exact coarse-grained observables for any fixed lag time and partition. In particular, we advocate using two transition matrices based on equilibrium and nonequilibrium steady-state distributions, as well as reweighting trajectories according to the RiteWeight algorithm [19]. Another relevant body of work considers dynamical observables derived from MSMs, such as the com-mittors, mean first-passage times, and nonequilibrium fluxes in Tab. 1. Su´ arez et al. identify which coarse-grained observables can be estimated without bias from traditional MSMs [38]. Related work by Russo et al. [29] constructs unbiased estimators for dynamical observables. The present paper builds on the previous development by identifying which ensemble-specific transition matrices are required for unbiased estimation of each observable. Of equal importance, we present all the necessary theory in a consistent and accessible fashion. Finally, past literature has studied the impact of finite-sampling error in MSMs. Singhal and Pande [35] pointed attention to the propagation of sampling error in estimates of mean first-passage times. Noe [22] and Chodera and No´ e [7] developed Bayesian approaches for estimating and addressing sampling error, and Trendelkamp-Schroer et al. [41] extended this framework to time-reversible MSMs. Kozlowski and Grubmuller compared error sources in MSMs and emphasized the role of finite sampling [20]. Most recently, Tuchkov et al. [42] analyzed mean first-passage time and committor estimates from MSMs, including their sensitivity to finite sampling. These works are complementary to the present paper. They address uncertainty caused by finite data, whereas we focus on systematic bias that remains in the infinite-data limit when transition matrices are constructed from mismatched within-cluster distributions or when observable formulas incorrectly assume coarse-grained Markovianity. 42 A fully solvable discrete model 
+
+To gain insight into the fundamental limitations of MSMs, we start by examining a discretized model of a one-dimensional diffusion process. For concreteness, we assume eight microstates are a perfect physical description of our system; there are no finer states. The ground-truth transition probabilities are defined for a particular lag time τ by the microscopic transition matrix, 
+
+T micro =
+
+
+
+2/3 1/3 0 0 0 0 0 01/3 1/3 1/3 0 0 0 0 00 1/3 1/3 1/3 0 0 0 00 0 1/3 1/3 1/3 0 0 00 0 0 1/3 1/3 1/3 0 00 0 0 0 1/3 1/3 1/3 00 0 0 0 0 1/3 1/3 1/30 0 0 0 0 0 1/3 2/3
+
+
+
+(2) Each element T micro  
+
+> αβ
+
+of this matrix represents the probability to transition from microstate α to β in a lag time τ , or more precisely the probability for a trajectory to be observed at β after having been at α a time increment τ earlier. From each state there is a 1 /3 probability to move one step left or right or to remain in the same state, except for the extreme left- and right-most states where there is a 2 /3 probability to remain in the state. The microscopic transition matrix T micro completely defines our system. Thus, the exact dynamics are described by 
+
+πβ (t + τ ) = X
+
+> α
+
+πα(t) T micro  
+
+> αβ
+
+, (3) where πα(t) denotes the normalized probability for each microstate α at time t. The probability observed in microstate β is a sum over all probability flowing into that state or remaining in the state. Note that summation over α includes α = β, and the term πβ (t) T micro  
+
+> ββ
+
+implicitly captures probability remaining in the state. From equation (3), the equilibrium solution for the matrix T micro is simply a uniform distribution over the eight states, as expected. 
+
+πequil  
+
+> α
+
+= 18 (α = 1 , 2, . . . , 8) . (4) We can confirm the detailed balance condition holds for this distribution, 
+
+πequil  
+
+> α
+
+T micro  
+
+> αβ
+
+= πequil  
+
+> β
+
+T micro  
+
+> βα
+
+. (5) Because of detailed balance, the equilibrium distribution is stationary, and it has no probability sources or sinks. 
+
+## 2.1 Equilibrium comparison between coarse- and fine-grained distributions 
+
+In an MSM, we organize the microstates into groups and compute an associated coarse-grained transition matrix. We do this now, not by using trajectory data as would be usual [6], but instead by calculating the idealized MSM that would be obtained from an infinite trajectory generated using T micro . In later examples and discussion, we will examine the consequences of finite data in MSMs. If we group microstates into neighboring pairs, the eight microstates become four clusters of two mi-crostates each. We can compute the exact 4 × 4 MSM equilibrium transition matrix T MSM by averaging transition probabilities weighted by the equilibrium distribution. The elements of this matrix are 
+
+T MSM  
+
+> ij
+
+=
+
+P
+
+> α∈i
+
+P 
+
+> β∈j
+
+πequil  
+
+> α
+
+T micro 
+
+> αβ
+
+P 
+
+> α∈i
+
+πequil 
+
+> α
+
+= X
+
+> α∈i
+
+X
+
+> β∈j
+
+12 T micro  
+
+> αβ
+
+(6) where the notation α ∈ i refers to all microstates in the coarse state, e.g., α = 1 , 2 for i = 1. In (6), the first equality is general and the second is particular to the 8-state model under consideration. These calculations 5yield the same matrix T MSM  
+
+> ij
+
+that would result from counting transitions in an infinite equilibrium-distributed trajectory. The defining equation for the macroscopic matrix elements (6) leads to 
+
+T MSM =
+
+
+
+5/6 1/6 0 01/6 2/3 1/6 00 1/6 2/3 1/60 0 1/6 5/6
+
+ . (7) This coarse-grained transition matrix allows us to compute equilibrium quantities of interest, and we start with the simplest: equilibrium populations. Using the coarse-grained analog of the detailed balance condition (5), namely, 
+
+πequil  
+
+> i
+
+T MSM  
+
+> ij
+
+= πequil  
+
+> j
+
+T MSM  
+
+> ji
+
+, (8) we can verify that the expected solution πi = 1 /4 holds for every i. The uniform coarse-grained solution is correct because we obtain the same value 1 /8 + 1 /8 = 1 /4 when we sum the microscopic equilibrium probabilities in each coarse-grained state. The coarse-grained and microscopic solutions are consistent. 
+
+## 2.2 Nonequilibrium comparison between coarse- and fine-grained distributions 
+
+The consistency between microscopic and coarse-grained MSM predictions can break down if we impose nonequilibrium boundary conditions after the coarse-graining. Here, we will focus on a source-sink steady state distribution with the source (initial) state A corresponding to the first coarse state ( i = 1) and the sink (target) state B corresponding to the final coarse state ( i = 4). Trajectories reaching the sink state are re-started in the source state at the next interval of the lag time, according to a modified microscopic matrix ˜T micro =
+
+
+
+2/3 1/3 0 0 0 0 0 01/3 1/3 1/3 0 0 0 0 00 1/3 1/3 1/3 0 0 0 00 0 1/3 1/3 1/3 0 0 00 0 0 1/3 1/3 1/3 0 00 0 0 0 1/3 1/3 1/3 00 1 0 0 0 0 0 00 1 0 0 0 0 0 0
+
+
+
+. (9) The specific choice of feedback to the α = 2 state from the α = 7 , 8 states is justified by the first entry distribution discussed later in Sec. 3.2, which builds in a natural correspondence with the equilibrium en-semble [4]. The A → B nonequilibrium steady state (NESS) is defined by the leading left eigenvector of the microscopic matrix (9), which is ˜πmicro = 161 
+
+
+
+15 15 12 96310
+
+
+
+(10) Hence, ˜ πmicro is the unique stationary vector for the A → B recycling dynamics. Due to the recycling, the first entry into the sink B occurs at microstate α = 7, and the process is recycled before moving to α = 8; hence the stationary probability of α = 8 is zero. In the unbiased approach to coarse-graining, we define the A → B coarse-grained transition matrix via stationary weighted averages of the microscopic transition probabilities, ˜T macro  
+
+> ij
+
+=
+
+P
+
+> α∈i
+
+P 
+
+> β∈j
+
+˜πmicro  
+
+> α
+
+˜T micro 
+
+> αβ
+
+P 
+
+> α∈i
+
+˜πmicro 
+
+> α
+
+. (11) 6The defining equation (11) yields the NESS coarse-grained matrix ˜T macro =
+
+
+
+5/6 1/6 0 04/21 14 /21 3/21 00 2/9 6/9 1/91 0 0 0
+
+ (12) In the rows i = 2 , 3, 4, the NESS coarse-grained matrix ˜T macro differs from the equilibrium coarse-grained matrix (7). In contrast, the traditional, biased route first constructs the equilibrium coarse-grained matrix and only afterward imposes the source–sink boundary condition. This procedure keeps the equilibrium-weighted transition rows for the intermediate coarse states, rather than recomputing those rows using the A → B
+
+NESS distribution. This yields a coarse-grained A → B MSM transition matrix, ˜T MSM =
+
+
+
+5/6 1/6 0 01/6 2/3 1/6 00 1/6 2/3 1/61 0 0 0
+
+ (13) Compared to the original MSM matrix (7), probability arriving at the fourth state ( B = sink) is fed back to the first state ( A = source). This MSM matrix differs from the NESS matrix (12) because probability flows symmetrically from the intermediate states ( i = 2 , 3). In the NESS matrix, probability is tilted to flow to the left, in the direction of the source state. With different transition matrices from the two coarse-graining schemes, not surprisingly the coarse-grained stationary vectors for (12) and (13) differ. ˜πmacro = 161 
+
+
+
+30 21 91
+
+ ≈
+
+
+
+0.492 0.344 0.148 0.016 
+
+ and ˜πMSM = 137 
+
+
+
+18 12 61
+
+ ≈
+
+
+
+0.486 0.324 0.162 0.027 
+
+ . (14) Only the stationary probability vector ˜ πmacro is correct because it matches the coarse-graining of the micro-scopic stationary vector (10), i.e., summing the elements in pairs. The MSM vector slightly underweights the first two states and overweights the last two states. Are these differences important? The lesson here is not the large or small numeric differences, because the magnitudes could be tuned by adjusting the underlying microscopic transition matrix. Rather, the message is the following. KEY POINT: Even with infinite equilibrium sampling, the traditional MSM route to computing nonequi-librium observables is theoretically flawed, leading to biased observables. We will elaborate on this key point in the remainder of the perspective paper, demonstrating that the bias observed in the stationary vectors (14) is mirrored in biased mean first-passage times, committors, and mechanistic path fluxes. 
+
+# 3 Dynamical observables for a continuous-state system 
+
+In this section, we define equilibrium and dynamical observables for a continuous-state system. For notation, we let x denote a phase-space variable that represents all positions, velocities, and other degrees of freedom needed to make the dynamics Markovian. Trajectories x(t) are discretized by a lag time τ , so they are observed at times 
+
+x(0) , x (τ ), x (2 τ ), . . . . (15) The trajectories evolve according to a transition probability density 
+
+pτ (x|x′), (16) 7Symbol Description 
+
+x, x′ Microscopic phase-space points 
+
+i, j Cluster labels 
+
+k Trajectory label 
+
+τ Lag time used throughout the analysis 
+
+pτ (x | x′) Underlying transition probability density 
+
+pA→Bτ (x | x′) Transition probability density for the A → B ensemble Superscript X Ensemble label: equilibrium, A → B, or B → AπX (x) Stationary probability density in ensemble XπX (x | i) Stationary density in ensemble X, conditioned on cluster iπXi Stationary probability of cluster i in ensemble XπX Vector of cluster stationary probabilities in ensemble X
+
+ΦXij Probability flux from cluster i to cluster j over one lag interval 
+
+mA→B Mean first-passage time from A to BqA(x) Microscopic probability of reaching A before BqAi Equilibrium-averaged committor to A within cluster iqB (x) Microscopic probability of reaching B before AC(k) 
+
+> ij
+
+Number of observed i → j transitions for trajectory kC(k) 
+
+> i
+
+Total number of transitions originating in cluster i for trajectory kρX (x | i) Distribution of trajectory initial points within cluster iTij Cluster transition matrix, for example estimated from transition counts 
+
+T Xij Ideal cluster transition matrix in ensemble XIi(x) Indicator function of cluster iπA→B Normalization constant relating the equilibrium and A → B densities 
+
+mBi Local mean first-passage time from cluster i to target state B
+
+Table 2: Notation used throughout the paper. which describes the dynamics initiated from x′ and observed after a time interval τ . For example, the transition probability density might represent MD simulation with a thermostat or barostat. Because the system is Markovian in the full phase space, only a single prior phase point x′ is needed to specify the distribution of outcomes. See Tab. 2 for a list of notation used throughout the paper. The following subsections introduce equilibrium and nonequilibrium stationary densities for the continuous-state system (Secs. 3.1 and 3.2). We then define dynamical observables for the system, including the com-mittor and mean first-passage time (Secs. 3.3 and 3.4). 
+
+## 3.1 Equilibrium density 
+
+We assume the continuous-state system has an equilibrium density πequil that satisfies detailed balance, 
+
+πequil (x′) pτ (x|x′) = πequil (x) pτ (x′|x), (17) or the corresponding momentum-flip version of detailed balance if x includes momenta or other variables that are odd under time reversal [21] . The equilibrium density is stationary with respect to the transition density pτ because it satisfies the relation 
+
+Z
+
+πequil (x′) pτ (x|x′) d x′ = πequil (x). (18) Detailed balance implies stationarity, as we can see by integrating both sides of (17) over x′, but the converse is not true. When a stationary distribution does not satisfy detailed balance, it is called a “nonequilibrium” steady state distribution (NESS). 8x
+
+## y
+
+## A B
+
+## x
+
+> Probability density
+
+## A B
+
+last in A last in B 
+
+equilibrium Figure 3: Decomposition of an equilibrium trajectory ensemble into two nonequilibrium steady-state en-sembles. States A and B are the leftmost and rightmost boxes, and the vertical rectangles represent MSM clusters. Left: a long equilibrium trajectory is colored according to the most recently visited state. Blue segments belong to the A → B ensemble, while red segments belong to the B → A ensemble. Right: nor-malized probability densities for the equilibrium ensemble and the two directional ensembles. 
+
+## 3.2 Nonequilibrium steady-state densities 
+
+Imagine a single trajectory is observed over a long time interval, long enough to contain many transitions between states A and B. The trajectory is in equilibrium throughout this extended period. The trajectory can be traced backward in time until it reaches one of the states A or B, and the trajectory is thus assigned to one of two classes, “last in A” or “last in B” (blue and red paths in Fig. 3). Going forward in time, when the trajectory reaches the opposite state from its class, it changes class. From this decomposition, we obtain two sets of trajectory segments, one for the A → B transitions and one for the B → A transitions. In the A → B trajectory set, the segments all start at the source state A
+
+and they all end at the sink state B. The distribution of start points in A is called the “reactive entrance distribution” [3] or the “EqSurf” distribution [4], which we express using the probability density ρA(x). As a convention, this paper chooses to include the endpoints in the A → B trajectory segments in order to simplify the description of the A → B recycling dynamics. After extracting an infinite sequence of A → B trajectory segments, we randomly shuffle the segments and concatenate them to form a trajectory representing the A → B nonequilibrium ensemble, as illustrated in Fig. 4. In this ensemble, the transition probability density from one phase-space point x′ to the next phase-space point x is given by the A → B recycling dynamics, 
+
+pA→Bτ (x|x′) = 
+
+(
+
+pτ (x|x′), x′ /∈ B, ρA(x), x′ ∈ B. (19) The ensemble follows ordinary dynamics starting from any point x′ /∈ B, but from any x′ ∈ B, the process is reset according to the EqSurf distribution ρA.Last, we write πA→B (x) for the probability density function of phase-space points in the A → B nonequi-librium ensemble. This density function is stationary with respect to the A → B recycling dynamics, namely, 
+
+Z
+
+πA→B (x′) pA→Bτ (x|x′) d x′ = πA→B (x). (20) However, πA→B is not an equilibrium density because of the nonzero probability current. Ordinary dynamics carry probability from A to B, and the recycling dynamics return probability from B to A.9Equilibrium 
+
+trajectory 
+
+A ! B
+
+nonequilibrium 
+
+trajectory 
+
+A ! B FPS A ! B FPS 
+
+B ! A FPS B ! A FPS 
+
+A ! B FPS A ! B FPS A ! B FPS A ! B FPS 
+
+recycling recycling recycling Figure 4: Long trajectories in the equilibrium and A → B nonequilibrium steady state ensembles. Both trajectories contain a sequence of A → B first passage segments (blue arrows). These are interrupted by 
+
+B → A first passage segments (red arrows) in the equilibrium trajectory, or recycling segments (gray arrows) in the A → B nonequilibrium trajectory. When B → A recycling is performed via the EqSurf distribution 
+
+ρA, the distributions of the A → B segments are identical in the two ensembles. KEY POINT: The equilibrium ensemble decomposes into two nonequilibrium steady-state (NESS) ensem-bles, one for the A → B direction and another for B → A [4]. 
+
+## 3.3 Committor relates equilibrium to NESS 
+
+The committor qA(x) is the probability that trajectories starting from a phase-space point x will visit state 
+
+A before they visit state B [12, 44]. Likewise qB is the analogous function in the opposite direction. Since all trajectories eventually hit either A or B,
+
+qA(x) + qB (x) = 1 (21) for every x.We can relate the committor to the nonequilibrium steady-state density by considering a single long trajectory conforming to equilibrium. Conditioned on the equilibrium trajectory passing through a phase-space point x, the probability that the forward trajectory next visits A before B is qA(x). Assuming detailed balance, we can reverse the trajectory in time to obtain a different sample from the equilibrium ensemble. The trajectory segments next visiting state A in the original trajectory correspond to trajectory segments that were last in A in the reversed trajectory. Therefore, the equilibrium density πequil (x) times the committor 
+
+qA(x) is proportional to the nonequilibrium density πA→B (x) [43, 9], 
+
+πequil (x) qA(x)
+
+R 
+
+> Bc
+
+πequil (x′) qA(x′) d x′ = πA→B (x)
+
+R 
+
+> Bc
+
+πA→B (x′) d x′ , x / ∈ B. (22) The two sides are normalized by integrating over all points excluding those in B, because the normalized 
+
+A → B NESS density includes the sink endpoint in B, while qA(x) vanishes on B. Rearranging (22) gives the likelihood ratio formula 
+
+qA(x) = πA→B πA→B (x)
+
+πequil (x) , x / ∈ B, (23) where we have introduced a normalizing constant 
+
+πA→B =
+
+R 
+
+> Bc
+
+πequil (x′)qA(x′) d x′
+
+R 
+
+> Bc
+
+πA→B (x′) d x′ . (24) Because qA(x) = 1 on A, integrating (23) over A allows us to re-express the normalizing constant as 
+
+πA→B =
+
+R 
+
+> A
+
+πequil (x) d x
+
+R 
+
+> A
+
+πA→B (x) d x . (25) 10 Equivalently, wherever the densities are positive, πequil (x)/π A→B (x) = πA→B for x ∈ A. These relations are derived using detailed balance. Under momentum-flip detailed balance, a corresponding statement involves the committor qA evaluated for the momentum flipped phase-space point x.To conclude, we emphasize the following key point that will allow us to estimate the coarse-grained committor without bias. KEY POINT: On the appropriate restricted domain, the committor is proportional to the likelihood ratio between the nonequilibrium and equilibrium steady state densities [9]. 
+
+## 3.4 Mean first-passage times 
+
+Another central quantity representing kinetics is the A → B mean first-passage time (MFPT), denoted by 
+
+mA→B . The A → B MFPT considered here is the mean duration of an A → B trajectory segment in the equilibrium ensemble, measured from its first sampled point in A through its first sampled point in B.Equivalently, the MFPT is the mean length of such a segment in the A → B nonequilibrium ensemble, which simply skips over any B → A trajectory segments by a lag-time step returning the trajectory from B directly to A (Fig. 4). We now employ a variation of the Kac return-time argument [23, Sec. 1.7] to derive a simple expression for the MFPT, assuming that the recycled process is stationary and ergodic. In the A → B nonequilibrium ensemble, we observe that each return cycle to B consists of one lag-time step that recycles the trajectory from B to A, followed by an A → B first-passage segment (Fig. 4), so the average time for a return cycle is 
+
+τ + mA→B . (26) Because the recycled chain occupies B at exactly one discrete observation per return cycle, the fraction of time spent visiting B in the A → B nonequilibrium ensemble equals the lag time τ divided by the average time for a return cycle, fraction of time visiting B = ττ + mA→B . (27) Yet the fraction of time spent visiting B is also expressed by the A → B steady-state density of B, which is fraction of time visiting B =
+
+Z
+
+> B
+
+πA→B (x) d x (28) By combining (27) with (28), we obtain the expression for the MFPT, 
+
+mA→B = τ
+
+R 
+
+> B
+
+πA→B (x) d x − τ. (29) This identity expresses the MFPT in terms of the stationary probability of the sink state in the source-sink steady state ensemble. We can recast the expression (29) to make a connection to a rate constant. We will use the indicator function for state B,
+
+IB (x) = 
+
+(
+
+1, x ∈ B, 
+
+0, x / ∈ B. (30) We apply the relation R · · · dx = R 
+
+> B
+
+· · · dx+R 
+
+> Bc
+
+· · · dx and the stationary condition R πA→B (x′) pA→Bτ (x|x′) d x′ =
+
+πA→B (x) to rearrange (29) as 
+
+τmA→B =
+
+R 
+
+> B
+
+πA→B (x) d x
+
+R 
+
+> Bc
+
+πA→B (x) d x
+
+=
+
+R R πA→B (x′) pA→Bτ (x|x′) IB (x) d x dx′
+
+R 
+
+> Bc
+
+πA→B (x) d x .
+
+(31) The numerator is the probability of starting outside of B and entering B on the next lag-time step, while the denominator is the probability of starting outside of B in the A → B nonequilibrium ensemble. Dividing 11 by τ , we obtain the conditional entry probability into B per unit time, which is a viable definition for the rate constant kAB [51]. Eq. (29) is a discrete-time version of the Hill relation [15], which establishes the reciprocal flux relation in the continuous-time limit τ → 0. Readers can also consult a related derivation for the continuous-time case [49, 52]. We emphasize the following key point. KEY POINT: The mean first-passage time mA→B is the inverse rate constant for an A → B process, and it can be computed from the A → B NESS probability of the sink state, 
+
+mA→B = τ
+
+R 
+
+> B
+
+πA→B (x) d x − τ. (32) Last, we acknowledge a nuance in the MFPT definition provided here. By our definition, the MFPT generally increases with the lag time, because coarser time sampling delays the first observed entry to the target state [38]. Choosing an appropriate lag time is therefore a practical modeling choice. The goal of capturing the first passage into the target state suggests using the shortest possible lag. However, unless state boundaries coincide with deep metastable basins, trajectories may rapidly recross the boundary, as emphasized in the transition state theory literature [5]. The recrossing issue motivates using a longer lag time to measure transitions that remain in the target state rather than transient boundary crossings. Different lag times define modified kinetic observables, so MSM estimates and reference simulations should always use the same convention [38]. 
+
+# 4 Unbiased coarse-grained observables from MSMs 
+
+Markov state models (MSMs) are simplified models for the transitions among a set of clusters or “states”, defined as non-overlapping regions fully covering the phase space. There has been extensive discussion of the clustering methods for defining MSM states [6, 17, 13], so this perspective focuses on a different issue of unbiased observables for a given set of clusters. Given the ideal trajectory data, we can define an MSM through a transition matrix T X = T X (τ ), where each element i, j describes the probability of observing the system in state j following a time lag of τ after the system was observed in state i. This matrix can be written 
+
+T Xij =
+
+Z
+
+ρX (x′|i)
+
+Z
+
+pX 
+
+> τ
+
+(x|x′) Ij (x) d x dx′. (33) Here, ρX (x′|i) denotes an initial distribution of phase-space points within each state i, and Ij is the indicator function on the state j, which satisfies 
+
+Ij (x) = 
+
+(
+
+1, x ∈ j, 
+
+0, x / ∈ j. (34) Last, X represents the ensemble of interest, which could be the equilibrium ensemble or A → B nonequilib-rium ensemble. The matrix elements are fully determined by the distribution of initial points, along with the dynamics and boundary conditions embodied in pXτ .Although MSMs are approximations obtained by coarse-graining in both space and time, remarkably they can express several coarse-grained observables at any fixed lag-time without bias, provided the MSM matrix elements are constructed from the correct stationary within-cluster distributions. (i) Equilibrium stationary probabilities are obtained from the equilibrium MSM T equil .(ii) A → B stationary probabilities are obtained from the A → B nonequilibrium MSM T A→B .(iii) The A → B MFPT is also obtained from T A→B .(iv) The A-committor is obtained from a combination of T equil and T A→B .The rest of this section will describe these procedures in detail. 12 4.1 Stationary probabilities 
+
+To evaluate unbiased equilibrium stationary probabilities, we can generate the equilibrium MSM with the following matrix elements. 
+
+T equil  
+
+> ij
+
+=
+
+Z
+
+πequil (x′|i)
+
+Z
+
+pτ (x|x′) Ij (x) d x dx′. (35) Here, πequil (x|i) denotes the equilibrium density conditioned on cluster i,
+
+πequil (x|i) = Ii(x) πequil (x)
+
+πequil 
+
+> i
+
+. (36) Its normalization factor is the equilibrium stationary probability for cluster iπequil  
+
+> i
+
+=
+
+Z
+
+Ii(x) πequil (x) d x. (37) We can check that when we solve for the stationary distribution of the transition matrix T equil defined in (35), we recover the equilibrium stationary probabilities πequil  
+
+> i
+
+, regardless of the lag time τ .
+
+X
+
+> i
+
+πequil  
+
+> i
+
+T equil  
+
+> ij
+
+=
+
+Z
+
+πequil (x′)
+
+Z
+
+pτ (x|x′) Ij (x) d x dx′
+
+=
+
+Z
+
+Ij (x) πequil (x) d x = πequil  
+
+> j
+
+for any τ. 
+
+(38) The first equality holds because X
+
+> i
+
+πequil  
+
+> i
+
+πequil (x′|i) = πequil (x′), (39) which follows from the definition (36) and the non-overlapping clusters covering phase space. The second equality of (38) holds because of the stationary condition, R πequil (x′) pτ (x|x′) d x′ = πequil (x). In exact analogy to equilibrium stationary probabilities, we can recover the nonequilibrium stationary probabilities from an approriate MSM model. We form the A → B NESS MSM with elements given by 
+
+T A→Bij =
+
+Z
+
+πA→B (x′|i)
+
+Z
+
+pA→Bτ (x|x′)Ij (x) d x dx′. (40) The initial points in each cluster i are sampled from the A → B NESS density conditioned on cluster i,
+
+πA→B (x|i) = Ii(x) πA→B (x)
+
+πA→Bi
+
+. (41) Its normalization factor is 
+
+πA→Bi =
+
+Z
+
+Ii(x) πA→B (x) d x. (42) Similar to (38), the stationary vector of the transition matrix T A→Bij yields the probabilities πA→Bi ,
+
+X
+
+> i
+
+πA→Bi T A→Bij = πA→Bj . (43) This approach for calculating stationary probabilities may seem circular, but it underpins important practical algorithms as we will see in Sec. 5. The failure to reckon with the proper construction of the equilibrium or nonequilibrium MSM by using ad hoc initial distributions will inevitably lead to biased results, not only for stationary probabilities but for any observables computed from these matrices. KEY POINT: If matrix elements are constructed based on an initial distribution of phase points exactly corresponding to stationarity, then the stationary solution of the MSM equals the coarse-grained stationary distribution. If different within-cluster initial distributions are used, this equality is no longer guaranteed, and stationary observables can be biased. 13 4.2 Cluster-to-cluster fluxes 
+
+In a discretized description of phase space, a fundamental mechanistic quantity is the flux Φ Xij = Φ Xij (τ ), which describes the directed probability movement from i → j occurring over lag time τ . The flux is defined as ΦXij =
+
+Z
+
+Ii(x′) πX (x′)
+
+Z
+
+pXτ (x|x′) Ij (x) d x dx′. (44) Here, as usual, X represents either the equilibrium ensemble or the A → B nonequilibrium ensemble. In both cases, the flux can be computed from the matched MSM matrix and its stationary probabilities, via ΦXij = πXi T Xij . (45) This MSM calculation is unbiased provided the correct coarse-grained stationary density πXi and transition matrix T Xij are used. KEY POINT: The cluster-to-cluster flux Φ Xij represents the exact amount of probability moving from cluster 
+
+i to j in ensemble X, and it can be computed from the matched MSM and its stationary probabilities, using ΦXij = πXi T Xij .
+
+## 4.3 Mean first-passage time 
+
+The A → B mean first-passage time quantifies the inverse rate constant for an A → B process, as discussed in Sec. 3.4. Here we show how to compute the A → B MFPT without bias from an MSM model. Applying the discrete-time Hill relation (29), 
+
+mA→B = τ
+
+R 
+
+> B
+
+πA→B (x) d x − τ. (46) Here and throughout, we assume that the union of one or more MSM clusters equals the target state B. We can rewrite the MFPT expression using the coarse-grained A → B stationary probability for the B state, 
+
+mA→B = τ
+
+P 
+
+> i∈B
+
+πA→Bi
+
+− τ. (47) We emphasize the following key point. KEY POINT: The exact A → B MFPT for lag time τ is determined by the A → B NESS stationary probability of the B state. 
+
+mA→B = τ
+
+P 
+
+> i∈B
+
+πA→Bi
+
+− τ. (48) This identity is unbiased when πA→Bb is obtained from the correctly constructed A → B NESS transition matrix because the stationary probability itself is unbiased. 
+
+## 4.4 Committor 
+
+To define the proper coarse-graining for the committor, we are guided by the long trajectory perspective. In a long trajectory, points in a given coarse cluster will be equilibrium-distributed, so we define the coarse-grained committor qAi as 
+
+qAi =
+
+Z
+
+πequil (x|i) qA(x) d x
+
+=
+
+R Ii(x) πequil (x) qA(x) d x
+
+R Ii(x) πequil (x) d x .
+
+(49) 14 In the second line, we have used the explicit formula for the equilibrium density conditioned on cluster i. We can generate an unbiased estimate for the coarse-grained committor by using the likelihood ratio formula which was derived in Sec. 3.3, 
+
+qA(x) = πA→B πA→B (x)
+
+πequil (x) , x / ∈ B. (50) For any cluster i outside of the sink state B, substituting (50) into (49) gives 
+
+qAi = πA→B πA→Bi
+
+πequil 
+
+> i
+
+. (51) For any cluster a in the source state A, the condition qAa = 1 leads to an explicit formula for the normalizing constant, 
+
+πA→B = πequil 
+
+> a
+
+πA→Ba
+
+. (52) We can use these formulas to obtained unbiased estimates of the coarse-grained committor and we close with the following key point. KEY POINT: In analogy to the continuous-state case, the coarse-grained committor is the normalized ratio of steady-state populations between the A → B NESS and equilibrium. 
+
+## 4.5 Traditional MSM observables are biased 
+
+The traditional MSM formulas for the mean first-passage time and committor are exact for a Markov chain on the MSM states, but they are generally biased when the MSM states are coarse-grained regions of a continuous-state molecular system. These formulas are inconsistent with the unbiased formulas in Secs. 4.3 and 4.4. The traditional MSM formula for the A → B MFPT is based on a first-step relation that holds under Markovianity. If the lag-τ dynamics are fully described by a Markov transition matrix with elements Tij ,then the local MFPT to B is given by the following formula [28]. 
+
+(
+
+mBi = P 
+
+> j
+
+Tij mBj + τ, i / ∈ B, mBi = 0 , i ∈ B, (Unbiased assuming Markov property). (53) This means the local MFPT from a given state i / ∈ B is the weighted average of the MFPTs among the subsequently visited states, plus one lag time. A global A → B MFPT is then obtained by averaging these local MFPTs over the first entry distribution on A.In direct analogy, the traditional MSM formula for the coarse-grained committor is also given by a first-step relation that holds under the Markov property. The Markov property implies that the coarse-grained committor satisfies 
+
+
+
+qAi = P 
+
+> j
+
+Tij qAj , i / ∈ A, i / ∈ B, qAi = 1 , i ∈ A, qAi = 0 , i ∈ B, 
+
+(Unbiased assuming Markov property). (54) In other words, the probability to reach state A before B from a state i outside of A or B must be preserved when averaging over all possible one-step outcomes. Both the relations (53) and (54) are systematically biased, regardless of how much trajectory data is used to estimate the transition matrix, because the projected dynamics on coarse-grained molecular states are generally not Markovian. The average observable in the downstream state j does not necessarily describe all future behavior from j, because different phase-space regions within j can lead to different outcomes. Secs. 6.2 and 6.3 will analyze the error in the first-step relations and provide formulas indicating that this error might be large. 15 5 Trajectory reweighting 
+
+The preceding section has explained how to use MSMs to compute unbiased observables, given infinite data that is distributed according to the appropriate stationary distribution. However, in practice we never have perfect data, so this section reviews ways to reweight trajectory data to construct more accurate MSMs. 
+
+## 5.1 Baseline method with simple counts 
+
+First consider a baseline method that constructs the MSM transition matrix based on simple counts. Suppose we have access to a data set of trajectories xk, for k = 1 , 2, . . . , K . Each trajectory is observed for Nk time steps, 
+
+xk(0) , x k(τ ), . . . , x k(Nkτ ). (55) For each k = 1 , 2, . . . , K , we define a transition count matrix C(k) with elements 
+
+C(k) 
+
+> ij
+
+=
+
+> Nk
+
+X
+
+> n=1
+
+Ii(xk(nτ − τ )) Ij (xk(nτ )) . (56) We also define a cluster occupancy vector with elements determined from C(k) as follows. 
+
+C(k) 
+
+> i
+
+= X
+
+> j
+
+C(k)
+
+> ij
+
+= 
+
+> Nk−1
+
+X
+
+> n=0
+
+Ii(xk(nτ )) .
+
+(57) The simplest way we can compute entries of an MSM is by dividing the sum of the transition counts over all the trajectories by the sum of the cluster occupancies, 
+
+Tij =
+
+PKk=1 C(k)
+
+> ij
+
+PKk=1 C(k)
+
+> i
+
+. (58) In this simple-counts approach, each observed lag-time transition is weighted equally, so longer trajectories generally make the largest contributions to the sums. In several idealized settings, the simple-counts approach can produce asymptotically unbiased MSMs as the number of trajectories K goes to infinity. 
+
+• The simple-counts estimator is unbiased for the equilibrium MSM when the trajectory start points are sampled from the equilibrium density πequil .
+
+• The estimator is unbiased for the A → B nonequilibrium MSM when the trajectory start points are sampled from the A → B nonequilibrium density πA→B and the transitions follow the A → B recycling dynamics. 
+
+• Last, the simple-counts estimator is unbiased for T equil or T A→B when the start points of the counted transitions are sampled from the correct within-cluster distributions πequil (x|i) or πA→B (x|i), and each trajectory consists of a single lag-time transition according to pτ or pA→Bτ .In contrast, the simple-counts estimator becomes biased when initial points are not drawn from the target stationary density and many transitions are counted. The downstream transition origins are distributed according to the relaxation of the initial ensemble, rather than the desired stationary density. In the typical MD workflow, researchers have access to one or more long trajectories, some of which pass through the A and B states of interest. Researchers then apply simple counts to the full data set of trajectories to approximate the matrix T equil . As a follow-up step, some researchers subset the data to include only trajectory segments whose most recent visit was to A, and they terminate each segment upon hitting B. They apply simple counts to the subsetted data and enforce the recycling dynamics from the sink 16 B to the source A, resulting in a “history-augmented MSM” (haMSM) [37, 8, 38] that approximates the matrix T A→B .While the simple counts approach is powerful in idealized settings, it has limitations in typical MD ap-plications. First, because full trajectories are counted, the start points must be sampled from the target stationary density for unbiased estimation. However, in practice the start points are only partially equili-brated, so finite trajectories retain initialization bias, especially along the slow relaxation modes. Second, the haMSM approach requires tracing trajectories backward to the last visit to A or B, which is not al-ways possible and can reduce the amount of usable data. To address these issues, the rest of this section will discuss alternative strategies that reweight the available trajectory data so it better matches the target equilibrium or nonequilibrium distribution. 
+
+## 5.2 Trajectory reweighting based on static clustering 
+
+The deviation from stationarity in typical data sets [2] has motivated efforts to remove initial-distribution bias from MSM models. Wan & Voelz [47] developed the first proposal for reweighting trajectories to improve consistency with a target stationary distribution π. They were inspired by the ideal weighted sampling approach, in which each trajectory k = 1 , . . . , K receives a weight wk so that the weighted distribution of start points equals the target distribution π. Given an increasing quantity of perfectly weighted data, the weights and trajectory start points yield 
+
+> K
+
+X
+
+> k=1
+
+wkIi(xk(0)) = πi, for each cluster i. (59) In practice, we do not know the exact stationary probabilities πi, but we can check the related consistency condition KX
+
+> k=1
+
+wkIi(xk(0)) = πMSM  
+
+> i
+
+, for each cluster i. (60) Here πMSM  
+
+> i
+
+is the stationary probability for cluster i calculated from the MSM model. Violations of (60) may indicate initial-distribution bias and can contribute to biased MSM estimates. To improve correspondence with the condition (60), Wan & Voelz first calculated the stationary solution 
+
+πMSM for an initial, standard MSM. Then they assigned a uniform weight to each trajectory beginning in cluster i,
+
+wk = πMSM 
+
+> i
+
+PKℓ=1 Ii(xℓ(0)) , if xk(0) ∈ i. (61) Last, they redefined the MSM transition matrix via 
+
+Tij =
+
+PKk=1 wk C(k)
+
+> ij
+
+PKk=1 wk C(k)
+
+> i
+
+. (62) Wan & Voelz initially applied their trajectory reweighting approach in the equilibrium setting [47]. However, the same approach can be used to approximate the nonequilibrium A → B transition matrix when the trajectories follow the appropriate source-sink recycling dynamics. As a limitation, however, the original Wan & Voelz algorithm was not fully self-consistent, since the matrix elements defined in (62) generally result in a new stationary solution that is no longer consistent with the assigned trajectory weights. Therefore, Russo et al. [29] proposed an iterative version of the algorithm that repeatedly updates the weights defined in (61) after computing each new stationary solution from the weighted matrix elements (62). At convergence, the iterated approach produces weights and stationary probabilities that satisfy (60) for the chosen static clustering. These early trajectory reweighting algorithms [47, 29] were primarily intended for long trajectories. For a single-lag trajectory, the trajectory weight multiplies both the numerator and denominator of one row of the transition matrix and therefore cancels. Therefore, trajectory reweighting results in no change to the computed MSM matrix entries. Reweighting only begins to affect the MSM matrix as the number of lag-time steps increases, since it changes the computed matrix entries for the downstream bins visited by 17 the trajectories. Given finite trajectory length, reweighting based on static bins cannot fully correct the distribution of trajectory start points within each cluster. KEY POINT: Reweighting based on static clusters is insufficient for unbiased local sampling with finite trajectories, especially when the trajectories are short. 
+
+## 5.3 Trajectory reweighting with random clusters 
+
+The early algorithms for trajectory reweighting [47, 29] were limited due to their reliance on static clusters. In contrast, the motivating idea behind the randomized iterative reweighting (RiteWeight) approach [19] is to randomly change the cluster definition at each iteration and then identify a new stationary solution of the MSM transition matrix 
+
+Tij =
+
+PKk=1 wk C(k)
+
+> ij
+
+PKk=1 wk C(k)
+
+> i
+
+. (63) The algorithm then enforces the consistency condition (60) by updating the weight of each trajectory begin-ning in cluster i according to 
+
+wnew  
+
+> k
+
+= πMSM 
+
+> i
+
+PKℓ=1 Ii(xℓ(0)) wℓ
+
+wk, if xk(0) ∈ i. (64) Here wk is the previous weight of the kth trajectory, wnew  
+
+> k
+
+is the new weight, and πMSM  
+
+> i
+
+is the current iter-ation’s estimate of the stationary probability for cluster i, based on T . The update rule (64) preserves the relative weights of trajectories starting in each cluster during a single iteration, but repeated re-clustering allows trajectories that were previously grouped together to receive different relative weights in later itera-tions. In this way, the algorithm iteratively improves the consistency between the trajectory weights and the stationary vectors of the weighted MSMs. We can apply this approach to either an equilibrium distribution or an A → B steady-state distribution, by imposing the appropriate boundary conditions at the sink and removing any segments violating the boundary conditions. The iterative algorithm described above can be applied to trajectories of any finite length. However, for RiteWeight, long trajectories are divided into segments containing one lag interval, allowing each counted transition origin to receive its own weight rather than tying its weight to all transitions in the parent trajec-tory. This increases the flexibility of the reweighting, although it does not add new dynamical information. RiteWeight makes the greatest impact when the empirical distribution of transition origins is far from stationary under the target dynamics. This occurs, for example, when a large number of short trajectories begin from a strongly biased distribution, or when data generated in one ensemble is reweighted to a differ-ent target ensemble, such as an A → B nonequilibrium steady state [19]. By contrast, RiteWeight makes little correction when the single-lag segments from long equilibrium trajectories are used to estimate equi-librium. With long equilibrium tajectories, the consistency condition (60) is automatically nearly satisfied with uniform weights, so there is little empirical inconsistency for RiteWeight to correct [50]. The recent study [19] shows that RiteWeight is asymptotically unbiased under idealized settings, and it empirically reduces the bias in equilibrium and nonequilibrium MSMs. Further analysis and best practices for RiteWeight are actively under development, and practical applications often use time-averaging [19] or smoothing [25] of the weights produced by the algorithm. There is also an extended version of RiteWeight that can analyze trajectory segments generated from biased transition densities [1]. KEY POINT: By repeatedly changing the clustering, RiteWeight approaches self-consistency across a rich family of coarse-grainings rather than for one fixed state decomposition. The method can use nearly all available trajectory data of any length, and it can target either equilibrium or A → B steady state. 
+
+# 6 Theoretical error analysis of standard MSMs 
+
+This section analyzes the error in traditional MSM observables due to the failure of Markovianity or incorrect local sampling within clusters. We will derive exact error expressions for stationary probabilities, mean first-18 passage times, and committors. 
+
+## 6.1 Analysis of stationary probabilities 
+
+First we analyze the error when approximating a coarse-grained stationary probability vector, such as πequil 
+
+or πA→B . The size of the error depends on how well the MSM transition matrix T approximates the target transition matrix T equil or T A→B . The following proposition makes this connection precise. 
+
+Proposition 6.1 (Errors in stationary probabilities) . Let πX be the stationary vector for a target MSM transition matrix T X , where X could indicate the equilibrium or nonequilibrium A → B ensemble, and let 
+
+π be the stationary vector for a computed MSM transition matrix T . We assume T X is irreducible and aperiodic. Then the errors in the stationary probabilities are given by 
+
+π⊤ − (πX )⊤ = π⊤(T − T X )M X (65) 
+
+where M X denotes the matrix 
+
+M X = I − T X + 1( πX )⊤−1 . (66) 
+
+Proof. First make the calculation (π − πX )⊤(I − T X + 1( πX )⊤) = ( π − πX )⊤(I − T X )= π⊤ − π⊤T X
+
+= π⊤(T − T X ).
+
+(67) where the first equality uses ( π − πX )⊤1 = 0, and the remaining equalities use ( πX )⊤T X = ( πX )⊤ and 
+
+π⊤T = π⊤. Multiply the left- and right-hand sides by M X to confirm 
+
+π⊤ − (πX )⊤ = π⊤(T − T X )M X . (68) This completes the proof. In the error expression (65), the stationary probabilities are generally incorrect if the computed matrix T
+
+fails to match the target matrix T X , which might result from misdistributed initial data. The errors T − T X
+
+are then inflated by a fundamental matrix 
+
+M X = I − T X + 1( πX )⊤−1
+
+= I +
+
+> ∞
+
+X
+
+> s=1
+
+(T X )s − 1( πX )⊤ . (69) The i, j element of this matrix quantifies the expected number of visits to cluster j in excess of an equilibrium value when a trajectory is started from cluster i, for the Markov model defined by T X . This implies that errors in the transition matrix are most significant when they inject probability into slowly relaxing modes or metastable regions. As a simple corollary, we can use Prop. 6.1 to analyze the error in the cluster-to-cluster flux Φ Xij = πXi T Xij 
+
+when the computed flux is Φij = πiTij . (70) Element-wise, the error is Φij − ΦXij = πi(Tij − T Xij ) + ( πi − πXi )T Xij . (71) The first term is a direct contribution from the error in the computed i → j transition probability. The second term results from the induced error in the stationary probability for cluster i. By Prop. 6.1, this stationary-probability error can be amplified by the slow relaxation timescales encoded in the fundamental matrix M X .19 6.2 Analysis of mean first-passage times 
+
+This section analyzes the error in the A → B MFPT which is estimated using the first-step relation discussed in Sec. 4.5. The computed MFPT is correct when the first-step relation is applied with the A → B nonequi-librium transition matrix T A→B . It is generally incorrect when it is applied to any other matrix, the resulting MFPT estimate, and Prop. 6.2 quantifies the size of the error. This analysis reveals a potentially important source of bias with the traditional MSM approach that estimates the MFPT from an approximation of the 
+
+equilibrium transition matrix T equil , instead of the A → B NESS matrix. 
+
+Proposition 6.2 (Error in mean first-passage time) . Let τ A→B be the exact A → B MFPT, and let T be a computed MSM transition matrix, where state A is represented by a single cluster a. Let ma be the estimated 
+
+A → B MFPT from the first-step relation 
+
+(
+
+mi = P 
+
+> j
+
+Tij mj + τ, i / ∈ B, mi = 0 , i ∈ B. (72) 
+
+Then the error in the A → B MFPT is given by 
+
+ma − mA→B = e⊤ 
+
+> a
+
+(I − ˜T A→B )−1( ˜T − ˜T A→B ) ˜ m. (73) 
+
+Here, ea is the standard basis vector associated with cluster a. ˜T A→B , ˜T , and ˜m denote submatrices or subvectors of T , T A→B , and m after removing all entries corresponding to clusters i ∈ B.Proof. It was shown in Sec. 4.3 that the A → B MFPT for the continuous-state system satisfies 
+
+mA→B = τ
+
+P 
+
+> i∈B
+
+πA→Bi
+
+− τ. (74) By the Kac return-time argument from Sec. 3.4, the A → B MFPT for the Markov chain with transition matrix T A→B also equals τ / P 
+
+> i∈B
+
+πA→Bi − τ . Therefore, the A → B MFPT equals the quantity mBi
+
+determined by the first-step relation 
+
+(
+
+mBi = P 
+
+> j
+
+T A→Bij mBj + τ, i / ∈ B, mBi = 0 , i ∈ B. (75) We combine the first-step relations for T and T A→B to yield a matrix equation ˜m − ˜mB = ˜T ˜m − ˜T A→B ˜mB (76) Rearranging the equation, (I − ˜T A→B )( ˜ m − ˜mB ) = ( ˜T − ˜T A→B ) ˜ m (77) Multiplying the left- and right-hand sides by ( I − ˜T A→B )−1,˜m − ˜mB = ( I − ˜T A→B )−1( ˜T − ˜T A→B ) ˜ m. (78) Last, we restrict to the a state. 
+
+ma − mA→B = e⊤ 
+
+> a
+
+(I − ˜T A→B )−1( ˜T − ˜T A→B ) ˜ m. (79) This completes the proof. Prop. 6.2 shows how any discrepancies between ˜T and ˜T A→B are inflated by a fundamental matrix (I − ˜T A→B )−1 =
+
+> ∞
+
+X
+
+> s=0
+
+( ˜T A→B )s. (80) The a, j element of this matrix quantifies the expected number of visits to cluster j before hitting B for the Markov model defined by T A→B , when a trajectory is started from cluster a. This implies that the errors in the transition matrix are most significant when they occur in origin states that are frequently visited, shift probability toward states with substantially different remaining MFPTs, or involve a combination of these two effects. 20 6.3 Analysis of committors 
+
+Last, we evaluate the error in the coarse-grained committor qA. The standard MSM approach estimates 
+
+qA from a first-step relation involving a computed transition matrix T . However, this approach is generally biased unless 
+
+qAi = X
+
+> j
+
+Tij qAj , i / ∈ A, i / ∈ B, (81) which is only expected to hold if the coarse-grained dynamics satisfy the Markov property. The following proposition quantifies the size of the bias. 
+
+Proposition 6.3 (Error in committor) . Let T be a computed MSM transition matrix, and let q be the estimated A-committor from the first-step relation 
+
+
+
+qi = P 
+
+> j
+
+Tij qj , i / ∈ A, i / ∈ B, qi = 0 , i ∈ B, qi = 1 , i ∈ A. 
+
+(82) 
+
+Then the error in the A-committor is given by 
+
+q◦ − qA, ◦ = ( I − T ◦)−1d◦, (83) 
+
+where 
+
+d = T q A − qA (84) 
+
+is the discrepancy vector. Here, q◦, qA, ◦, T ◦, and d◦ denote submatrices or subvectors of q, qA, T , and d
+
+after removing all entries corresponding to states i ∈ A or i ∈ B.Proof. Introduce a vector t with entries ti = P 
+
+> j∈A
+
+Tij . Then we can rewrite the first-step relation as a linear system 
+
+q◦ = T ◦q◦ + t◦. (85) Next use the definition of the discrepancy vector to check that (I − T ◦)( q◦ − qA, ◦) = ( T ◦qA, ◦ + t◦) − qA, ◦
+
+= d◦, (86) Multiplying both sides by ( I − T ◦)−1,
+
+q◦ − qA, ◦ = ( I − T ◦)−1d◦. (87) This completes the proof. The error expression (83) shows how violations of the equality qAi = P 
+
+> j
+
+Tij qAj are amplified by a funda-mental matrix (I − T ◦)−1 =
+
+> ∞
+
+X
+
+> s=0
+
+(T ◦)s. (88) The i, j element of this matrix quantifies the expected number of visits to cluster j before hitting A or B
+
+for the Markov model defined by T , when a trajectory is started from cluster i. This implies that errors in the transition matrix are most impactful when they occur in origin states that are frequently visited, cause large committor discrepancies, or involve a combination of the two effects. 21 7 Concluding discussion 
+
+This perspective paper has examined the limitations of the standard MSM framework in which a single transition matrix is used to estimate many observables. Even with infinite sampling, this approach can produce biased observables because different observables generally require transition matrices with different within-cluster sampling distributions. In Sec. 6, we quantified these biases through exact error expressions for stationary probabilities, mean first-passage times, and committors. These results demonstrate how coarse-grained observables depend strongly on the distribution of configurations sampled within each state. It is useful to recall why constructing an exactly Markovian MSM is difficult. Biomolecular energy landscapes contain large numbers of basins and barriers, as illustrated in Fig. 2. Given the affordable amount of trajectory data, it is generally infeasible to construct a moderate-sized state decomposition that resolves every dynamically relevant basin and barrier. Consequently, individual MSM states often contain configurations with substantially different future behavior, leading to the failure of the Markov property at practical lag times. As one indication of this complexity, a classic study by Czerminski and Elber cataloged 138 local energy minima for a tripeptide [10]; later work has further documented the remarkable landscape complexity of seemingly simple systems [46, 34]. Overall, the notion of describing a protein-scale system with, say, 100 - 1,000 strictly Markovian states brings with it insurmountable challenges. Rather than requiring a single Markovian transition matrix, we have presented a framework for computing unbiased coarse-grained observables from data. Our framework uses an equilibrium transition matrix and an A → B source–sink transition matrix, each constructed using the corresponding stationary within-cluster sampling distribution. Together, these objects yield unbiased estimators for equilibrium and nonequilibrium stationary probabilities, mean first-passage times, and committors in the infinite-data limit. Our theoretical discussion has focused primarily on systematic bias in observables and has largely set aside uncertainty due to finite sampling. Readers interested in finite-sample limitations of MSMs can consult [32, 2, 20]. Nevertheless, Sec. 5 describes trajectory-reweighting methods that begin to connect the infinite-data theory with realistic data regimes. Because the proposed estimators can be incorporated into existing MSM workflows, and because these reweighting methods have shown strong empirical performance, we expect the framework to provide a practical route toward reducing systematic MSM bias. Understanding its performance under finite sampling, imperfect reweighting, and incomplete state-space coverage remains an important direction for future work. 
+
+# Acknowledgments 
+
+Jeremy Copperman, John Russo, and Gideon Simpson played a key role in developing the perspective presented here. We also thank Alex Dickson, Sagar Kania, and Edward Lyman for useful discussions of MSM properties. RJW acknowledges support from a 2026–2027 Hellman Fellowship. DMZ acknowledges support from NIH Grant GM115805. 
+
+# References 
+
+[1] David Aristoff and Daniel M Zuckerman. “bRiteWeight: Randomized iterative reweighting for biased trajectory data”. In: chemRxiv (2026). https://doi.org/10.26434/chemrxiv.15001675/v1. [2] Marco Bacci, Amedeo Caflisch, and Andreas Vitalis. “On the removal of initial state bias from simu-lation data”. In: The Journal of chemical physics 150.10 (2019). [3] Manon Baudel, Arnaud Guyader, and Tony Leli` evre. “On the Hill relation and the mean reaction time for metastable processes”. In: Stochastic Processes and their Applications 155 (2023), pp. 393–436. [4] Divesh Bhatt and Daniel M Zuckerman. “Beyond microscopic reversibility: Are observable nonequi-librium processes precisely reversible?” In: Journal of chemical theory and computation 7.8 (2011), pp. 2520–2527. [5] David Chandler. Introduction to modern statistical mechanics . Oxford University Press, Oxford, UK, 1987. 22 [6] John D Chodera and Frank No´ e. “Markov state models of biomolecular conformational dynamics”. In: 
+
+Current opinion in structural biology 25 (2014), pp. 135–144. [7] John D Chodera and Frank No´ e. “Probability distributions of molecular observables computed from Markov models. II. Uncertainties in observables and their time-evolution”. In: The Journal of chemical physics 133.10 (2010). [8] Jeremy Copperman and Daniel M Zuckerman. “Accelerated estimation of long-timescale kinetics from weighted ensemble simulation via non-Markovian “microbin” analysis”. In: Journal of chemical theory and computation 16.11 (2020), pp. 6763–6775. [9] Ronan Costaouec et al. “Analysis of the accelerated weighted ensemble methodology”. In: Discrete and Continuous Dynamical Systems (2013), pp. 171–181. [10] Ryszard Czerminski and Ron Elber. “Reaction path study of conformational transitions in flexible systems: applications to peptides”. In: The Journal of chemical physics 92.9 (1990), pp. 5580–5601. [11] Alex Dickson, Aryeh Warmflash, and Aaron R Dinner. “Separating forward and backward pathways in nonequilibrium umbrella sampling”. In: The Journal of chemical physics 131.15 (2009). [12] Crispin W. Gardiner. Handbook of Stochastic Methods . Springer, 1985. [13] Enrico Guarnera and Eric Vanden-Eijnden. “Optimized Markov state models for metastable systems”. In: The Journal of Chemical Physics 145.2 (2016). [14] Matthew P. Harrigan et al. “MSMBuilder: Statistical Models for Biomolecular Dynamics”. In: Bio-physical Journal 112.1 (2017), pp. 10–15. doi : 10.1016/j.bpj.2016.10.042 .[15] Terrell L Hill. Free energy transduction and biochemical cycle kinetics . Courier Corporation, 2013. [16] Moritz Hoffmann et al. “Deeptime: A Python library for machine learning dynamical models from time series data”. In: Machine Learning: Science and Technology 3.1 (Dec. 2021), p. 015009. doi :
+
+10.1088/2632-2153/ac3de0 .[17] Brooke E Husic et al. “Optimized parameter selection reveals trends in Markov state models for protein folding”. In: The Journal of chemical physics 145.19 (2016). [18] Brooke E. Husic and Vijay S. Pande. “Markov State Models: From an Art to a Science”. In: Journal of the American Chemical Society 140.7 (2018), pp. 2386–2396. doi : 10.1021/jacs.7b12191 .[19] Sagar Kania et al. “Randomized iterative trajectory reweighting for steady-state distributions without discretization error”. In: Proceedings of the National Academy of Sciences 123.19 (2026), e2529246123. [20] Nicolai Kozlowski and Helmut Grubmuller. “Uncertainties in Markov state models of small proteins”. In: Journal of Chemical Theory and Computation 19.16 (2023), pp. 5516–5524. [21] Benedict Leimkuhler and Charles Matthews. Molecular Dynamics: With Deterministic and Stochastic Numerical Methods . Vol. 39. Interdisciplinary Applied Mathematics. Springer, 2015. doi : 10.1007/ 978-3-319-16375-8 .[22] Frank No´ e. “Probability distributions of molecular observables computed from Markov models”. In: 
+
+The Journal of Chemical Physics 128.24 (June 2008), p. 244103. doi : 10.1063/1.2916718 .[23] James R Norris. Markov chains . 2. Cambridge university press, 1998. [24] Feliks N¨ uske et al. “Markov state models from short non-equilibrium simulations—Analysis and cor-rection of estimation bias”. In: The Journal of Chemical Physics 146.9 (Mar. 2017), p. 094104. doi :
+
+10.1063/1.4976518 .[25] Lisa Otten, David Aristoff, and Daniel M Zuckerman. “Regularized RiteWeight for Sparse Trajectory Data: A Smoothed Stationary Reweighting Framework”. In: chemRxiv (2026). url : https://doi. org/10.26434/chemrxiv.15001337/v1 .[26] Vijay S. Pande, Kyle Beauchamp, and Gregory R. Bowman. “Everything you wanted to know about Markov State Models but were afraid to ask”. In: Methods 52.1 (2010). Protein Folding, pp. 99–105. 
+
+issn : 1046-2023. doi : 10.1016/j.ymeth.2010.06.002 .[27] Jan-Hendrik Prinz et al. “Markov models of molecular kinetics: Generation and validation”. In: The Journal of chemical physics 134.17 (2011). 23 [28] Nicolas Privault. Understanding Markov Chains . Vol. 8. Springer, 2018. [29] John D Russo, Jeremy Copperman, and Daniel M Zuckerman. “Iterative trajectory reweighting for es-timation of equilibrium and non-equilibrium observables”. In: arXiv preprint arXiv:2006.09451 (2020). [30] John D Russo et al. “Unbiased estimation of equilibrium, rates, and committors from Markov state model analysis”. In: arXiv preprint arXiv:2105.13402 (2021). [31] Marco Sarich, Frank No´ e, and Christof Sch¨ utte. “On the Approximation Quality of Markov State Models”. In: Multiscale Modeling & Simulation 8.4 (2010), pp. 1154–1177. doi : 10.1137/090764049 .[32] Riccardo Scalco and Amedeo Caflisch. “Equilibrium distribution from distributed computing (simula-tions of protein folding)”. In: The Journal of Physical Chemistry B 115.19 (2011), pp. 6358–6365. [33] Martin K. Scherer et al. “PyEMMA 2: A Software Package for Estimation, Validation, and Analysis of Markov Models”. In: Journal of Chemical Theory and Computation 11.11 (2015), pp. 5525–5542. 
+
+doi : 10.1021/acs.jctc.5b00743 .[34] Daniel J Sharpe and David J Wales. “Identifying mechanistically distinct pathways in kinetic transition networks”. In: The Journal of Chemical Physics 151.12 (2019). [35] Nina Singhal and Vijay S. Pande. “Error analysis and efficient sampling in Markovian state models for molecular dynamics”. In: The Journal of Chemical Physics 123.20 (Nov. 2005), p. 204909. doi :
+
+10.1063/1.2116947 .[36] E Su´ arez et al. “Simultaneous Computation of Dynamical and Equilibrium Information Using a Weighted Ensemble of Trajectories.” In: Journal of Chemical Theory and Computation 10.7 (2014), pp. 2658–2667. [37] Ernesto Su´ arez, Joshua L Adelman, and Daniel M Zuckerman. “Accurate estimation of protein folding and unfolding times: beyond Markov state models”. In: Journal of chemical theory and computation 
+
+12.8 (2016), pp. 3473–3481. [38] Ernesto Su´ arez et al. “What Markov state models can and cannot do: Correlation versus path-based observables in protein-folding models”. In: Journal of chemical theory and computation 17.5 (2021), pp. 3119–3133. [39] William C Swope, Jed W Pitera, and Frank Suits. “Describing protein folding kinetics by molecular dynamics simulations. 1. Theory”. In: The Journal of Physical Chemistry B 108.21 (2004), pp. 6571– 6581. [40] William C Swope et al. “Describing protein folding kinetics by molecular dynamics simulations. 2. Example applications to alanine dipeptide and a β-hairpin peptide”. In: The Journal of Physical Chemistry B 108.21 (2004), pp. 6582–6594. [41] Benjamin Trendelkamp-Schroer et al. “Estimation and uncertainty of reversible Markov models”. In: 
+
+The Journal of Chemical Physics 143.17 (Nov. 2015), p. 174101. doi : 10.1063/1.4934536 .[42] Yehor Tuchkov et al. “Error Breakdown and Sensitivity Analysis of Dynamical Quantities in Markov State Models”. In: Journal of Chemical Theory and Computation 21.23 (2025), pp. 12304–12316. doi :
+
+10.1021/acs.jctc.5c01143 .[43] Titus S Van Erp, Daniele Moroni, and Peter G Bolhuis. “A novel path sampling method for the calculation of rate constants”. In: The Journal of chemical physics 118.17 (2003), pp. 7762–7774. [44] N.G. Van Kampen. Stochastic Processes in Physics and Chemistry, 3rd edition . Elsevier, 2007. [45] Eric Vanden-Eijnden and Maddalena Venturoli. “Exact rate calculations by trajectory parallelization and tilting”. In: The Journal of chemical physics 131.4 (2009). [46] David J Wales. “Exploring energy landscapes”. In: Annual review of physical chemistry 69 (2018), pp. 401–425. [47] Hongbin Wan and Vincent A Voelz. “Adaptive Markov state model estimation using short reseeding trajectories”. In: The Journal of chemical physics 152.2 (2020). 24 [48] Hao Wu et al. “Variational Koopman models: Slow collective variables and molecular kinetics from short off-equilibrium simulations”. In: The Journal of Chemical Physics 146.15 (Apr. 2017), p. 154104. 
+
+doi : 10.1063/1.4979344 .[49] Daniel M Zuckerman. “‘Proof’ of the Hill Relation Between Probability Flux and Mean First-Passage Time”. https://statisticalbiophysicsblog.org/?p=8. [50] Daniel M Zuckerman. “Counting is not enough: A weakness of MSMs inherited by RiteWeight”. https://statisticalbiophysicsblog.org/?p=566. [51] Daniel M Zuckerman. Statistical physics of biomolecules: An introduction . CRC press, 2010. [52] Daniel M Zuckerman and John D Russo. “A gentle introduction to the non-equilibrium physics of trajectories: Theory, algorithms, and biomolecular applications”. In: American journal of physics 89.11 (2021), pp. 1048–1061. 25

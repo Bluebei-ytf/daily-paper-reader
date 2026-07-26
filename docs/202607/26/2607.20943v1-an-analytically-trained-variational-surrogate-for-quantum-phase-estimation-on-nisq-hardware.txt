@@ -1,0 +1,1430 @@
+Title: An Analytically Trained Variational Surrogate for Quantum Phase Estimation on NISQ Hardware
+
+URL Source: https://arxiv.org/pdf/2607.20943v1
+
+Published Time: Fri, 24 Jul 2026 00:38:17 GMT
+
+Number of Pages: 30
+
+Markdown Content:
+# An Analytically Trained Variational Surrogate for Quantum Phase Estimation on NISQ Hardware 
+
+Mousumi Kundu 1, 2 , Ashish Kumar Patra 1, Anurag K. S. V. 1, Ruchika Bhat 1, 3 , Sai Shankar P. 1, Alok Shukla 4, and Jaiganesh G. *, 1 
+
+1Qclairvoyance Quantum Labs, Secunderabad, TG 500094, India. 
+
+2Department of CSE(AI & ML), School of Engineering, Dayananda Sagar University, Bengaluru, KA 562112, India. 
+
+3The University of Arizona, Tucson, AZ 85721, USA. 
+
+4School of Arts and Sciences, Ahmedabad University, Ahmedabad, GJ 380009, India. 
+
+## ABSTRACT 
+
+Quantum Phase Estimation (QPE) is a foundational fault-tolerant quantum algorithm for molecular ground-state energy estimation. Yet, its deep circuit requirements render direct hardware execution impractical on Noisy Intermediate-Scale Quantum (NISQ) devices. We present an analytically grounded variational surrogate framework in which a shallow Variational Quantum Circuit (VQC) is trained to reproduce the QPE measurement probability distribution without any quantum circuit simulation. The training target is computed entirely classically via the Dirichlet kernel, evaluated directly from the Full Configuration Interaction (FCI) ground-state energy, the number of ancilla qubits, and the time evolution parameter, eliminating the exponentially scaling simulation bottleneck of prior surrogate approaches. We apply this framework to the hydrogen molecule (H 2) with a symmetry-tapered Hamiltonian and conduct a systematic four-stage experimental investigation on IBM quantum superconducting hardware. In the first stage, we compare linear and full entangler topologies for the RY -RZ -CZ ansatz with and without XpXm Dynamical Decoupling (DD), evaluating distributional agreement using Hellinger distance, fidelity error, total variation distance, and Jensen-Shannon divergence, from which the linear entangler is identified as the optimal topology. In the second stage, we vary the number of VQC layers from p = 1 to p = 5 for the linear entangler RY -RZ -CZ ansatz with and without DD, from which the single-layer configuration is identified as optimal under hardware noise. In the third stage, the single-layer linear entangler configuration is applied to the RY -CZ ansatz without DD on real hardware, comparing ideal-simulator-trained and noisy-simulator-trained parameters across all four metrics. As a supplementary noise analysis, the 
+
+RY -CZ ansatz is executed at circuit depths p ∈ { 8, 64 } with and without XpXm DD to systematically characterize the interplay between circuit depth and dynamical decoupling effectiveness on current superconducting hardware. The resulting framework enables faithful mimicry of the QPE probability distribution using a linearly scaling VQC circuit, recovering the molecular ground-state energy within chemical accuracy ( |∆E| = 1.786 × 10 −4 Hartree, well below the chemical accuracy threshold of 
+
+1.59 × 10 −3 Hartree), and constitutes a scalable and hardware-efficient paradigm for QPE-based molecular energy estimation on NISQ devices. 
+
+Keywords: Quantum Phase Estimation · Variational Quantum Circuits · Quantum Chemistry · Dirichlet Kernel · Molecular Energy Estimation 
+
+> *
+
+(Corresponding Author) email: jaiganesh@qclairvoyance.in, drjaiganesh15@gmail.com arXiv:2607.20943v1 [quant-ph] 23 Jul 2026 1 Introduction 
+
+Quantum computing has emerged as a transformative paradigm for addressing computational problems that remain intractable for classical machines, leveraging the principles of superposition, entanglement, and quantum interference 1–3 . Among the foundational subroutines underpinning many quantum algorithms, Quantum Phase Estimation (QPE) occupies a central role, providing the mechanism by which the eigenphase of a unitary operator is extracted with high precision 1, 4, 5 . Originally introduced by Kitaev 4 and later refined into the circuit-based formulation by Cleve et al. 5, QPE has since become an indispensable primitive in quantum algorithm design. It serves as a critical component in landmark algorithms such as Shor’s factoring algorithm 6, the HHL algorithm for linear systems of equations 7, and quantum algorithms for simulating quantum chemistry 8–10 , where the ground-state energy of molecular Hamiltonians must be determined with chemical accuracy. Despite its theoretical power, the standard QPE circuit incurs a deep circuit requirement that renders it acutely sensitive to gate errors and decoherence, posing a fundamental obstacle in the Noisy Intermediate-Scale Quantum (NISQ) era 2, 11, 12 .The accumulation of noise over many sequential gate operations degrades the fidelity of measurement outcomes, in some cases to the point where the dominant bitstring is irrecoverably corrupted 13, 14 . Various strategies have been explored to address this challenge, including error mitigation techniques 13, 15, 16 , compilation optimization 17 , and hybrid quantum-classical algorithms 18, 19 designed to minimize circuit depth while preserving computational utility. Among hybrid approaches, Variational Quantum Algorithms (VQAs) have attracted considerable attention as a near-term alternative to deep quantum circuits 12, 18 . The Variational Quantum Eigensolver (VQE), introduced by Peruzzo et al. 20 and subsequently developed extensively 19, 21, 22 , estimates molecular ground-state energies using shallow parameterized circuits optimized by classical routines. While VQE circumvents the depth requirements of QPE, it does not directly reproduce the full QPE measurement distribution, which encodes richer spectral information essential for integration into larger quantum algorithms. A conceptually distinct approach to circumventing the depth limitation of QPE while preserving its spectral output was proposed by Liu et al. 23 , who demonstrated that a Variational Quantum Circuit (VQC) can be trained to reproduce the measurement probability distribution of QPE, casting phase estimation as a supervised learning problem and reducing the effective circuit depth to O(pn ) for a VQC with p layers and n qubits under a linear entangler topology. The trained VQC can then substitute the original QPE block within a larger quantum circuit, preserving essential phase information while maintaining a more hardware-amenable gate sequence. However, a fundamental limitation of this approach is that the training target distribution must be generated by executing the full QPE circuit on an ideal or noisy classical simulator leading to a computational cost scaling exponentially with the number of qubits and constitutes a significant bottleneck as problem size grows, ultimately undermining the scalability of the surrogate framework itself. In the present work, we address this limitation by introducing an analytically grounded variational surrogate framework for QPE distribution learning, eliminating the need for any quantum circuit simulation in the training pipeline. The central insight is that the QPE measurement probability distribution is analytically specified by the Dirichlet kernel 1, 5 , given the exact ground-state energy Etrue , the number of ancilla qubits na, and the time evolution parameter τ, the target probability distribution 
+
+Pgt (k; φ ) can be computed directly and efficiently in fully classical computation, without any quantum circuit execution. This renders the entire training workflow classical and scalable, in sharp contrast to simulation-dependent approaches. We apply this framework to the physically motivated task of molecular ground-state energy estimation, using the hydrogen molecule (H 2) with a symmetry-tapered Hamiltonian 24, 25 as our benchmark system, and demonstrate that the trained VQC recovers the ground-state energy within chemical accuracy on real IBM Quantum superconducting hardware. We conduct a systematic four-stage experimental investigation. In the first stage, we compare linear and full entangler topologies for the RY -RZ -CZ ansatz, evaluating distributional agreement using four complementary metrics (Hellinger distance 26 ,fidelity error, total variation distance (TVD), and Jensen-Shannon divergence (JSD) 27 ) both with and without XpXm Dynamical Decoupling (DD) 28–30 on real hardware, from which the linear entangler is identified as the optimal topology. In the second stage, we vary the number of VQC layers from p = 1 to p = 5 for the linear entangler RY -RZ -CZ ansatz with and without DD, from which the single-layer configuration emerges as optimal under hardware noise. In the third stage, the single-layer linear entangler configuration is applied to a reduced RY -CZ ansatz without DD on real hardware, comparing ideal-simulator- trained and noisy-simulator-trained parameters across all four metrics. As a supplementary investigation, we execute the RY -CZ ansatz at circuit depths p ∈ { 8, 64 } with and without XpXm DD to systematically characterize the interplay between circuit depth and dynamical decoupling effectiveness on current superconducting hardware as this is of direct practical relevance for NISQ-era variational algorithm design. The remainder of this paper is organized as follows. Section 2 introduces the theoretical background, covering the historical development of QPE, the Dirichlet kernel formalism, variational quantum circuits, distributional distance metrics, the molecular Hamiltonian with symmetry tapering, and dynamical decoupling. Section 3 describes the methodology, including the molecular Hamiltonian construction, the analytical training pipeline, the ansatz architectures, and the hardware execution setup. Section 4 presents and discusses the results across simulation and real hardware experiments. Section 5 summarizes our findings and 
+
+> 2/30
+
+outlines directions for future research. Finally, Section A presents a dedicated noise analysis examining the interplay between VQC circuit depth and the effectiveness of dynamical decoupling on real quantum hardware. 
+
+## 2 Theoretical Background 
+
+2.1 Historical Development of Quantum Phase Estimation 
+
+The problem of estimating the eigenphase of a unitary operator has a rich history in quantum algorithm design, with successive refinements progressively clarifying both the theoretical foundations and the practical circuit requirements. The earliest formulation is due to Kitaev 4, who introduced a phase estimation procedure based on repeated single-qubit measurements and classical post-processing. In Kitaev’s original scheme, the phase θ is estimated bit by bit using a sequence of controlled-U2k
+
+operations, each followed by a Hadamard gate and a single-qubit measurement. While conceptually transparent, this approach requires many repetitions and does not produce the full probability distribution over bitstrings in a single circuit execution. The circuit-based formulation of QPE, which has since become standard, was introduced and analyzed by Cleve et al. 5 and independently described in the textbook treatment by Mosca and Ekert 31 . In this formulation, an ancilla register of na qubits is initialized in the uniform superposition via Hadamard gates, followed by a sequence of controlled-U2k
+
+operations acting on the system register initialized in the eigenstate |ψ⟩. An inverse Quantum Fourier Transform (QFT †) is then applied to the ancilla register, and measurement in the computational basis yields an na-bit approximation to θ with high probability 1, 5 . The textbook by Nielsen and Chuang 1 provided the definitive pedagogical treatment, establishing the resource requirements and error analysis that are now widely cited. Specifically, to estimate θ with precision ε and success probability at least 1 − δ , one requires 
+
+na = nbits +
+
+
+
+log 2
+
+
+
+2 + 12δ
+
+ 
+
+(1) ancilla qubits, where nbits is the number of bits of precision required to resolve the phase to within ε = 2−nbits , with the total circuit depth dominated by the QFT †1 , rendering direct hardware execution impractical on NISQ devices. The application of QPE to quantum chemistry was pioneered by Aspuru-Guzik et al. 8, who showed that the ground-state energy of a molecular Hamiltonian H can be extracted by applying QPE to the time-evolution operator U = e−iH τ , with the eigenphase encoding the energy as θ = |E|τ/2π. This sparked a sustained research effort into quantum algorithms for electronic structure calculation 9, 10, 32, 33 , culminating in resource estimates for fault-tolerant QPE on industrially relevant molecules 9, 10 .Subsequent work by Berry et al. 34 introduced qubitization and quantum signal processing as more efficient alternatives to Trotterized time evolution for Hamiltonian simulation within QPE, further reducing the gate complexity of the controlled-U
+
+operations. More recently, attention has shifted to phase estimation protocols tailored for the pre-fault-tolerant regime. Lin and Tong 35 
+
+introduced a rejection-sampling-based phase estimation algorithm that achieves Heisenberg-limited precision scaling with early fault-tolerant hardware. Parallel developments in robust phase estimation 36 and Bayesian phase estimation 37 have explored statistical approaches to extracting phase information from shallow circuits with fewer ancilla qubits. Liu et al. 23 proposed a distinct direction in which the QPE circuit is replaced entirely by a trained variational surrogate that reproduces the QPE measurement distribution at greatly reduced circuit depth. This idea directly motivates the analytically grounded framework introduced in the present work. 
+
+2.2 Quantum Phase Estimation: Circuit Formalism and Depth Analysis 
+
+In the standard circuit formulation, QPE estimates the phase θ ∈ [0, 1) of a unitary U satisfying U |ψ⟩ = e2πiθ |ψ⟩, using an 
+
+na-qubit ancilla register and a system register initialized in the eigenstate |ψ⟩1, 5 . The algorithm proceeds as follows: 1. Apply Hadamard gates to all na ancilla qubits to prepare the uniform superposition 1√2na ∑2na −1 
+
+> k=0
+
+|k⟩.2. Apply the controlled-U2 j
+
+gate for j = 0, 1, . . . , na − 1, where the j-th ancilla qubit serves as the control. 3. Apply the inverse Quantum Fourier Transform QFT † to the ancilla register. 4. Measure the ancilla register in the computational basis. The resulting measurement outcome k ∈ { 0, 1, . . . , 2na − 1} is obtained with probability 1, 5 
+
+P(k; φ ) = 122na
+
+sin 2(π(φ − k)) 
+
+sin 2
+
+ π(φ − k)
+
+2na
+
+ , (2) 
+
+> 3/30
+
+where φ = 2na θ is the rescaled phase. When φ is exactly an integer, the distribution collapses to a Kronecker delta at k = φ ,recovering the phase exactly in a single shot. For non-integer φ , the distribution takes the form of a squared Dirichlet kernel, sharply peaked at k∗ = ⌊φ ⌉ (the nearest integer) with characteristic decaying side lobes 5.In the context of quantum chemistry, U = e−iH τ is the time-evolution operator under the molecular Hamiltonian H, and the eigenphase encodes the energy eigenvalue as θ = |E|τ/(2π), giving φ = |E|τ · 2na /(2π)8, 32 . The dominant measurement outcome k∗ then yields the energy estimate 
+
+|Eest | = 2πk∗
+
+2na · τ . (3) 
+
+> QPE Circuit Depth for Molecular Hamiltonians
+
+The circuit depth of QPE for molecular systems is determined by two contributions: the inverse QFT and the controlled time-evolution operators. For a molecule with ns spin-orbitals, the molecular Hamiltonian after Jordan-Wigner mapping contains O(n4 
+
+> s
+
+) Pauli terms, arising from the two-electron integrals 33, 38 . Implementing the time-evolution operator U = e−iH τ
+
+via first-order Trotterization with m Trotter steps incurs a single-step gate complexity of 
+
+DTrotter ∼ O(m · n4 
+
+> s
+
+), (4) since each of the O(n4 
+
+> s
+
+) Pauli exponentials must be applied sequentially within each Trotter step 32, 33 . For the j-th controlled-U2 j
+
+operation in the QPE circuit, this Trotterized block is repeated 2 j times, giving a per-ancilla depth of O(2 j · m · n4 
+
+> s
+
+). Summing over all na ancilla qubits yields the total QPE circuit depth: 
+
+DQPE =
+
+> na−1
+
+# ∑
+
+> j=0
+
+O 2 j · m · n4
+
+> s
+
+ = O 2na · m · n4
+
+> s
+
+ . (5) Substituting the ancilla count requirement from Eq. (1) , where na ∼ O(log (1/ε)) for precision ε, gives 2na ∼ O(1/ε), and the total depth becomes 
+
+DQPE ∼ O
+
+ m · n4
+
+> s
+
+ε
+
+
+
+. (6) This expression reveals the three-way scaling challenge inherent to molecular QPE: the depth grows quartically with the number of spin-orbitals ns, linearly with the number of Trotter steps m, and inversely with the required precision ε. For molecules beyond hydrogen such as LiH ( ns = 12 ), BeH 2 (ns = 14 ), or water ( ns = 14 ), the O(n4 
+
+> s
+
+) scaling renders the QPE circuit depth prohibitively large even for moderate precision requirements on current hardware 32, 33 .Critically, this exponential scaling with na also undermines the classical simulation of QPE circuits. A classical state-vector simulator requires memory scaling as O(2ns+na ) and runtime proportional to DQPE , making exact simulation of QPE for anything beyond the smallest molecules computationally infeasible on classical hardware. This is the fundamental bottleneck of prior surrogate approaches 23 that rely on classical QPE simulation to generate training targets, and this bottleneck is entirely circumvented by the analytical Dirichlet kernel framework introduced in this work, requiring only the FCI ground-state energy 
+
+Etrue , the ancilla count na, and the time evolution parameter τ, alongside the O(2na ) classical evaluation of the Dirichlet distribution, which is lightweight compared to full circuit simulation. 
+
+2.3 The Dirichlet Kernel and the Analytical Target Distribution 
+
+A foundational contribution of the framework introduced in this work is the replacement of QPE circuit simulation with a fully analytical computation of the training target, enabled by the closed-form structure of the QPE measurement distribution. When the exact ground-state energy Etrue is available for a given basis e.g., from a Full Configuration Interaction (FCI) calculation, together with the number of ancilla qubits na and the time evolution parameter τ, the corresponding rescaled phase is φ = |Etrue | τ · 2na /(2π), and the QPE measurement distribution is given exactly by the Dirichlet kernel 
+
+Pgt (k; φ ) = 122na
+
+sin 2
+
+
+
+π2na
+
+
+
+φ − k
+
+2na
+
+ 
+
+sin 2
+
+
+
+π
+
+
+
+φ − k
+
+2na
+
+ , k = 0, 1, . . . , 2na − 1. (7) This expression is normalized, ∑2na −1 
+
+> k=0
+
+Pgt (k; φ ) = 1, and is sharply peaked at k∗ = ⌊2na φ ⌉5. For na = 11 ancilla qubits employed in this work, the dominant bitstring typically concentrates 90 – 95% of the total probability mass, consistent with the high-precision regime of QPE. The remaining probability is distributed across neighboring side lobes, whose accurate characterization 
+
+> 4/30
+
+requires adequate sampling depth. In all experiments reported in this work, we use Nshots = 100 ,000 measurement shots uniformly across every experimental configuration, for both simulation and hardware, ensuring statistically consistent and directly comparable histogram estimates between the VQC output distribution and the analytical Dirichlet target across all stages of the investigation. The key computational advantage is that Pgt (k; φ ) can be evaluated entirely classically for all 2na bitstrings in O(2na ) time, requiring only the FCI energy Etrue , the ancilla count na, and the evolution time τ as inputs, with no quantum circuit execution required at any stage. This stands in sharp contrast to prior surrogate approaches 23 , in which the training target must be generated by running the full QPE circuit on a classical state-vector simulator. As established in Section 2.2, the memory and runtime cost of such simulation scales as O(2ns+na ) and O(2na · m · n4 
+
+> s
+
+) respectively, becoming infeasible for any molecule beyond the smallest benchmark systems. In contrast, the Dirichlet kernel evaluation remains lightweight and analytically exact for any system size accessible to QPE, rendering the training pipeline of the present framework entirely classical, scalable, and free of any exponential simulation overhead that grows with molecular size ns.
+
+2.4 Variational Quantum Circuits 
+
+Variational Quantum Circuits (VQCs), also known as parameterized quantum circuits (PQCs), are quantum circuits U(θθθ ) whose gate parameters θθθ = {θ1, . . . , θM } are optimized by a classical outer loop to minimize a scalar cost function 12, 18 . The theoretical foundations of VQCs draw on the expressibility of parameterized unitaries 39 and the trainability landscape of quantum cost functions 40, 41 . VQCs have been applied to variational eigensolvers 20, 21 , quantum classifiers 42 , quantum generative models 43 ,and quantum reinforcement learning 44 , among many other tasks 18 .The architecture of a VQC consists of alternating layers of single-qubit rotation gates and two-qubit entangling gates. Two entangler topologies are standard: the linear entangler, coupling each qubit to its nearest neighbor and yielding depth O(p · na)
+
+for p layers and na ancilla qubits; and the full entangler, coupling all pairs and yielding depth O(p · n2
+
+> a
+
+)23, 39 . Under ideal (noiseless) conditions, the full entangler achieves greater expressibility for a fixed layer count; however, under realistic noise, its deeper circuits accumulate substantially more error, and the linear entangler is the preferred choice for NISQ hardware 18, 23 . In the present framework, the VQC serves as a linearly scaling surrogate for the QPE circuit with a depth of O(p · na) compared to O(2na · m · n4 
+
+> s
+
+) for the full QPE circuit. This is being trained entirely offline using the analytical Dirichlet target before deployment on real quantum hardware. We investigate two ansatz designs. The RY -RZ -CZ ansatz applies RY and RZ rotations to every qubit in each layer, followed by CZ entangling gates according to the chosen topology, giving 2(p + 1)na variational parameters. The RY -CZ ansatz applies only RY rotations per layer, reducing the parameter count to (p + 1)na and further decreasing circuit depth while retaining the entanglement structure necessary for learning the QPE distribution. Both ansatze are initialized with all variational parameters set to zero. 
+
+2.5 Cost Function and Classical Optimization 
+
+The VQC parameters are optimized by minimizing the cost function 
+
+L (θθθ ) =  
+
+> 2na −1
+
+# ∑
+
+> k=0
+
+qPθθθ (k) − Pgt (k; φ )2, (8) which is the L1 norm of elementwise absolute differences between the VQC output distribution Pθθθ (k) and the analytical Dirichlet target Pgt (k; φ ). Since the training target is computed analytically rather than by circuit execution, the optimization loop is entirely decoupled from any quantum simulation overhead, and the only quantum resource consumed during training is the VQC circuit evaluation itself. Optimization is performed using the Constrained Optimization BY Linear Approximation (COBYLA) algorithm 45 , a gradient-free method that constructs a linear approximation to the objective function within a trust region and updates parameters accordingly. A critical practical advantage of COBYLA is that it requires only a single circuit execution per optimization iteration, avoiding the O(M) circuit evaluations per step required by gradient-based methods such as the parameter-shift rule 46, 47 , where M is the number of variational parameters in θθθ (e.g., M = 2(p + 1)na for the RY -RZ -CZ 
+
+ansatz and M = ( p + 1)na for the RY -CZ ansatz). This makes COBYLA particularly well-suited to VQC training on NISQ devices where circuit execution time is a primary bottleneck 18, 23 . At each COBYLA iteration, the VQC output distribution 
+
+Pθθθ (k) is estimated using Nshots = 100 ,000 measurement shots, yielding normalized probability estimates 
+
+Pθθθ (k) = ck
+
+Nshots 
+
+, k = 0, 1, . . . , 2na − 1, (9) where ck denotes the count of bitstring k in the measurement record. The same shot budget of Nshots = 100 ,000 is used for the classical multinomial sampling of the Dirichlet target distribution Pgt (k; ϕ), ensuring statistically comparable histogram estimates between the VQC output and the analytical target. For bin probabilities of order q ∼ 10 −3, this shot count yields an expected 
+
+> 5/30
+
+sample count of Nshots ·q ≈ 100 , sufficient to suppress large relative statistical fluctuations ( σq ≈ pq(1 − q)/Nshots ≈ 1.0×10 −4)and to ensure stable estimation of divergence-based metrics such as the Jensen–Shannon divergence (JSD), which are sensitive to tail undersampling. 
+
+2.6 Distributional Distance Metrics 
+
+To rigorously quantify the agreement between the learned VQC distribution P ≡ Pθθθ (k) and the analytical Dirichlet target 
+
+Q ≡ Pgt (k; φ ), we employ four complementary distributional distance measures. Together, these metrics probe different geometric and information-theoretic aspects of the distributional discrepancy, providing a more comprehensive evaluation of VQC performance than the single χ2 statistic employed in prior work 23 .
+
+> Hellinger Distance
+
+The Hellinger distance 26 is a symmetric, bounded measure of dissimilarity between two probability distributions, defined as 
+
+H(P, Q) = 1
+
+√2
+
+√P − pQ 2 =
+
+r
+
+1 − ∑
+
+> k
+
+pP(k) Q(k) . (10) It satisfies H(P, Q) ∈ [0, 1], with H = 0 if and only if P = Q, and H = 1 if and only if P and Q have mutually disjoint support. The Hellinger distance is related to the Bhattacharyya coefficient BC (P, Q) = ∑k
+
+pP(k)Q(k) by H2 = 1 − BC 48 , and is metrically equivalent to the total variation distance up to constant factors. Its square, H2, is directly related to the fidelity between quantum states when P and Q are treated as classical probability vectors, making it a natural choice for benchmarking quantum distributions 1. A key practical advantage of the Hellinger distance is its robustness to zero-probability bins, which makes it well-suited for comparing finite-shot probability distributions that may contain outcomes with zero observed counts. 
+
+> Fidelity Error
+
+The classical fidelity between two probability distributions P and Q is defined as 
+
+F(P, Q) = ∑
+
+> k
+
+pP(k) Q(k)
+
+!2
+
+= BC (P, Q)2 , (11) in analogy with the quantum state fidelity F(ρ, σ ) =  Tr p√ρσ √ρ21, 49 . For pure states represented by probability vectors (as in the measurement distributions considered here), this reduces to Eq. (11) 1. The fidelity satisfies F ∈ [0, 1], with F = 1indicating identical distributions and F = 0 indicating orthogonal support. The fidelity error is defined as 
+
+εF = 1 − F(P, Q) = 1 − ∑
+
+> k
+
+pP(k) Q(k)
+
+!2
+
+, (12) and measures the departure of the learned distribution from perfect agreement with the target. It is directly related to the Hellinger distance by εF = 2H2 − H41 , so the two metrics carry complementary but overlapping information. The fidelity error is particularly informative in the near-perfect regime ( H ≪ 1 ), where εF ≈ 2H2 amplifies small differences that would be less visible in the Hellinger distance alone. 
+
+> Total Variation Distance
+
+The total variation distance (TVD) is the L1-based metric on probability distributions 50 :TVD (P, Q) = 12 ∑
+
+> k
+
+|P(k) − Q(k)|. (13) It has the operational interpretation as the maximum possible difference in probability that P and Q can assign to any measurable event: TVD (P, Q) = sup S |P(S) − Q(S)|50 . Equivalently, it represents the minimum probability of error in distinguishing P
+
+from Q given a single sample, providing a direct operational meaning in the context of hypothesis testing. The TVD satisfies TVD (P, Q) ∈ [0, 1] and is related to the Hellinger distance by H2 ≤ TVD ≤ √2 H51 . In the present setting, the TVD is particularly sensitive to discrepancies in the dominant peak of the QPE distribution, since the dominant bitstring contributes a disproportionately large share of the L1 norm when the distributions are highly localized. 
+
+> 6/30 Jensen-Shannon Divergence
+
+The Jensen-Shannon divergence (JSD) is a symmetrized and smoothed version of the Kullback-Leibler (KL) divergence 27, 52 ,defined as JSD (P∥Q) = 12 DKL (P∥M) + 12 DKL (Q∥M), M = P + Q
+
+2 , (14) where DKL (P∥M) = ∑k P(k) ln P(k) 
+
+> M(k)
+
+is the KL divergence. Unlike the KL divergence, the JSD is symmetric, always finite (provided P and Q share finite support), and bounded: JSD (P∥Q) ∈ [0, ln 2 ] for natural-logarithm convention 27 . Endres and Schindelin 27 proved that the square root of the JSD is a proper metric on the space of probability distributions, satisfying the triangle inequality. In our analysis, we report pJSD / ln 2 , which normalizes the metric to [0, 1] and facilitates direct comparison with the Hellinger distance and TVD. The JSD is particularly sensitive to discrepancies in the low-probability tail regions of the distributions, where the mixture M in the denominator of the KL terms is small, causing the logarithmic factor to amplify even minor probability differences. This makes the JSD a stringent metric for evaluating whether the VQC accurately captures not only the dominant QPE peak but also the surrounding side-lobe structure. 
+
+2.7 Molecular Hamiltonian and Symmetry Tapering 
+
+The electronic structure of a molecule is governed by the molecular Hamiltonian, which in second quantization takes the form 33, 38, 53 
+
+ˆH = ∑
+
+> pq
+
+hpq ˆa† 
+
+> p
+
+ˆaq + 12 ∑
+
+> pqrs
+
+hpqrs ˆa† 
+
+> p
+
+ˆa† 
+
+> q
+
+ˆar ˆas + Enuc , (15) where ˆa† 
+
+> p
+
+and ˆap are fermionic creation and annihilation operators, hpq and hpqrs are one- and two-electron integrals com-puted from the chosen molecular orbital basis spanning ns spin-orbitals, and Enuc is the nuclear repulsion energy 33, 53 . For quantum hardware implementation, the fermionic operators must be mapped to qubit operators. The Jordan-Wigner (JW) transformation 53, 54 achieves this via ˆa† 
+
+> p
+
+→ 12 ( ˆXp − i ˆYp) O
+
+> q<p
+
+ˆZq, ˆap → 12 ( ˆXp + i ˆYp) O
+
+> q<p
+
+ˆZq, (16) where ˆXp, ˆYp, ˆZp denote Pauli operators acting on qubit p. Under the JW mapping, the molecular Hamiltonian with ns spin-orbitals maps to ns qubits and generates O(n4 
+
+> s
+
+) Pauli terms, directly giving rise to the circuit depth scaling derived in Section 2.2. Alternative mappings such as the Bravyi-Kitaev (BK) transformation 25, 53 offer improved locality at the cost of additional encoding complexity. For the H 2 molecule in the STO-3G minimal basis, the system has ns = 4 spin-orbitals, and the full JW-mapped Hamiltonian acts on 4 qubits. However, the Hamiltonian commutes with a set of Z2 symmetry operators corresponding to particle number parity in each spin sector 24 . Exploiting these symmetries via the tapering procedure of Bravyi et al. 24 allows two qubits to be exactly eliminated by applying single-qubit Clifford rotations that simultaneously diagonalize the symmetry generators. The resulting tapered Hamiltonian acts on only 2 qubits and preserves the full eigenspectrum within the relevant symmetry sector, including the ground-state energy Etrue 24, 25 . This reduction substantially decreases the circuit complexity of the Hamiltonian simulation block within QPE, making it a crucial preprocessing step for near-term hardware implementations and for the analytical Dirichlet training pipeline introduced in this work. 
+
+2.8 Dynamical Decoupling 
+
+Dynamical Decoupling (DD) is an open-loop error suppression technique with origins in nuclear magnetic resonance (NMR) spin-echo experiments 55, 56 . The quantum computing adaptation, introduced by Viola and Lloyd 28 and further developed by Viola, Knill, and Lloyd 29 and Zanardi 30 , suppresses decoherence by applying sequences of rapid, periodic unitary pulses to idle qubits during circuit execution. The theoretical mechanism is group-theoretic: for a system coupled to an environment via 
+
+HSE = ∑α Sα ⊗ Bα , a DD sequence drawn from a decoupling group G causes the time-averaged system-environment coupling to vanish to leading order in the Magnus expansion 29, 30 . For a DD sequence of N pulses applied over a total time T to a qubit subject to dephasing noise with correlation time τc, the residual dephasing error is suppressed from O(T /τc) (without DD) to 
+
+O(( T /Nτc)2) with DD 29 .Commonly used DD sequences include the Hahn echo ( X-X) and CPMG ( X-X with optimized timing) 56 . In the present work, we employ the XpXm DD sequence as implemented in the IBM Quantum Qiskit framework 57 , which applies alternating X+ and X− pulses to idle qubits during circuit execution via the Qiskit pulse scheduler, inserting π-pulses into the idle windows of a dynamically scheduled circuit 14, 58 . Experimental demonstrations on superconducting qubits have 
+
+> 7/30
+
+confirmed coherence improvements with DD under appropriate conditions 58 ; however, the benefit is contingent on the presence of sufficient idle time. As circuit depth increases and idle windows shrink relative to active gate time, the marginal benefit of DD diminishes, and in the deep-circuit regime, DD may degrade performance due to pulse calibration errors 14 . This depth-dependent behavior motivates the systematic noise analysis presented in Section A, where the interplay between VQC circuit depth and XpXm DD effectiveness is characterized across three qualitatively distinct depth regimes. 
+
+## 3 Methodology 
+
+3.1 Molecular System and Hamiltonian Construction 
+
+We consider the hydrogen molecule (H 2) as our benchmark system, evaluated at an internuclear separation of R = 0.74 Å, which corresponds to the equilibrium bond length. The electronic Hamiltonian is constructed in the STO-3G minimal basis set 59 using the PySCF quantum chemistry package 60 , which computes the one- and two-electron integrals hpq and hpqrs via a restricted Hartree-Fock (RHF) calculation. The FCI ground-state energy EFCI is obtained using the full configuration interaction solver implemented in PySCF 60 .The fermionic Hamiltonian is mapped to a qubit operator via the Jordan-Wigner (JW) transformation 54 using the Qiskit Nature package 57 . After applying the JW mapping and exploiting the Z2 symmetries of the H 2 Hamiltonian via symmetry tapering 24 , the effective Hamiltonian reduces to a single-qubit operator expressed as a linear combination of Pauli strings: ˆHtap = c0 ˆI + c1 ˆZ + c2 ˆX, (17) where c0, c1, and c2 are real-valued coefficients computed from the molecular integrals 24, 25 . Here c0 is the constant (identity) term of the JW-mapped qubit Hamiltonian, while c1 and c2 are the coefficients of the ˆZ and ˆX Pauli terms respectively, which carry the non-trivial phase structure relevant to QPE. The exact ground-state energy EFCI of the full molecular system is obtained from PySCF and includes the nuclear repulsion energy Enuc .
+
+3.2 Analytical Training Target via the Dirichlet Kernel 
+
+The central methodological device of our framework is that the QPE simulation step used to generate training data is replaced entirely by a closed-form evaluation of the Dirichlet kernel, introduced in Section 2.3. Rather than executing any quantum circuit to obtain the target distribution, we compute it directly from the exact ground-state energy, the number of ancilla qubits 
+
+na, and the evolution time τ. The QPE unitary in the molecular simulation context is the time-evolution operator U = e−iH tap τ ,whose eigenphase encodes the electronic energy. Since the JW-mapped qubit Hamiltonian contains a constant shift c0 (the identity term) and the total molecular energy includes the nuclear repulsion Enuc , the physically relevant phase used for training is computed from the shifted electronic energy: 
+
+Eshift = EFCI − c0 − Enuc , (18) which isolates the contribution of the non-constant Hamiltonian terms ( c1 ˆZ + c2 ˆX) that generate the non-trivial phase structure in the QPE measurement distribution. The rescaled phase is then given by 
+
+φ = |Eshift | τ
+
+2π , (19) where the absolute value accounts for the sign convention in the phase encoding. The target distribution is evaluated for all 
+
+k ∈ { 0, 1, . . . , 2na − 1} via the Dirichlet kernel: 
+
+Pgt (k; φ ) = 1
+
+N2
+
+ sin (πNδk)
+
+sin (πδ k)
+
+2
+
+, δk = φ − kN , N = 2na , (20) where the limiting value Pgt (k; φ ) = 1 is assigned when | sin (πδ k)| < 10 −10 to handle the degenerate case δk ≈ 0 . The distribution is subsequently normalized to ensure ∑k Pgt (k; φ ) = 1. In all experiments, we use na = 11 ancilla qubits and an evolution time of τ = 1.0 a.u., yielding a dominant bitstring at 
+
+k∗ = ⌊Nφ ⌉ that carries approximately 90 – 95% of the total probability mass. The full evaluation of Pgt (k; φ ) over all 211 = 2048 bitstrings is performed entirely classically in negligible computation time, requiring no quantum circuit simulation at any stage of training-data generation. This is the feature that distinguishes our training pipeline architecturally from a QPE-simulation approach: the target is available in closed form for any system size accessible to QPE, rather than being bottlenecked by the exponential cost of classically simulating a QPE circuit. 
+
+> 8/30
+
+The recovered ground-state energy from the dominant QPE bitstring k∗ is computed as 
+
+Etotal = − 2π φ ∗
+
+τ + c0 + Enuc , (21) where φ ∗ = k∗/N is the estimated phase from the dominant bitstring, and the sign and constant shifts restore the full molecular energy from the shifted electronic phase. The absolute energy error is then 
+
+|∆E| = |EFCI − Etotal |. (22) 
+
+3.3 VQC Ansatz Architectures 
+
+We investigate two VQC ansatz architectures applied to the na = 11 ancilla qubit register. The two architectures differ in their rotation gate structure and in the entangler topologies that are investigated, as detailed below and summarized in the experimental workflow of Section 3.4.    
+
+> RY-RZ-CZ Ansatz
+
+The first ansatz follows the general rotation-entangler-rotation design pattern used for QPE surrogates in prior work 23 , consisting of p repeated layers followed by a final rotation block. Each of the p intermediate layers comprises: 1. A layer of single-qubit RY (θ ) rotations applied to every qubit. 2. A layer of single-qubit RZ (θ ) rotations applied to every qubit. 3. A layer of CZ entangling gates arranged according to the chosen entangler topology. After the p entangling layers, a final rotation block of RY and RZ gates is applied to every qubit without a subsequent entangling layer. For na qubits and p layers, this ansatz has M = 2(p + 1)na variational parameters in total. For the RY -RZ -CZ ansatz, we consider both the linear entangler and the full entangler topologies (described below), as the topology comparison constitutes the first stage of the experimental workflow.   
+
+> RY-CZ Ansatz
+
+The second ansatz is a reduced variant in which each layer contains only RY (θ ) rotations followed by CZ entangling gates, with a final RY rotation block applied after the last entangling layer. This gives M = ( p + 1)na variational parameters for p
+
+layers and na qubits, exactly half the parameter count of the RY -RZ -CZ ansatz at the same depth. The reduced gate count and circuit depth of this ansatz lowers noise accumulation on real hardware while retaining the entanglement structure necessary for learning the QPE distribution. For the RY -CZ ansatz, only the linear entangler topology is considered, motivated by the conclusion of Stage 1 that the linear entangler is optimal for NISQ hardware. Due to its reduced parameter count and hardware efficiency, the RY -CZ ansatz is selected for the extended noise analysis in Section A. 
+
+> Entangler Topologies
+
+Two entangler topologies are defined and used as follows: • Linear entangler : CZ gates are applied between nearest-neighbor qubit pairs (q0, q1), (q1, q2), . . . , (qna−2, qna−1),yielding a circuit depth of O(pn a). This topology is used for both the RY -RZ -CZ and RY -CZ ansatze. • Full entangler : CZ gates are applied between all  na
+
+> 2
+
+ pairs of qubits, yielding a circuit depth of O(pn 2
+
+> a
+
+). This topology is used only for the RY -RZ -CZ ansatz in the topology comparison of Stage 1. The motivation for restricting the full entangler to Stage 1 is that its O(pn 2
+
+> a
+
+) depth is expected to be detrimental on NISQ hardware 18 , and this expectation is confirmed by the Stage 1 results, after which the full entangler is discarded from all further experiments. 
+
+3.4 Experimental Workflow 
+
+The experimental investigation proceeds in four sequential stages, each building on the conclusions of the previous one, as summarized in Table 1. 
+
+Stage 1 — Entangler topology comparison ( RY -RZ -CZ , p = 1): We compare the linear and full entangler topologies for the RY -RZ -CZ ansatz at p = 1 layer under ideal simulation, noisy simulation, and real hardware execution (with and without DD), evaluating all four distributional metrics and the dominant bitstring count. The superior topology is identified and adopted for all subsequent stages. 
+
+> 9/30
+
+H HStep 1: Quantum chemistry 
+
+Simulate H 2 (STO-3G, symmetry-tapered) and compute the exact ground-state energy EFCI via Full Configuration Interaction. ˆH = ∑
+
+> p,q
+
+hpq ˆa† 
+
+> p
+
+ˆaq
+
++ 12 ∑
+
+> p,q,r,s
+
+hpqrs ˆa† 
+
+> p
+
+ˆa† 
+
+> q
+
+ˆar ˆas + Enuc 
+
+k
+
+P(k; φ )
+
+Step 2: Analytical target 
+
+P(k; φ ) = 122na
+
+sin 2(π(φ − k)) 
+
+sin 2
+
+ π(φ − k)
+
+2na
+
+
+
+φ = |EFCI | τ · 2na /(2π)
+
+computed directly from EFCI , na,and τ — no circuit simulation re-quired.                 
+
+> q0RY(θ1)RY(θ5)
+> q1RY(θ2)RY(θ6)
+> q2RY(θ3)RY(θ7)
+> q3RY(θ4)RY(θ8)
+
+Step 3: Parameterized VQC 
+
+RY -CZ ansatz with linear entangler. The circuit is measured to obtain the output distribution Pθθθ (k).
+
+Classical Optimizer 
+
+(COBYLA) Update θθθ
+
+Step 4: Optimize 
+
+Compare Pθθθ (k) against the target: 
+
+L (θθθ ) =  
+
+> 2na −1
+
+# ∑
+
+> k=0
+
+qPθθθ (k) − Pgt (k; φ )2
+
+COBYLA proposes a new θθθ , which is fed back into the circuit. 
+
+EFCI 
+
+target 
+
+Pgt (k; φ )
+
+measure 
+
+Pθθθ (k)
+
+> update  θθθ
+
+Figure 1. Training workflow for the analytically-trained VQC surrogate. Step 1: the H 2 molecular Hamiltonian is simulated classically and the exact ground-state energy EFCI is obtained via Full Configuration Interaction. Step 2: EFCI , together with the ancilla count na and evolution time τ, is substituted directly into the analytical Dirichlet kernel to obtain the target QPE measurement distribution Pgt (k; φ ) — no quantum circuit simulation is required. Step 3: a parameterized RY -CZ ansatz (linear entangler) is measured to obtain the output distribution Pθθθ (k). Step 4: Pθθθ (k) is compared against the target via the cost function L (θθθ ), and the classical COBYLA optimizer proposes an updated parameter vector θθθ , which is fed back into the ansatz. Steps 3–4 repeat until convergence. 
+
+10/30 q0 RY (θ1,1) RZ (θ1,5) RY (θ2,1) RZ (θ2,5)                              
+
+> q1RY(θ1,2)RZ(θ1,6)RY(θ2,2)RZ(θ2,6)
+> q2RY(θ1,3)RZ(θ1,7)RY(θ2,3)RZ(θ2,7)
+> q3RY(θ1,4)RZ(θ1,8)RY(θ2,4)RZ(θ2,8)
+> RYlayer RZlayer CZ layer
+> players
+
+(b)                     
+
+> q0RY(θ1,1)RY(θ2,1)
+> q1RY(θ1,2)RY(θ2,2)
+> q2RY(θ1,3)RY(θ2,3)
+> q3RY(θ1,4)RY(θ2,4)
+> RYlayer CZ layer
+> players
+
+(c) 
+
+q0 RY (θ1,1) RZ (θ1,5) RY (θ2,1) RZ (θ2,5)
+
+q1 RY (θ1,2) RZ (θ1,6) RY (θ2,2) RZ (θ2,6)
+
+q2 RY (θ1,3) RZ (θ1,7) RY (θ2,3) RZ (θ2,7)
+
+q3 RY (θ1,4) RZ (θ1,8) RY (θ2,4) RZ (θ2,8)
+
+RY layer RZ layer CZ layer 
+
+p layers 
+
+(a) 
+
+Figure 2. VQC ansatz architectures used as QPE surrogates ( p = 1 layer, na = 4 qubits shown for illustration). (a) RY -RZ -CZ 
+
+ansatz with the full entangler: each repeated layer applies RY and RZ rotations to every qubit followed by a CZ gate between every pair of qubits, ending in a final untied RY -RZ rotation block. (b) RY -RZ -CZ ansatz with the linear entangler, where CZ 
+
+gates connect only nearest-neighbor qubits. (c) RY -CZ ansatz with the linear entangler: identical entangling structure to (b) but with the RZ rotations omitted, halving the number of variational parameters per layer. Colored regions mark the RY layer (green), RZ layer (violet), CZ entangling layer (red), and the block of p repeated layers (blue, dashed) 
+
+Stage 2 — Layer depth analysis ( RY -RZ -CZ , linear, p ∈ { 1, . . . , 5}): Using the linear entangler identified in Stage 1, we vary the number of layers from p = 1 to p = 5 for the RY -RZ -CZ ansatz. Each configuration is evaluated under: ideal simulation, noisy simulation, real hardware with noisy-trained parameters (with and without DD), and real hardware with ideal-trained parameters (with and without DD). Metric comparison across layers and DD conditions identifies the optimal layer count and establishes whether DD improves hardware performance. 
+
+Stage 3 — Ansatz comparison (linear, p = 1, no DD): Having identified the optimal layer count and discarded DD-augmented configurations based on Stage 2 findings, we compare the RY -RZ -CZ and RY -CZ ansatze at p = 1 with the linear entangler, evaluating ideal simulation, noisy simulation, real hardware with noisy-trained parameters, and real hardware with ideal-trained parameters. The metric comparison reveals the relative performance of the two architectures, and the preferred ansatz is selected for Stage 4. 
+
+Stage 4 — Noise analysis ( RY -CZ , linear, p ∈ { 8, 64 }): As a supplementary investigation, the RY -CZ ansatz with ideal-trained parameters is executed on real hardware at layers p ∈ { 8, 64 }, with and without DD, to systematically characterize how DD effectiveness changes with increasing circuit depth. This constitutes the bonus noise analysis of Section A. 
+
+3.5 Training Protocol 
+
+The VQC parameters θθθ ∈ RM are optimized using the COBYLA optimizer 45 to minimize the cost function L (θθθ ) defined in Eq. (8) (Section 2.5), where M is the total number of variational parameters of the chosen ansatz ( M = 2(p + 1)na for the 
+
+11/30 Table 1. Summary of experimental configurations across all four stages. “Ideal Tr.” and “Noisy Tr.” refer to the simulator training environment. “Real HW” indicates execution on IBM Quantum hardware. “DD” indicates whether XpXm Dynamical Decoupling (as implemented in Qiskit) was applied during hardware execution. 
+
+Stage Configuration Ansatz Entangler Layers Real HW DD 
+
+1Ideal Sim. RY -RZ -CZ Linear & Full 1 No –Noisy Sim. RY -RZ -CZ Linear & Full 1 No –Real + Noisy Tr. RY -RZ -CZ Linear & Full 1 Yes No/Yes Real + Ideal Tr. RY -RZ -CZ Linear & Full 1 Yes No/Yes 2Ideal Sim. RY -RZ -CZ Linear 1–5 No –Noisy Sim. RY -RZ -CZ Linear 1–5 No –Real + Noisy Tr. RY -RZ -CZ Linear 1–5 Yes No/Yes Real + Ideal Tr. RY -RZ -CZ Linear 1–5 Yes No/Yes 3Ideal Sim. RY -RZ -CZ / RY -CZ Linear 1 No –Noisy Sim. RY -RZ -CZ / RY -CZ Linear 1 No –Real + Noisy Tr. RY -RZ -CZ / RY -CZ Linear 1 Yes No Real + Ideal Tr. RY -RZ -CZ / RY -CZ Linear 1 Yes No 4 Real + Ideal Tr. RY -CZ Linear 8, 64 Yes No Real + Ideal Tr. + DD RY -CZ Linear 8, 64 Yes Yes 
+
+RY -RZ -CZ ansatz, M = ( p + 1)na for the RY -CZ ansatz, as defined in Section 3.3). The ansatz parameters are initialized to zero (θθθ 0 = 0) at the start of each optimization run. At each COBYLA iteration, the VQC output distribution Pθθθ (k) is estimated by executing the parameterized circuit on the appropriate simulator backend using the shot-based procedure and shot budget described in Section 2.5 (Eq. (9) ), with the target distribution sampled at the same shot count to ensure statistically comparable histogram estimates. We perform two distinct training modes: • Ideal simulator training : The VQC circuit is executed on the AerSimulator backend with no noise model, providing shot-based probability estimates under ideal noiseless conditions 57 .• Noisy simulator training : A noise model is extracted directly from the calibrated ibm_boston superconducting device via the QiskitRuntimeService using NoiseModel.from_backend() 57 . This noise model, which incorpo-rates the device-specific gate error rates, readout errors, decoherence parameters, and basis gate set of ibm_boston , is used to configure an AerSimulator instance ( ibm_boston_sim ) that faithfully emulates the noise environment of the real hardware during training. The VQC circuit is transpiled to the native basis gates of ibm_boston before each execution 2, 14, 57 .In both training modes, the circuit is transpiled using Qiskit ’s transpile function with optimization_level=3 
+
+targeting the respective backend 57 , and the COBYLA optimizer is run with a maximum iteration budget of 4 × 10 7, which is found to be more than sufficient for convergence across all configurations tested. 
+
+3.6 Real Hardware Execution 
+
+All real hardware experiments are executed on IBM Quantum superconducting devices accessed via the Qiskit SDK 57 . The trained VQC parameters θθθ ∗, obtained from either ideal or noisy classical simulation, are transferred directly to the hardware circuit without further optimization. This zero-shot transfer protocol tests the generalization of the learned parameters to the real device noise environment. Prior to execution, each circuit is transpiled to the native gate set of the target device using Qiskit ’s transpiler with optimization level 3 57 . Each hardware experiment uses Nshots = 100 ,000 measurement shots, consistent with the shot budget used during training and defined in Section 2.5. 
+
+3.7 Dynamical Decoupling Implementation 
+
+For configurations incorporating Dynamical Decoupling (DD), we apply the XpXm pulse sequence, as implemented in Qiskit’s dynamical-decoupling pass, to all idle qubits during circuit execution. The XpXm sequence alternates π-pulses about the 
+
+> 12/30
+
++X and −X axes, providing first-order suppression of dephasing noise during idle windows. DD sequences are inserted into the transpiled circuit using Qiskit ’s PadDynamicalDecoupling pass applied to the dynamically scheduled circuit 57 .The DD pulses are placed symmetrically within each identified idle window subject to the hardware timing constraints. The depth-dependent effectiveness of DD is examined systematically in Section A. 
+
+3.8 Metric Evaluation 
+
+Following hardware or simulation execution, the measurement histogram Pθθθ (k) is compared against the analytically sampled Dirichlet distribution Pgt (k; φ ) using the four metrics defined in Section 2.6: Hellinger distance H, fidelity error εF , total variation distance TVD, and normalized Jensen-Shannon divergence pJSD / ln 2 . All metrics are evaluated over the full support of 211 = 2048 bitstrings, with a Laplace smoothing correction εsmooth = 10 −10 applied to zero-count bins to ensure numerically stable evaluation of the logarithmic terms in the JSD computation. For the dominant bitstring analysis, we additionally report the count of the most probable bitstring k∗ = 00101010011 
+
+across all experimental configurations, which serves as a direct indicator of how well the hardware-executed VQC concentrates probability mass at the correct QPE outcome. The recovered ground-state energy is computed from k∗ via Eq. (21) and compared against EFCI to assess whether the output lies within chemical accuracy ( |∆E| < 1.59 × 10 −3 Hartree) 33, 38 .
+
+3.9 Software and Hardware Stack 
+
+All simulations and circuit constructions are implemented in Python using Qiskit 57 for circuit definition, transpilation, and hardware execution; Qiskit Nature 57 for Hamiltonian construction and symmetry tapering; PySCF 60 for molecular integral computation and FCI energy evaluation; NumPy 61 and SciPy 62 for numerical evaluation of the Dirichlet kernel, metric computation, and post-processing. Visualization is performed using Matplotlib 63 .
+
+## 4 Results and Discussion 
+
+In this section, we present and discuss the results obtained across all experimental configurations described in Section 3, following the four-stage workflow of Section 3.4. We organize the discussion as follows: (i) validation of the analytical Dirichlet training target; (ii) entangler topology comparison; (iii) layer depth analysis with and without DD; (iv) training environment comparison on real hardware; (v) ansatz comparison; and (vi) energy recovery accuracy. 
+
+4.1 Validation of the Analytical Dirichlet Target 
+
+We first validate the proposed analytical training pipeline by verifying that a VQC trained on the Dirichlet kernel distribution successfully learns the QPE phase structure of the H 2 molecule. Figure 3 shows the convergence of the cost function L (θθθ ) over the course of COBYLA optimization for the RY -RZ -CZ 
+
+ansatz with linear entangler at p = 1. The cost decreases monotonically and reaches a well-defined minimum, confirming that the COBYLA optimizer successfully navigates the variational parameter landscape of this training task 18, 23 .
+
+4.2 Stage 1: Entangler Topology Comparison 
+
+The first stage of the experimental workflow compares the linear and full entangler topologies for the RY -RZ -CZ ansatz at p = 1layer. Figure 4 shows the dominant bitstring 00101010011 counts across all experimental cases for both topologies. The results reveal a clear and consistent advantage of the linear entangler over the full entangler across all hardware-executed configurations. Under ideal and noisy simulation, both topologies achieve comparable counts ( 98 ,840 vs 98 ,835 ideally; 79 ,148 vs 76 ,374 under noise), indicating that the expressibility difference is minimal for this learning task at p = 1 .However, on real hardware the gap becomes dramatic: the linear entangler achieves 91 ,104 counts (noisy-trained) and 92 ,106 counts (ideal-trained), while the full entangler achieves only 58 ,281 and 65 ,449 respectively. This stark difference is a direct consequence of the O(pn 2) circuit depth of the full entangler, which accumulates substantially more two-qubit gate errors on superconducting hardware compared to the O(pn ) linear entangler 2, 12 . Based on this analysis, the linear entangler is adopted for all subsequent experiments. Figure 5 shows the complete metric heatmap comparing both topologies across all experimental cases, further confirming the superiority of the linear entangler across all four distance metrics. 
+
+4.3 Stage 2: Layer Depth Analysis with and without Dynamical Decoupling 
+
+Having established the linear entangler as the optimal topology, we now vary the number of layers from p = 1 to p = 5 for the RY -RZ -CZ ansatz under all experimental scenarios. Figure 6 shows the dominant bitstring counts across all layers and configurations. Figure 7 presents the complete metric heatmap for the RY -RZ -CZ ansatz with linear entangler across all layers and experimental cases. 
+
+> 13/30
+
+0 100 200 300 400 500 600 
+
+# Optimization Iteration 
+
+0.0 
+
+0.5 
+
+1.0 
+
+1.5 
+
+2.0 
+
+> Cost Function
+
+Figure 3. Convergence of the cost function L (θθθ ) during COBYLA optimization of the RY -RZ -CZ VQC (linear entangler, 
+
+p = 1) trained on the analytical Dirichlet distribution. The cost decreases monotonically, confirming stable convergence of the variational optimization. 0 20000 40000 60000 80000 100000 
+
+Counts for Dominant Bitstring "00101010011" 
+
+Dirichlet QPE 
+
+Ideal Sim 
+
+Noisy Sim 
+
+Real (Noisy Trained) 
+
+Real + DD (Noisy Trained) 
+
+Real (Ideal Trained) 
+
+Real + DD (Ideal Trained) 
+
+> Cases
+> 98,890
+> 98,840
+> 79,148
+> 58,281
+> 64,806
+> 65,449
+> 56,960
+> 98,890
+> 98,835
+> 76,374
+> 91,104
+> 88,194
+> 92,106
+> 88,923
+
+Full Entangler Linear Entangler 
+
+Figure 4. Dominant bitstring 00101010011 counts for the RY -RZ -CZ ansatz at p = 1 layer, comparing the full entangler (pink) and linear entangler (purple) across all experimental cases ( Nshots = 100 ,000 ). The linear entangler consistently achieves higher counts on real hardware across all configurations, with the gap being most pronounced under real hardware execution (linear: 91 ,104 vs full: 58 ,281 for noisy-trained; linear: 92 ,106 vs full: 65 ,449 for ideal-trained), confirming the superior noise resilience of the shallower linear topology. 
+
+14/30 Hellinger 
+
+Fidelity Error 
+
+TVD 
+
+JSD 
+
+Metrics 
+
+Ideal 
+
+Noisy 
+
+Real + Noisy Tr. 
+
+Real + DD + Noisy Tr. 
+
+Real + Ideal Tr. 
+
+Real + DD + Ideal Tr. 
+
+Ideal 
+
+Noisy 
+
+Real + Noisy Tr. 
+
+Real + DD + Noisy Tr. 
+
+Real + Ideal Tr. 
+
+Real + DD + Ideal Tr.                                     
+
+> Experimental Cases
+> 0.083 0.007 0.009 0.070
+> 0.317 0.101 0.203 0.272
+> 0.458 0.210 0.409 0.402
+> 0.423 0.179 0.345 0.365
+> 0.414 0.171 0.339 0.360
+> 0.469 0.220 0.423 0.411
+> 0.071 0.005 0.007 0.062
+> 0.331 0.110 0.230 0.289
+> 0.188 0.035 0.083 0.164
+> 0.220 0.049 0.111 0.192
+> 0.177 0.031 0.074 0.156
+> 0.216 0.047 0.106 0.189
+> FULL LINEAR
+
+0.0 
+
+0.2 
+
+0.4 
+
+0.6 
+
+0.8 
+
+1.0 
+
+> Distance / Error  (lower = better)
+
+Figure 5. Metric heatmap (Hellinger distance, fidelity error, TVD, JSD) comparing the RY -RZ -CZ ansatz with full entangler (top, orange) and linear entangler (bottom, blue) at p = 1 layer, across all experimental cases. Lower values indicate better agreement with the Dirichlet target. The linear entangler achieves uniformly lower metric values across all hardware configurations, confirming its superior noise resilience for NISQ hardware execution. 
+
+15/30 Figure 6. Dominant bitstring 00101010011 counts for the RY -RZ -CZ ansatz with linear entangler across layers 
+
+p ∈ { 1, 2, 3, 4, 5}, comparing the analytical Dirichlet reference, ideal simulation, noisy simulation, real hardware with ideal-and noisy-trained parameters, and their DD-augmented variants ( Nshots = 100 ,000). The ideal simulation closely tracks the Dirichlet reference across all layers. On real hardware, all configurations show progressive degradation with increasing depth, and non-DD circuits consistently outperform their DD-augmented counterparts at every layer count. 
+
+> 16/30
+
+Hellinger 
+
+Fidelity Error 
+
+TVD 
+
+JSD 
+
+Metric 
+
+Layer 1 
+
+Layer 2 
+
+Layer 3 
+
+Layer 4 
+
+Layer 5 
+
+Layer 1 
+
+Layer 2 
+
+Layer 3 
+
+Layer 4 
+
+Layer 5 
+
+Layer 1 
+
+Layer 2 
+
+Layer 3 
+
+Layer 4 
+
+Layer 5 
+
+Layer 1 
+
+Layer 2 
+
+Layer 3 
+
+Layer 4 
+
+Layer 5 
+
+Layer 1 
+
+Layer 2 
+
+Layer 3 
+
+Layer 4 
+
+Layer 5 
+
+Layer 1 
+
+Layer 2 
+
+Layer 3 
+
+Layer 4 
+
+Layer 5 
+
+> Layer
+
+0.071 0.005 0.007 0.062 
+
+0.061 0.004 0.005 0.053 
+
+0.074 0.005 0.009 0.065 
+
+0.067 0.004 0.007 0.059 
+
+0.063 0.004 0.011 0.056 
+
+0.331 0.110 0.230 0.289 
+
+0.377 0.142 0.285 0.328 
+
+0.403 0.162 0.329 0.352 
+
+0.458 0.210 0.405 0.400 
+
+0.475 0.225 0.427 0.414 
+
+0.188 0.035 0.083 0.164 
+
+0.236 0.056 0.125 0.207 
+
+0.268 0.072 0.172 0.237 
+
+0.340 0.116 0.247 0.297 
+
+0.321 0.103 0.228 0.280 
+
+0.220 0.049 0.111 0.192 
+
+0.274 0.075 0.159 0.236 
+
+0.338 0.114 0.243 0.294 
+
+0.393 0.154 0.314 0.342 
+
+0.403 0.163 0.324 0.349 
+
+0.177 0.031 0.074 0.156 
+
+0.241 0.058 0.138 0.214 
+
+0.241 0.058 0.133 0.212 
+
+0.263 0.069 0.159 0.231 
+
+0.272 0.074 0.168 0.238 
+
+0.216 0.047 0.106 0.189 
+
+0.282 0.079 0.176 0.246 
+
+0.300 0.090 0.192 0.261 
+
+0.320 0.102 0.219 0.279 
+
+0.361 0.131 0.268 0.313 
+
+> Ideal Noisy Real +Noisy Tr. Real +DD +Noisy Tr. Real +Ideal Tr. Real +DD +Ideal Tr.
+
+Figure 7. Detailed metric heatmap (Hellinger distance, fidelity error, TVD, JSD) for the RY -RZ -CZ ansatz with linear entangler, showing results for each layer p ∈ { 1, 2, 3, 4, 5} under all experimental cases. Each colored block represents a distinct experimental scenario. Lower metric values (darker color within each block) indicate better agreement with the Dirichlet target. Metrics degrade monotonically with increasing layers across all hardware configurations, with Layer 1 consistently achieving the best real hardware performance. 
+
+17/30 Several important observations emerge from this analysis. 
+
+Ideal simulation. Under ideal conditions, all layers achieve very low metric values (Hellinger ≈ 0.061 – 0.074 , fidelity error 
+
+≈ 0.004 –0.005 ), with no significant trend across layers. This confirms that the VQC ansatz successfully learns the Dirichlet distribution at all depths under noiseless conditions. 
+
+Noisy simulation. Under noisy simulation, metrics degrade monotonically with increasing layers (Hellinger increases from 0.331 at p = 1 to 0.475 at p = 5 ), reflecting noise accumulation from additional two-qubit gates. This trend persists on real hardware, where the degradation is even more pronounced. 
+
+Effect of Dynamical Decoupling. Crucially, across all layer counts and both training environments, the DD-augmented hardware configurations consistently underperform their non-DD counterparts. For example, at p = 1 with noisy-trained parameters, the non-DD circuit achieves Hellinger = 0.188 while the DD circuit yields 0.220 ; at p = 5, the gap widens further (0.321 vs 0.403 ). This counterintuitive result, that DD actively degrades performance rather than improving it, is analyzed in detail in Section A. Based on these findings, all DD-augmented configurations are discarded for the ansatz comparison in Stage 3. 
+
+Optimal layer count. Layer p = 1 achieves the best real hardware performance across both training environments and is therefore adopted as the reference configuration for Stage 3. 
+
+4.4 Stage 3: Training Environment and Ansatz Comparison 
+
+Having discarded DD-augmented configurations and identified p = 1 as the optimal layer count, Stage 3 addresses two questions: (a) does ideal-simulator training generalize better to real hardware than noisy-simulator training? and (b) does the 
+
+RY -CZ ansatz perform comparably to the RY -RZ -CZ ansatz? 
+
+> Training Environment: Ideal vs. Noisy Simulator
+
+Figure 8 shows the dominant bitstring counts for the RY -CZ ansatz at p = 1 across all four non-DD experimental cases: ideal simulation, noisy simulation, real hardware with noisy-trained parameters, and real hardware with ideal-trained parameters. 0 20000 40000 60000 80000 100000 
+
+## Counts 
+
+> Dirichlet QPE (Analytical)
+> Ideal VQC
+> Real VQC (Ideal Sim Trained)
+> Noisy VQC
+> Real VQC (Noisy Sim Trained)
+> 98890
+> 98933
+> 91499
+> 76627
+> 90267
+
+Figure 8. Dominant bitstring 00101010011 counts for the RY -CZ ansatz with linear entangler at p = 1 layer, comparing the analytical Dirichlet reference ( 98 ,890 ), ideal simulation ( 98 ,933 ), noisy simulation ( 76 ,627 ), real hardware with ideal-trained parameters (91 ,499), and real hardware with noisy-trained parameters (90 ,267). The ideal-trained VQC achieves a higher dominant bitstring count on real hardware than the noisy-trained variant, confirming that ideal-simulator-trained parameters generalize better to real hardware for this task. Across both ansatze, ideal-simulator-trained parameters consistently outperform noisy-simulator-trained parameters when executed on real hardware. For the RY -CZ ansatz, the ideal-trained circuit achieves 91 ,499 counts on the dominant bitstring compared to 90 ,267 for the noisy-trained circuit. While the difference is modest in counts, it is reflected consistently across all four distributional metrics (Figure 10), suggesting that the cleaner optimization landscape of ideal simulation produces parameters with better intrinsic generalization to real hardware noise 12, 18 .
+
+> 18/30
+
+Ansatz Comparison: RY -RZ -CZ vs. RY -CZ 
+
+Figure 9 presents the metric heatmaps for both ansatze at p = 1 with the linear entangler, evaluated across all four non-DD experimental cases. Hellinger 
+
+> Fidelity Error
+> TVD
+> JSD
+
+Metrics                         
+
+> Ideal
+> Noisy
+> Real + Noisy Tr.
+> Real + Ideal Tr.
+> Ideal
+> Noisy
+> Real + Noisy Tr.
+> Real + Ideal Tr.
+> Experimental Cases
+> 0.071 0.005 0.007 0.062
+> 0.331 0.110 0.230 0.289
+> 0.188 0.035 0.083 0.164
+> 0.177 0.031 0.074 0.156
+> 0.054 0.003 0.005 0.047
+> 0.337 0.113 0.227 0.289
+> 0.201 0.041 0.091 0.174
+> 0.176 0.031 0.077 0.154
+> RyRzCz Ansatz RyCz Ansatz
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> Distance / Error  (lower = better)
+
+Figure 9. Metric comparison (Hellinger distance, fidelity error, TVD, JSD) between the RY -RZ -CZ ansatz (top, orange) and 
+
+RY -CZ ansatz (bottom, blue) for the linear entangler at p = 1 layer, evaluated across ideal simulation, noisy simulation, real hardware with noisy-trained parameters (Real + Noisy Tr.), and real hardware with ideal-trained parameters (Real + Ideal Tr.). Both ansatze achieve comparable metric values across all experimental cases, with the RY -CZ ansatz showing marginally better performance under ideal simulation. Figure 10 shows the full metric heatmap for the RY -CZ ansatz alone, providing a clear standalone view of its performance profile. The two ansatze achieve remarkably comparable metric values across all experimental cases. The RY -CZ ansatz achieves marginally better performance under ideal simulation (Hellinger = 0.054 vs 0.071 for RY -RZ -CZ ), while real hardware metrics are nearly identical between the two designs. This equivalence demonstrates that the additional RZ rotation layer in the 
+
+RY -RZ -CZ ansatz does not provide a meaningful performance advantage for learning the sharply peaked Dirichlet distribution, where the dominant bitstring already carries over 90% of the probability mass. Since the RY -CZ ansatz achieves equivalent accuracy with half the rotation parameters, it is the preferred choice from a hardware efficiency standpoint and is selected for the noise analysis in Stage 4. 
+
+4.5 Energy Recovery Accuracy 
+
+The ultimate figure of merit for molecular ground-state energy estimation is the absolute error between the recovered energy and the FCI reference. The dominant bitstring k∗ = 00101010011 yields a phase estimate φ ∗ = k∗/N, from which the total molecular energy is recovered via Eq. (21). Table 2 summarizes the energy recovery for the best-performing configurations. The analytical Dirichlet distribution yields an absolute energy error of 1.786 × 10 −4 Hartree at t = 1.0 a.u., well within the chemical accuracy threshold of 1.6 × 10 −3 Hartree 33, 38 . All best-performing VQC configurations — both in simulation and on real hardware — correctly identify the dominant bitstring 00101010011 and therefore recover the same energy estimate, confirming that the variational surrogate approach preserves the chemical accuracy of the analytical Dirichlet pipeline. 
+
+4.6 Summary of Results 
+
+Table 3 provides a consolidated summary of the best metric values achieved across all experimental categories at the optimal configuration ( p = 1, linear entangler, no DD). 
+
+19/30 Hellinger 
+
+> Fidelity Error
+> TVD
+> JSD
+
+Metrics             
+
+> Ideal
+> Noisy
+> Real + Noisy Trained
+> Real + Ideal Trained
+> Experimental Cases
+> 0.054 0.003 0.005 0.047
+> 0.337 0.113 0.227 0.289
+> 0.201 0.041 0.091 0.174
+> 0.176 0.031 0.077 0.154
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> Normalized Distance / Error
+
+Figure 10. Distributional metric heatmap (Hellinger distance, fidelity error, TVD, JSD) for the RY -CZ ansatz with linear entangler at p = 1 layer, evaluated across ideal simulation, noisy simulation, real hardware with noisy-trained parameters, and real hardware with ideal-trained parameters. The ideal-trained real hardware configuration achieves the lowest metric values (Hellinger = 0.176, fidelity error = 0.031, TVD = 0.077, JSD = 0.154), confirming the effectiveness of the analytical Dirichlet training pipeline on real quantum hardware. 
+
+20/30 Table 2. Ground-state energy recovery for the best-performing configurations at p = 1, linear entangler. EFCI is the FCI reference energy. All energies in Hartree. Chemical accuracy threshold: 1 .6 × 10 −3 Hartree. 
+
+Configuration Ansatz Etotal (Ha) |∆E| (Ha) Dirichlet (Analytical) – EFCI − ε 1.786 × 10 −4
+
+Ideal Sim RY -RZ -CZ – < 1.6 × 10 −3
+
+Real + Ideal Tr. RY -RZ -CZ – < 1.6 × 10 −3
+
+Real + Ideal Tr. RY -CZ – < 1.6 × 10 −3
+
+Table 3. Summary of best-performing configurations at p = 1, linear entangler, without DD. All metric values are for the non-DD configurations. Lower values indicate better performance. 
+
+Configuration Ansatz Hellinger Fid. Err. TVD JSD 
+
+Ideal Sim. RY -RZ -CZ 0.071 0.005 0.007 0.062 Noisy Sim. RY -RZ -CZ 0.331 0.110 0.230 0.289 Real+Noisy Tr. RY -RZ -CZ 0.188 0.035 0.083 0.164 Real+Ideal Tr. RY -RZ -CZ 0.177 0.031 0.074 0.156 Ideal Sim. RY -CZ 0.054 0.003 0.005 0.047 Noisy Sim. RY -CZ 0.337 0.113 0.227 0.289 Real+Noisy Tr. RY -CZ 0.201 0.041 0.091 0.174 Real+Ideal Tr. RY -CZ 0.176 0.031 0.077 0.154 The key findings from the results are: (i) the linear entangler substantially outperforms the full entangler on real hardware; (ii) p = 1 is the optimal layer count for both ansatze under hardware noise; (iii) ideal-simulator-trained parameters consistently generalize better to real hardware than noisy-simulator-trained parameters; (iv) the two ansatze achieve comparable real hardware performance, with the RY -CZ ansatz preferred for its lower gate count; and (v) DD consistently degrades performance across all layer counts, motivating the dedicated noise analysis of Section A in the Supplementary Material. 
+
+4.7 Sidelobe Structure: Hardware VQC vs. Analytical Dirichlet Reference 
+
+To characterize how hardware noise distorts the QPE outcome distribution near its peak, we compare the four hardware-executed VQC configurations against the analytical Dirichlet reference over a window of bitstrings centered on the dominant outcome 
+
+b∗ = 00101010011 . Measurement counts n(b) are converted to empirical probabilities P(b) = n(b)/N, where N is the total number of recorded counts for that configuration ( N = 100 ,000 for all four hardware-executed configurations and N = 99 ,948 for the analytical Dirichlet reference), and each outcome is assigned a bit-value offset ∆(b) = int (b) − int (b∗), the signed difference between b and b∗ read as binary integers. The plotted window retains |∆(b)| ≤ 28 (57 outcomes), chosen to keep the peak region legible while excluding the sparse tail of the full 211 -outcome space (Figure 11). Within this window we separate two sidelobe types: near-neighbor outcomes ( 0 < |∆(b)| ≤ 5), where the QPE sinc-kernel predicts a smooth, monotonically decaying envelope; and single-bit-flip outcomes, reachable from b∗ by flipping one bit and hence satisfying |∆(b)| = 2k (here 
+
+|∆(b)| ∈ { 8, 16 }), which have no analytical basis for appearing in the Dirichlet target and instead flag a specific physical qubit rather than a nearby phase value. Table 4 summarizes the aggregate sidelobe probability, ∑b P(b), for each category. The Dirichlet kernel shows the smooth decay expected of the QPE sinc-kernel: near-neighbor outcomes contribute only ≈ 1.0% of the probability mass, and single-bit-flip outcomes are essentially unpopulated ( ≈ 0.01% ). The hardware VQC distributions reproduce the same qualitative near-neighbor decay, but with 3 – 4× larger aggregate weight ( 3.0% – 4.0% ), consistent with shot-noise- and gate-error-broadening of the analytical envelope. Superimposed on this broadened envelope, all four hardware configurations additionally show a non-negligible single-bit-flip sidelobe mass ( 0.6% –2.5% ), dominated in every case by an isolated peak at 
+
+∆(b) = −16 (0.35% –1.84% ) that has no counterpart of comparable size in the Dirichlet reference; for the noisy-trained RY -CZ 
+
+configuration, this single peak exceeds every near-neighbor sidelobe except ∆(b) = −2 , making it the second most prominent feature in the windowed distribution after the dominant peak itself. Comparing training environments, noisy-simulator-trained circuits consistently show a larger single-bit-flip sidelobe than          
+
+> 21/30 00100110111
+> 00100111000
+> 00100111001
+> 00100111010
+> 00100111011
+> 00100111100
+> 00100111101
+> 00100111110
+> 00100111111
+> 00101000000
+> 00101000001
+> 00101000010
+> 00101000011
+> 00101000100
+> 00101000101
+> 00101000110
+> 00101000111
+> 00101001000
+> 00101001001
+> 00101001010
+> 00101001011
+> 00101001100
+> 00101001101
+> 00101001110
+> 00101001111
+> 00101010000
+> 00101010001
+> 00101010010
+> 00101010011
+> 00101010100
+> 00101010101
+> 00101010110
+> 00101010111
+> 00101011000
+> 00101011001
+> 00101011010
+> 00101011011
+> 00101011100
+> 00101011101
+> 00101011110
+> 00101011111
+> 00101100000
+> 00101100001
+> 00101100010
+> 00101100011
+> 00101100100
+> 00101100101
+> 00101100110
+> 00101100111
+> 00101101000
+> 00101101001
+> 00101101010
+> 00101101011
+> 00101101100
+> 00101101101
+> 00101101110
+> 00101101111
+> Measured bitstrings
+> 10 5
+> 10 4
+> 10 3
+> 10 2
+> 10 1
+> 10 0
+> Probability (log scale)
+> RY-RZ-CZ (ideal-trained) RY-RZ-CZ (noisy-trained) RY-CZ (ideal-trained) RY-CZ (noisy-trained) Dirichlet (analytical)
+
+Figure 11. Measured outcome probabilities P(b) (log scale) for the four real-hardware VQC configurations ( RY -RZ -CZ and 
+
+RY -CZ ansatze, ideal- and noisy-trained, linear entangler, p = 1) against the analytical Dirichlet reference, plotted against bit-value offset ∆(b) from the dominant peak 00101010011 over the window |∆(b)| ≤ 28 . The Dirichlet distribution decays smoothly with |∆(b)|, while the hardware distributions exhibit an additional, non-smooth sidelobe at ∆(b) = −16 that is present in all four hardware configurations but negligible in the Dirichlet reference. 
+
+Table 4. Aggregate sidelobe probability (% of total counts) within the |∆(b)| ≤ 28 window around 00101010011 .Near-neighbor: 0 < |∆(b)| ≤ 5. Single-bit-flip: |∆(b)| ∈ { 8, 16 }.
+
+Configuration Dominant Near-neighbor Single-bit-flip peak (%) sidelobes (%) sidelobes (%) 
+
+Dirichlet (analytical) 98.94 0.98 ≈0.01 
+
+RY -RZ -CZ , ideal-trained 92.11 4.04 0.63 
+
+RY -RZ -CZ , noisy-trained 91.10 3.75 0.79 
+
+RY -CZ , ideal-trained 91.50 3.68 1.24 
+
+RY -CZ , noisy-trained 90.27 3.01 2.52 their ideal-trained counterparts for the same ansatz ( RY -CZ : 2.52% vs. 1.24% ; RY -RZ -CZ : 0.79% vs. 0.63% ), indicating that noisy-simulator training does not suppress this qubit-level artifact better than ideal-simulator training – if anything, the opposite trend holds. Overall, the residual mismatch between the hardware VQC outcome distributions and the analytical Dirichlet target near the dominant peak arises less from the broadened-but-smooth near-neighbor sidelobes, which the VQC reproduces reasonably well in shape, and more from a small number of isolated, hardware-specific single-bit-flip sidelobes concentrated at a few fixed qubit positions, most notably the qubit responsible for ∆(b) = −16. 
+
+## 5 Conclusion 
+
+This work addressed a specific obstacle to the practical use of QPE for molecular energy estimation: the exponential circuit-depth scaling of QPE (Eq. (6) ) renders direct execution on NISQ hardware impractical, and prior variational surrogate approaches 23 
+
+that train on QPE-simulated targets inherit an equally prohibitive classical simulation cost, scaling as O(2ns+na ) in memory. We have shown that this bottleneck can be removed by computing the QPE training target analytically via the Dirichlet kernel, evaluated directly from the FCI ground-state energy, the ancilla count na, and the evolution time τ, so that the training pipeline for a shallow VQC surrogate becomes fully classical and requires no quantum circuit simulation at any stage. Because 
+
+Pgt (k; φ ) is available in closed form, this pipeline decouples entirely from the O(n4
+
+s ) Pauli-term scaling and O(2na · m · n4
+
+s )
+
+circuit-depth scaling that govern direct QPE simulation (Section 2.2), and the COBYLA-optimized VQC converges smoothly against this target (Figure 3), confirming that the analytical replacement is not merely computationally cheaper but also a faithful surrogate for a simulated one. Applied to H 2 with a symmetry-tapered Hamiltonian and validated through a systematic 
+
+22/30 four-stage investigation on IBM Quantum hardware, the resulting framework recovers the molecular ground-state energy to 
+
+|∆E| = 1.786 × 10 −4 Hartree, an order of magnitude within the chemical accuracy threshold of 1.59 × 10 −3 Hartree, using a VQC whose depth scales linearly rather than exponentially with precision. The four-stage experimental workflow yielded several consistent findings. Stage 1 established a clear advantage for the linear entangler over the full entangler once circuits are executed on real hardware, with dominant bitstring counts of 
+
+∼91,000–92,000 for the linear topology versus ∼58,000–65,000 for the full topology, despite near-identical performance under noiseless simulation; this confirms that the O(pn 2
+
+> a
+
+) depth of the full entangler, rather than any deficiency in expressibility, is the limiting factor on NISQ devices. Stage 2 showed that increasing VQC depth from p = 1 to p = 5 monotonically degrades all four distributional metrics on real hardware, even though ideal simulation shows no such trend, indicating that the additional expressibility afforded by deeper circuits is not realized under present-day noise conditions and that p = 1 is the practical operating point. Across both ansatz architectures, parameters trained against a noiseless simulator generalized to real hardware more effectively than parameters trained against a hardware-calibrated noise model, a counterintuitive result suggesting that, for shallow single-layer circuits, the smoother optimization landscape of ideal training outweighs the fidelity of noise-aware training. Stage 3 further found the RY -CZ and RY -RZ -CZ ansatze statistically indistinguishable on real hardware (Hellinger 0.176 – 0.177 ,fidelity error 0.031 for both, at p = 1 ), despite the RY -CZ ansatz using only (p + 1)na parameters against 2(p + 1)na for the latter; since the target Dirichlet distribution concentrates 90 – 95% of its probability mass in a single dominant bitstring, the additional RZ degree of freedom proved largely redundant, making RY -CZ the preferred, more hardware-efficient choice. Beyond correctly identifying the dominant bitstring k∗ = 00101010011 , the hardware-executed VQC also reproduced the decaying side-lobe structure of the Dirichlet kernel surrounding k∗ (Figure 11), with the relative heights and decay envelope of neighboring bitstrings closely tracking the analytical prediction. Since the cost function of Eq. (8) optimizes agreement over the full 2na -dimensional distribution rather than a single bin, this side-lobe fidelity is an independent confirmation that the surrogate learns the underlying phase structure of QPE rather than merely collapsing probability onto its most likely outcome, and is consistent with the four-metric evaluation (Hellinger distance, fidelity error, TVD, and JSD) reported throughout Section 4, each of which probes a different region of the distribution. Finally, the supplementary noise analysis in Section A in the Supplementary Material revealed that XpXm Dynamical Decoupling consistently degraded, rather than improved, distributional agreement across all tested layer counts and training environments, indicating that circuit-level design choices, namely entangler topology, layer count, and ansatz structure, are a more effective lever for noise resilience in this setting than post-hoc pulse-level error suppression. These findings carry implications beyond the H 2 benchmark studied here. The analytical Dirichlet training pipeline is a general strategy that applies wherever a target energy is available from any classical electronic-structure method 38 , and its cost is independent of the circuit-simulation cost that would otherwise be needed to generate a training target, directly addressing the scalability limitation that motivated this study. The observation that ideal-simulator training generalizes better than noisy-simulator training suggests that, for shallow surrogate circuits on current-generation hardware, the added engineering cost of hardware-calibrated noise-aware training may not be justified. The multi-metric evaluation adopted here, together with the side-lobe-level agreement in Figure 11, provides a more complete picture of distributional fidelity than the single χ2 statistic used in the original LearnQPE study 23 , and is offered as a more rigorous evaluation standard for future QPE-surrogate work. The finding that DD actively harms performance for densely scheduled shallow VQCs (Section A.4) further suggests that noise mitigation efforts in this regime are better directed at circuit architecture than at pulse-level intervention. The present framework nonetheless has important limitations that constrain its immediate scalability, and that follow directly from the two classical inputs required to construct the analytical Dirichlet target: the exact ground-state energy EFCI 
+
+and the evolution time τ. In this study, both are available in closed form because H 2 in the STO-3G basis, after symmetry tapering, reduces to a single-qubit Hamiltonian (Eq. (17) ) whose FCI energy is computed exactly and cheaply. For larger molecules and basis sets where the FCI energy itself scales exponentially with the number of spin-orbitals and becomes classically intractable well before the regime in which quantum advantage is sought, meaning that the reference energy needed to construct Pgt (k; φ ) will generally not be available in practice; the framework would then need to rely on approximate references, such as coupled-cluster or other polynomially scaling electronic structure methods, whose deviation from the true ground-state energy would propagate into the trained surrogate and has not been characterized in the present study. A related and equally important limitation concerns the evolution time τ, which was fixed at τ = 1.0 a.u. in this work based on prior knowledge of EFCI for H 2, but which in general must be chosen without access to the true energy it is meant to help resolve; an inappropriate choice of τ can place the rescaled phase φ close to an integer boundary or otherwise compress the achievable energy resolution, and no systematic procedure for selecting τ a priori, for instance from a lower-accuracy energy estimate or an adaptive refinement scheme, was investigated here. Extending the framework to larger, chemically relevant molecules will therefore require both an approximate but scalable substitute for EFCI and a principled strategy for selecting τ, in addition to testing whether the linear-entangler VQC retains its expressibility and avoids barren plateaus 40, 41 as the ancilla and system registers grow, and whether the side-lobe-level agreement demonstrated here for a single-qubit system persists at larger 
+
+> 23/30
+
+scale. Further natural extensions include generalizing the cost function of Eq. (8) to a multi-peak analytical target to enable simultaneous learning of multiple eigenphases for excited-state and spectroscopic applications; combining this framework with complementary error-mitigation strategies such as zero-noise extrapolation 13, 16 , probabilistic error cancellation 13 , and readout error mitigation 64 , given that DD alone was found to be ineffective in this setting; and the development of automated compiler workflows that detect QPE subroutines, generate the corresponding analytical target, train the VQC surrogate, and substitute it prior to hardware execution 23 , moving this technique from a standalone benchmark toward integration in quantum chemistry compilation pipelines. In summary, this work shows that an entirely classical, analytically derived training target, combined with a shallow single-layer linear-entangler VQC and ideal-simulator parameter training, reproduces the QPE measurement distribution, including its dominant peak and side-lobe structure, with sufficient fidelity to recover molecular ground-state energies within chemical accuracy on IBM Quantum hardware. By removing the exponential classical-simulation cost inherent to prior surrogate approaches, this framework offers a promising, hardware-efficient path toward QPE-based molecular energy estimation on NISQ devices, provided that the identified dependence on the reference energy and a suitably chosen evolution time is addressed for molecules beyond the minimal-basis regime studied here. 
+
+## Data Availability 
+
+The data that support the findings of this study are available from the corresponding author upon reasonable request. 
+
+## Acknowledgements 
+
+We acknowledge the use of IBM Quantum Credits via the IBM Quantum Startups Program for this work. The views expressed are those of the authors and do not reflect the official policy or position of IBM or the IBM Quantum Platform team. The authors would like to express their appreciation to the advisors at Qclairvoyance Quantum Labs for their support, constructive discussions, and inspiration throughout the preparation of this work. 
+
+## Funding 
+
+No funding was received for this research. 
+
+## Conflict of Interest 
+
+The authors declare no competing interests. 
+
+## References 
+
+1. Nielsen, M. A. & Chuang, I. L. Quantum Computation and Quantum Information (Cambridge University Press, Cambridge, UK, 2000). 
+
+2. Preskill, J. Quantum computing in the NISQ era and beyond. Quantum 2, 79, DOI: 10.22331/q-2018-08-06-79 (2018). 
+
+3. Steane, A. Quantum computing. Reports on Prog. Phys. 61 , 117–173, DOI: 10.1088/0034-4885/61/2/002 (1998). 
+
+4. Kitaev, A. Y. Quantum measurements and the Abelian stabilizer problem (1995). ArXiv:quant-ph/9511026. 
+
+5. Cleve, R., Ekert, A., Macchiavello, C. & Mosca, M. Quantum algorithms revisited. In Proceedings of the Royal Society of London A , vol. 454, 339–354, DOI: 10.1098/rspa.1998.0164 (1998). 
+
+6. Shor, P. W. Algorithms for quantum computation: discrete logarithms and factoring. In Proceedings of the 35th Annual Symposium on Foundations of Computer Science , 124–134, DOI: 10.1109/SFCS.1994.365700 (IEEE, 1994). 
+
+7. Harrow, A. W., Hassidim, A. & Lloyd, S. Quantum algorithm for linear systems of equations. Phys. Rev. Lett. 103 , 150502, DOI: 10.1103/PhysRevLett.103.150502 (2009). 
+
+8. Aspuru-Guzik, A., Dutoi, A. D., Love, P. J. & Head-Gordon, M. Simulated quantum computation of molecular energies. 
+
+Science 309 , 1704–1707, DOI: 10.1126/science.1113479 (2005). 
+
+9. Babbush, R. et al. Low-depth quantum simulation of materials. Phys. Rev. X 8, 011044, DOI: 10.1103/PhysRevX.8.011044 (2018). 
+
+10. Reiher, M., Wiebe, N., Svore, K. M., Wecker, D. & Troyer, M. Elucidating reaction mechanisms on quantum computers. 
+
+Proc. Natl. Acad. Sci. 114 , 7555–7560, DOI: 10.1073/pnas.1619152114 (2017). 
+
+> 24/30
+
+11. Leymann, F. & Barzen, J. The bitter truth about gate-based quantum algorithms in the NISQ era. Quantum Sci. Technol. 5,044007, DOI: 10.1088/2058-9565/abae7d (2020). 
+
+12. Bharti, K. et al. Noisy intermediate-scale quantum algorithms. Rev. Mod. Phys. 94 , 015004, DOI: 10.1103/RevModPhys. 94.015004 (2022). 
+
+13. Temme, K., Bravyi, S. & Gambetta, J. M. Error mitigation for short-depth quantum circuits. Phys. Rev. Lett. 119 , 180509, DOI: 10.1103/PhysRevLett.119.180509 (2017). 
+
+14. Endo, S., Cai, Z., Benjamin, S. C. & Yuan, X. Hybrid quantum-classical algorithms and quantum error mitigation. J. Phys. Soc. Jpn. 90 , 032001, DOI: 10.7566/JPSJ.90.032001 (2021). 
+
+15. Li, Y. & Benjamin, S. C. Efficient variational quantum simulator incorporating active error minimization. Phys. Rev. X 7,021050, DOI: 10.1103/PhysRevX.7.021050 (2017). 
+
+16. Giurgica-Tiron, T., Hindy, Y., LaRose, R., Mari, A. & Zeng, W. J. Digital zero noise extrapolation for quantum error mitigation. arXiv preprint arXiv:2005.10921 (2020). 
+
+17. Lao, L. & Almudever, C. G. Timing and resource-efficient quantum circuit compilation. arXiv preprint arXiv:2209.07005 
+
+(2022). 
+
+18. Cerezo, M. et al. Variational quantum algorithms. Nat. Rev. Phys. 3, 625–644, DOI: 10.1038/s42254-021-00348-9 (2021). 
+
+19. McClean, J. R., Romero, J., Babbush, R. & Aspuru-Guzik, A. The theory of variational hybrid quantum-classical algorithms. 
+
+New J. Phys. 18 , 023023, DOI: 10.1088/1367-2630/18/2/023023 (2016). 
+
+20. Peruzzo, A. et al. A variational eigenvalue solver on a photonic quantum processor. Nat. Commun. 5, 4213, DOI: 10.1038/ncomms5213 (2014). 
+
+21. Kandala, A. et al. Hardware-efficient variational quantum eigensolver for small molecules and quantum magnets. Nature 
+
+549 , 242–246, DOI: 10.1038/nature23879 (2017). 
+
+22. Tilly, J. et al. The variational quantum eigensolver: A review of methods and best practices. Phys. Reports 986 , 1–128, DOI: 10.1016/j.physrep.2022.08.003 (2022). 
+
+23. Liu, C.-Y., Chen, K.-C. & Lin, C.-H. A. Learning quantum phase estimation by variational quantum circuits. In 2024 International Joint Conference on Neural Networks (IJCNN) , 1–8, DOI: 10.1109/IJCNN60899.2024.10651206 (2024). 
+
+24. Bravyi, S., Gambetta, J. M., Mezzacapo, A. & Temme, K. Tapering off qubits to simulate fermionic Hamiltonians. arXiv preprint arXiv:1701.08213 (2017). 
+
+25. Seeley, J. T., Richard, M. J. & Love, P. J. The Bravyi-Kitaev transformation for quantum computation of electronic structure. The J. Chem. Phys. 137 , 224109, DOI: 10.1063/1.4768229 (2012). 
+
+26. Hellinger, E. Neue Begründung der Theorie quadratischer Formen von unendlichvielen Veränderlichen. J. für die reine und angewandte Math. 136 , 210–271 (1909). 
+
+27. Endres, D. M. & Schindelin, J. E. A new metric for probability distributions. IEEE Transactions on Inf. Theory 49 ,1858–1860, DOI: 10.1109/TIT.2003.813506 (2003). 
+
+28. Viola, L. & Lloyd, S. Dynamical suppression of decoherence in two-state quantum systems. Phys. Rev. A 58 , 2733–2744, DOI: 10.1103/PhysRevA.58.2733 (1998). 
+
+29. Viola, L., Lloyd, S. & Knill, E. Universal control of decoupled quantum systems. Phys. Rev. Lett. 83 , 4888–4891, DOI: 10.1103/PhysRevLett.83.4888 (1999). 
+
+30. Zanardi, P. Symmetrizing evolutions. Phys. Lett. A 258 , 77–82, DOI: 10.1016/S0375-9601(99)00365-5 (1999). 
+
+31. Mosca, M. & Ekert, A. The hidden subgroup problem and eigenvalue estimation on a quantum computer. In Quantum Computing and Quantum Communications , vol. 1509 of Lecture Notes in Computer Science , 174–188, DOI: 10.1007/ 3-540-49208-9_15 (Springer, 1999). 
+
+32. Wecker, D., Bauer, B., Clark, B. K., Hastings, M. B. & Troyer, M. Progress towards practical quantum advantage in quantum chemistry. Phys. Rev. A 92 , 062318, DOI: 10.1103/PhysRevA.92.062318 (2015). 
+
+33. McArdle, S., Endo, S., Aspuru-Guzik, A., Benjamin, S. C. & Yuan, X. Quantum computational chemistry. Rev. Mod. Phys. 
+
+92 , 015003, DOI: 10.1103/RevModPhys.92.015003 (2020). 
+
+34. Berry, D. W. et al. Qubitization of arbitrary basis quantum chemistry leveraging sparsity and low rank factorization. 
+
+Quantum 3, 208, DOI: 10.22331/q-2019-12-02-208 (2019). 
+
+> 25/30
+
+35. Lin, S.-H. & Tong, Y. Heisenberg-limited ground-state energy estimation for early fault-tolerant quantum computers via rejection sampling. PRX Quantum 3, 010318, DOI: 10.1103/PRXQuantum.3.010318 (2022). 
+
+36. Kimmel, S., Low, G. H. & Yoder, T. J. Robust calibration of a universal single-qubit gate set via robust phase estimation. 
+
+Phys. Rev. A 92 , 062315, DOI: 10.1103/PhysRevA.92.062315 (2015). 
+
+37. Wiebe, N. & Granade, C. Efficient Bayesian phase estimation. Phys. Rev. Lett. 117 , 010503, DOI: 10.1103/PhysRevLett. 117.010503 (2016). 
+
+38. Helgaker, T., Jørgensen, P. & Olsen, J. Molecular Electronic-Structure Theory (Wiley, Chichester, UK, 2000). 
+
+39. Sim, S., Johnson, P. D. & Aspuru-Guzik, A. Expressibility and entangling capability of parameterized quantum circuits for hybrid quantum-classical algorithms. Adv. Quantum Technol. 2, 1900070, DOI: 10.1002/qute.201900070 (2019). 
+
+40. McClean, J. R., Boixo, S., Smelyanskiy, V. N., Babbush, R. & Neven, H. Barren plateaus in quantum neural network training landscapes. Nat. Commun. 9, 4812, DOI: 10.1038/s41467-018-07090-4 (2018). 
+
+41. Cerezo, M., Sone, A., Volkoff, T., Cincio, L. & Coles, P. J. Cost function dependent barren plateaus in shallow parametrized quantum circuits. Nat. Commun. 12 , 1791, DOI: 10.1038/s41467-021-21728-w (2021). 
+
+42. Biamonte, J. et al. Quantum machine learning. Nature 549 , 195–202, DOI: 10.1038/nature23474 (2017). 
+
+43. Benedetti, M., Lloyd, E., Sack, S. & Fiorentini, M. Parameterized quantum circuits as machine learning models. Quantum Sci. Technol. 4, 043001, DOI: 10.1088/2058-9565/ab4eb5 (2019). 
+
+44. Chen, S. Y.-C. et al. Variational quantum circuits for deep reinforcement learning. IEEE Access 8, 141007–141024, DOI: 10.1109/ACCESS.2020.3010470 (2020). 
+
+45. Powell, M. J. D. A direct search optimization method that models the objective and constraint functions by linear interpolation. Adv. Optim. Numer. Analysis 51–67, DOI: 10.1007/978-94-015-8330-5_4 (1994). 
+
+46. Mitarai, K., Negoro, M., Kitagawa, M. & Fujii, K. Quantum circuit learning. Phys. Rev. A 98 , 032309, DOI: 10.1103/ PhysRevA.98.032309 (2018). 
+
+47. Schuld, M., Bergholm, V., Gogolin, C., Izaac, J. & Killoran, N. Evaluating analytic gradients on quantum hardware. Phys. Rev. A 99 , 032331, DOI: 10.1103/PhysRevA.99.032331 (2019). 
+
+48. Bhattacharyya, A. K. On a measure of divergence between two statistical populations defined by their probability distributions. Bull. Calcutta Math. Soc. 35 , 99–109 (1943). 
+
+49. Jozsa, R. Fidelity for mixed quantum states. J. Mod. Opt. 41 , 2315–2323, DOI: 10.1080/09500349414552171 (1994). 
+
+50. Levin, D. A. & Peres, Y. Markov Chains and Mixing Times (American Mathematical Society, Providence, RI, 2017), 2nd edn. 
+
+51. Tsybakov, A. B. Introduction to Nonparametric Estimation (Springer, New York, 2009). 
+
+52. Kullback, S. & Leibler, R. A. On information and sufficiency. Annals Math. Stat. 22 , 79–86, DOI: 10.1214/aoms/ 1177729694 (1951). 
+
+53. Anurag, K. S. V. et al. Resource estimation for vqe on small molecules: Impact of fermion mappings and hamiltonian reductions. J. Comput. Chem. 47 , e70379, DOI: https://doi.org/10.1002/jcc.70379 (2026). 
+
+54. Jordan, P. & Wigner, E. P. Über das Paulische äquivalenzverbot. Zeitschrift für Physik 47 , 631–651, DOI: 10.1007/ BF01331938 (1928). 
+
+55. Hahn, E. L. Spin echoes. Phys. Rev. 80 , 580–594, DOI: 10.1103/PhysRev.80.580 (1950). 
+
+56. Carr, H. Y. & Purcell, E. M. Effects of diffusion on free precession in nuclear magnetic resonance experiments. Phys. Rev. 
+
+94 , 630–638, DOI: 10.1103/PhysRev.94.630 (1954). 
+
+57. Qiskit contributors. Qiskit: An open-source framework for quantum computing, DOI: 10.5281/zenodo.2573505 (2023). 
+
+58. Pokharel, B., Anand, N., Fortman, B. & Lidar, D. A. Demonstration of fidelity improvement using dynamical decoupling with superconducting qubits. Phys. Rev. Lett. 121 , 220502, DOI: 10.1103/PhysRevLett.121.220502 (2018). 
+
+59. Hehre, W. J., Stewart, R. F. & Pople, J. A. Self-consistent molecular-orbital methods. I. use of Gaussian expansions of Slater-type atomic orbitals. The J. Chem. Phys. 51 , 2657–2664, DOI: 10.1063/1.1672392 (1969). 
+
+60. Sun, Q. et al. PySCF: the Python-based simulations of chemistry framework. Wiley Interdiscip. Rev. Comput. Mol. Sci. 8,e1340, DOI: 10.1002/wcms.1340 (2018). 
+
+61. Harris, C. R. et al. Array programming with NumPy. Nature 585 , 357–362, DOI: 10.1038/s41586-020-2649-2 (2020). 
+
+> 26/30
+
+62. Virtanen, P. et al. SciPy 1.0: Fundamental algorithms for scientific computing in Python. Nat. Methods 17 , 261–272, DOI: 10.1038/s41592-019-0686-2 (2020). 
+
+63. Hunter, J. D. Matplotlib: A 2D graphics environment. Comput. Sci. & Eng. 9, 90–95, DOI: 10.1109/MCSE.2007.55 (2007). 
+
+64. Bravyi, S., Sheldon, S., Kandala, A., Mckay, D. C. & Gambetta, J. M. Mitigating measurement errors in multiqubit experiments. Phys. Rev. A 103 , 042605, DOI: 10.1103/PhysRevA.103.042605 (2021). 
+
+> 27/30
+
+## Supplementary Information A Noise Analysis of VQC Circuit Depth and Dynamical Decoupling 
+
+As a supplementary investigation beyond the main results of this work, we present a dedicated noise analysis examining how the interplay between VQC circuit depth and Dynamical Decoupling (DD) affects the quality of hardware-executed quantum circuits. This analysis uses the RY -CZ ansatz with the linear entangler, trained on the ideal simulator, and executed on IBM Quantum hardware with Nshots = 100 ,000 measurement shots. Motivated by the finding in Section 4.3 that DD consistently underperforms relative to the non-DD baseline for the RY -RZ -CZ ansatz across layers p ∈ { 1, . . . , 5}, we extend this investigation to a broader range of circuit depths, specifically p ∈ { 8, 64 }, using the RY -CZ ansatz, to determine whether the DD underperformance persists as circuit depth grows, and to identify the depth threshold beyond which neither the VQC nor DD can maintain useful distributional fidelity on current NISQ hardware. 
+
+A.1 Motivation and Experimental Design 
+
+The effectiveness of Dynamical Decoupling as a decoherence-suppression strategy depends critically on two competing factors: the availability of idle time windows into which DD pulses can be beneficially inserted, and the overhead introduced by the DD pulses themselves 28, 29, 58 . For a VQC circuit with p layers of the linear entangler on n = 11 qubits, the total circuit time Ttotal is partitioned between active gate time Tgate and idle time Tidle = Ttotal − Tgate . As p increases, Tgate grows while the idle-window fraction generally decreases relative to the total circuit time 14 , reducing the opportunity for effective DD insertion. Two qualitatively distinct depth regimes are investigated: • Moderate-depth regime ( p = 8): An intermediate depth, substantially deeper than the optimal single-layer case, providing a test of whether DD becomes beneficial as the circuit lengthens and more idle windows become available. • Deep regime ( p = 64 ): An extreme depth far exceeding the coherence length of current IBM Quantum superconducting devices, representing the fully decoherence-dominated limit in which all quantum information encoded in the circuit parameters is expected to be lost irreversibly. For each depth, the RY -CZ ansatz is executed on real IBM Quantum hardware both with and without the XpXm DD sequence, using ideal-simulator-trained parameters in both cases. The dominant bitstring and its count are examined at each depth and DD condition to characterize the noise behavior. 
+
+A.2 Dominant Bitstring Fidelity Across Depths 
+
+Figure A1 shows the dominant bitstring and its count for the RY -CZ ansatz executed on real hardware at layers p ∈ { 8, 64 }, with and without DD, compared against the analytical Dirichlet reference count of 98 ,890 for the target bitstring 00101010011 .At p = 8, the dominant bitstring remains the correct target 00101010011 in both the DD and non-DD cases, and its count stays substantial relative to the reference, demonstrating that the RY -CZ ansatz with linear entangler retains useful fidelity at this moderate depth. At p = 64 , the dominant bitstring is no longer the target in either case: the non-DD circuit’s most frequent outcome is 00101110011 , and the DD circuit’s most frequent outcome is the distinct bitstring 00001110011 .This confirms that, at extreme depth, the circuit has lost the correct QPE phase information entirely, with the identity of the (incorrect) dominant outcome itself becoming sensitive to the presence of DD. 
+
+A.3 Full Distribution Analysis: With and Without Dynamical Decoupling 
+
+To understand how noise and DD interact beyond the dominant bitstring, we examine the reported counts at p = 8 and p = 64 ,comparing circuits executed with and without the XpXm DD sequence.    
+
+> Layer p=8: DD degrades performance
+
+At p = 8 , the non-DD circuit concentrates 65 ,876 counts on the target bitstring 00101010011 , which remains the dominant outcome, while the DD-augmented circuit reduces this to 49 ,067 counts, a reduction of approximately 25 .6% , though 
+
+00101010011 remains dominant in this case as well. This reduction is consistent with coherent errors introduced by DD pulse-calibration imperfections 14, 58 , which redistribute probability mass away from the correct bitstring toward neighboring incorrect ones without displacing it as the dominant outcome at this depth. This is a notable finding: even at p = 8 layers, substantially deeper than the optimal single-layer case, the non-DD RY -CZ 
+
+circuit still correctly identifies the target QPE bitstring as dominant, with a majority-scale count. The linear entangler’s sparse two-qubit gate structure limits cumulative noise accumulation even at this depth, indicating that the RY -CZ ansatz with linear entangler is more robust to hardware noise at moderate depth than a naive circuit-depth argument would suggest. DD, however, degrades the count on the correct bitstring at this depth as well, consistent with the DD underperformance observed for the 
+
+RY -RZ -CZ ansatz at p ∈ { 1, . . . , 5} in Section 4.3: taken together, the two experiments indicate that this underperformance is       
+
+> 28/30 020000 40000 60000 80000 100000 120000
+
+Dominant Bitstring Counts  
+
+> Dirichlet QPE
+> L8
+> L8 + DD
+> L64
+> L64 + DD
+> Experiment
+> 98,890
+> 00101010011
+> 65,876
+> 00101010011
+> 49,067
+> 00101010011
+> 6,868
+> (00101110011)
+> 2,965
+> (00001110011)
+> dominant bitstring 00101010011
+
+Figure A1. Dominant bitstring counts on real IBM Quantum hardware for the RY -CZ ansatz with linear entangler at layers 
+
+p ∈ { 8, 64 }, with and without XpXm DD, compared against the analytical Dirichlet reference ( Nshots = 100 ,000 ). At p = 8 , the target bitstring 00101010011 remains dominant in both the DD and non-DD cases. At p = 64, the dominant bitstring is no longer the target: it shifts to 00101110011 (non-DD, 6 ,868 counts) and to 00001110011 (with DD, 2 ,965 counts), each flagged in the figure as differing from the target bitstring 00101010011 .not confined to a single ansatz or to shallow circuits, but recurs across different VQC architectures and into the moderate-depth regime. 
+
+Layer p = 64 : both circuits fail 
+
+At p = 64 , the correct target bitstring 00101010011 is no longer the dominant outcome in either case. The non-DD circuit’s dominant bitstring is 00101110011 , with 6,868 counts, only a small fraction of the 98 ,890 -count reference; the DD circuit’s dominant bitstring is the distinct 00001110011 , with 2,965 counts. Both dominant counts are far below the reference, and the identity of the (incorrect) dominant bitstring differs between the DD and non-DD cases, indicating that the residual structure of the measured distribution at this depth is no longer governed by the learned QPE phase but by depth-dependent noise processes, consistent with the dominant noise mechanism at this depth being irreversible decoherence-driven depolarization rather than the coherent dephasing that DD is designed to suppress 2, 28, 29 .This is consistent with the theoretical expectation that, beyond the circuit-depth threshold set by the hardware coherence time T2, quantum information is irreversibly lost to the environment 2, 11, 12 . At p = 64 with the linear entangler on n = 11 qubits, the total circuit depth far exceeds the coherence length of current IBM Quantum devices, placing this configuration firmly in the incoherent, noise-dominated regime, where no error-mitigation strategy can recover useful distributional fidelity. 
+
+A.4 Depth Regime Characterization 
+
+The two-depth noise analysis reveals a clear progression through qualitatively distinct operating regimes, summarized in Table A1, which reports the dominant bitstring and its count as shown in Figure A1. 
+
+Moderate-depth regime ( p = 8): The non-DD circuit correctly identifies 00101010011 as the dominant bitstring, with 65 ,876 counts ( 66 .6% of the reference). This demonstrates the noise resilience of the sparse linear-entangler RY -CZ architecture even at this depth. DD, however, significantly degrades performance, reducing the count on the (still dominant) correct bitstring by ∼ 25 .6% , from 65 ,876 to 49 ,067 , due to coherent errors introduced by imperfect pulse calibration. This is a practically important result: the RY -CZ ansatz can operate usefully at p = 8 on current hardware provided that DD is not applied . This underperformance of DD echoes the analogous finding for the RY -RZ -CZ ansatz at p ∈ { 1, . . . , 5} (Section 4.3), extending the observation to a second ansatz and a substantially greater depth. 
+
+Deep regime ( p = 64 ): Both the non-DD and DD-augmented circuits fail to recover the correct bitstring as dominant. The non-DD circuit’s dominant outcome, 00101110011 , receives only 6,868 counts, and the DD circuit’s dominant outcome, the distinct bitstring 00001110011 , receives only 2,965 counts, both small fractions of the 98 ,890 -count reference. That the 
+
+29/30 Table A1. Summary of noise analysis results for the RY -CZ ansatz with linear entangler (ideal-trained parameters) on real IBM Quantum hardware, showing the dominant bitstring and its count, with and without XpXm Dynamical Decoupling, at layers 
+
+p ∈ { 8, 64 }, as shown in Figure A1. Nshots = 100 ,000. Dirichlet reference: target bitstring 00101010011 , count 98 ,890. 
+
+Layers p DD Dom. Bitstring Count % of Ref. Regime 
+
+8 No 00101010011 65,876 66.6% Moderate: correct peak, no DD preferred 8 Yes 00101010011 49,067 49.6% Moderate: DD reduces correct-peak weight 64 No 00101110011 6,868 6.9% Deep: wrong peak domi-nant 64 Yes 00001110011 2,965 3.0% Deep: wrong peak dom-inant, DD provides no benefit dominant outcome itself differs between the DD and non-DD circuits, and that neither recovers the target bitstring, indicates that measurement statistics at this depth are governed by decoherence-driven noise rather than the learned QPE phase structure. DD confers no benefit in this regime. 
+
+A.5 Implications and Design Principles 
+
+The noise analysis suggests three practical design principles for VQC-based QPE learning on current superconducting NISQ hardware. 
+
+Circuit architecture over error mitigation. At p = 8 , the non-DD RY -CZ circuit with linear entangler retains substantially more weight on the correct bitstring than its DD-augmented counterpart. This indicates that choosing a sparse, hardware-efficient ansatz architecture is a more effective noise-mitigation strategy than applying DD as a post-hoc pulse-level intervention. For densely scheduled VQC circuits, where idle windows are limited, DD introduces more error than it suppresses. 
+
+Practical depth limit for current hardware. The effective useful depth range for the RY -CZ ansatz with linear entangler on current IBM Quantum hardware lies between p = 1 and approximately p = 8 . Within this range, the non-DD circuit correctly identifies the target bitstring as dominant with a majority-scale count. Beyond p ≈ 8 – 16 , noise accumulation becomes severe, and by p = 64 the dominant bitstring is no longer the target in either the DD or non-DD case, indicating that the circuit has entered a decoherence-dominated regime. This depth limit is hardware-specific and is expected to improve as device coherence times and gate fidelities advance 2, 12 .
+
+DD is not a universal remedy. DD degrades performance consistently across every configuration in which it was tested in this work: for the RY -RZ -CZ ansatz at p ∈ { 1, . . . , 5} (Section 4.3), and for the RY -CZ ansatz at p = 8 in the present analysis, DD reduces the count on the correct bitstring relative to the non-DD baseline in every case where that bitstring remains dominant. At p = 64 , neither circuit recovers the correct bitstring as dominant regardless of the pulse sequence, so DD cannot be said to actively degrade an otherwise-correct result at this depth so much as to simply fail to help. Taken together, these results across two ansatz architectures and a depth range spanning p = 1 to p = 64 indicate that DD should not be applied as a default error-mitigation strategy for variational circuits of this kind. Its benefit is contingent on the presence of substantial and predictable idle windows, such as those found in quantum error correction circuits or deliberately padded schedules 14, 58 . For the compact linear-entangler VQC circuits studied here, the idle-window fraction is insufficient to make DD beneficial, and the additional pulse overhead from DD becomes a source of error whenever it is applied.
