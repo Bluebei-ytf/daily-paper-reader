@@ -1,0 +1,854 @@
+Title: Thermodynamics-Informed Input Reparameterization for Neural Prediction of Real-Fluid Thermodynamic Properties in Supercritical Combustion
+
+URL Source: https://arxiv.org/pdf/2607.19241v1
+
+Published Time: Wed, 22 Jul 2026 01:23:17 GMT
+
+Number of Pages: 13
+
+Markdown Content:
+# Thermodynamics-Informed Input Reparameterization for Neural Prediction of Real-Fluid Thermodynamic Properties in Supercritical Combustion 
+
+Haoze Zhang, 1 Han Li, 1, 2, a) Ke Xiao, 2 Yangchen Xu, 1 Runze Mao, 1 and Zhi X. Chen 1, 2 
+
+> 1)
+
+State Key Laboratory of Turbulence and Complex Systems, College of Engineering, Peking University, Beijing 100871, China 
+
+> 2)
+
+AI for Science Institute (AISI), Beijing 100080, China 
+
+(Dated: 22 July 2026) 
+
+Real-fluid thermodynamic property evaluation is a major computational cost in supercritical combustion simulations. In the enthalpy-based pressure-correction formulation considered here, the cell-local closure evaluates temperature T ,density 
+
+ρ, and the compressibility coefficient 
+
+ψ from the solver-available state (h, p, Y) through enthalpy–temperature inversion and repeated real-fluid equation-of-state evaluations. Neural-network surrogates offer fixed-cost inference, but a direct mapping from (h, p, Y) to (T,
+
+ρ,
+
+ψ) must represent both the caloric relation between enthalpy and temper-ature and the non-ideal equation-of-state response, resulting in a complex regression problem. This work introduces a thermodynamics-informed input reparameterization strategy, termed target-aligned input reparameterization (TAIR). TAIR replaces the raw enthalpy coordinate of each property network with a target-matched thermodynamic coordinate: the temperature network uses a temperature estimate obtained by inverting a constant-cp ideal-gas mixture enthalpy approximation, whereas the density and compressibility networks use an ideal-gas density estimate. These explicit algebraic transformations use only solver-available variables and species constants, guiding the networks to learn real-fluid departures from ideal-gas-based baselines rather than reconstructing the full closure from raw enthalpy. The method is assessed using supercritical methane–oxygen counterflow flame data against a raw-input baseline and target-inconsistent cross-reparameterization controls. TAIR reduces held-out test-set root-mean-squared error (RMSE) by factors of approximately 1 .5, 2 .0, and 7 .5 for T ,
+
+ρ, and 
+
+ψ, respectively. For an unseen-strain-rate flame within the augmented thermodynamic envelope, the corresponding factors are 3 .6, 14 .5, and 6 .0. The target-inconsistent controls perform markedly worse, indicating that the gains arise from thermodynamically matched input design rather than generic preprocessing. Keywords: Supercritical combustion, Real-fluid thermodynamics, Thermodynamic closure, Neural-network surrogate, Input reparameterization 
+
+I. INTRODUCTION 
+
+Liquid-propellant rocket engines and related high-pressure propulsion systems commonly operate at pressures above the critical pressure of one or more propellants; consequently, propellant injection, mixing, and combustion are strongly influenced by real-fluid thermodynamics 1–4 . Under these conditions, dense-fluid interactions cause pronounced depar-tures from ideal-gas behavior, including strong nonlineari-ties in density and thermodynamic derivatives near critical or pseudo-critical states 5–7 . In reacting-flow simulations, these effects are accounted for through the thermodynamic closure. For the enthalpy-based pressure-correction formulation con-sidered here, the local closure evaluates temperature T , den-sity 
+
+ρ, and the compressibility coefficient 
+
+ψ from the solver-available state (h, p, Y), where h is the specific enthalpy and 
+
+Y is the species mass-fraction vector. Temperature is re-quired for chemical-kinetic and temperature-dependent prop-erty evaluations, density enters the conservation equations, and 
+
+ψ enters the pressure-correction equation. Accurate and robust evaluation of this closure is therefore essential for su-percritical combustion simulations. The computational expense of this closure arises from repeated real-fluid state evaluations. Given a local state 
+
+> a) Electronic mail: han_li@pku.edu.cn
+
+(h, p, Y), temperature is recovered by solving the nonlin-ear relation h = h(T, p, Y) typically through Newton-type iteration 8. Each temperature iteration requires an equation-of-state (EoS) evaluation; for a cubic EoS such as Peng– Robinson 9, this includes solving the corresponding cubic re-lation for the molar volume, from which density follows 10 . In the reference closure considered here, 
+
+ψ is evaluated by an isenthalpic finite-difference pressure perturbation, which re-quires an additional enthalpy inversion and EoS evaluation at the perturbed pressure. Because these operations are repeated in every computational cell and at every time step, real-fluid thermodynamic closure can constitute a major computational cost in supercritical combustion simulations 11,12 .Several approaches have been developed to reduce this cost. Tabulation methods precompute thermodynamic states and re-place online EoS evaluations with interpolation 13,14 . Their storage requirement and interpolation complexity, however, increase rapidly with the dimensionality and resolution of the tabulated state space. Near critical or pseudo-critical re-gions, steep real-fluid property gradients additionally require dense local resolution to maintain accuracy 15,16 . Correlated dynamic evaluation reduces repeated property calculations by reusing evaluations within dynamically constructed groups of thermodynamically similar states 12,17 , but its efficiency and accuracy depend on the quality of the state-space partition-ing. These difficulties become increasingly important for mul-ticomponent reacting mixtures, motivating surrogate models arXiv:2607.19241v1 [cs.LG] 21 Jul 2026 2that provide rapid local property evaluation without explicitly constructing a high-dimensional table 18 .Machine-learning models have consequently been explored for accelerating thermodynamic calculations in both non-reacting and reacting real-fluid systems 19 . In broader ther-modynamic applications, neural networks and related regres-sors have been used to emulate equations of state and itera-tive flash calculations for complex fluids 20,21 . For real-fluid flow simulations, Milan et al. 22 developed deep-learning sur-rogates for property evaluation in complex reacting flowfields, demonstrating the feasibility of replacing repeated thermody-namic calculations with neural inference. Sahranavardfard et al. 23 subsequently implemented a neural real-fluid prop-erty model in OpenFOAM for transcritical LOX/GH 2 mixing, addressing practical issues including training-domain selec-tion, output transformation, and solver integration. More re-cently, Cai et al. 24 coupled a real-fluid property network with a chemical-ODE network to accelerate both thermodynamic-property evaluation and chemistry integration in supercritical combustion. Collectively, these studies establish neural surro-gates as a promising route for accelerating real-fluid reacting-flow calculations. The available studies have primarily improved surrogate performance through network architecture, training-data cov-erage, output transformation, loss formulation, and solver coupling. By comparison, the thermodynamic input coordi-nates themselves have received relatively little systematic in-vestigation, although they determine the regression map pre-sented to the network. In an enthalpy-based formulation, a direct neural closure naturally inherits the solver interface, 
+
+(h, p, Y) 7 → (T,
+
+ρ,
+
+ψ). This input contains sufficient informa-tion to determine the target properties and is convenient for CFD coupling. However, the network must represent both the caloric relation between enthalpy and temperature and the non-ideal EoS response within the same learned mapping. This combination may increase the complexity of the regres-sion problem, particularly for density and compressibility in thermodynamically sensitive high-pressure states 25 . It there-fore motivates the hypothesis examined in this work: a low-cost thermodynamic transformation of the input coordinates may improve the learnability and accuracy of neural real-fluid closures. To examine this hypothesis, we introduce athermodynamics-informed input-coordinate design strat-egy, termed target-aligned input reparameterization (TAIR), for neural prediction of real-fluid thermodynamic properties. Instead of providing every property network with the same raw enthalpy coordinate, TAIR replaces h with a target-matched thermodynamic input. The temperature network uses an estimated temperature ˜T obtained by inverting an ideal-gas mixture enthalpy approximation, whereas the density and compressibility networks use an ideal-gas-based density estimate ˜ 
+
+ρ = p/(Rm ˜T ). These quantities serve only as input coordinates; the network outputs remain the real-fluid properties T ,
+
+ρ, and 
+
+ψ. The transformed coordinates incor-porate the leading ideal-gas dependence of the corresponding targets, leaving the networks to represent the remaining real-fluid departures from the ideal-gas baseline rather than reconstructing the complete closure directly from the raw enthalpy coordinate. The role of input-coordinate design is isolated by compar-ing TAIR with a raw-input baseline and target-inconsistent cross-reparameterization controls under identical network ar-chitectures, training data, and optimization settings. The as-sessment considers training behavior, held-out test-set accu-racy, transfer to a methane–oxygen counterflow flame at an unseen strain rate within the augmented thermodynamic en-velope, and closure-level computational cost. The remainder of this paper is organized as follows. Section II presents the reference real-fluid closure, the TAIR construction, data gen-eration, and neural-network training. Section III reports the model comparisons, and Section IV discusses the thermody-namic interpretation and implications of the proposed repa-rameterization, followed by conclusions in Section V.   
+
+> II. METHODS A. Reference Real-Fluid Thermodynamic Closure
+
+The present work considers the cell-local thermodynamic closure used in the enthalpy-based pressure-correction formu-lation of the DeepFlame dfLowMachFoam solver 26 . At each thermodynamic update, the closure receives the local solver state 
+
+xh = ( h, p, Y), (1) where h is the mass-specific enthalpy variable selected in the present solver configuration, p is the local pressure, and 
+
+Y = ( Y1, . . . , YNs ) is the species mass-fraction vector. The same enthalpy definition and reference convention are used by the flow solver, the Cantera-based reference thermody-namic evaluator 27 , and the input transformations introduced in Sec. II B. The reference real-fluid closure defines the state-to-property mapping 
+
+G : (h, p, Y) 7 −→ (T,
+
+ρ,
+
+ψ), (2) where T is temperature, 
+
+ρ is density, and 
+
+ψ =
+
+(
+
+∂ ρ ∂ p
+
+)
+
+> h,Y
+
+(3) is the compressibility coefficient used in the pressure-correction formulation. For a prescribed state (h, p, Y), temperature is recovered by solving the nonlinear enthalpy relation 
+
+f (T ) = h(T, p, Y) − h = 0, (4) where the real-fluid mixture enthalpy is expressed as 
+
+h(T, p, Y) = hig (T, Y) + hdep (T, p, Y). (5) Here, hig is the ideal-gas contribution obtained from the species thermochemical data, whereas hdep is the real-fluid de-parture contribution associated with the equation of state. The 3enthalpy inversion is performed iteratively. In Newton form, the temperature update can be written as 
+
+T k+1 = T k − h(T k, p, Y) − hcp(T k, p, Y) , (6) where 
+
+cp(T, p, Y) = 
+
+(
+
+∂ h
+
+∂ T
+
+)
+
+> p,Y
+
+(7) is the mass-specific real-fluid heat capacity at constant pres-sure and composition. At each trial temperature T k, the real-fluid state at 
+
+(T k, p, Y) is established using the Peng–Robinson equation of state. The ideal-gas contributions to h and cp are eval-uated from the species thermochemistry at T k, while their departure contributions are evaluated from the corresponding Peng–Robinson state. Thus, h and cp are evaluated consis-tently from the same trial state and do not require separate EoS root solves. The Peng–Robinson equation of state is written as 9
+
+p = RuT
+
+¯V − bm
+
+− am
+
+¯V ( ¯V + bm) + bm( ¯V − bm) , (8) where ¯ V is the molar volume and am and bm are mixture pa-rameters calculated using the classical one-fluid mixing rules. For each trial temperature, Eq. (8) is solved for the molar vol-ume. Once the enthalpy inversion has converged, the density is retained from the final Peng–Robinson state as 
+
+ρ = ¯W
+
+¯V , ¯W =
+
+( Ns
+
+# ∑
+
+> i=1
+
+Yi
+
+Wi
+
+)−1
+
+, (9) where ¯ W is the mixture molecular weight. In the reference implementation, the compressibility coef-ficient is evaluated by a first-order backward finite difference at fixed h and Y. Introducing the perturbed pressure 
+
+p′ = p(1 −
+
+ε), (10) gives ψ ≈
+
+ρ(h, p, Y) −
+
+ρ(h, p′, Y)
+
+p − p′ , (11) where 
+
+ε > 0 is the relative pressure perturbation. Evaluation of the perturbed state requires a second enthalpy–temperature inversion and real-fluid EoS evaluation at fixed h and Y.Fig. 1 schematically summarizes this cell-local workflow. Temperature recovery and density evaluation are shown se-quentially for clarity, although they are numerically cou-pled because each temperature iteration requires an EoS state evaluation. Evaluation of 
+
+ψ further requires repeat-ing the temperature–density closure at the perturbed pressure. The reference thermodynamic states underlying Eqs. (4)–(11) are evaluated using the Cantera Peng–Robinson implementa-tion. These calculations provide the supervised targets used throughout this work. Solver state                                             
+
+> ℎ, 푝, Y
+> Recover temperature 푇
+> Solve ℎ(푇, 푝, Y)=ℎ
+> Newton iteration:
+> 푇푘+1=푇푘−ℎ(푇푘, 푝, Y) − ℎ푐푝(푇푘, 푝, Y)
+> (each iteration requires PR-EoS evaluation)
+> Compute density 휌
+> Solve PR-EoS for ¯푉(molar volume)
+> 휌=¯푊/¯푉
+> Perturbed pressure state
+> 푝′=푝(1−휖)at fixed ℎ, Y
+> Repeat 푇-휌closure Obtain 휌(ℎ, 푝 ′,Y)
+> Compute compressibility coefficient 휓휓≈휌(ℎ, 푝, Y) − 휌(ℎ, 푝 ′,Y)
+> 휖 푝
+> Thermochemical evaluation and pressure correction use
+> 푇, 휌, 휓
+> Cell-local thermodynamic closure (repeated calls)
+
+FIG. 1. Schematic of the reference solver-native thermodynamic closure in each computational cell. 
+
+The corresponding raw-input neural surrogate preserves the external state-to-property interface, 
+
+(T,
+
+ρ,
+
+ψ) = F 
+
+> θ
+
+(h, p, Y), (12) where F 
+
+> θ
+
+denotes the aggregate neural-surrogate mapping. This configuration serves as the raw-input baseline. The TAIR strategy introduced in Sec. II B retains p, Y, and the real-fluid output quantities, but reparameterizes the enthalpy coordinate separately for each target. 
+
+B. Target-Aligned Input Reparameterization 
+
+The raw-input baseline defined in Eq. (12) supplies the same solver-native enthalpy coordinate h to all property net-works. Target-aligned input reparameterization (TAIR) modi-fies only this thermodynamic coordinate while retaining pres-sure, composition, network architecture, and output defini-tions. The construction follows two requirements. First, every transformed coordinate must be evaluated exclusively from the solver-available state (h, p, Y), without using the reference values of T ,
+
+ρ, or 
+
+ψ. Second, the transformation must involve only species-weighted sums and explicit algebraic operations, so that it does not reintroduce enthalpy inversion or real-fluid 4EoS iteration. Its cost therefore scales linearly with the num-ber of species and is fixed for a prescribed chemical mecha-nism. Because the energy variable used in the present solver con-figuration is the mass-specific absolute enthalpy, the ideal-gas mixture enthalpy under the same thermochemical reference convention can be written as 
+
+hig (T, Y) = 
+
+> Ns
+
+# ∑
+
+> i=1
+
+Yi
+
+[
+
+h◦  
+
+> f,i
+
++ 
+
+> ∫TT0
+
+cig 
+
+> p,i
+
+(
+
+τ) d
+
+τ
+
+]
+
+, (13) where T0 = 298 .15 K, h◦  
+
+> f,i
+
+is the mass-specific standard en-thalpy of formation of species i at T0, and cig  
+
+> p,i
+
+is its mass-specific ideal-gas heat capacity at constant pressure. All species enthalpies and heat capacities in this section are ex-pressed on a mass basis before mass-fraction averaging. A low-cost temperature coordinate is obtained by treating the solver-provided real-fluid enthalpy as an ideal-gas mix-ture enthalpy and approximating the species heat capacities by their values at T0:
+
+hig (T, Y) ≈ ˜hig (T, Y) = 
+
+> Ns
+
+# ∑
+
+> i=1
+
+Yi
+
+[h◦  
+
+> f,i
+
++ c◦
+
+> p,i
+
+(T − T0)] , (14) where c◦ 
+
+> p,i
+
+= cig 
+
+> p,i
+
+(T0). The thermodynamic coordinate temper-ature ˜ T is defined by equating the solver-provided enthalpy to this approximate ideal-gas mixture enthalpy ˜hig ( ˜T , Y) = h.Solving this equation gives ˜T = T0 +
+
+h −
+
+> Ns
+
+# ∑
+
+> i=1
+
+Yih◦ 
+
+> f,iNs
+
+# ∑
+
+> i=1
+
+Yic◦
+
+> p,i
+
+. (15) The quantity ˜ T is a thermodynamic input coordinate rather than a replacement for the real-fluid temperature. It retains the leading caloric relation among enthalpy, temperature, and composition, while omitting the temperature dependence of the species heat capacities and the real-fluid enthalpy depar-ture. The temperature network therefore uses 
+
+xTAIR  
+
+> T
+
+= ( ˜T , p, Y). (16) Pressure is retained because the real-fluid correction to tem-perature at fixed enthalpy and composition remains pressure dependent. For the density-related targets, the thermodynamic coordi-nate temperature is further combined with the ideal-gas equa-tion of state to obtain the ideal-gas density estimate as ˜
+
+ρ = pRm ˜T , (17) where Rm is the mixture-specific gas constant. This coordinate incorporates the leading pressure, temperature, and mixture-molecular-weight dependence of density, while omitting the non-ideal EoS contribution.                  
+
+> TABLE I. First thermodynamic coordinate supplied to each property network. Pressure pand composition Yare retained in all configura-tions. Configuration Tnetwork
+> ρnetwork
+> ψnetwork Raw-input baseline hhh
+> TAIR ˜T˜
+> ρ˜
+> ρ
+> Cross-reparameterization ˜
+> ρ˜T˜T
+
+The use of ˜ 
+
+ρ for the compressibility network follows from the same approximate thermodynamic relation. At fixed h and 
+
+Y, Eq. (15) contains no explicit pressure dependence. Conse-quently, ˜
+
+ψ ≡
+
+(
+
+∂ ˜
+
+ρ∂ p
+
+)
+
+> h,Y
+
+= 1
+
+Rm ˜T = ˜
+
+ρ
+
+p . (18) Thus, because p is retained as an independent input, ( ˜
+
+ρ, p)
+
+contains the corresponding ideal-gas baseline for the isen-thalpic density response. The density and compressibility net-works use 
+
+xTAIR  
+
+> ρ
+
+= xTAIR  
+
+> ψ
+
+= ( ˜
+
+ρ, p, Y). (19) Equation (18) is used only to motivate the input design; the real-fluid compressibility coefficient 
+
+ψ remains the network output. The resulting target-specific assignments are summarized in Table I. The raw-input baseline retains the solver-native en-thalpy coordinate for all three targets. TAIR assigns each net-work the target-matched thermodynamic coordinate that rep-resents the leading ideal-gas dependence of its target. The cross-reparameterization control deliberately exchanges these assignments: ˜ 
+
+ρ is used for temperature, whereas ˜ T is used for density and compressibility. This control distinguishes the ef-fect of target-consistent thermodynamic input design from the generic effect of replacing h with an analytically transformed variable. All three configurations predict the absolute real-fluid quantities T ,
+
+ρ, and 
+
+ψ; no residual target is introduced in the loss function. Therefore, the interpretation that TAIR guides the networks to learn real-fluid departures from ideal-gas-based baselines refers to the structure of the input coor-dinates rather than to an explicit residual-output formulation. The resulting input–target relations are examined in Sec. III.  
+
+> C. Data Generation and Augmentation
+
+The supervised database consists of input–target pairs 
+
+D =
+
+{
+
+(h, p, Y)(n), (T,
+
+ρ,
+
+ψ)(n)}Nn=1 . (20) It is worth noting that TAIR is applied only after these ref-erence pairs have been generated, as a deterministic prepro-cessing transformation of the enthalpy coordinate. It there-fore does not alter the sampled thermodynamic states, data augmentation, or reference targets. The raw-input, TAIR, 5
+
+FIG. 2. Schematic of the 2D counterflow diffusion flame configura-tion used for data generation. 
+
+and cross-reparameterization models use the same underlying database and differ only in the first thermodynamic coordinate supplied to each property network. The base thermochemical states are sampled from two-dimensional laminar counterflow diffusion flames 28,29 com-puted using the DeepFlame dfLowMachFoam solver. For each sampled state, the reference thermodynamic properties are evaluated using the Cantera real-fluid closure described in Sec. II A. The counterflow configuration is shown in Fig. 2. The computational domain is a 2 mm × 2 mm square dis-cretized using a 400 × 100 mesh. Pure methane at 269 K and pure oxygen at 278 K are introduced through opposing bound-aries with equal inlet-speed magnitudes. The nominal operat-ing pressure is 100 bar, which exceeds the critical pressures of both pure inlet species. For equal inlet-speed magnitudes Uin , the nominal strain rate is defined as a = 2Uin /Lx, where Lx = 2 mm is the dis-tance between the opposing inlets. Three flames are simulated at a = 1000, 5000, and 10000 s −1, corresponding to inlet-speed magnitudes of 1, 5, and 10 m s −1, respectively. Chemi-cal kinetics are represented using the 18-species, 44-reaction reduced mechanism for high-pressure methane–oxygen com-bustion developed by Monnier et al. 30 . For each strain rate, thermochemical states are sampled from multiple snapshots during the transient evolution toward a quasi-steady flame, thereby including states from the inlet streams, mixing layers, reaction zone, and burned-gas region. The flame-derived states occupy a relatively narrow portion of the thermochemical state space. To broaden the thermo-chemical coverage of the flame-derived database, the physi-cally constrained random-augmentation procedure following our previous work 31 is adopted. The augmentation is per-formed in (T, p, Y) space rather than by directly perturb-ing enthalpy: temperature and pressure are randomly var-ied within prescribed bounds, while the species mass frac-tions are perturbed using a common power-law exponent and subsequently renormalized. Candidate states that vio-0.0 0.2 0.4 0.6 0.8 1.0         
+
+> Mixture Fraction, Z
+> 1000
+> 2000
+> 3000
+> 4000
+> Temperature,  T (K)
+> (a) Sampled Data
+> Augmented Data
+> 01000 2000 3000 4000
+> Temperature, T(K)
+> 9.60
+> 9.80
+> 10.00
+> 10.20
+> 10.40
+> Pressure,  p (MPa)
+> (b)
+
+FIG. 3. Thermochemical state-space coverage of sampled and aug-mented flame states. (a) mixture fraction-temperature space and (b) temperature-pressure space. 
+
+late the prescribed temperature, pressure, mixture-fraction, or elemental-composition bounds are discarded. For every ac-cepted augmented state, the mass-specific enthalpy, density, and compressibility coefficient are recomputed using the same Cantera-based real-fluid closure as that used for the base flame states. Consequently, the augmented input–target pairs remain thermodynamically consistent. This offline data-generation step is common to all model configurations and is indepen-dent of the subsequent TAIR preprocessing. Fig. 3 shows the state-space coverage before and after augmentation. In the displayed projections, the base flame states form rela-tively narrow bands, whereas the augmented samples pop-ulate a broader neighborhood in both the mixture-fraction– temperature and temperature–pressure spaces. A total of 1 .2 × 10 6 accepted samples is retained. The augmented database is randomly partitioned into 1 .0 × 10 6
+
+training samples, 1 .0 × 10 5 validation samples, and 1 .0 × 10 5
+
+held-out test samples. The resulting test set therefore evalu-ates prediction accuracy within the augmented-state distribu-tion. Transfer across operating conditions is examined sep-arately using a counterflow flame at the unseen strain rate 
+
+a = 3000 s −1, which is not included in the training, validation, or test sets but remains within the augmented thermodynamic envelope. 
+
+D. Neural-Network Architecture and Training 
+
+The raw-input, TAIR, and cross-reparameterization models are implemented using the same neural-network architecture 6Solver State                                  
+
+> h,p,Y
+> Thermodynamic Approximation
+> ˜T=T0+h−∑iYih0
+> f,i
+> ∑iYic0
+> p,i
+> ˜ρ=pRm˜T
+> Raw Inputs Target-Aligned Coordinates
+> ˜T,˜ρ,p,Y
+> ˜T→T,˜ρ→ρ,ψ
+> Z-Score Norm
+> ˆx=x−μσ
+> MLP ρ
+> MLP T
+> MLP ψ
+> ρ(Density)
+> T(Temperature)
+> ψ(Compressibility)
+> FIG. 4. Neural-surrogate framework taking the TAIR models as an example.
+
+and training procedure. The three configurations differ only in the thermodynamic coordinate supplied as the first input to each property network, as summarized in Table I. This con-trolled design isolates the effect of input reparameterization from those of model capacity, training data, and optimization. As illustrated in Fig. 4, temperature, density, and compress-ibility are predicted using three independent multilayer per-ceptrons (MLPs). Each network receives a 20-dimensional input vector comprising one thermodynamic coordinate, pres-sure, and 18 species mass fractions, and returns one scalar real-fluid property. The thermodynamic coordinate is selected according to the input strategy: the raw-input model uses h
+
+for all three networks; TAIR uses ˜ T for the temperature net-work and ˜ 
+
+ρ for the density and compressibility networks as presented in Fig. 4; and the cross-reparameterization control interchanges these assignments. The target-matched thermo-dynamic coordinates are therefore used only as network in-puts, while the outputs remain the real-fluid quantities T ,
+
+ρ,and 
+
+ψ.Each MLP contains three fully connected hidden layers with 64, 32, and 16 neurons, respectively. Gaussian error lin-ear unit (GELU) activation functions 32 are applied after the hidden layers, and the output layer is linear. The three prop-erty networks are trained independently and do not share pa-rameters. In particular, density and compressibility are pre-dicted by separate networks rather than deriving 
+
+ψ from the density surrogate, thereby retaining a direct, fixed-cost evalu-ation of all three closure quantities. All input and output variables are standardized using means and standard deviations calculated from the training set. The same normalization parameters are subsequently applied to the validation set, held-out test set, and unseen-strain-rate flame. Each property network is trained using an L1 loss in the standardized output space, the Adam optimizer 33 , and a cosine-annealing learning-rate schedule 34 . Training is per-formed with a batch size of 1024 for 1500 epochs. Network predictions are transformed back to physical units before the accuracy metrics reported in Sec. III are calculated.  
+
+> III. RESULTS
+
+The effect of thermodynamic input-coordinate design is examined from five complementary perspectives: projected input–target relations, training convergence, held-out test-set accuracy, transfer to an unseen strain-rate condition, and closure-level computational cost. All comparisons use the same thermochemical database, property-network architec-tures, and training procedure; the only difference among the raw-input, TAIR, and cross-reparameterization configurations is the thermodynamic coordinate supplied as the first network input.  
+
+> A. Projected Input–Target Relations
+
+Fig. 5 compares two-dimensional projections of each tar-get property against the first thermodynamic coordinate used by the three input configurations. Pressure and the full com-position vector remain network inputs in all cases; conse-quently, these projections do not represent the complete high-dimensional regression mapping. They are used only to exam-ine how the choice of the leading scalar coordinate organizes the sampled thermodynamic states. For the raw-input configuration, the projections of 
+
+ρ, T ,and 
+
+ψ against h are strongly multivalued. States with similar enthalpy can exhibit substantially different target values be-cause pressure, composition, and real-fluid departures are not represented by the enthalpy coordinate alone. The methane-mass-fraction coloring further shows that much of this pro-jected spread is associated with composition. With TAIR, the target-matched coordinates produce sub-stantially tighter and more monotonic projected relations. The mappings ˜ 
+
+ρ →
+
+ρ and ˜ 
+
+ρ →
+
+ψ are close to linear over most of the sampled range, while the mapping ˜ T → T forms a compar-atively narrow monotonic band. These observations indicate that the target-matched thermodynamic coordinates capture a large part of the leading ideal-gas dependence of their cor-responding targets, although residual spread remains because the outputs retain their full real-fluid dependence. The cross-reparameterization projections remain organized by analytical coordinates but exhibit markedly less favorable 7−4 −2 0
+
+Enthalpy h (10 6 J/kg)   
+
+> 0.5
+> 1.0
+> 1.5
+> 2.0
+> 2.5
+> 3.0
+> 3.5
+> Target  T (K)
+> 1e3
+> −4−20
+
+Enthalpy h (10 6 J/kg)   
+
+> 0
+> 25
+> 50
+> 75
+> 100
+> 125
+> 150
+> 175
+> Target  ρ (kg/m 3)
+> −4−20
+
+Enthalpy h (10 6 J/kg)   
+
+> 0.00
+> 0.25
+> 0.50
+> 0.75
+> 1.00
+> 1.25
+> 1.50
+> Target  ψ (s 2/m 2)
+> 1e −5
+> 024
+
+Estimated temperature  ̃ T (K)    
+
+> 1e3
+> 0.5
+> 1.0
+> 1.5
+> 2.0
+> 2.5
+> 3.0
+> 3.5
+> Target  T (K)
+> 1e3
+> 050 100 150
+
+Estimated density  ̃ ρ (kg/m 3)   
+
+> 0
+> 25
+> 50
+> 75
+> 100
+> 125
+> 150
+> 175
+> Target  ρ (kg/m 3)
+> 050 100 150
+
+Estimated density  ̃ ρ (kg/m 3)   
+
+> 0.00
+> 0.25
+> 0.50
+> 0.75
+> 1.00
+> 1.25
+> 1.50
+> Target  ψ (s 2/m 2)
+> 1e −5
+> 050 100 150
+
+Estimated density  ̃ ρ (kg/m 3)  
+
+> 0.5
+> 1.0
+> 1.5
+> 2.0
+> 2.5
+> 3.0
+> 3.5
+> Target  T (K)
+> 1e3
+> 024
+
+Estimated temperature  ̃ T (K)   
+
+> 1e3
+> 0
+> 25
+> 50
+> 75
+> 100
+> 125
+> 150
+> 175
+> Target  ρ (kg/m 3)
+> 024
+
+Estimated temperature  ̃ T (K) 
+
+> 1e3
+> 0.00
+> 0.25
+> 0.50
+> 0.75
+> 1.00
+> 1.25
+> 1.50
+> Target  ψ (s 2/m 2)
+> 1e −5
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> YCH 4
+> Raw Input Model TAIR Cross-reparameterization
+
+FIG. 5. Projected input–target distributions for temperature, density, and compressibility under the raw-input, TAIR, and cross-reparameterization strategies. Points are colored by the methane mass fraction ( YCH 4 ). 
+
+relations. In particular, using ˜ 
+
+ρ for temperature produces an inverse, strongly curved relation, whereas using ˜T for den-sity and compressibility retains broad and nonlinear varia-tions. The comparison therefore suggests that the benefit is associated with matching the analytical coordinate to the tar-get thermodynamic dependence, rather than with analytical input transformation alone. 
+
+B. Training Convergence 
+
+Fig. 6 compares the standardized L1 training losses of the three input configurations. Because each target is standard-ized independently, loss magnitudes can be compared among input configurations for the same property, but not across dif-ferent properties. For density and compressibility, TAIR reaches lower losses from the early stages of training and maintains this advantage throughout the optimization. The final density loss is approxi-mately half that obtained with the raw-input coordinate, while the reduction is more pronounced for compressibility. For temperature, the raw-input and TAIR models show similar be-havior during the initial training stage, but TAIR converges to the lowest final loss. By contrast, the cross-reparameterization model, which uses the density-like coordinate ˜ 
+
+ρ for temper-ature, converges more slowly and remains at a substantially higher loss. The ordering of the converged losses is consistent with the projected relations in Fig. 5. Target-matched coordinates are associated with tighter projected relations and lower attainable training losses under the same network capacity and optimiza-tion procedure. The cross-reparameterization results further show that replacing enthalpy by an analytical variable does not by itself guarantee improved optimization; the relation be-tween the transformed coordinate and the target property is essential. 8
+
+FIG. 6. Standardized L1 training-loss histories for the raw-input, TAIR, and cross-reparameterization configurations: (a) temperature T , (b) density 
+
+ρ, and (c) compressibility coefficient 
+
+ψ.
+
+FIG. 7. Predicted-versus-reference scatter plots for the held-out test set. Rows correspond to the target properties T ,
+
+ρ, and 
+
+ψ, whereas columns correspond to the raw-input, TAIR, and cross-reparameterization models. The dashed lines indicate exact agreement. Marker colors and sizes represent absolute errors. Error color scales are normalized separately for each target property. 
+
+C. Held-Out Test-Set Accuracy 
+
+Fig. 7 compares the network predictions with the reference values on the held-out test subset of the augmented database. All three configurations produce predictions close to the line of exact agreement, but their errors differ substantially when 9quantified by the root-mean-squared error (RMSE) in physical units. For temperature, the RMSE decreases from 0 .371 K for the raw-input model to 0 .250 K for TAIR, an improvement fac-tor of approximately 1 .5. The target-inconsistent ˜ 
+
+ρ-to-T pair-ing instead increases the RMSE to 0 .909 K, approximately 3 .6times the TAIR value and 2 .5 times the raw-input value. For density, the raw-input model yields an RMSE of 0.0746 kg m −3, whereas TAIR reduces it to 0 .0368 kg m −3,corresponding to an improvement factor of approximately 2 .0. Cross-reparameterization gives 0 .0886 kg m −3, which is less accurate than both TAIR and the raw-input baseline. The strongest improvement is obtained for compressibil-ity. TAIR reduces the RMSE from 3 .19 × 10 −8 s2 m−2 for the raw-input model to 4 .24 × 10 −9 s2 m−2, corresponding to a reduction factor of approximately 7 .5. The cross-reparameterization result, 3 .03 × 10 −8 s2 m−2, remains close to the raw-input error and provides no comparable improve-ment. Thus, TAIR gives the lowest held-out error for all three tar-gets. The cross-reparameterization control does not provide a systematic benefit: it performs similarly to the raw-input model for compressibility and degrades the density and tem-perature predictions. This behavior supports the interpretation that the improvement originates from target-matched thermo-dynamic input design rather than from analytical preprocess-ing in general.  
+
+> D. Transfer to an Unseen Strain Rate
+
+To assess transfer across operating conditions, an addi-tional counterflow flame is generated at the unseen strain rate 
+
+a = 3000 s −1. The assessment is performed a priori : the three trained models are queried on the thermochemical states gen-erated by the reference dfLowMachFoam calculation, without replacing the real-fluid closure during time integration. The comparison therefore evaluates property-prediction transfer to a new flame structure rather than online solver stability or thermodynamic extrapolation. Fig. 8 shows the reference fields and the correspond-ing absolute-error maps at t = 7 × 10 −4 s. For tempera-ture, the TAIR RMSE is 0 .332 K, compared with 1 .18 K for the raw-input model, giving an improvement factor of ap-proximately 3 .6. Cross-reparameterization again performs poorly for this target, with an RMSE of 6 .48 K. For den-sity, TAIR yields an RMSE of 0 .0295 kg m −3, compared with 0.429 kg m −3 for the raw-input model and 0 .0532 kg m −3 for cross-reparameterization. The raw-input-to-TAIR reduction factor is therefore approximately 14 .5. For compressibil-ity, TAIR reduces the RMSE from 1 .81 × 10 −8 s2 m−2 for the raw-input model to 3 .03 × 10 −9 s2 m−2, corresponding to an improvement factor of approximately 6 .0. The cross-reparameterization RMSE is 9 .47 × 10 −9 s2 m−2, approxi-mately 3 .1 times the TAIR value. For all three properties, the largest errors are confined pri-marily to the thin mixing and reaction layer, where the refer-ence thermodynamic fields exhibit their strongest spatial gra-           
+
+> TABLE II. Thermodynamic closure cost using 10 5held-out thermo-chemical states. Method Mean time (s) Speed-up Reference (Cantera) 15.429 1.0×
+> Raw-input NN 0.159 97 .1×
+> TAIR 0.173 89 .4×
+
+dients. Errors in the bulk fuel and oxidizer streams remain small. The preservation of the TAIR accuracy advantage at this separately generated flame demonstrates transfer across strain-rate conditions within the augmented thermodynamic envelope. It does not, by itself, establish extrapolation beyond that envelope or stable inline coupling of the surrogate with the pressure-correction solver.  
+
+> E. Closure-Level Computational Cost
+
+The computational cost of the local thermodynamic closure is assessed using the 10 5 states in the held-out test subset. The reported wall-clock time corresponds to completing the evalu-ation of the full test set for each method. For every run, timing starts immediately before loading the test subset and ends af-ter the 
+
+ρ, T , and 
+
+ψ outputs are materialized. All timings are obtained using one core of an Intel Xeon Gold 6330 CPU at 2 .00 GHz. Each method is measured 12 times using a cyclically balanced execution order. After re-moving the largest and smallest values for each method, the reported result is the mean of the remaining ten measure-ments. As shown in Table II, the reference real-fluid closure re-quires 15 .429 s for the full test set. The raw-input neural model reduces this cost to 0 .159 s, corresponding to a speed-up of 97 .1×. TAIR requires 0 .173 s and provides a speed-up of 89 .4×.The TAIR workflow therefore requires an additional 0 .014 s over the full test set relative to the raw-input neural model, corresponding to an observed overhead of approximately 8.8%. Nevertheless, the complete TAIR evaluation remains only about 1 .1% of the reference closure cost. This overhead is therefore small relative to the iterative thermodynamic cal-culation that the surrogate replaces. These measurements quantify closure-level evaluation on the held-out test set only. They should not be interpreted as an equivalent speed-up of the complete CFD simulation, whose wall-clock cost also includes transport equations, chemical ki-netics, pressure correction, communication, and other solver operations.   
+
+> IV. DISCUSSION A. Thermodynamic Interpretation of TAIR
+
+The target-matched thermodynamic coordinates introduced by TAIR are not approximate substitutes for the real-fluid 10            
+
+> FIG. 8. Reference thermodynamic fields and absolute-error contours for the independently generated counterflow flame at the unseen strain rate a=3000 s −1and t=7×10 −4s.
+
+closure. The estimated temperature ˜ T is constructed by ne-glecting the real-fluid enthalpy departure and approximating the ideal-gas species heat capacities as constants at the refer-ence temperature. The estimated density ˜ 
+
+ρ further applies the ideal-gas equation of state to ˜ T . These variables therefore re-tain the leading caloric or volumetric dependence of the cor-responding targets, while the real-fluid departures remain to be represented by the neural networks. TAIR does not introduce additional thermodynamic-state information. At fixed p and Y, the enthalpy h and ˜ T are related by an invertible affine transformation. Because p and Y are retained, ˜ 
+
+ρ = p/(Rm ˜T ) is likewise an invertible reparameter-ization over the admissible positive-temperature domain. The raw-input, TAIR, and cross-reparameterization models there-fore contain the same underlying state information and differ only in how that information is presented to the finite-capacity networks. TAIR is thus best interpreted as a deterministic thermody-namic preconditioning of the input coordinates. The networks continue to predict the absolute real-fluid quantities T ,
+
+ρ, and ψ, rather than explicit residuals. Nevertheless, the target-matched coordinates expose the leading ideal-gas-based de-pendence of each target, leaving a more departure-like input– output relation for neural regression.  
+
+> B. Target Matching and Local Sensitivity
+
+The target-dependent improvements are consistent with the structure of the thermodynamic closure. At fixed p and Y,enthalpy is already directly related to temperature through the caloric equation of state. The raw enthalpy is therefore a com-paratively favorable coordinate for T , and the transformation to ˜T mainly accounts for the dominant formation-enthalpy offset and mixture heat-capacity scaling before regression. This is consistent with the moderate improvement obtained for temperature. In contrast, ˜ 
+
+ρ combines the leading dependence of density on pressure, caloric state, composition, and mixture molecular weight. Together with the retained pressure input, it also provides the ideal-gas baseline for the isenthalpic den-sity response represented by 
+
+ψ, as shown in Eq. (18). This is consistent with the larger improvements obtained for density and compressibility. The cross-reparameterization controls show that the im-provement does not arise from analytical preprocessing alone. Using the density-like coordinate ˜ 
+
+ρ for temperature produces a strongly curved inverse relation, whereas using ˜ T for density and compressibility omits the leading pressure and mixture-molecular-weight dependence contained in ˜ 
+
+ρ. The degraded performance of these target-inconsistent models therefore demonstrates the importance of matching the transformed co-11  
+
+> FIG. 9. Normalized local first-coordinate sensitivities of the reference thermodynamic mapping. One representative database state is selected in each temperature bin as the sample closest to the bin-median temperature.
+
+ordinate to the thermodynamic dependence of the target. Fig. 5 and 9 describe complementary aspects of this coor-dinate effect. Fig. 5 provides a qualitative two-dimensional projection of how each first coordinate organizes the target states, whereas Fig. 9 quantifies the corresponding local slope at representative thermochemical states. For each tempera-ture bin, one representative database state is selected, and the candidate first coordinate is locally perturbed while p and 
+
+Y are held fixed. The normalized sensitivity is defined as 
+
+Sy,x = |
+
+∂ y∗/
+
+∂ x∗|p,Y, where starred quantities denote the stan-dardized variables used during training. For a monotonic one-dimensional relation, a constant signed derivative corresponds to an affine mapping. Accordingly, when interpreted together with the monotonic projections in Fig. 5, a narrower varia-tion of Sy,x indicates a more uniform local input–target scale and a relation that is closer to affine along the selected coordi-nate. Such a representation is generally more favorable for a finite-capacity multilayer perceptron, consistent with approx-imation results for smoother target functions and the spectral preference of standard neural networks for more slowly vary-ing function components 35–38 . The more uniform sensitivi-ties of the target-matched coordinates are therefore consistent with their tighter projected relations, lower training losses, and lower prediction errors. This analysis characterizes only one representative state in each temperature bin and only the selected first input coordi-nate. The sensitivity magnitude does not capture derivative-sign changes, cross-coordinate coupling, sample density, or the complete multivariate mapping. Fig. 9 should therefore be interpreted as a quantitative complement to the projected rela-tions in Fig. 5, rather than as a complete measure of mapping nonlinearity or neural-network learnability.  
+
+> C. Generality and Limitations
+
+The quantitative results reported in this work are obtained for supercritical methane–oxygen counterflow flames near a nominal pressure of 100 bar, using the Peng–Robinson equa-tion of state and the thermodynamic envelope represented by the present database. The specific error-reduction fac-tors and computational speed-ups should therefore be inter-preted within this validated domain. The unseen-strain-rate case demonstrates transfer to a different flame structure and operating condition within the augmented thermodynamic en-velope, rather than unrestricted extrapolation to arbitrary ther-modynamic states. The input-design principle underlying TAIR, however, is not intrinsically restricted to the present fuel–oxidizer system or to the three properties considered here. More generally, when a target quantity admits an inexpensive analytical or reduced-order approximation based on solver-available vari-ables, that approximation may be used as a transformed input coordinate to expose the leading physical dependence of the target before neural regression. The network is then required to represent the remaining departure from the physical base-line rather than reconstructing the complete input–target re-lation directly from the native solver variables. This principle may provide a useful design strategy for other thermodynamic properties, transport quantities, or data-driven closure terms, provided that an appropriate target-matched baseline can be identified. Density and compressibility are predicted using separate networks. This choice provides direct fixed-cost inference, but does not enforce the differential consistency condition. Joint training or thermodynamic-consistency regularization may be examined in future work, together with the associated compu-tational trade-offs. Finally, the flame-field assessment reported here is a pri-ori : the surrogates are queried using states generated by the reference CFD solution. Stable online coupling with the en-thalpy equation and pressure-correction procedure has not yet been demonstrated. Such a test must assess error accumula-tion, pressure–density feedback, conservation, and excursions outside the training envelope. Extension of the same input-design principle to transport properties or other closure terms will similarly require an inexpensive analytical baseline that is physically matched to the corresponding target. 12 
+
+V. CONCLUSIONS 
+
+This work introduced target-aligned input reparameteriza-tion (TAIR) for neural prediction of real-fluid thermodynamic properties in supercritical combustion. TAIR replaces the raw enthalpy coordinate of each property network with a target-matched thermodynamic coordinate: an estimated tempera-ture derived from a constant-cp ideal-gas enthalpy approxima-tion for temperature prediction, and an ideal-gas density esti-mate for density and compressibility prediction. The transfor-mations are explicit, preserve the solver-available state infor-mation, and leave the training database, network architecture, and real-fluid output definitions unchanged. For supercritical methane–oxygen counterflow flames, TAIR reduced the held-out test-set RMSE by factors of ap-proximately 1 .5, 2 .0, and 7 .5 for T ,
+
+ρ, and 
+
+ψ, respectively, relative to the raw-input baseline. At an unseen strain rate within the augmented thermodynamic envelope, the corre-sponding reduction factors were approximately 3 .6, 14 .5, and 6.0. The degraded performance of the target-inconsistent cross-reparameterization controls shows that the improvement arises from thermodynamically matched input design rather than generic analytical preprocessing. TAIR also achieved a closure-level single-core speed-up of approximately 89 .4×
+
+relative to the iterative Cantera reference. These results demonstrate that low-cost physical approximations can pro-vide effective input coordinates for neural real-fluid clo-sures. Future work will assess stable inline coupling with the pressure-based reacting-flow solver and thermodynamic consistency between the independently predicted density and compressibility. 
+
+ACKNOWLEDGMENTS 
+
+This work was supported by the National Natural Science Foundation of China (Grant Nos. 92270203, 523B2062 and 52276096). 
+
+> 1
+
+V. Yang and W. E. Anderson, eds., Liquid Rocket Engine Combustion In-stability , Progress in Astronautics and Aeronautics, Vol. 169 (American In-stitute of Aeronautics and Astronautics, Washington, DC, 1995). 
+
+> 2
+
+W. Mayer, A. Schik, M. Schäffler, and H. Tamura, “Injection and mixing processes in high-pressure liquid oxygen/gaseous hydrogen rocket combus-tors,” J. Propul. Power 16 , 823–828 (2000). 
+
+> 3
+
+J. C. Oefelein, “Mixing and combustion of cryogenic oxygen-hydrogen shear-coaxial jet flames at supercritical pressure,” Combust. Sci. Technol. 
+
+178 , 229–252 (2006). 
+
+> 4
+
+V. Yang, “Modeling of supercritical vaporization, mixing, and combustion processes in liquid-fueled propulsion systems,” Proc. Combust. Inst. 28 ,925–942 (2000). 
+
+> 5
+
+B. E. Poling, J. M. Prausnitz, and J. P. O’Connell, The Properties of Gases and Liquids , 5th ed. (McGraw-Hill, New York, 2001). 
+
+> 6
+
+J. Bellan, “Supercritical (and subcritical) fluid behavior and modeling: drops, streams, shear and mixing layers, jets and sprays,” Prog. Energy Combust. Sci. 26 , 329–366 (2000). 
+
+> 7
+
+D. T. Banuti, “Crossing the Widom-line – Supercritical pseudo-boiling,” J. Supercrit. Fluids 98 , 12–16 (2015). 
+
+> 8
+
+D. N. Nguyen and C. S. Yoo, “An OpenFOAM-based solver for modeling low Mach number turbulent flows at high pressure with real-fluid effects,” Comput. Phys. Commun. 312 , 109600 (2025). 
+
+> 9
+
+D.-Y. Peng and D. B. Robinson, “A new two-constant equation of state,” Ind. Eng. Chem. Fundam. 15 , 59–64 (1976). 
+
+> 10
+
+F. Föll, T. Hitz, C. Müller, C.-D. Munz, and M. Dumbser, “On the use of tabulated equations of state for multi-phase simulations in the homogeneous equilibrium limit,” Shock Waves 29 , 769–793 (2019). 
+
+> 11
+
+P. Koukouvinis, C. Rodriguez, J. Hwang, I. Karathanassis, M. Gavaises, and L. Pickett, “Machine learning and transcritical sprays: A demonstration study of their potential in ECN Spray-A,” Int. J. Engine Res. 23 , 1556–1572 (2022). 
+
+> 12
+
+X. Wang, H. Huo, U. Unnikrishnan, and V. Yang, “A systematic approach to high-fidelity modeling and efficient simulation of supercritical fluid mix-ing and combustion,” Combust. Flame 195 , 203–215 (2018). 
+
+> 13
+
+Z. Liu, J. Liang, and Y. Pan, “Construction of thermodynamic properties look-up table with block-structured adaptive mesh refinement method,” J. Thermophys. Heat Transfer 28 , 50–58 (2014). 
+
+> 14
+
+International Association for the Properties of Water and Steam, “Guideline on the fast calculation of steam and water properties with the spline-based table look-up method (SBTL),” IAPWS Guideline G13-15 (International Association for the Properties of Water and Steam, Stockholm, Sweden, 2015). 
+
+> 15
+
+S. Kawai, H. Terashima, and H. Negishi, “A robust and accurate numerical method for transcritical turbulent flows at supercritical pressure with an arbitrary equation of state,” J. Comput. Phys. 300 , 116–135 (2015). 
+
+> 16
+
+P. C. Ma, Y. Lv, and M. Ihme, “An entropy-stable hybrid scheme for sim-ulations of transcritical real-fluid flows,” J. Comput. Phys. 340 , 330–357 (2017). 
+
+> 17
+
+S. Yang, Y. Li, X. Wang, U. Unnikrishnan, V. Yang, and W. Sun, “Compar-ison of tabulation and correlated dynamic evaluation of real fluid properties for supercritical mixing,” in 53rd AIAA/SAE/ASEE Joint Propulsion Con-ference (American Institute of Aeronautics and Astronautics, 2017). 
+
+> 18
+
+T. Wan, M. Zhou, P. Zhao, and X. Wang, “Challenges in the modeling and simulation of turbulent supercritical fluid flows and heat transfer,” Propul-sion and Energy 1, 6 (2025). 
+
+> 19
+
+L. Roach, G.-M. Rignanese, A. Erriguible, and C. Aymonier, “Applications of machine learning in supercritical fluids research,” J. Supercrit. Fluids 
+
+202 , 106051 (2023). 
+
+> 20
+
+K. Zhu and E. A. Müller, “Generating a Machine-Learned equation of state for fluid properties,” J. Phys. Chem. B 124 , 8628–8639 (2020). 
+
+> 21
+
+Y. Li, T. Zhang, and S. Sun, “Acceleration of the NVT flash calculation for multicomponent mixtures using deep neural network models,” Ind. Eng. Chem. Res. 58 , 12312–12322 (2019). 
+
+> 22
+
+P. J. Milan, J.-P. Hickey, X. Wang, and V. Yang, “Deep-learning acceler-ated calculation of real-fluid properties in numerical simulation of complex flowfields,” J. Comput. Phys. 444 , 110567 (2021). 
+
+> 23
+
+N. Sahranavardfard, D. Aubagnac-Karkar, G. Costante, F. N. Z. Rahantami-alisoa, C. Habchi, and M. Battistoni, “Computation of real-fluid thermo-physical properties using a neural network approach implemented in Open-FOAM,” Fluids 9, 56 (2024). 
+
+> 24
+
+Y. Cai, R. Yang, H. Li, J. Xu, K. Xiao, Z. X. Chen, and H. Wang, “Efficient machine learning method for supercritical combustion: Predicting real-fluid properties and chemical ODEs,” Aerosp. Sci. Technol. 159 , 110034 (2025). 
+
+> 25
+
+G. Lacaze and J. C. Oefelein, “A non-premixed combustion model based on flame structure analysis at supercritical pressures,” Combust. Flame 159 ,2087–2103 (2012). 
+
+> 26
+
+R. Mao, M. Lin, Y. Zhang, T. Zhang, Z.-Q. J. Xu, and Z. X. Chen, “Deep-Flame: A deep learning empowered open-source platform for reacting flow simulations,” Comput. Phys. Commun. 291 , 108842 (2023). 
+
+> 27
+
+D. G. Goodwin, H. K. Moffat, I. Schoegl, R. L. Speth, and B. W. Weber, “Cantera: An object-oriented software toolkit for chemical kinetics, ther-modynamics, and transport processes,” Zenodo (2023). 
+
+> 28
+
+G. Ribert, N. Zong, V. Yang, L. Pons, N. Darabiha, and S. Candel, “Coun-terflow diffusion flames of general fluids: Oxygen/hydrogen mixtures,” Combust. Flame 154 , 319–330 (2008). 
+
+> 29
+
+F. Monnier, G. Ribert, and L. Duhem-Duvilla, “CH4/O2 supercritical flame structure and simulation,” Proc. Combust. Inst. 40 , 105514 (2024). 
+
+> 30
+
+F. Monnier and G. Ribert, “Simulation of high-pressure methane-oxygen combustion with a new reduced chemical mechanism,” Combustion and Flame 235 , 111735 (2022). 
+
+> 31
+
+H. Li, R. Yang, Y. Xu, M. Zhang, R. Mao, and Z. X. Chen, “Comprehensive deep learning for combustion chemistry integration: Multi-fuel generaliza-13 
+
+tion and a posteriori validation in reacting flow,” Phys. Fluids 37 , 015162 (2025). 
+
+> 32
+
+D. Hendrycks and K. Gimpel, “Gaussian error linear units (GELUs),” arXiv:1606.08415 (2016). 
+
+> 33
+
+D. P. Kingma and J. Ba, “Adam: A method for stochastic optimization,” in 3rd International Conference on Learning Representations (ICLR 2015) 
+
+(San Diego, CA, 2015). 
+
+> 34
+
+I. Loshchilov and F. Hutter, “SGDR: Stochastic gradient descent with warm restarts,” in 5th International Conference on Learning Representa-tions (ICLR 2017) (Toulon, France, 2017). 
+
+> 35
+
+D. Yarotsky, “Error bounds for approximations with deep ReLU networks,” Neural Networks 94 , 103–114 (2017). 
+
+> 36
+
+N. Rahaman, A. Baratin, D. Arpit, F. Draxler, M. Lin, F. A. Hamprecht, Y. Bengio, and A. Courville, “On the spectral bias of neural networks,” in Proceedings of the 36th International Conference on Machine Learning ,Proceedings of Machine Learning Research, Vol. 97 (2019) pp. 5301–5310. 
+
+> 37
+
+J. Sokoli, R. Giryes, G. Sapiro, and M. R. D. Rodrigues, “Robust large margin deep neural networks,” IEEE Transactions on Signal Processing 65 ,4265–4280 (2017). 
+
+> 38
+
+A. Andoni, R. Panigrahy, G. Valiant, and L. Zhang, “Learning polynomials with neural networks,” in Proceedings of the 31st International Conference on Machine Learning , Proceedings of Machine Learning Research, Vol. 32, edited by E. P. Xing and T. Jebara (PMLR, Bejing, China, 2014) pp. 1908– 1916.

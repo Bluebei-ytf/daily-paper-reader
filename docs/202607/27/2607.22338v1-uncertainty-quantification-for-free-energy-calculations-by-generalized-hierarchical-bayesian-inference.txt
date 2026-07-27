@@ -1,0 +1,841 @@
+Title: Uncertainty Quantification for Free Energy Calculations by Generalized Hierarchical Bayesian Inference
+
+URL Source: https://arxiv.org/pdf/2607.22338v1
+
+Published Time: Mon, 27 Jul 2026 00:49:16 GMT
+
+Number of Pages: 17
+
+Markdown Content:
+# Uncertainty Quantification for Free Energy Calculations by 
+
+# Generalized Hierarchical Bayesian Inference 
+
+Preprint , compiled July 27, 2026 
+
+Martin Skorna ID 1, Adam Gottfried ID 1, Zuzana Janackova ID 1, Katarina Baxova ID 1, Pavel Jungwirth ID 1, and Brennon L. Shanks* ID 1*Correspondence: shanks.brennon@uochb.cas.cz 
+
+> 1
+
+Institute of Organic Chemistry and Biochemistry of the Czech Academy of Sciences, Prague, CZH 
+
+## Abstract 
+
+Free energy calculations are routinely used to study molecular processes inaccessible to unbiased molecular dynamics, but their utility ultimately depends on knowing when and how much their predictions can be trusted. Uncertainty estimation is therefore essential for distinguishing genuine physical features of a free energy profile from artifacts arising from limited simulation data or inadequate sampling. Gaussian processes have emerged as a powerful framework for reconstructing free energy profiles together with predictive uncertainties. However, ex-isting implementations typically condition on fixed hyperparameters and observation noise, preventing predictive uncertainties from adapting to the information content of the simulation data. Here, we develop a generalized hierarchical Gaussian process framework that accounts for these neglected sources of uncertainty. Applications to umbrella sampling and extended Lagrangian metadynamics of peptide–lipid membrane interactions demonstrate that the resulting uncertainty estimates track reconstruction errors across a wide range of sampling and data conditions. 
+
+Keywords: Free Energy · Umbrella Sampling · Metadynamics · Uncertainty Quantification · Gaussian Process arXiv:2607.22338v1 [physics.chem-ph] 24 Jul 2026 Preprint – U ncertainty Quantification for Free Energy Calculations by Generalized Hierarchical Bayesian Inference 2
+
+## 1 Introduction 
+
+Enhanced-sampling free energy calculations are among the most widely used applications of molecular dynamics (MD), pro-viding a powerful framework for understanding atomic-scale interactions and thermodynamic processes in molecular sys-tems. By projecting the high-dimensional configurational phase space of a molecular system onto a reduced set of coordinates, free energy calculations facilitate the study of molecular pro-cesses whose characteristic timescales lie beyond the reach of unbiased MD. Over the past several decades, the development of enhanced sampling techniques such as umbrella sampling [1 –3], metadynamics [ 4 , 5], and related methods [ 6– 9] has dra-matically expanded the range of systems that can be studied computationally. A fundamental challenge of free energy methods is principled uncertainty quantification (UQ), which aims to estimate both the free energy profile and its uncertainty. This problem is es-pecially challenging for short simulation trajectories or sparse sampling. In such low-data regimes, rigorous UQ would en-able adaptive sampling strategies that avoid over-sampling of well-characterized regions and under-sampling near barriers or transition states, thus saving valuable computational e ff ort and enabling automated computational workflows. However, stan-dard UQ approaches rely on assumptions that become question-able in precisely these regimes. For example, error propagation for variance estimators with sparse umbrella window centers, given a normal distribution approximation for the biased dis-tributions, underestimates the total sampled error [ 10 ]. On the other hand, block averaging and bootstrapping methods require fully equilibrated trajectories and user-specified choice of the number of independent trajectory epochs, which significantly impacts the estimated predictive variance [ 11 ]. While these ap-proaches can be e ff ective under ideal sampling conditions, their uncertainty estimates are less informative when data are limited, precisely where accurate reliable UQ is most important. To address these limitations, we employ a Gaussian process (GP), which treats free energy reconstruction as a problem of statistical inference. In a nutshell, the method assumes the free energy is an unknown function of the collective variables, and begins with a broad range of physically plausible functions that satisfy basic assumptions such as continuity and di ff erentiabil-ity. This initial description, known as the prior , represents our knowledge before obtaining simulation data. MD simulations then provide incomplete information about this unknown free energy, and Bayesian inference quantifies the probability of dif-ferent functions as new data is incorporated. The final result is a probability distribution, known as the posterior , that identifies the most plausible free energy functions given both the prior assumptions and the simulation data. GPs have been used for umbrella sampling [ 12 ], metadynamics [ 13 ], mulistate Bennet acceptance ratio [ 14 ], and the interpolation of quantum potential energy surfaces [ 15 , 16 ]. Bayesian optimization for umbrella sampling, which leverages a GP as a guide for biasing window selection, has even been shown to improve sampling e ffi ciency by a factor of 1.6-2.8 across a diverse set of two-dimensional systems [17]. While existing GP-based free energy estimators have been suc-cessfully applied across multiple areas of computational chem-istry, rigorous evaluation of their UQ performance remains lim-ited. A key unresolved issue is the treatment of hyperparame-ters, which are GP model parameters that specify properties of the prior. Earlier work has either fixed hyperparameters a pri-ori based on empirical evidence of low root-mean-square-error (RMSE) between the GP mean and "ground truth" or varied hyperparameters to assess sensitivity post hoc . As we will show, assuming GP hyperparameters neglects important sources of uncertainty and can prevent the model from adapting as new simulation data are acquired. Consequently, the resulting un-certainty estimates are often misleading and do not accurately reflect the true level of uncertainty in the reconstruction. Here, we develop a generalized hierarchical GP framework for free energy reconstruction that provides reliable uncertainty esti-mates that respond consistently to data quality and availability. The method combines a joint function–derivative GP observa-tion model with Hamiltonian Monte Carlo No-U-Turn Sampling (HMC-NUTS) of a generalized hyperposterior to propagate un-certainty in the GP hyperparameters to the free energy. Using the free energy profile of interaction of a nonaarginine (R 9) pep-tide with a lipid bilayer as a benchmark, an important system for understanding the membrane penetration mechanism of cell-penetrating peptides (CPPs), we find that several commonly employed UQ strategies can produce misleading assessments of convergence, either by exhibiting little sensitivity to additional data or by becoming overconfident as sampling progresses. In contrast, the hierarchical Bayesian approach avoids these patho-logical behaviors and yields uncertainties that systematically evolve with increasing data acquisition. Together, these results highlight the importance of hyperparameter uncertainty in free energy UQ and suggest a practical path toward uncertainty-aware and automated free energy workflows. 
+
+## 2 Theory and Computational Methods 
+
+Enhanced sampling simulations provide samples of the biased probability distribution of a molecular system along a collective variable (CV), ξ, which serve as input data y for GP reconstruc-tion of the free energy profile (Figure 1). Model selection (Figure 1a) is the process of specifying a proba-bilistic model for free energy inference. This involves choosing the GP prior mean and covariance functions, which depend on unknown parameters called hyperparameters . Priors on these quantities, called hyperpriors , constrain nonphysical behavior while allowing the model su ffi cient flexibility to learn from the MD data. Because priors are specified for both the free energy profile and the GP hyperparameters, the method is hierarchical ,consisting of multiple levels of uncertainty that are ultimately propagated to the final prediction. The final component of model selection is the choice of likelihood , which quantifies how well a model explains the observed data. Here, we employ a leave-one-out (LOO) pseudo-likelihood that favors models with strong predictive performance on held-out observations. Hyperposterior learning (Figure 1b) is the process of sampling the unknown probability distribution given the model and data. The unnormalized hyperposterior , the posterior distribution over the GP hyperparameters, is given by Bayes’ theorem as the product of the hyperpriors and the likelihood. With the LOO pseudo-likelihood, this object is technically not a proper hyper-posterior, but rather a pseudo- or generalized hyperposterior. Preprint – U ncertainty Quantification for Free Energy Calculations by Generalized Hierarchical Bayesian Inference 3(a)  (b)  (c) Hyperposterior Learning  Free Energy Estimation       
+
+> Hierarchical Gaussian Process Hamiltonian Monte Carlo
+> ~1000
+> iterations
+> θi
+> θj
+> P(θ|y)∝L(y|θ)P(θ)
+
+Model Selection             
+
+> P(θi)∼log 𝒩 (μθi,σθi)
+> Leave-one-out
+> Pseudo-likelihood
+> Hyperparameters ̂
+> Σ∼f(ξi,ξj;θ)
+> Collective Variable
+> A(ξ)∼𝒩 (0,̂Σ)
+> Data
+> L(y|θ)
+> θi
+> Gaussian Process
+> Hyperprior
+> Objective
+> Mean
+> Sample
+> Uncertainty
+> ξ
+> A(ξ)
+
+Figure 1: Flowchart summarizing the workflow of the generalized hierarchical Bayesian framework for free energy reconstruction. The resulting distribution is not available in closed form and is therefore sampled via HMC-NUTS. Free energy reconstruction (Figure 1c) is performed by propagat-ing samples from the generalized hyperposterior through the GP predictive equations, yielding predictive credible intervals for the free energy surface. The result is commonly summarized by the posterior mean and a ±σ or ±2σ credible interval, although posterior samples can also be propagated to quantify uncertainty in downstream observables such as free energy barriers. The resulting free energy posterior therefore reflects uncertainty aris-ing from both the molecular simulation data and the inferred GP hyperparameters. 
+
+2.1 Free Energy Estimation 
+
+The first stage of the workflow is the construction of observa-tions of the free energy profile from enhanced sampling MD simulations. Because the underlying theory and practical im-plementation of free energy methods are well documented else-where [ 18 ], we restrict ourselves to a brief discussion of the approaches used in the present work: umbrella sampling and extended Lagrangian metadynamics. 
+
+Umbrella Sampling In umbrella sampling, a system is sim-ulated under a set of biased potentials centered at prescribed locations ξw in CV space. A CV is a function of the microscopic coordinates chosen to describe the molecular process of interest, such as the distance or angle between two species. One or more CVs define the reduced coordinate space used for free energy reconstruction. For a harmonic umbrella window w with force constant κw, the biasing potential is 
+
+ψw(ξ) = 12 κw
+
+ ξ − ξw
+
+2 . (1) The resulting biased simulations provide two complementary sources of information: biased probability histograms and local mean-force estimates. Umbrella sampling provides empirical observations of the free energy function values, up to an additive constant. For bin i
+
+centered at ξi, the unbiased free energy is related to the biased histograms by 
+
+A(ξi) = −β−1 log Pw(ξi) − ψw(ξi) + cw, (2) where Pw(ξi) is a histogram-based estimate of the biased prob-ability density at bin i from window w and cw is an unknown window-dependent additive constant arising from the normal-ization of the biased distribution. In the weighted histogram analysis method (WHAM), these constants are determined self-consistently across all windows to reconstruct a global unbiased probability distribution [ 2]. WHAM also has a Bayesian inter-pretation [ 19 ]. In the present framework, we instead treat the window-dependent constants as nuisance GP hyperparameters and marginalize them out analytically, while using the histogram-derived values as local observations of the free energy profile. The free energy gradient at window w can be estimated from the mean restraining force in the biased simulation 
+
+∂A(ξ)
+
+∂ξ ξw
+
+≈ − κw
+
+ ξ − ξw
+
+ w, (3) where · w is the mean of the biased distribution sampled in window w. These quantities are treated as free energy derivative observations, in a manner analogous to the umbrella integration method [3]. 
+
+Metadynamics Metadynamics is an enhanced sampling method in which the system is biased along a set of CVs by depositing history-dependent Gaussian potentials centered on previously visited CV values. As the simulation progresses, the accumulated bias progressively destabilizes previously explored free energy minima, encouraging transitions into neighboring regions of CV space. Under appropriate conditions, the accu-mulated bias converges to the negative of the underlying free energy profile (up to a constant). In extended Lagrangian formulations, auxiliary variables z are introduced and coupled to the CVs through a sti ff harmonic Preprint – U ncertainty Quantification for Free Energy Calculations by Generalized Hierarchical Bayesian Inference 4restraint [5], 
+
+Vcoupling (ξ, z) = 12 κ (ξ − z)2 , (4) while the history-dependent bias is applied only in the auxiliary space. Under su ffi ciently sti ff coupling, z ≈ ξ, and 
+
+∂A
+
+∂z z∗
+
+=
+
+* ∂Vcoupling 
+
+∂z
+
++
+
+> z∗
+
+= − κ (ξ − z) z∗ . (5) The physical potential does not depend explicitly on z, hence the estimator reduces to the derivative of the coupling term alone. This expression provides direct estimates of the mean force at sampled values of z, which are treated as noisy derivative observations of the free energy profile. Histogram observations are obtained by a discrete binning of neighboring z to construct an umbrella biased histogram of the corresponding ξ values. The binning procedure, which includes choosing the number of bins and the bin width, adds an addi-tional layer of uncertainty, and is discussed in the Supporting Information Section F. 
+
+2.2 Gaussian Process Regression 
+
+The core of our approach is to model the free energy profile f (ξ)over the CV space ξ ∈ Rn as a zero mean GP, 
+
+f ∼ GP  0, k(ξ, ξ′), (6) so that for a set of test inputs ˆX∗ = [ξ1, . . . , ξN∗ ], the latent function values 
+
+f ∗ =  f (ξi)N∗ 
+
+> i=1
+
+(7) follow a zero mean multivariate normal distribution with co-variance matrix ˆK( ˆX∗, ˆX∗), where [ ˆK]i j = k(ξi, ξ j) are elements governed by the kernel function. Given noisy free energy obser-vations y = [y1, . . . , yN ] at inputs ˆX = [ξ1, . . . , ξN ], the standard GP posterior mean and covariance is, ¯f ∗ = ˆK( ˆ X∗, ˆX) h ˆK( ˆ X, ˆX) + σ2n ˆIi−1
+
+y, (8) cov[ f ∗] = ˆK( ˆ X∗, ˆX∗) − ˆK( ˆ X∗, ˆX)
+
+· h ˆK( ˆ X, ˆX) + σ2n ˆIi−1 ˆK( ˆ X, ˆX∗). (9) 
+
+Inference from Free Energy Histograms To infer the free energy profile from biased histograms in a manner analogous to WHAM, unknown additive constants associated with individual umbrella windows must be accounted for. Following established GP formulations, we represent these o ff sets through an explicit linear basis in the GP mean. For each bin center ξi, we define a characteristic basis vector 
+
+h(ξi) = hδξi (w) w = 1, . . . , Nw
+
+i , (10) where 
+
+δξi (w) =
+
+(1, ξi ∈ w,
+
+0, ξi < w, (11) indicates whether bin i belongs to window w. The corresponding weights β are the unknown window-dependent o ff sets. Collect-ing the basis vectors for all training and test points gives the design matrices ˆH and ˆH∗, respectively, with entries [ ˆH]iw = 1if bin i belongs to window w and zero otherwise. The observation model for histogram-derived free energy values is written as 
+
+y = ˆHβ + f ( ˆ X) + ε, ε ∼ N  0, ˆΣy
+
+, (12) where β represents the unknown window-dependent o ff sets. These nuisance parameters are assigned a Gaussian prior and analytically marginalized, yielding a modified GP posterior. As shown by O’Hagan [ 20 ], in the limit of an uninformative prior over β, the posterior predictive distribution remains Gaussian, with mean and covariance ¯g∗ = ¯f ∗ + ˆRT ¯β, cov[ g∗] = cov[ f ∗] + ˆRT ˆS−1 ˆR, (13) where ˆR = ˆHT 
+
+> ∗
+
+− ˆHT h ˆK( ˆ X, ˆX) + σ2f ˆIi−1 ˆK( ˆ X, ˆX∗),
+
+¯β =
+
+ ˆHT h ˆK( ˆ X, ˆX) + σ2f ˆIi−1 ˆH
+
+−1
+
+ˆHT h ˆK( ˆ X, ˆX) + σ2f ˆIi−1
+
+y,
+
+ˆS = ˆHT h ˆK( ˆ X, ˆX) + σ2f ˆIi−1 ˆH.
+
+(14) The additional terms relative to Equations (8) and (9) account for the uncertainty associated with the unknown window-dependent off sets. 
+
+Inference from Free Energy Gradients The same framework can be extended to noisy derivative observations, the main di ff er-ence being that we no longer need to consider the unknown ad-ditive constants arising from the biased probability distributions (they become zero after di ff erentiation). Let y′ = [y′
+
+> 1
+
+, . . . , y′ 
+
+> M
+
+]denote gradient observations associated with input locations ˆX′ = [ξ′
+
+> 1
+
+, . . . , ξ′ 
+
+> M
+
+]. Since di ff erentiation is linear, derivatives of a GP remain jointly Gaussian. Defining the structured derivative operators [∂i ˆK( ˆ X, ˆX)] i j = ∇ξi k(ξi, ξ j), (15) and [∂i∂ j ˆK( ˆ X, ˆX)] i j = ∇ξi ∇ξ j k(ξi, ξ j), (16) the posterior predictive distribution for derivative-informed in-ference is Gaussian with mean and covariance ¯f ∗ = ∂ j ˆK( ˆ X∗, ˆX′) h∂i∂ j ˆK( ˆ X′, ˆX′) + σ2d ˆIi−1
+
+y′, (17) cov[ f ∗] = ˆK( ˆ X∗, ˆX∗) − ∂ j ˆK( ˆ X∗, ˆX′)
+
+· h∂i∂ j ˆK( ˆ X′, ˆX′) + σ2d ˆIi−1
+
+∂ j ˆK( ˆ X∗, ˆX′)T. (18) 
+
+Joint Histogram-Gradient Inference Both observation types can be incorporated into a single GP model by concatenating the observation vectors, y ⊕ y′, and constructing the joint latent covariance matrix ˆKy⊕y′ = ˆK( ˆ X, ˆX) ∂ j ˆK( ˆ X, ˆX′)
+
+∂i ˆK( ˆ X′, ˆX) ∂i∂ j ˆK( ˆ X′, ˆX′)
+
+!
+
+. (19) The corresponding test–training cross-covariance is ˆK∗, y⊕y′ = h ˆK( ˆ X∗, ˆX) ∂ j ˆK( ˆ X∗, ˆX′)i . (20) The joint observation noise covariance is ˆΣy⊕y′ = ˆΣy ˆO
+
+ˆO ˆΣy′
+
+!
+
+, (21) Preprint – U ncertainty Quantification for Free Energy Calculations by Generalized Hierarchical Bayesian Inference 5where ˆΣy and ˆΣy′ denote the covariance matrices associated with the histogram and derivative observations, respectively. In this work, the histogram and derivative observation noise are assumed to be uncorrelated, so the o ff -diagonal blocks are zero. The corresponding joint observation covariance is therefore ˆCy⊕y′ = ˆKy⊕y′ + ˆΣy⊕y′ . (22) The unknown window-dependent o ff sets apply only to the his-togram observations and vanish for derivative observations. The posterior predictive mean and covariance then follow directly from Equations (8) and (9) by replacing the observation vector 
+
+y with y ⊕ y′, the training covariance ˆK( ˆX, ˆX) + ˆΣy with ˆCy⊕y′ ,and the test–training cross-covariance ˆ K( ˆ X∗, ˆX) with ˆ K∗, y⊕y′ .
+
+2.3 Specifying the Gaussian Process Prior 
+
+At this stage, the posterior GP is fully specified up to the choice of covariance kernel. The kernel function encodes the prior assumptions that govern the smoothness, correlation structure, and uncertainty of the free energy profile, and are selected based on known physical behaviors of the underlying latent function. free energy profiles are generally assumed to be continuous and at least twice di ff erentiable ( C2) in physically meaningful collec-tive variables (such as distances, angles, coordination numbers, etc), which is su ffi cient for defining mean forces (first deriva-tives) and local curvature (second derivatives). Here we model the free energy as a smooth, or C∞, function that is continuously di ff erentiable up to any order derivative with the squared-exponential (or radial basis function) kernel, 
+
+kSE (ξ, ξ′) = w2 exp 
+
+− ξ − ξ′ 2
+
+2ℓ2
+
+ . (23) where ℓ is a length scale and w is the kernel amplitude. This enforces a stronger regularity than is strictly required for defin-ing mean forces or local curvature ( C2). Other kernels for GP regression tasks are well described in Rasmussen and Williams [21] and were not investigated in this work. 
+
+A Note on Noise Noise is typically estimated directly from molecular simulation statistics, for example using histogram-based variance estimators. Implicit in this approach is the as-sumption that the GP prior is su ffi ciently expressive to represent the free energy profile, such that any residual discrepancy be-tween the observations and the GP model arises solely from statistical uncertainty in the simulation. In practice, however, residuals may also reflect model mismatch arising from limi-tations of the chosen GP prior. Consequently, fixing the noise from simulation statistics alone attributes all model-data discrep-ancy to sampling uncertainty, potentially leading to pathological hyperparameter inference and misleading uncertainty estimates. We address this limitation by treating the noise term as an un-known hyperparameter and inferring it directly from the data. Under this interpretation, the noise represents an e ff ective mea-sure of data–model mismatch rather than pure measurement error, incorporating simulation uncertainty, temporal and spatial correlations not represented explicitly in the diagonal noise ap-proximation, numerical errors, and fluctuations in the data that the GP regression may not be fully equipped to explain. As we will show, this simple reinterpretation prevents the optimizer from converging to non-physical hyperparameter configurations and yields uncertainty estimates that respond appropriately to data acquisition. 
+
+2.4 Generalized Hyperposterior Learning 
+
+Previous work suggested that free energy profile reconstruction is relatively insensitive to hyperparameter selection, leading to the use of fixed hyperparameters chosen a priori . In practice this approach can be well-justified for estimating the profile mean, particularly if one already has strong prior knowledge of the behavior of the underlying function. However, selecting hyperparameters based on expert knowledge e ff ectively fixes predictive uncertainty, preventing adaptive response of the UQ to new data. We therefore relax the assumption that the GP hyperparameters can be specified a priori . A common alternative is to opti-mize them from observed data by maximizing the GP marginal likelihood (or, more generally, the posterior over hyperparam-eters), yielding a maximum a posteriori (MAP) estimate. Al-though MAP estimation is computationally e ffi cient compared to sampling the full hyperposterior with Monte Carlo methods, it conditions the predictive distribution on a single set of hy-perparameters and therefore neglects their uncertainty. This approximation can lead to underdispersed predictive uncertainty, particularly when the available data are limited [21]. Rather than conditioning the GP on a single optimized set of hyperparameters, we construct and sample the full hyperparam-eter distribution, yielding a hierarchical Bayesian model. The target distribution is defined by a physically motivated hyper-prior combined with a leave-one-out (LOO) cross-validation pseudo-likelihood [ 22 ], which has previously been shown to improve uncertainty quantification in computational chemistry applications [ 23 , 24 ]. In the present work, the LOO objective also produced more informative uncertainty estimates than the standard GP marginal likelihood (Supporting Information Sec-tion D). Because the LOO objective is not a proper likelihood, the re-sulting distributions are formally pseudo-posteriors (or gener-alized posteriors) rather than exact Bayesian hyperposteriors. For simplicity, we retain the term "hyperposterior" throughout the remainder of the manuscript. Complete specifications of the GP mean functions, covariance kernels, and hyperpriors used in each analysis are provided in Supporting Information Section B. 
+
+Hamiltonian Monte Carlo Implementation Hamiltonian Monte Carlo with the No-U-Turn Sampler (HMC-NUTS), as implemented in Pyro [ 25 ], was used for hyperposterior sam-pling. The target density was the sum of the log hyperprior and the LOO pseudo-likelihood of the joint histogram-derivative GP model. Positive kernel and noise hyperparameters were sampled in unconstrained log space and transformed back by exponentia-tion within the probabilistic model, the so-called "log trick". For each proposed hyperparameter state, the full joint covariance ma-trix of the function and derivative observations was assembled in PyTorch , regularized with a small diagonal "jitter" term for numerical stability (10 −8), and factorized via Cholesky decom-position to evaluate the target log density. Gradients required for Preprint – U ncertainty Quantification for Free Energy Calculations by Generalized Hierarchical Bayesian Inference 6leapfrog integration were obtained by automatic di ff erentiation through the GP matrix operations. An initial burn-in phase of 500 steps was used to adapt the HMC step size and mass matrix, followed by a production phase of 1000 retained samples, which was su ffi cient for stable estima-tion of free energy observables with four independent NUTS chains (see Supporting Information Section C). Chains were initialized from dispersed random starting points and run in parallel. Convergence was assessed using standard multi-chain Markov chain Monte Carlo diagnostics extracted from the Pyro 
+
+sampler output, including the split potential scale reduction fac-tor ( ˆR), e ff ective sample size (ESS), divergence counts, and chain-resolved trace plots and marginal posterior histograms for each sampled hyperparameter. We defined convergence when ˆR < 1.01 and bulk and tail ESS exceeded 200 for all param-eters (with no persistent divergences). We note that standard HMC convergence diagnostics do not necessarily ensure com-plete exploration of the hyperposterior and may fail to detect unvisited modes in multimodal parameter spaces, but this ef-fect is mitigated by initiating chains in di ff erent regions of the hyperparameter space. 
+
+Hyperposterior Uncertainty Propagation The propagation of hyperparameter uncertainty can be understood through the GP predictive distribution at test inputs ˆX∗ conditioned on the hyperparameters, 
+
+p( f ∗ | y, θ) = N μθ, ˆΣθ
+
+, (24) where μθ ∈ RN∗ and ˆΣθ ∈ RN∗×N∗ are the GP posterior mean and covariance. To obtain the hyperparameter-marginalized pre-dictive distribution, we marginalize the conditional Gaussian process predictive distribution over the generalized hyperposte-rior, p(θ | y), 
+
+p( f ∗ | y) =
+
+Z
+
+p( f ∗ | y, θ) p(θ | y) dθ, (25) which yields a mixture of Gaussian distributions. Although this hierarchical predictive distribution is not Gaussian in general, its first and second moments are given in closed form by the laws of total expectation and total variance [26], ¯μ = E[ f ∗ | y ] = Eθ|y
+
+ μθ
+
+ , (26) ¯Σ = Cov( f ∗ | y)
+
+= Eθ|y
+
+ ˆΣθ
+
+ + Cov θ|y
+
+ μθ
+
+ , (27) or equivalently, ¯Σ = Eθ|y
+
+ ˆΣθ
+
+ + Eθ|y
+
+h μθμ⊤
+
+> θ
+
+i − ¯μ ¯μ⊤. (28) Given M samples {θ(m)}Mm=1 from p(θ | y), we approximate Eqs. (26)–(28) via, ¯μ ≈ 1
+
+M
+
+> M
+
+X
+
+> m=1
+
+μθ(m) , (29) ¯Σ ≈ 1
+
+M
+
+> M
+
+X
+
+> m=1
+
+ˆΣθ(m) + 1
+
+M
+
+> M
+
+X
+
+> m=1
+
+ μθ(m) − ¯μ  μθ(m) − ¯μ⊤. (30) The first term represents the average posterior variance condi-tioned on θ, while the second term accounts for the uncertainty in the GP hyperparameters. This hyperposterior uncertainty propagation step therefore propagates uncertainty arising from both the GP prediction and the inferred hyperparameters into the reconstructed free energy profile. Note, however, that the interpretation of this uncertainty is subtle because only free energy di ff erences are physically observable, leaving the free energy profile defined only up to an arbitrary additive constant. The resulting predictive covariance therefore reflects uncertainty only in the relative free energy profile, inde-pendent of the arbitrary choice of energy zero. In practical terms, this uncertainty characterizes the physically meaningful features of the landscape, including the relative depths of metastable states and the free energy barriers separating them. 
+
+2.5 Evaluation of Uncertainty under Data Ablation 
+
+To assess how uncertainty changes as a function of the amount of available data, we performed free energy UQ while system-atically knocking-out umbrella windows and trajectory time. As a test system, we studied umbrella sampling data of a non-aarginine peptide (R9) interacting with a lipid bilayer. The CV was defined as the distance between the centers of mass of the membrane and peptide normal to the membrane surface. The dataset consists of 25 umbrella windows, each constrained by a harmonic potential with ∼ 500 ns long trajectories. Simulation details are described elsewhere [27]. The four methods presented are: (a) umbrella integration (UI) with block averaging (methodology in Supporting Information Section A), (b) a fixed hyperparameter GP regression model with simulation derived noise variances, (c) our hierarchical GP model with optimized hyperparameters (MAP estimation), and (d) the same hierarchical GP but with hyperposterior uncertainty propagation. After removing equilibration timesteps, the trajectory length was cut from the beginning up to a selected percentage of the converged simulation run, from 4 to 100 % ( T =
+
+[4 , 6.3, 10 , 16 , 25 , 40 , 60 , 80 , 90 , 100]). The number of win-dows were varied from 3 to the maximum available of 25 (W = [3 , 4, 6, 8, 10 , 13 , 16 , 19 , 22 , 25]). A T × W grid was con-structed for a total of 100 UQ calculations. Five independent calculations were performed for each grid eval-uation. One used an evenly spaced subset of umbrella windows, while the remaining four were randomly selected subsets of the available 25 windows. RMSE with respect to a full dataset WHAM reference and predictive standard deviation were cal-culated for each reconstruction and averaged over these five computations. Averaging over window selection was introduced to mitigate bias associated with the window selection process, which in general may be di ff erent depending on the Bayesian op-timization (or equivalent) decision-theoretic scheme employed. Heatmaps of the average RMSE and standard deviations were constructed to visualize the relationship between error and pre-dictive uncertainty. 
+
+## 3 Results 
+
+3.1 Noise as an Uncertain Hyperparameter 
+
+GP-based free energy methods typically estimate histogram and derivative noise variances from simulation statistics (Supporting Preprint – U ncertainty Quantification for Free Energy Calculations by Generalized Hierarchical Bayesian Inference 70.001 0.05 0.1                
+
+> ℓ [nm]
+> 2
+> 3
+> 4
+> w [kJ/mol]
+> 234
+> w [kJ/mol]
+> 2345
+> Position [nm]
+> −50
+> 0
+> WHAM
+> Inferred noise
+> −50
+> 0
+> WHAM
+> Fixed noise
+> 5
+> 11
+> 17
+> w [kJ/mol]
+> 2
+> 2.2
+> 2.4
+> σf [kJ/mol]
+> 0.3 0.5 0.6
+> ℓ [nm]
+> 3
+> 6
+> 8
+> σd [kJ/mol/nm]
+> 511 17
+> w [kJ/mol]
+> 22.2 2.4
+> σf[kJ/mol]
+> 368
+> σd[kJ/mol/nm]
+> (a) Fixed noise
+> (c) Posterior predictive
+> Free Energy [kJ/mol]
+> (b) Inferred noise
+
+Figure 2: Comparison between fixed and inferred noise hyperparameter models. (a) Corner plot of fixed noise hyperposterior with marginal hyperpriors (grey line). (b) Corner plot of inferred noise hyperposterior. Raw HMC-NUTS samples below diagonal and sample contour map above diagonal. (c) Posterior predictive surfaces comparing the fixed and inferred noise models with shaded region given by ±σ.Information Eqs. (37) and (38) ) and condition the GP posterior on these fixed values. However, this implicitly assumes that the prior is su ffi ciently expressive to fit the training data such that any remaining discrepancy between the observations and GP can be attributed to statistical uncertainty in MD sampling alone. In general, this assumption need not hold, since the posterior free energy profile is coupled to both the MD data and the GP prior. Treating the noise variance as known therefore forces the GP to explain any residual data-model mismatch through its remaining hyperparameters, collapsing the hyperposterior into unlikely regions of the hyperparameter space. The consequences of this approximation are shown in general-ized hyperposterior MAP summarized in Table 1 and posterior distributions visualized in Figure 2. For a fixed noise model, the hyperposterior over the ℓ and w hyperparameters is multi-modal, with a MAP estimate of ℓ = 0.10 nm and w = 1.88 kJ /mol (Figure 2a). The second mode collapses to an unreal-istically short ℓ =0.01 nm accompanied by an inflated kernel amplitude w =3.95 kJ /mol. The consequences of this bimodality are clear in the sampled GP posterior, with an RMSE of 9.20 kJ /mol and predictive standard deviation of 7.97 kJ /mol. Small discrepancies between the plotted posterior histograms and the reported MAP estimates arise because the MAP values were obtained by direct optimization of the joint objective, rather than by estimating marginal modes from binned histograms. The histogram shapes therefore provide a visual summary of the sampled marginal distributions, but their bin-dependent maxima should not be interpreted as the joint MAP. Table 1: LOO MAP hyperparameter estimates for fixed- and inferred-noise GP models. Noise model ℓ w σf σd
+
+Fixed 0.10 1.88 – –Inferred 0.48 7.51 2.18 4.94 Relaxing the delta-function priors on the nuisance parameters 
+
+σf and σd acknowledges that statistical uncertainty from the enhanced sampling MD is not the only source of discrepancy between the observations and the GP model. As shown in Fig-ure 2b, jointly inferring these quantities removes the pathological short-length-scale mode and yields a well-behaved hyperpos-terior centered around ℓ = 0.48 nm and w = 7.2 kJ /mol. The inferred values of σf and σd are larger than those predicted from simulation statistics alone, indicating that the model attributes part of the residual discrepancy to limitations of the GP repre-sentation rather than forcing it into the kernel hyperparameters. This change also resolves the deterioration in predictive RMSE and average standard deviation, with values of 1.59 and 4.12 kJ /mol, respectively. Modeling the histogram and derivative noise variances as inferred hyperparameters therefore appears to correct hyperparameter identifiability and uncertainty propaga-Preprint – U ncertainty Quantification for Free Energy Calculations by Generalized Hierarchical Bayesian Inference 8100                                          
+
+> 90
+> 80
+> 60
+> 40
+> 25
+> 16
+> 10
+> 6.3
+> 4
+> (a) Umbrella integration (b) Fixed GP (c) Optimized GP (LOO) (d) Hierarchical GP (LOO)
+> 346810 13 16 19 22 25
+> 100
+> 90
+> 80
+> 60
+> 40
+> 25
+> 16
+> 10
+> 6.3
+> 4
+> 346810 13 16 19 22 25 346810 13 16 19 22 25 346810 13 16 19 22 25
+> 0.25
+> 1.1
+> 2.5
+> 5
+> 12
+> 32
+> 175
+> RMSE [kJ/mol]
+> 0.3
+> 1.2
+> 2.6
+> 5
+> 8.6
+> 17
+> 50
+> Standard Deviation [kJ/mol]
+> Number of umbrella windows
+> Trajectory length [%]
+
+Figure 3: Data ablation heatmap grids. Columns represent di ff erent free energy profile reconstruction and error estimation methods: (a) Umbrella Integration (UI) with the block averaging, (b) GP with fixed hyperparameters, (c) optimized hierarchical GP model with LOO pseudo-likelihood and (d) sampled hierarchical GP model with LOO pseudo-likelihood. The first row shows the mean RMSE with respect to the reference WHAM prediction, while the second row shows the average predictive standard deviation in the given model. Color bars are shared within each row and shown on a logarithmic scale. White denotes a chemical accuracy threshold (RMSE = 5 kJ /mol, top row; average SD = 5 kJ /mol, bottom row). tion pathologies from the generalized hyperposterior. This idea represents the principal conceptual departure of our framework from prior work. 
+
+3.2 Uncertainty Evolution with Data Acquisition 
+
+An important property of reliable UQ methods is that the esti-mated uncertainty should be large when the prediction is poor, and only become small when the prediction is accurate. This be-havior ensures that we are close to an optimal min-max problem, where we minimize computational time while still obtaining accurate and trustworthy predictions. We evaluated four UQ methods on our R9 umbrella sampling dataset to assess their ability to reproduce this desirable behavior by knocking out umbrella windows and trajectory time. Heatmaps of average RMSE and standard deviation for these data ablation grids are shown in Figure 3. All methods considered show the expected trend that increasing the amount of simulation data improves reconstruction accuracy, resulting in lower average RMSE values (top row of Figure 3). Furthermore, the RMSE of the free energy prediction was ex-cellent in the high-data limit for all tested methods. For this particular system, increasing the number of umbrella windows provided a larger improvement than extending the trajectory length within individual windows. However, this observation is system dependent and should not be interpreted as a general rule. The bottom row of Figure 3 shows heatmaps of the average pre-dictive standard deviation for each method, where red indicates values greater than 5 kJ /mol and blue values below this threshold. For short trajectories and low window counts, UI with block averaging produces large standard deviations, reaching values up to 265 kJ /mol. Large uncertainty estimates persist even in regions of the grid corresponding to 8-22 umbrella windows, where the free energy profile mean is already within chemical ac-curacy. As additional data are introduced, the standard deviation estimates collapse abruptly toward near-zero values. This behav-ior suggests that the uncertainty estimates are not well-correlated with the reconstruction error and therefore provide a misleading picture of convergence. Specifically, this method appears un-derconfident in that it will begin to achieve high accuracy (low RMSE) before the predictive uncertainties converge. The fixed-hyperparameter GP (fixed GP) model produces a dif-ferent pathology. The uncertainty remains nearly unchanged regardless of the amount of available data (8.3–9.2 kJ /mol), as evidenced by the essentially uniform standard deviation heatmap. Consequently, the predictive uncertainty becomes largely decou-pled from the information content of the simulations and cannot reliably indicate whether additional sampling has improved the reconstruction. In contrast, the hierarchical GP models provide uncertainty esti-mates that evolve consistently with the amount of available data. The optimized GP (Figure 3c) is overconfident in the low-data setting, with a predictive standard deviation approximately 18% lower, on average, than the hyperposterior-propagated model (Supporting Information Section E). Propagating hyperparame-ter uncertainty with the hierarchical GP corrects this overcon-fidence (Figure 3d). This comparison suggests that uncertainty Preprint – U ncertainty Quantification for Free Energy Calculations by Generalized Hierarchical Bayesian Inference 90.00                   
+
+> 0.05
+> 0.10 (a) UI + block averaging WHAM [50.2 kJ/mol]
+> 0.00
+> 0.05
+> 0.10 (b) Fixed GP
+> 020 40 60 80 100
+> 0.00
+> 0.05
+> 0.10 (c) Hierarchical GP (LOO)
+> 346810 13 16 19 22 25
+> Umbrella windows
+> Barrier Height [kJ/mol]
+> Probability Density
+
+Figure 4: Barrier-height distributions for three PMF estimation methods as a function of sampling window count (100% trajec-tory length). Distributions correspond to the free energy barrier height, ( ∆A‡ = max ( f ) − min ( f )), estimated from 500 samples at each window count and colored from 3 (purple) to 25 (yel-low) windows. The vertical dashed line indicates the WHAM reference barrier height. associated with the GP hyperparameters contributes meaning-fully to the overall predictive uncertainty. 
+
+3.3 Propagating Free Energy Uncertainty 
+
+Access to a probability distribution enables principled uncer-tainty propagation to downstream quantities-of-interest (QoIs). Consequently, uncertainties in the simulation data, model as-sumptions, and GP hyperparameters can be propagated directly to these observables, yielding predictive distributions rather than point estimates. Figure 4 shows uncertainty propagation to the free energy bar-rier height of the R9-membrane interaction as a function of the number of umbrella windows. The barrier-height distributions reveal the same qualitative behavior observed for the free en-ergy profiles. UI with block averaging, in line with the previous heatmap, produces broad barrier-height distributions for low window counts, reflecting substantial uncertainty in the recon-structed surface. The distribution remains broad until a nearly complete dataset is available, at which point it abruptly collapses to an almost delta-function-like distribution centered on a single barrier value. For the fixed GP, the width of the barrier-height distribution remains nearly unchanged as additional data are acquired. Al-though the mean barrier estimate gradually approaches the ref-erence value, the associated uncertainty does not evolve with the amount of information provided by the simulations. Con-sequently, the uncertainty estimate o ff ers little indication of whether the calculation has converged. In contrast, the hierarchical GP exhibits a smooth and physically sensible convergence behavior. The barrier-height distribution systematically narrows around the reference value while remain-ing appropriately broad in undersampled regimes. This indicates that the model is able to adapt its uncertainty estimates to the amount of available information, yielding both accurate barrier predictions and reasonable uncertainty estimates throughout the convergence process. 
+
+3.4 Extended Lagrangian Metadynamics Benchmark 
+
+Although the preceding results focused on an umbrella sampling example, the hierarchical GP formulation is applicable to data obtained from any enhanced sampling method. To illustrate this, we applied our framework to extended Lagrangian metadynam-ics simulations of phenol interacting with a lipid bilayer. As in the previous case, the CV is defined as the distance between the centers of mass of the membrane and the phenol molecule normal to the membrane surface. The primary distinction from umbrella sampling is that histogram and derivative observations are not naturally partitioned into independent umbrella windows, but must instead be constructed by discretizing the metadynam-ics trajectory. This additional preprocessing step introduces another layer of modeling assumptions, making metadynamics a useful test of the generality of the framework. Details of the molecular simulations and discretization procedure are provided in Supporting Information Section F. In analogy to the umbrella-sampling analysis, we examined how uncertainty changes with the retained length of the meta-dynamics trajectory. The results for the fixed and hierarchical GP are shown in Figure 5. The fixed GP behaved similarly to the umbrella sampling case, showing improving RMSE with additional trajectory data, decreasing from 11.30 to 1.41 kJ /mol, but nearly constant average predictive standard deviation, vary-ing only from 8.89 to 8.33 kJ /mol. Thus, the fixed GP model did not adapt its uncertainty scale appreciably as additional metadynamics data were included. In contrast, the hierarchical GP produced uncertainty estimates that changed with the amount of available data and remained broadly correlated with reconstruction accuracy. For the hierar-chical GP, the average predictive standard deviation decreased rapidly from 3.56 kJ /mol at 1% of the trajectory to approxi-mately 1.6–2.2 kJ /mol over the remaining trajectory lengths. Over the same range, the RMSE decreased from 10.77 kJ /mol at 1% trajectory length to 1.58 kJ /mol for the full trajectory. The average predictive standard deviation was correlated with the predictive mean error, with a Pearson correlation coe ffi cient of 
+
+ρ = 0.95. These results suggest that, despite the additional modeling as-sumptions required to discretize metadynamics trajectories, the hierarchical GP framework can still provide reliable UQ beyond umbrella sampling. The fixed GP remains a useful baseline, but its uncertainty evolution is substantially less responsive to the amount of metadynamics data. 
+
+## 4 Discussion 
+
+The results from the previous sections reinforce a simple but im-portant lesson: uncertainty quantification for free energy profiles is inseparable from the assumptions of the underlying statistical model. Consequently, strong assumptions about GP hyperpa-rameters inevitably propagate into the predictive uncertainties. Preprint – U ncertainty Quantification for Free Energy Calculations by Generalized Hierarchical Bayesian Inference 10 −20            
+
+> −10
+> 0
+> 10
+> 20
+> 30
+> Free Energy [kJ/mol]
+> (a) Fixed GP
+> Reference
+> 1%
+> 25%
+> 100%
+> Mean
+> ±1σ
+> 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0
+> Position [nm]
+> −20
+> −10
+> 0
+> 10
+> 20
+> 30
+> Free Energy [kJ/mol]
+> (b) Hierarchical GP (LOO)
+> 5
+> 10
+> RMSE [kJ/mol]
+> (c) Fixed GP
+> Hierarchical GP (LOO)
+> 25 50 75 100
+> Trajectory Length [%]
+> 2
+> 4
+> 6
+> 8
+> Avg. SD [kJ/mol]
+
+Figure 5: Metadynamics GP-based free energy reconstruction as a function of trajectory length. Fixed GP and hierarchical GP posterior predictive means are shown relative to the WHAM reference for selected trajectory fractions; shaded regions denote 
+
+±σ. Bottom panels show the RMSE and average predictive standard deviation as a function of retained trajectory length for the fixed GP and hierarchical GP models. In this study, we showed that the treatment of noise, the choice of likelihood (or pseudo-likelihood) objective, and uncertainty in the GP hyperparameters can alter predictive uncertainty es-timation for free energy reconstruction, even in simple one-dimensional problems. Our results suggest that reliable free energy profiles, accompanied by meaningful uncertainty esti-mates, can often be reconstructed from substantially less data than is required by conventional free energy reconstruction meth-ods. This may be particularly valuable for ab initio molecular dynamics (AIMD), where the computational expense of gener-ating su ffi ciently converged free energy landscapes remains a major practical limitation. In the context of automated free energy workflows, omitting sources of uncertainty becomes particularly problematic because the simulation data are sparse, noisy, and highly dependent on sampling protocol. We showed that generalized hierarchical Bayesian inference can mitigate this problem by propagating uncertainty in the GP hyperparameters directly into the predic-tive distribution. As a result, the model is able to adapt to the available information and provides a more reliable measure of convergence. This behavior was demonstrated for umbrella sam-pling and extended Lagrangian metadynamics examples, but in principle is applicable to any free energy method, including the accelerated weighted histogram [7], alchemical decoupling [9], and multistate Bennet acceptance ratio [14] methods. The hierarchical GP framework has its limitations, perhaps the most significant being computational cost. Unlike conventional GP-based free energy reconstruction, which requires only a single evaluation of the predictive posterior at fixed hyperparam-eters, this approach requires repeated assembly and factorization of a joint covariance matrix for each HMC sample of the hyper-posterior. For the one-dimensional problems considered here, this additional cost is negligible compared to that of generating well-sampled MD trajectories, but could become a limiting fac-tor for high-dimensional surfaces. Furthermore, if one needs to increase the flexibility of the GP prior (which typically intro-duces additional hyperparameters), the computational burden associated with Bayesian inference will also increase. Develop-ing scalable inference strategies for richer GP models therefore remains an important area for future work. Beyond computational considerations, the reliability of any Bayesian inference procedure is ultimately limited by the as-sumptions encoded in the prior model. In the present work, we considered only stationary covariance kernels, which assume that correlations depend solely on distance in CV space and not on location. While this assumption is common, there is no phys-ical reason why a free energy profile should exhibit uniform cor-relation structure throughout an entire CV domain. Regions near metastable basins, transition states, and steep free energy bar-riers may possess fundamentally di ff erent characteristic length scales and smoothness properties. A natural extension of the present framework would therefore be the use of non-stationary kernels, either in parametric form [ 28 ] or fully nonparametric form [ 29 ]. Such models would permit spatially varying correla-tion structures and potentially provide more realistic uncertainty estimates, albeit at the cost of a substantially more complex hyperposterior inference problem. At the same time, a GP-based representation of free energy pro-files creates opportunities for integration with a broader ecosys-tem of Bayesian methodologies in computational chemistry. GPs have already been successfully applied to scattering analysis [ 28 ], force field optimization [ 24 , 30 – 32 ], and machine-learning interatomic potentials [ 33 – 35 ]. Representing free energy pro-files within the same probabilistic framework raises the pos-sibility of combining information from multiple experimental and computational sources into unified Bayesian models. Such approaches could enable consistency checks between scattering data, electronic structure calculations, force field models, and free energy calculations, while also providing a mechanism for propagating uncertainty between di ff erent levels of theory. 
+
+## 5 Conclusions 
+
+We evaluated several strategies for quantification of uncertainties for free energy calculations and found that generalized hierar-chical GP inference was the only approach whose uncertainty estimates consistently adapted to the amount and quality of the available simulation data. In contrast, existing methods exhibited systematic failure modes by conditioning on fixed Preprint – U ncertainty Quantification for Free Energy Calculations by Generalized Hierarchical Bayesian Inference 11 modeling assumptions, including fixed hyperparameters and noise models that attribute all uncertainty to statistical sampling. These results highlight the importance of propagating uncer-tainty throughout the statistical model rather than conditioning on point estimates or fixed probabilistic assumptions. Although important challenges remain—including computational scal-ing, higher-dimensional collective variable spaces, and more expressive non-stationary covariance models—we conclude that hierarchical GP inference provides a promising foundation for next-generation automated free energy calculations in which uncertainty quantification is treated as a primary objective rather than an afterthought. 
+
+## 6 Author Information 
+
+CRediT Author Contributions 
+
+M. Skorna: Conceptualization (supporting), Formal analysis (equal), Investigation (equal), Methodology (equal), Software (equal), Validation (equal), Visualization (equal), Writing – orig-inal draft (equal) A. Gottfried: Conceptualization (supporting), Formal analysis (supporting), Investigation (supporting), Methodology (support-ing), Writing – original draft (supporting) Z. Janackova: Conceptualization (supporting), Data curation (lead), Investigation (supporting), Methodology (supporting), Visualization (supporting), Writing – original draft (supporting), Writing – review & editing (supporting) K. Baxova: Data curation (supporting), Methodology (support-ing) P. Jungwirth: Funding acquisition (lead), Project administration (lead), Resources (lead), Supervision (equal), Writing – review & editing (supporting) B. L. Shanks: Conceptualization (lead), Formal analysis (equal), Investigation (equal), Methodology (equal), Project administra-tion (supporting), Software (equal), Supervision (equal), Vali-dation (equal), Visualization (equal), Writing – original draft (equal), Writing – review & editing (lead) 
+
+Notes 
+
+The authors declare no competing financial interest. 
+
+## 7 Data Availability 
+
+The code and datasets used in this work are provided on GitHub at https://github.com/brennonshanks/freeGP 
+
+and Zenodo https://zenodo.org/uploads/21358802 , re-spectively. A tutorial folder in the GitHub repo allows users to try the code on an artificial system and the repo README provides guidance on adapting umbrella sampling and metady-namics data into a suitable format to work with our code base. Additional information is available from the corresponding au-thors upon reasonable request. 
+
+## A Umbrella Integration with Block Averaging 
+
+After equilibration removal and trajectory truncation, each um-brella trajectory was divided into 10 contiguous blocks. For each umbrella window i and block b, a Gaussian approximation to the biased coordinate distribution was used to estimate the block-specific mean-force contribution, A′
+
+> i,b
+
+(x). The window-specific mean-force estimate was then obtained by averaging over the block estimates, 
+
+A′ 
+
+> i
+
+(x) = 1
+
+B
+
+> B
+
+X
+
+> b=1
+
+A′
+
+> i,b
+
+(x), (31) where B = 10 is the number of blocks. The uncertainty in the window mean force was estimated from the squared standard error (SE), SE 2A′ 
+
+> i
+
+(x) = Var b
+
+hA′
+
+> i,b
+
+(x)i
+
+B . (32) The window-specific mean forces were combined using the standard UI weights, 
+
+A′(x) =
+
+X
+
+> i
+
+˜wi(x) A′ 
+
+> i
+
+(x), (33) where ˜wi(x) are the normalized UI weights. Assuming indepen-dent uncertainties between umbrella windows, the variance of the combined mean force was approximated as Var hA′(x)i ≈
+
+X
+
+> i
+
+˜wi(x)2 SE 2A′ 
+
+> i
+
+(x) . (34) The PMF was obtained by trapezoidal quadrature of the mean-force profile, 
+
+A(x j) = A(x0) +
+
+> j
+
+X
+
+> k=1
+
+xk − xk−1
+
+2
+
+hA′(xk−1) + A′(xk)i . (35) The pointwise mean-force variance was propagated through the same trapezoidal integration procedure using a running sum to estimate the within-replicate free energy variance. This propa-gation assumes that mean-force uncertainties at di ff erent grid points are independent and therefore neglects covariance be-tween neighboring mean-force estimates. For each data condi-tion, multiple independent window selections were analyzed. The total UI uncertainty was computed as the sum of the aver-age within-replicate variance and the variance across replicate window selections, consistent with the law of total variance. 
+
+## B Hyperposterior Specification 
+
+The GP was assigned a squared-exponential covariance function prior, 
+
+kSE (ξ, ξ′) = w2 exp 
+
+− ξ − ξ′ 2
+
+2ℓ2
+
+ . (36) where ℓ is the correlation length and w is the kernel amplitude. All positive hyperparameters were sampled in natural-log space. Expressing distances in nm and free energies in kJ /mol, the default independent hyperpriors were log ℓ ∼ N (log 4 , 12),
+
+log w ∼ N (1 , 0.52),
+
+log σf ∼ N (0 .5, 22),
+
+log σd ∼ N (0 .5, 22).Preprint – U ncertainty Quantification for Free Energy Calculations by Generalized Hierarchical Bayesian Inference 12 Equivalently, ℓ, w, σf , and σd follow log-normal distributions with medians of 4 nm, 2.72 kJ /mol, 1.65 kJ /mol, and 1.65 kJ /mol /nm, respectively. The length-scale prior was intention-ally chosen to be weakly informative, allowing the posterior to learn substantially shorter or longer correlation lengths when supported by the data. The parameters σf and σd represent nuisance noise scales whose variances enter the diagonal of the function and derivative observation covariance matrices. Their priors were intentionally broad to permit uncertainty arising from both sampling variability and model mismatch. Unless otherwise stated, these hyperpriors were combined with the LOO pseudo-likelihood to construct the generalized hyper-posterior. 
+
+B.1 Details of the Fixed Hyperparameter GP 
+
+The fixed-hyperparameter reference used the same stationary covariance with ℓ = π/ 2 nm and w = 4.184 √10 kJ /mol (the heuristic recommendation is √10 kcal /mol). Although these kernel parameters were fixed, the observation covariance was estimated from each umbrella trajectory. After equilibration removal, the CV time series x in each window was approxi-mated as an autoregressive process of order one. This provides an inexpensive approximation to the integrated autocorrelation time. The lag-one coe ffi cient was estimated using a weakly regularized ratio of the lag-one sample autocovariance to the sample variance, ˆϕ = tanh 
+
+" P t(xt − ¯x)( xt+1 − ¯x)
+
+λ + Pt(xt − ¯x)2
+
+#
+
+,
+
+with λ = 0.01 in the squared coordinate units of the input tra-jectory. The regularization shrinks poorly determined estimates toward zero and the tanh transformation constrains ˆϕ to the sta-tionary interval ( −1, 1). The corresponding AR(1) statistical ine ffi ciency and e ff ective sample size were 
+
+τ = 1 + ˆϕ
+
+1 − ˆϕ , Neff = N
+
+τ .
+
+We did not cap Neff at N; therefore, windows with negative lag-one correlation can have τ < 1 and Neff > N. In prac-tice, this estimator was used only to scale the trajectory-derived observation covariances for the fixed hyperparameter GP and umbrella integration references, and should be regarded as an approximate AR(1)-based correction rather than a full integrated autocorrelation time analysis. For a histogram bin with probability pi, uncertainty in the histogram-derived free-energy observation was represented by Var( Fi) = 1
+
+β2 Neff 
+
+1
+
+pi
+
+− 1
+
+!
+
+. (37) The multinomial constraint introduces covariance between bins from the same umbrella window, Cov( Fi, F j) = − 1
+
+β2 Neff 
+
+, i , j.
+
+For the derivative observation obtained from an umbrella with force constant k and positional variance s2
+
+> x
+
+, the estimated vari-ance was Var( F′) = k2 s2
+
+> x
+
+Neff 
+
+. (38) 
+
+B.2 Hyperprior Sensitivity Analyses 
+
+Bayesian inference is influenced by prior selection, making sen-sitivity analyses important for assessing robustness. Since it is computationally impractical to exhaustively explore all hyper-prior choices, we focus on a case-study of the length scale ℓ. ℓ
+
+is a particularly relevant parameter to investigate, because larger length scales regularize non-physical free energy fluctuations by favoring smoother surfaces. We therefore examined several length-scale hyperpriors in a data-limited regime (7 windows, 25% trajectory), where the influence of prior assumptions should be most apparent. Four priors were examined: (i) a prior uniform in log ℓ, (ii) the default prior log ℓ ∼ N ( log 4, 12) used throughout this work, and two informative priors centered at ℓ = 0.5 nm with standard deviations of 0 .5 and 0 .1 in log space. Priors on all remaining hyperparameters were unchanged. The reconstruction was largely insensitive to the uniform, de-fault, and moderately informative priors (Table 2), suggesting a data-dominated generalized posterior. The inferred posterior median length scales di ff ered by less than 1%, their credible intervals strongly overlapped, and the resulting free energy sur-faces were visually indistinguishable. Across these three cases, the mean predictive standard deviation ranged from 4.71-4.92 kJ /mol and the RMSE relative to the UI reference ranged from 17.88-17.94 kJ /mol. On the other hand, the strongly informative prior centered at 0.5 nm with σlog = 0.1 shifted the median ℓ to 0.244 nm. This stronger regularization suppresses short-length-scale structure, but also increased the RMSE relative to UI to 29.98 kJ /mol and increased the mean predictive standard deviation to 11.88 kJ /mol. These results suggest that the free energy reconstruc-tion is robust to broad and moderately informative choices of the length-scale hyperprior, but strongly informative priors can significantly impact the reconstruction and thus should be used with care. Table 2: Posterior sensitivity to tested ℓ hyperpriors. Prior Median ℓ (nm) RMSE SD Uniform in log ℓ 0.0604 17.94 4.71 log ℓ ∼ N (log 4 , 12) 0.0605 17.94 4.72 log ℓ ∼ N (log 0 .5, 0.52) 0.0609 17.88 4.92 log ℓ ∼ N (log 0 .5, 0.12) 0.2443 29.98 11.88 
+
+## C Hamiltonian Monte Carlo Diagnostics 
+
+To assess convergence of our HMC-NUTS implementation, we systematically varied burn-in period and number of retained posterior samples. Four data regimes were considered: an 
+
+easy case consisting of 25 umbrella windows and the full post-equilibration trajectory, a medium case with 13 windows and 50% of each trajectory, a hard case with 7 windows and 25% of each trajectory, and a super-hard case with 3 windows and 10% of each trajectory. For each regime, four independent chains were run using 250, 500, or 1000 burn-in steps and 250, 500, or 1000 retained samples per chain, yielding a total of 36 calcula-tions. All calculations employed the squared-exponential kernel Preprint – U ncertainty Quantification for Free Energy Calculations by Generalized Hierarchical Bayesian Inference 13 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5.0 5.5             
+
+> Position [nm]
+> −60
+> −40
+> −20
+> 0
+> 20
+> 40
+> Free Energy [kJ/mol]
+> Flat in log ℓ
+> Default: log ℓ ∼ (log 4, 1 2)
+> ℓ0= 0.5 nm, σ log ℓ = 0.5
+> ℓ0= 0.5 nm, σ log ℓ = 0.1
+> WHAM
+> Flat in log ℓ
+> Default: log ℓ ∼ (log 4, 1 2)
+> ℓ0= 0.5 nm, σ log ℓ = 0.5
+> 10 −1 10 010 1
+> Length scale ℓ [nm]
+> ℓ0= 0.5 nm, σ log ℓ = 0.1
+> Normalized Probability Density
+
+Figure 6: Length-scale hyperprior sensitivity analysis. (a) Poste-rior free energy profile compared to WHAM on the full umbrella sampling dataset. Shaded regions represent the predictive credi-ble interval of ±σ. (b) Normalized ℓ priors (dashed) and sampled hyperposterior marginals (solid). with inferrable noise hyperparameters, default hyperpriors, and the LOO pseudo-likelihood. Convergence was assessed using the potential scale reduction factor ( ˆR), e ff ective sample size (ESS), the number of diver-gent transitions, and visual inspection of chain trace plots and marginal posterior distributions. In addition, posterior-derived quantities, including the average predictive standard devia-tion and free-energy barrier height, were monitored across run lengths to assess sensitivity of physically relevant observables to HMC-NUTS settings. The chains were well mixed and no divergent transitions were observed. For the easy and medium regimes, all calculations yielded excellent convergence diagnostics, with maximum ˆR
+
+values of 1.0062 and 1.0033, respectively. In the hard regime, eight of the nine runs satisfied ˆR < 1.01, with the only exception corresponding to the shortest calculation (250 burn-in steps and 250 retained samples per chain), for which the maximum ˆR was 1.0196 and the minimum ESS was 232. The super-hard regime provided the most stringent test because the limited amount of data weakly constrained the hyperposte-rior. Seven of the nine runs achieved ˆR < 1.01. The two failed cases both used only 250 retained samples, yielding maximum ˆR
+
+values of 1.0107 and 1.0110. In contrast, all calculations using 500 or more retained samples satisfied ˆR < 1.005, while all calculations using 1000 retained samples satisfied ˆR < 1.002, irrespective of burn-in length. Thus, increasing the number of retained samples per chain is more beneficial than extending the burn-in period beyond 250 steps for weakly identified posteriors. −2.8                  
+
+> −2.6
+> −2.4
+> −2.2
+> log ℓ
+> (a) NUTS trace plots
+> Chain 1
+> Chain 2
+> Chain 3
+> Chain 4
+> -3.0 -2.7 -2.5 -2.2
+> (b) Posterior Marginals
+> 1.5
+> 2.0
+> 2.5
+> 3.0
+> 3.5
+> log w
+> 1.4 2.1 2.8 3.5
+> −2.0
+> −1.8
+> −1.6
+> −1.4
+> −1.2
+> log σ f
+> -2.0 -1.7 -1.5 -1.2
+> 0200 400 600 800 1000
+> NUTS sample
+> −5
+> 0
+> log σ d
+> -7.6 -3.5 0.7 4.9
+
+Figure 7: NUTS chain tracking for the super-hard data case (3 windows, 10% trajectory) exhibits excellent mixing and sam-pling of the hyperposterior despite limited data. Production calculations were therefore performed using 500 burn-in steps followed by 1000 retained samples per chain. At this setting, all four data regimes exhibited excellent conver-gence (Table 3), with a maximum ˆR of 1.0024, a minimum ESS of 1479, and no divergent transitions. Trace plots showed station-ary fluctuations without persistent chain o ff sets, and marginal posterior distributions exhibited strong overlap across chains (Figure 7). Preprint – U ncertainty Quantification for Free Energy Calculations by Generalized Hierarchical Bayesian Inference 14 Table 3: NUTS diagnostics and divergences (Divs) using a 500 step burn-in and 1000 retained samples for four chains. Windows Trajectory Max ˆ R Min ESS Divs 25 1.00 1.0008 2823 013 0.50 1.0012 2393 07 0.25 1.0024 1554 03 0.10 1.0018 1479 0Posterior-derived observables were similarly insensitive to the precise burn-in and sampling length once standard convergence criteria were satisfied. Across all nine burn-in /sample com-binations, the coe ffi cient of variation of the mean predictive standard deviation was 1.66%, 1.31%, 1.84%, and 2.93% for the easy, medium, hard, and super-hard regimes, respectively. Cor-responding free-energy barrier estimates varied only between 48.57-48.69, 50.40-50.72, 36.84-36.91, and 30.46-30.94 kJ /mol. The largest within-regime variation was therefore only 0.49 kJ /mol, observed for the super-hard case. 
+
+## D Sensitivity to Likelihood Objective 
+
+Hyperparameter inference requires defining an objective func-tion for constructing the generalized posterior over the GP hy-perparameters. The standard Bayesian choice is the marginal likelihood, which evaluates how probable the observed data are under a given set of hyperparameters after integrating over the latent free energy profile. However, maximizing the probability of the observed data is not necessarily equivalent to maximizing predictive performance on unseen data. Since the primary ob-jective of the present work is reliable uncertainty quantification rather than reconstruction of the mean free energy surface alone, we also considered a leave-one-out (LOO) pseudo-likelihood ob-jective [ 22 ]. Generalized hyperposteriors constructed from both objectives were compared using identical GP priors, hyperpriors, and HMC-NUTS sampling procedures. A comparison between the marginal likelihood and LOO hy-perparameter objectives at di ff erent data conditions is shown in Figure 8. The reconstructions obtained from the two objectives are similar for the posterior mean. The primary distinction be-tween the two approaches emerged in their uncertainty estimates. Hyperposteriors constructed using the LOO pseudo-likelihood produced uncertainty estimates that more consistently tracked the observed accuracy of the reconstructed free energy surfaces across the data-ablation study. On the other hand, the marginal likelihood objective actually exhibits an increase in predictive uncertainty as more data are obtained. This behavior is expected from the underlying objectives. The marginal likelihood rewards hyperparameters that provide a globally self-consistent explanation of the observed data under the GP model. In contrast, the LOO pseudo-likelihood directly evaluates predictive performance by repeatedly assessing how well the model predicts observations omitted during training. Because UQ is fundamentally a predictive task, the LOO objec-tive naturally places greater emphasis on predictive reliability than on explaining the training observations themselves. These results suggest that the choice of hyperposterior objective function can influence the practical usefulness of uncertainty 100                   
+
+> 90
+> 80
+> 60
+> 40
+> 25
+> 16
+> 10
+> 6.3
+> 4
+> (a) Hierarchical GP (LML) (b) Hierarchical GP (LOO)
+> 346810 13 16 19 22 25
+> 100
+> 90
+> 80
+> 60
+> 40
+> 25
+> 16
+> 10
+> 6.3
+> 4
+> 346810 13 16 19 22 25
+> 0.25
+> 1.1
+> 2.5
+> 5
+> 12
+> 32
+> 175
+> RMSE [kJ/mol]
+> 0.3
+> 1.2
+> 2.6
+> 5
+> 8.6
+> 17
+> 50
+> Standard Deviation [kJ/mol]
+> Number of umbrella windows
+> Trajectory length [%]
+
+Figure 8: Mean RMSE and SD ablation grid heat maps compar-ing marginal likelihood and LOO pseudo-likelihood generalized hyperposterior constructions. estimates even when its e ff ect on the reconstructed mean is small. Consequently, for predictive UQ we recommend the LOO pseudo-likelihood as the default objective for hyperposterior inference in GP-based free energy reconstruction. 
+
+## E Risks of Hyperposterior Optimization 
+
+In many GP applications, hyperparameters are optimized using marginal likelihood or a predictive objective (such as LOO), with uninformative (flat) hyperpriors. Optimization locates the 
+
+maximum a posteriori (MAP), ˆθMAP = arg max  
+
+> θ
+
+p(θ | y), (39) or, in the case of the LOO objective, ˆθLOO = arg max  
+
+> θ
+
+pLOO (y | θ)p(θ). (40) Here we compare GP-based free energy reconstructions obtained using optimized hyperparameters to HMC-NUTS hyperposte-rior sampling, see Figure 9. The mean inferred by the two approaches was similar. However, notable di ff erences emerged in the uncertainty estimates. Hyperposterior sampling consis-tently produced broader predictive distributions, particularly in regions of sparse sampling where multiple hyperparameter configurations remained compatible with the available data. From a practical perspective, the choice between optimization and hyperposterior sampling therefore depends on the intended application. When the primary goal is reconstruction of the mean, optimization is a reasonable and computationally e ffi -cient approximation. However, UQ is non-negligibly impacted by neglecting uncertainties in the underlying hyperparameters, particularly in low-data regimes. Preprint – U ncertainty Quantification for Free Energy Calculations by Generalized Hierarchical Bayesian Inference 15 100                     
+
+> 90
+> 80
+> 60
+> 40
+> 25
+> 16
+> 10
+> 6.3
+> 4mean Δ = -1.8%
+> (a) Hierarchical GP (LML)
+> mean Δ = 2.8%
+> (b) Hierarchical GP (LOO)
+> 346810 13 16 19 22 25
+> 100
+> 90
+> 80
+> 60
+> 40
+> 25
+> 16
+> 10
+> 6.3
+> 4mean Δ = 12%
+> 346810 13 16 19 22 25
+> mean Δ = 18%
+> -50
+> -25
+> 0
+> 25
+> 50
+> Δ [%]
+> -50
+> -25
+> 0
+> 25
+> 50
+> Δ [%]
+> Number of umbrella windows
+> Trajectory length [%]
+
+Figure 9: Percentage di ff erence ( ∆) in mean RMSE and stan-dard deviation between propagated hyperposteriors and MAP estimation. Blue indicates a decrease in the plotted quantity and red indicates an increase. We note that, for the systems considered in this work, the addi-tional computational cost associated with HMC-NUTS remained negligible compared to the cost of generating MD trajectories. The principal challenge is therefore not the computational ex-pense of the Bayesian inference itself, but rather the scaling of hyperparamter-marginalized GP models to increasingly flexible kernel representations and higher-dimensional CV spaces. 
+
+## F Metadynamics 
+
+F.1 Molecular Simulation Details 
+
+A bilayer patch containing 128 1,2-dioleoyl-phosphatidylcholine (DOPC) molecules was generated using CHARMM-GUI Mem-brane Builder [ 36 – 38 ]. The system was solvated and the ions were added to neutralize the system and mimic 0.15M NaCl solution. All simulations were performed using GROMACS 2026.1 [ 39 –41 ]. The membrane was equilibrated using CHARMM36 [ 42 ]force field and the GROMACS input parameters recommended by CHARMM-GUI [ 43 , 44 ]. To the equilibrated system, one phenol molecule was added and the system was equilibrated for another 20 ns. The parameters of the phenol molecule were obtained using CHARMM Small Molecule Library [45]. The extended Lagrangian metadynamics simulation was per-formed using a PLUMED 2.9.3 plugin [ 46 , 47 ]. As a CV, we employed the distance between the center of mass (COM) of the membrane and the COM of the phenol molecule ranging from -1 to 5 nm. The phenol was restrained using a flat-bottom potential with the force constant of 1000 kJ /mol /nm 2. The tem-perature was set to 303.15 K. The coupling constant of the ex-tended Lagrangian was 10.000 kJ /mol /nm 2 and the relaxation time was 1 ps. The Gaussian potentials were applied with a rate of 0.004 kJ /mol per picosecond and their widths were set to 0.1 nm. The length of the metadynamics simulation was 1 μs. In all simulations, the stochastic velocity rescaling thermostat [ 48 ] was used with a reference temperature of 303.15 K. The pressure of 1 atm was maintained by the stochastic cell rescaling barostat [ 49 ]. The Verlet cuto ff scheme was used [ 50 ]. Force-switch cuto ff of the van der Waals interactions was used between 1.0 and 1.2 nm. Long-range electrostatics was computed with the particle mesh Ewald method [ 51 ] with the cuto ff of explicit short-range electrostatic interactions at 1.2 nm. An integration step of 2 fs was used in all simulations, with the bonds to hy-drogen atoms converted to rigid constraints using the LINCS algorithm [ 52 ] and water molecules constrained using SETTLE [ 53 ]. Periodic boundary conditions were applied in all direc-tions. 
+
+F.2 Metadynamics Binning Procedure 
+
+Unlike umbrella sampling, metadynamics trajectories are not naturally partitioned into independent sampling windows and therefore require post hoc discretization of the history-dependent bias into histogram and derivative observations. The choice of discretization is not unique and can influence both the GP recon-struction and the inferred hyperparameter distributions. If the discretization is too fine, each observation contains too few data points, leading to unreliable estimates of the histogram densities and mean forces. This manifests as inflated inferred noise hy-perparameters, particularly σd. Conversely, if the discretization is too coarse, many data points are merged into a single obser-vation, reducing the spatial resolution of the observations and producing unnecessarily smooth reconstructions with increased predictive uncertainty. The objective is therefore to employ the finest discretization that remains statistically well supported by the available data. The histogram and derivative discretizations are controlled by the number of histogram bins, nh, and derivative windows, nd,respectively. For the histogram observations, increasing nh im-proves spatial resolution because the sti ff coupling between the auxiliary coordinate z and the physical collective variable ξ con-fines the sampled ξ values to a narrow region within each bin. However, increasing nh also enlarges the GP covariance matrix, eventually making GP inference computationally prohibitive. For this study, values above approximately nh = 200 became impractical computationally, while values below nh ≈ 100 no-ticeably degraded the predictive mean and uncertainty. Within the interval 100 ≤ nh ≤ 200, the reconstruction was largely insensitive to the precise choice of nh.The derivative discretization is instead limited primarily by the available simulation data. Choosing too few windows ( nd ≲ 30) smooths the mean-force observations and degrades the recon-struction, whereas choosing too many windows produces noisy estimates of the average coupling force because each window contains too few samples. This behavior is reflected by increas-ing values of the inferred derivative noise hyperparameter, σd,during hyperparameter optimization. To avoid overconfident or unstable reconstructions, we selected discretizations for which the inferred histogram and derivative noise hyperparameters re-mained of comparable magnitude over the full range of trajectory lengths considered. Preprint – U ncertainty Quantification for Free Energy Calculations by Generalized Hierarchical Bayesian Inference 16 Based on these considerations, the interval of interest (0–4.5 nm) was discretized into nh = 120 histogram bins and nd = 40 deriva-tive windows. Each bin and window contained approximately the same number of simulation samples, di ff ering only in width. This equal-occupancy discretization was chosen to promote ap-proximately homoskedastic observation noise by maintaining similar statistical precision across observations. 
+
+## References 
+
+[1] Torrie, G. M.; Valleau, J. P. Monte Carlo free energy esti-mates using non-Boltzmann sampling: Application to the sub-critical Lennard-Jones fluid. Chem. Phys. Lett. 1974 ,
+
+28 , 578–581. [2] Kumar, S.; Rosenberg, J. M.; Bouzida, D.; Swend-sen, R. H.; Kollman, P. A. The weighted histogram analy-sis method for free-energy calculations on biomolecules. J. Comput. Chem. 1992 , 13 , 1011–1021. [3] Kästner, J.; Thiel, W. Bridging the gap between thermody-namic integration and umbrella sampling provides a novel analysis method: “Umbrella integration”. J. Chem. Phys. 
+
+2005 , 123 , 144104. [4] Laio, A.; Parrinello, M. Escaping free-energy minima. 
+
+Proc. Natl. Acad. Sci. U.S.A. 2002 , 99 , 12562–12566. [5] Laio, A.; Gervasio, F. L. Metadynamics: a method to simulate rare events and reconstruct the free energy in biophysics, chemistry and material science. Rep. Prog. Phys. 2008 , 71 , 126601. [6] Shirts, M.; Chodera, J. D. Statistically optimal analysis of samples from multiple equilibrium states. J. Chem. Phys. 
+
+2008 , 129 , 124105. [7] Lindahl, V.; Lidmar, J.; Hess, B. Accelerated weight his-togram method for exploring free energy landscapes. J. Chem. Phys. 2014 , 141 , 044110. [8] Comer, J.; Gumbart, J. C.; Henin, J.; Lelievre, T.; Poho-rille, A.; Chipot, C. The Adaptive Biasing Force Method: Everything You Always Wanted To Know but Were Afraid to Ask. J. Phys. Chem. B 2015 , 119 , 1129–1151. [9] York, D. M. Modern Alchemical Free Energy Methods for Drug Discovery Explained. ACS Phys. Chem. Au 2023 , 3,478–491. [10] Kästner, J.; Thiel, W. Analysis of the statistical error in umbrella sampling simulations by umbrella integration. J. Chem. Phys. 2006 , 124 , 234106. [11] Zhu, F.; Hummer, G. Convergence and error estimation in free energy calculations using the weighted histogram analysis method. J. Comput. Chem. 2012 , 33 , 453–465. [12] Stecher, T.; Bernstein, N.; Csányi, G. Free Energy Surface Reconstruction from Umbrella Samples Using Gaussian Process Regression. J. Chem. Theory Comput. 2014 , 10 ,4079–4097. [13] Mones, L.; Bernstein, N.; Csányi, G. Exploration, Sam-pling, And Reconstruction of Free Energy Surfaces with Gaussian Process Regression. J. Chem. Theory Comput. 
+
+2016 , 12 , 5100–5110. [14] Ding, X. Bayesian Multistate Bennett Acceptance Ratio Methods. J. Chem. Theory Comput. 2024 , 20 , 1878–1888. [15] Dai, J.; Krems, R. V. Interpolation and extrapolation of global potential energy surfaces for polyatomic systems by Gaussian processes with composite kernels. J. Chem. Theory Comput. 2020 , 16 , 1386–1395. [16] Sugisawa, H.; Ida, T.; Krems, R. V. Gaussian process model of 51-dimensional potential energy surface for proto-nated imidazole dimer. J. Chem. Phys. 2020 , 153 , 114101. [17] Kempkes, E. K.; Ortíz, A. P. d. A. Bayesian umbrella quadrature accelerates free-energy calculations across di-verse molecular systems and processes. J. Chem. Theory Comput. 2026 ,[18] Pohorille, A.; Jarzynski, C.; Chipot, C. Good Practices in Free-Energy Calculations. J. Phys. Chem. B 2010 , 114 ,10235–10253. [19] Ferguson, A. L. BayesWHAM: A Bayesian approach for free energy estimation, reweighting, and uncertainty quan-tification in the weighted histogram analysis method. J. Comput. Chem. 2017 , 38 , 1583–1605. [20] O’Hagan, A. Curve Fitting and Optimal Design for Predic-tion. J. R. Stat. Soc. Ser. B 1978 , 40 , 1–24. [21] Rasmussen, C. E.; Williams, C. K. I. Gaussian Processes for Machine Learning ; MIT Press, 2006. [22] Sundararajan, S.; Keerthi, S. S. Predictive approaches for choosing hyperparameters in gaussian processes. Neural Comput. 2001 , 13 , 1103–1118. [23] Bartók, A. P.; Kermode, J. R. Improved uncertainty quan-tification for Gaussian process regression based inter-atomic potentials. 2022 , arXiv:2206.08744. [24] Shanks, B. L.; Sullivan, H. W.; Shazed, A. R.; Hoepfner, M. P. Accelerated Bayesian inference for molec-ular simulations using local Gaussian process surrogate models. J. Chem. Theory Comput. 2024 , 20 , 3798–3808. [25] Bingham, E.; Chen, J. P.; Jankowiak, M.; Obermeyer, F.; Pradhan, N.; Karaletsos, T.; Singh, R.; Szerlip, P.; Hors-fall, P.; Goodman, N. D. Pyro: Deep Universal Probabilis-tic Programming. J. Mach. Learn. Res. 2019 , 20 , 1–6. [26] Lalchand, V.; Rasmussen, C. E. Approximate Inference for Fully Bayesian Gaussian Process Regression. PMLR 2020 ,1–12. [27] Baxová, K. L.; Morandi, M. I.; Scher, N.; Kula, P.; Tichacek, O.; Schachter, I.; Busko, P.; Zahrad-nik, J.; Vazdar, M.; Koikkara, J.; Allolio, C.; Avi-noam, O.; Jungwirth, P. Direct Membrane Penetration of Oligoarginines by Fluorescence and Cryo-electron Mi-croscopy Combined with Molecular Simulations. 2026 ,bioRxiv:10.64898 /2026.04.07.716952. [28] Sullivan, H. W.; Cervenka, M.; Shanks, B. L.; Hoepfner, M. P. Physics-Informed Gaussian Process In-ference of Liquid Structure from Scattering Data. J. Phys. Chem. B 2025 , 129 , 11802–11815. [29] Heinonen, M.; Mannerström, H.; Rousu, J.; Kaski, S.; Lähdesmäki, H. Non-stationary Gaussian process regres-sion with Hamiltonian Monte Carlo. PMLR 2016 , 732– 740. [30] Shanks, B. L.; Sullivan, H. W.; Hoepfner, M. P. Bayesian Analysis Reveals the Key to Extracting Pair Potentials Preprint – U ncertainty Quantification for Free Energy Calculations by Generalized Hierarchical Bayesian Inference 17 from Neutron Scattering Data. J. Phys. Chem. Lett. 2024 ,
+
+15 , 12608–12618. [31] Fan, S.; Mason, P. E.; Chamorro, V. C.; Shanks, B. L.; Martinez-Seara, H.; Jungwirth, P. Charge Scaling Force Field for Biologically Relevant Ions Utilizing a Global Optimization Method. J. Chem. Theory Comput. 2025 , 21 ,9023–9034. [32] Kostal, V.; Shanks, B. L.; Jungwirth, P.; Martinez-Seara, H. Bayesian Learning for Accurate and Robust Biomolecular Force Fields. J. Chem. Theory Comput. 2026 , 22 , 2652– 2663. [33] Bartók, A. P.; Payne, M. C.; Kondor, R.; Csányi, G. Gaus-sian Approximation Potentials: The Accuracy of Quantum Mechanics, without the Electrons. Phys. Rev. Lett. 2010 ,
+
+104 , 136403. [34] Shanks, B. L.; Poto ff , J. J.; Hoepfner, M. P. Transferable Force Fields from Experimental Scattering Data with Ma-chine Learning Assisted Structure Refinement. J. Phys. Chem. Lett. 2022 , 13 , 11512–11520. [35] Shanks, B. L.; Sullivan, H. W.; Jungwirth, P.; Hoepfner, M. P. Experimental evidence of quantum Drude oscillator behavior in liquids revealed with probabilistic iterative Boltzmann inversion. J. Chem. Phys. 2025 , 162 ,164501. [36] Jo, S.; Kim, T.; Iyer, V. G.; Im, W. CHARMM-GUI: A web-based graphical user interface for CHARMM. J. Comput. Chem. 2008 , 29 , 1859–1865. [37] Wu, E. L.; Cheng, X.; Jo, S.; Rui, H.; Song, K. C.; Dávila-Contreras, E. M.; Qi, Y.; Lee, J.; Monje-Galvan, V.; Ven-able, R. M.; Klauda, J. B.; Im, W. CHARMM-GUI Mem-brane Builder toward realistic biological membrane simu-lations. J. Comput. Chem. 2014 , 35 , 1997–2004. [38] Jo, S.; Lim, J. B.; Klauda, J. B.; Im, W. CHARMM-GUI Membrane Builder for Mixed Bilayers and Its Application to Yeast Membranes. Biophys. J. 2009 , 97 , 50–58. [39] Abraham, M. J.; Murtola, T.; Schulz, R.; Páll, S.; Smith, J. C.; Hess, B.; Lindahl, E. GROMACS: High performance molecular simulations through multi-level parallelism from laptops to supercomputers. SoftwareX 
+
+2015 , 1-2 , 19–25. [40] Páll, S.; Abraham, M. J.; Kutzner, C.; Hess, B.; Lindahl, E. 
+
+Solving Software Challenges for Exascale ; Springer Inter-national Publishing, 2015; pp 3–27. [41] Van Der Spoel, D.; Lindahl, E.; Hess, B.; Groenhof, G.; Mark, A. E.; Berendsen, H. J. C. GROMACS: Fast, flexible, and free. J. Comput. Chem. 2005 , 26 , 1701–1718. [42] Huang, J.; MacKerell Jr, A. D. CHARMM36 all-atom ad-ditive protein force field: Validation based on comparison to NMR data. J. Comput. Chem. 2013 , 2135–2145. [43] Brooks, B. R. et al. CHARMM: The biomolecular simula-tion program. J. Comput. Chem. 2009 , 30 , 1545–1614. [44] Lee, J. et al. CHARMM-GUI Input Generator for NAMD, GROMACS, AMBER, OpenMM, and CHARMM /OpenMM Simulations Using the CHARMM36 Additive Force Field. J. Chem. Theory Comput. 2016 , 12 , 405–413. [45] Kim, S.; Lee, J.; Jo, S.; Brooks, C. L.; Lee, H. S.; Im, W. CHARMM-GUI ligand reader and modeler for CHARMM force field generation of small molecules: CHARMM-GUI Ligand Reader and Modeler for CHARMM Force Field Generation of Small Molecules. J. Comput. Chem. 2017 ,
+
+38 , 1879–1886. [46] Bonomi, M. et al. Promoting transparency and repro-ducibility in enhanced molecular simulations. Nat. Meth-ods 2019 , 16 , 670–673. [47] Tribello, G. A.; Bonomi, M.; Branduardi, D.; Camil-loni, C.; Bussi, G. PLUMED 2: New feathers for an old bird. Comput. Phys. Commun. 2014 , 185 , 604–613. [48] Bussi, G.; Donadio, D.; Parrinello, M. Canonical sam-pling through velocity rescaling. J. Chem. Phys. 2007 , 126 ,014101. [49] Bernetti, M.; Bussi, G. Pressure control using stochastic cell rescaling. The J. Chem. Phys. 2020 , 153 , 114107. [50] Verlet, L. Computer "Experiments" on Classical Fluids. I. Thermodynamical Properties of Lennard-Jones Molecules. 
+
+Phys. Rev. 1967 , 159 , 98–103. [51] Darden, T.; York, D.; Pedersen, L. Particle mesh Ewald: An N log( N ) method for Ewald sums in large systems. J. Chem. Phys. 1993 , 98 , 10089–10092. [52] Hess, B.; Bekker, H.; Berendsen, H. J. C.; Fraaije, J. G. E. M. LINCS: A linear constraint solver for molecular simulations. J. Comput. Chem. 1997 , 18 , 1463–1472. [53] Miyamoto, S.; Kollman, P. A. Settle: An analytical version of the SHAKE and RATTLE algorithm for rigid water models. J. Comput. Chem. 1992 , 13 , 952–962.

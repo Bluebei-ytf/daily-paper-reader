@@ -41,17 +41,17 @@
 <section class="dpr-home-dashboard-card dpr-home-report-card">
   <div class="dpr-home-dashboard-header">
     <div>
-      <span class="dpr-home-dashboard-kicker">2026-07-26</span>
+      <span class="dpr-home-dashboard-kicker">2026-07-27</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">共 8 篇</strong>
+    <strong class="dpr-home-dashboard-count">共 12 篇</strong>
   </div>
   <dl class="dpr-home-dashboard-stats">
     <div class="dpr-home-dashboard-stat"><dt>累计更新</dt><dd>1 次</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>3</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>5</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>6</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>6</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-07-26 22:41:18 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-07-27 23:14:08 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -62,7 +62,7 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>今日推荐8篇论文，含3篇精读与5篇速读，聚焦AI在电池、化学反应及抗体设计中的应用。最值得关注精读中的AI驱动锂电池放电预测模型和化学思维链防幻觉研究；建议普通读者优先了解AI在物理化学交叉领域的前沿应用。</p>
+<p>今日前沿：多模态AI与图神经网络突破材料预测与分子力学计算，两篇高分论文直指精准建模与复杂系统仿真。最值得关注的方向是生成式多模态AI在材料设计中的全景进展（9.0分）以及结合直接力学习的图论神经网络在流形体系中的耦合簇精度AIMD（9.0分）。普通读者下一步可重点追踪这两篇精读文章中的算法创新，以理解AI如何推动材料科学从经验走向可预测。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -71,12 +71,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">精读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">3 篇</strong>
+    <strong class="dpr-home-dashboard-count">6 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="AI-Driven Surrogate Models for Predicting Electrode-Scale Discharge Behavior in Lithium-Ion Batteries">AI-Driven Surrogate Models for Predicting Electrode-Scale Discharge Behavior in Lithium-Ion Batteries</span></li><li><span class="dpr-home-dashboard-paper-title" title="Chemical Chain-of-Thought Functions as a Hallucination-Prone Molecular Scratchpad">Chemical Chain-of-Thought Functions as a Hallucination-Prone Molecular Scratchpad</span></li><li><span class="dpr-home-dashboard-paper-title" title="Approximating committor functions: Objective functions and training data sampling">Approximating committor functions: Objective functions and training data sampling</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Generative and multimodal AI for materials prediction and design: Progress, challenges, and perspectives">Generative and multimodal AI for materials prediction and design: Progress, challenges, and perspectives</span></li><li><span class="dpr-home-dashboard-paper-title" title="Graph-Theoretic Neural Network Fragmentation with Covariant Direct Molecular Force Learning: Enabling Coupled-Cluster Accuracy AIMD for Fluxional Systems">Graph-Theoretic Neural Network Fragmentation with Covariant Direct Molecular Force Learning: Enabling Coupled-Cluster Accuracy AIMD for Fluxional Systems</span></li><li><span class="dpr-home-dashboard-paper-title" title="Learning to Prepare Molecular Ground States with Transformer Models">Learning to Prepare Molecular Ground States with Transformer Models</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>3</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>6</strong></span></div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-skim-card">
   <div class="dpr-home-dashboard-header">
@@ -84,12 +84,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">速读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">5 篇</strong>
+    <strong class="dpr-home-dashboard-count">6 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="ABOPD: Antibody CDR Design via On-Policy Distillation">ABOPD: Antibody CDR Design via On-Policy Distillation</span></li><li><span class="dpr-home-dashboard-paper-title" title="Markov state models revisited: Principles and algorithms for unbiased observables">Markov state models revisited: Principles and algorithms for unbiased observables</span></li><li><span class="dpr-home-dashboard-paper-title" title="From MLIPs to Microstructure: A High-Throughput Computational Framework to Design Spinodal Alloys in High-Dimensional Composition Spaces via Analytic Derivatives of CALPHAD Model Predictions">From MLIPs to Microstructure: A High-Throughput Computational Framework to Design Spinodal Alloys in High-Dimensional Composition Spaces via Analytic Derivatives of CALPHAD Model Predictions</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="PertReason: A Knowledge-Grounded Benchmark and Framework for Cell-State-Conditioned Mechanistic Reasoning of Perturbation Effects">PertReason: A Knowledge-Grounded Benchmark and Framework for Cell-State-Conditioned Mechanistic Reasoning of Perturbation Effects</span></li><li><span class="dpr-home-dashboard-paper-title" title="Closed-Loop Generative Selection: Convergence, Memory, and Noisy Oracles">Closed-Loop Generative Selection: Convergence, Memory, and Noisy Oracles</span></li><li><span class="dpr-home-dashboard-paper-title" title="SAGE-Net: Semantics-Augmented Geometric Encoder for Material Property Prediction">SAGE-Net: Semantics-Augmented Geometric Encoder for Material Property Prediction</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>5</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>6</strong></span></div>
 </section>
 </div>
 
