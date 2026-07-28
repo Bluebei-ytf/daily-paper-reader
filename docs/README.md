@@ -41,7 +41,7 @@
 <section class="dpr-home-dashboard-card dpr-home-report-card">
   <div class="dpr-home-dashboard-header">
     <div>
-      <span class="dpr-home-dashboard-kicker">2026-07-27</span>
+      <span class="dpr-home-dashboard-kicker">2026-07-28</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
     <strong class="dpr-home-dashboard-count">共 12 篇</strong>
@@ -51,7 +51,7 @@
     <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>6</dd></div>
     <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>6</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-07-27 23:14:08 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-07-28 22:53:33 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -62,7 +62,9 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>今日前沿：多模态AI与图神经网络突破材料预测与分子力学计算，两篇高分论文直指精准建模与复杂系统仿真。最值得关注的方向是生成式多模态AI在材料设计中的全景进展（9.0分）以及结合直接力学习的图论神经网络在流形体系中的耦合簇精度AIMD（9.0分）。普通读者下一步可重点追踪这两篇精读文章中的算法创新，以理解AI如何推动材料科学从经验走向可预测。</p>
+<p>今日精选12篇，聚焦AI驱动化学实验与催化剂逆向设计，两篇高分论文分别测试LLM在机器人化学实验室的鲁棒性及用扩散Transformer实现催化剂生成设计。</p>
+<p>强烈推荐《Stress-testing large language model agents》和《Catalyst Diffusion Transformer》，前者揭示了AI代理在真实实验中的脆弱性，后者开创了催化剂结构的生成式逆设计新范式。</p>
+<p>普通读者可关注速读中的《CP2K》（多尺度模拟工具）和《MS-GPT》（质谱解析新方法），拓展AI+化学的实用视野。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -74,7 +76,7 @@
     <strong class="dpr-home-dashboard-count">6 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Generative and multimodal AI for materials prediction and design: Progress, challenges, and perspectives">Generative and multimodal AI for materials prediction and design: Progress, challenges, and perspectives</span></li><li><span class="dpr-home-dashboard-paper-title" title="Graph-Theoretic Neural Network Fragmentation with Covariant Direct Molecular Force Learning: Enabling Coupled-Cluster Accuracy AIMD for Fluxional Systems">Graph-Theoretic Neural Network Fragmentation with Covariant Direct Molecular Force Learning: Enabling Coupled-Cluster Accuracy AIMD for Fluxional Systems</span></li><li><span class="dpr-home-dashboard-paper-title" title="Learning to Prepare Molecular Ground States with Transformer Models">Learning to Prepare Molecular Ground States with Transformer Models</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Stress-testing large language model agents in a robotic chemistry laboratory">Stress-testing large language model agents in a robotic chemistry laboratory</span></li><li><span class="dpr-home-dashboard-paper-title" title="Catalyst Diffusion Transformer: Generative Inverse Design of Heterogeneous Catalysts">Catalyst Diffusion Transformer: Generative Inverse Design of Heterogeneous Catalysts</span></li><li><span class="dpr-home-dashboard-paper-title" title="MEGA-CL: A Molecular Foundation Model for Generalizable ADMET Prediction through Graph External Attention and Contrastive Learning">MEGA-CL: A Molecular Foundation Model for Generalizable ADMET Prediction through Graph External Attention and Contrastive Learning</span></li></ul>
   </div>
   <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>6</strong></span></div>
 </section>
@@ -87,7 +89,7 @@
     <strong class="dpr-home-dashboard-count">6 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="PertReason: A Knowledge-Grounded Benchmark and Framework for Cell-State-Conditioned Mechanistic Reasoning of Perturbation Effects">PertReason: A Knowledge-Grounded Benchmark and Framework for Cell-State-Conditioned Mechanistic Reasoning of Perturbation Effects</span></li><li><span class="dpr-home-dashboard-paper-title" title="Closed-Loop Generative Selection: Convergence, Memory, and Noisy Oracles">Closed-Loop Generative Selection: Convergence, Memory, and Noisy Oracles</span></li><li><span class="dpr-home-dashboard-paper-title" title="SAGE-Net: Semantics-Augmented Geometric Encoder for Material Property Prediction">SAGE-Net: Semantics-Augmented Geometric Encoder for Material Property Prediction</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="CP2K: An electronic structure and molecular dynamics software package - Dynamics, Transport, and Spectroscopic Response">CP2K: An electronic structure and molecular dynamics software package - Dynamics, Transport, and Spectroscopic Response</span></li><li><span class="dpr-home-dashboard-paper-title" title="Transfer Learning Architectures for Scalable Multi-Fidelity Bayesian Optimization">Transfer Learning Architectures for Scalable Multi-Fidelity Bayesian Optimization</span></li><li><span class="dpr-home-dashboard-paper-title" title="MS-GPT: Rethinking MS/MS De Novo Structure Elucidation as Spectrum-Induced Posterior Querying of a Molecule-Language Model">MS-GPT: Rethinking MS/MS De Novo Structure Elucidation as Spectrum-Induced Posterior Querying of a Molecule-Language Model</span></li></ul>
   </div>
   <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>6</strong></span></div>
 </section>
