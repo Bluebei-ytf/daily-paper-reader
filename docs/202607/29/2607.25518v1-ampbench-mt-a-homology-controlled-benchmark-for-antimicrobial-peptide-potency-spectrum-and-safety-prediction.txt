@@ -1,0 +1,1325 @@
+Title: AMPBench-MT: A Homology-Controlled Benchmark for Antimicrobial Peptide Potency, Spectrum, and Safety Prediction
+
+URL Source: https://arxiv.org/pdf/2607.25518v1
+
+Published Time: Wed, 29 Jul 2026 00:47:07 GMT
+
+Number of Pages: 19
+
+Markdown Content:
+# AMPB ENCH -MT: A H OMOLOGY -C ONTROLLED BENCHMARK FOR ANTIMICROBIAL PEPTIDE POTENCY , S PECTRUM , AND 
+
+# SAFETY PREDICTION 
+
+PREPRINT 
+
+Ziheng Zhou 1, Huiyu Luo 2, Xiaohu Zhu 3, Nan Wang 4, Xuebiao Qin 1, Chaoyan Zhang 1, and Jun Yan *1 
+
+> 1
+
+Shanghai Ocean University, Shanghai, China 
+
+> 2
+
+Tongji University, Shanghai, China 
+
+> 3
+
+Center for Safe AGI, Shanghai, China 
+
+> 4
+
+DP Technology, Shanghai, China 
+
+zihengzhouac@outlook.com 2211285@tongji.edu.cn aleph@csagi.org wangnan411570@gmail.com xbqin@shou.edu.cn chyzhang@shou.edu.cn yanjun@ieee.org 
+
+ABSTRACT 
+
+Computational AMP discovery is often evaluated through AMP/non-AMP recognition, yet follow-up decisions depend on assay-derived evidence such as target-species potency, hemolysis, toxicity, and selectivity. Existing AMP and peptide benchmarks cover binary recognition, multilabel annotation, assay regression, or broader peptide-model comparison, but they do not jointly place AMP recog-nition, species-conditioned potency, spectrum, safety-facing proxy endpoints, and cross-endpoint behavior within one sequence-homology-controlled protocol. To address this problem, we introduce AMPBench-MT, a provenance-preserving benchmark that standardizes canonical peptide records and organizes them into binary recognition, species-conditioned pMIC regression, and endpoint-specific potency and safety-facing readouts. Across 161 endpoint-specific model evaluations, high binary performance does not reliably indicate assay-endpoint behavior. Frozen protein-language-model embeddings form the leading pMIC error cluster, while graph and classical regressors remain close. Spectrum labels further reveal that PR-oriented metrics can be misleading under scarce ob-served negatives, whereas low-toxicity, HC50 hemolysis, and selectivity expose smaller but more assay-facing signals. AMPBench-MT shows that AMP evaluation should move beyond recognition leaderboards toward endpoint-aware evidence auditing. Our proposed benchmark is available at 
+
+https://huggingface.co/datasets/ZihengZhou06/AMPBench-MT .
+
+CCS Concepts • Computing methodologies → Machine learning. 
+
+Keywords AI4Science, antimicrobial peptides, benchmark, MIC regression, activity spectrum, toxicity prediction, selectivity, protein language models 
+
+1 Introduction 
+
+Machine learning has become a central computational route in AI-for-science research [ 48 ] and drug-discovery workflows [ 56 ], supporting molecular representation, compound design, preclinical prioritization, clinical development, and biomedical evidence synthesis. In preclinical discovery, these methods are used to search large candidate spaces while keeping activity, mechanism, and cytotoxicity evidence in view [ 4]. Antibiotic-discovery work similarly uses model-guided search to prioritize candidates with interpretable activity evidence [ 50 ]. This shift makes evaluation design part of the discovery problem itself: candidate value is not determined by recognition alone, but by endpoint evidence that connects activity with safety-proxy readouts and developability constraints [ 32 ]. For antimicrobial 
+
+> ∗
+
+Corresponding author. arXiv:2607.25518v1 [cs.LG] 28 Jul 2026 AMPBench-MT AR XIV PREPRINT 
+
+Table 1: Benchmark-level comparison with closely related AMP and peptide benchmarks. Work Main focus Coverage / protocol Boundary vs. AMPBench-MT AMPBenchmark / negative-data bias study [37] Binary AMP bias AMP/non-AMP labels; negative-data sensitivity No assay-level potency, spectrum, toxicity, hemolysis, or selectivity endpoints ESCAPE [29] Multilabel AMP classification Activity/function labels with standardized annotation organization Does not connect species-conditioned MIC, HC50, selectivity, and safety-proxy readouts QMAP [23] Assay-level AMP regression MIC potency and HC50 hemolysis with homology-aware test sets Closest assay comparator, but narrower than the AMPBench-MT endpoint set PepBenchmark [55] General peptide ML benchmark Standardized peptide datasets, preprocessing, model-family evaluation Peptide-wide comparability rather than AMP-specific potency–safety-proxy linkage AMPBench-MT Endpoint-aware AMP prioritization Binary AMP, species-conditioned pMIC, spectrum, low toxicity, HC50, selectivity, multitask; 30% identity splits Integrates recognition, potency, spectrum, and safety-proxy readouts under one AMP-specific protocol peptides (AMPs), the need is amplified by antimicrobial resistance, which remains a major global health burden [ 27 ]. This data-driven setting is especially relevant for AMPs because peptide sequence space is large, experimental assays are costly, and activity annotations are scattered across heterogeneous databases. Models can help triage candidates before synthesis or follow-up testing, but only if their predictions reflect the endpoints that guide prioritization [ 18 ]. Recent AMP machine-learning reviews therefore emphasize not only identification and design, but also potency, spectrum, toxicity, hemolysis, selectivity, and related developability constraints [46]. Existing AMP and peptide benchmarks cover neighboring but still partial pieces of this evaluation landscape. Bi-nary AMP benchmarks expose negative-data sensitivity [ 37 ]. ESCAPE organizes AMP activity as a multilabel benchmark [ 29 ]. QMAP covers MIC and HC50 assay regression [ 23 ], while PepBenchmark broadens evaluation to peptide-machine-learning protocols [ 55 ]. Table 1 summarizes this boundary. However, these benchmarks do not provide a single AMP-specific protocol that keeps binary recognition, species-conditioned potency, activity spectrum, toxicity, hemolysis, selectivity, and cross-endpoint prediction visible under the same controlled split and metric design. To fill this gap, we propose AMPBench-MT for probing peptide prioritization through assay-derived endpoint evidence: a model that recognizes AMP-like sequences can still fail on potency, spectrum, toxicity, hemolysis, or selectivity. AMPBench-MT standardizes peptide sequences, preserves endpoint provenance, applies MMseqs2 30% cluster splits, and evaluates balanced AMP classification, species-conditioned MIC regression, multi-endpoint prediction, and joint pilot baselines. From a data-mining perspective, AMP benchmarking is an integration and evaluation problem: near-identical peptide backbones recur across databases, labels are endpoint-specific, missing assay evidence is not negative evidence, and class imbalance can make ranking metrics misleading. AMPBench-MT makes these failure modes measurable rather than hidden behind a single leaderboard. Figure 1 gives the pipeline overview, while later sections provide the data-source, label-construction, split, and model-family details. Rather than reducing these settings to one aggregate leaderboard, the experiments use binary recognition as a historical anchor, MIC as a species-conditioned potency task, and the endpoint panel as a test of how label evidence and metric choice shape interpretation. AMPBench-MT controls near-duplicate peptide-sequence leakage, while reporting residual source, species, and publication overlap as benchmark boundaries rather than claiming prospective external validation. Our contributions are summarized as follows: 2AMPBench-MT AR XIV PREPRINT Evidence and endpoint semantics 
+
+Homology-controlled evaluation protocol 
+
+Model-family audit and endpoint readout 
+
+A
+
+B
+
+C       
+
+> Heterogeneous
+> AMP sources
+> Peptide
+> sequence layer
+> Curation &
+> provenance
+> Deduplicate, standardize,
+> track provenance
+> Endpoint-aware task set
+> Binary AMP pMIC potency
+> Spectrum Low toxicity HC50 hemolysis
+> Spectrum
+> consensus Selectivity Joint multitask
+> MMseqs2 30% identity clustering
+> Low-identity sequence clusters
+> 30% identity split
+> Train
+> clusters
+> Valid
+> clusters
+> Test
+> clusters
+> Key principle
+> Homology-aware clustering supports
+> unseen-sequence evaluation.
+> 161 model evaluations across 7 families
+> Statistical
+> baselines
+> Classical
+> ML
+> Small
+> NN
+> PLM
+> features
+> LLM
+> (QLoRA)
+> GNN
+> baselines
+> Endpoint-specific readout
+> MCC Balanced
+> accuracy
+> MAE
+> Calibration Sensitivity + failure accounting
+
+Figure 1: AMPBench-MT overview: multi-source evidence, homology-controlled splitting, and endpoint-specific evaluation. • Benchmark construction. AMPBench-MT provides a provenance-aware, homology-controlled AMP bench-mark spanning binary recognition, species-conditioned MIC potency, activity spectrum, low toxicity, HC50 hemolysis, selectivity, and joint multitask evaluation. • Experimental protocol. The experiments connect balanced binary classification, species-conditioned MIC regression, and multi-endpoint prediction through 161 endpoint-specific model evaluations across seven model families using endpoint-matched metrics and failure accounting. • Endpoint-level audit. Results indicate that high binary recognition is not sufficient evidence for potency or safety-proxy assay readouts. Under the homology-controlled split, MIC regression clusters around protein-language-model embeddings with graph and tree-based comparators close behind, spectrum labels expose metric sensitivity under positive-heavy evidence, and two early shared multitask baselines provide pilot evidence for endpoint-dependent sharing. 
+
+2 Related Work 
+
+Drug-discovery machine learning provides the broader evaluation setting for AMP benchmarking. AI-for-science reviews frame models as tools for representation learning and scientific evidence synthesis [ 48 ], while drug-development reviews place screening and candidate prioritization within longer discovery workflows [ 56 ]. Preclinical candidate search raises similar concerns [ 4 ]. Explainable antibiotic-class discovery raises related concerns [ 50 ]. Safety-proxy assay evidence enters from investigative toxicology, where activity evidence must be weighed against toxicity and developability risk [ 32 ]. For AMPs, these lines of work set a benchmark target that is narrower than general drug discovery but broader than sequence recognition: potency and safety-proxy readouts must remain visible during model comparison. AMP prediction has often been organized as binary classification between AMP and non-AMP sequences. This setting remains useful because it gives a common comparison point across external AMP tools, classical baselines, neural sequence models, and newer language-model approaches. Its limitation is semantic rather than only technical: a single AMP label does not encode MIC potency, pathogen spectrum, host-cell toxicity, hemolytic activity, or selectivity, all of which are emphasized in recent AMP machine-learning reviews [ 46 ]. The benchmark itself can also shape the apparent difficulty of the task. Negative-data selection has been shown to bias AMP prediction benchmarks, making high binary scores sensitive to how non-AMP examples are constructed [ 37 ]. AMPBench-MT therefore keeps a balanced binary task for historical alignment, but treats it as one experimental setting rather than as evidence of assay-endpoint performance for follow-up decisions. 3AMPBench-MT AR XIV PREPRINT 
+
+Recent work has moved AMP and peptide evaluation beyond this binary frame in complementary ways. ESCAPE organizes AMP activity information as a standardized multilabel benchmark for functional and activity annotation [ 29 ]. QMAP focuses on two quantitative assay endpoints, MIC and HC50, with homology-aware predefined test sets [ 23 ]. PepBenchmark broadens the view further by providing a unified pipeline for peptide machine learning across preprocess-ing choices, task families, and model types [ 55 ]. Table 1 makes the distinction explicit: ESCAPE emphasizes multilabel AMP annotation, QMAP emphasizes MIC and HC50 assay regression, and PepBenchmark emphasizes peptide-wide protocol comparability. AMPBench-MT is AMP-specific and jointly covers binary recognition, species-conditioned MIC, spectrum, toxicity, hemolysis, selectivity, and cross-endpoint prediction under unified split construction and endpoint-matched metrics. This endpoint framing also determines how model families are compared. AMPBench-MT evaluates protein-language-model embedding baselines [ 25 ] and generic LLM baselines adapted with parameter-efficient fine-tuning [ 7], but it does not treat language-model scale as evidence of endpoint understanding. These model families are relevant to AMP prediction only when the task definitions, split construction, and endpoint metrics are fixed. The evaluation therefore places statistical baselines, classical machine learning, small neural sequence and shared multitask models, graph neural baselines, LLM/QLoRA baselines, and AMP-specific external tools within the same endpoint protocol. This design matters for imbalanced endpoint labels: a single classification-accuracy number can look acceptable when the majority class dominates, even if the model separates observed negatives poorly. MCC and balanced accuracy provide complementary views when one class dominates [6]. These previous studies motivate AMPBench-MT as an endpoint-aware benchmark rather than a single-task AMP classifier benchmark. The design retains binary AMP recognition for comparability and evaluates whether model behavior transfers to assay-derived endpoints under homology-controlled splits with endpoint-matched metrics. 
+
+3 Benchmark Pipeline Design 
+
+AMPBench-MT is constructed through three linked stages. Source records are first standardized into canonical peptide, assay, species, and provenance fields and routed to task-specific tables. Endpoint labels are then derived from explicit assay evidence, with missing evidence left unassigned rather than imputed. Finally, sequence clusters are used to create homology-controlled splits and verify the overlap boundaries reported with the release. The following subsections describe data standardization, endpoint construction, and split construction in this order. 
+
+3.1 Task Scope and Data Standardization 
+
+Figure 2 gives the record-level entry point to AMPBench-MT. Source entries may contain sequence, assay, activity, species, citation, and database identifiers. The pipeline standardizes these fields into canonical sequence and endpoint fields, applies quality gates, and routes usable records into binary, MIC, endpoint-panel, and evaluation tables. This record-first view matters because AMPBench-MT is organized around three settings chosen to separate historical AMP recognition, species-conditioned potency estimation, and downstream endpoint evidence. The binary setting retains AMP/non-AMP recognition as a historical anchor. The MIC setting pairs peptide sequences with target species so that potency is modeled as an assay-derived quantity rather than as a generic activity label. The multi-endpoint setting keeps spectrum, low toxicity, HC50 hemolysis, selectivity, and shared multitask prediction as separate evidence types. Main multi-endpoint tasks use uppercase 20-standard-amino-acid sequences of length 5–100, while the binary task keeps its historical 10–50 range. This defines a canonical sequence-only benchmark: it does not cover D-amino acids, terminal modifications, cyclization, non-canonical residues, amidation, salt forms, or related modified-peptide chemistry. The source layer is built from curated protein, AMP, bioactive-peptide, and assay databases rather than from a single repository. For binary recognition, the pipeline combines the Swiss-Prot subset of UniProtKB [ 42 ] with AMP and bioactive-peptide repositories recorded in the provenance fields, including APD6 [ 47 ], CAMPR4 [ 13 ], DBAASP [ 31 ], DRAMP 3.0 [ 36 ], GRAMPA [ 49 ], SATPdb [ 38 ], dbAMP 3.0 [ 54 ], AMPDB [ 26 ], and PEP-Lab [ 41 ]. Assay-bearing records for MIC and downstream endpoints are then drawn from DBAASP, CAMPR4, DRAMP 3.0, and GRAMPA. Additional MIC records come through Witten-derived exports [ 49 ] spanning APD6, DBAASP, DRAMP 3.0, YADAMP [ 30 ], and DADP [ 28 ], together with the EC-SA 2025 AMP regression collection [ 3]. Spectrum labels use target-group or activity annotations from DBAASP, CAMPR4, DRAMP 3.0, dbAMP 3.0, SATPdb, and PEP-Lab. Toxicity and HC50 labels are derived from DBAASP toxicity records. Across these tasks, the pipeline retains source database names, source IDs, URLs, PubMed IDs, and source-record links where available, so endpoint aggregation preserves provenance. Figure 3 summarizes this provenance layer and shows that endpoint coverage differs by source. After standardization, each task table is defined by the observation unit required by its endpoint. The binary table is peptide-level, MIC regression is sequence–species level, spectrum depends on target-group or activity evidence, HC50 4AMPBench-MT AR XIV PREPRINT source record      
+
+> structure / assay evidence
+> assay: MIC |HC50 |species
+> normalized record fields
+> canonical 20-AA sequence
+> species, units and endpoint labels
+> one record keeps linked provenance
+> source trace
+> database name and record ID
+> URL and PubMed ID
+
+curation 
+
+> sequence
+> 20-AA alphabet
+> length / dedup filters
+> assay values
+> unit conversion
+> pMIC, HC50, selectivity
+> provenance
+> source, record ID
+> URL and PubMed ID
+> quality gates
+> conflict removal
+> homology-controlled split
+
+endpoint tables 
+
+> binary AMP
+> recognition baseline
+> for comparability
+> MIC task
+> species-conditioned pMIC
+> regression target
+> endpoint panel
+> spectrum, toxicity
+> HC50, selectivity
+> evaluation
+> splits, metrics
+> failure diagnostics
+
+Figure 2: Record-level data curation and endpoint routing. Source records are standardized into canonical sequence, provenance, split, and endpoint tables before model evaluation. depends on exact hemolysis records, and selectivity depends on paired activity–hemolysis evidence. The resulting tables are therefore not forced to match by intersection or by peptide-level imputation. A peptide enters an endpoint only when the corresponding source evidence is present. Missing endpoint evidence remains missing rather than being converted into a negative, low-risk, or non-hemolytic label. This choice reduces label coverage, but it keeps task semantics aligned with the evidence needed for assay-aware evaluation. Task sizes and split allocations are therefore reported with the experimental protocol, where the consequences of endpoint-specific evidence are visible next to the model results. 
+
+3.2 Endpoint Label Construction 
+
+The pipeline keeps assay semantics explicit by converting heterogeneous assay records into endpoint-specific targets. For MIC regression, each input is a peptide sequence paired with a target species, and the target is the median pMIC of exact sequence–species evidence. We use MIC values reported in μM directly, scale nM and mM values to μM, and convert mass-concentration units such as μg/mL to μM using molecular weight. A direct-unit MIC sensitivity table excludes estimated mass-concentration conversions and is retained without train/validation/test partitioning. The reported MIC model results use the main split rather than a direct-unit-only evaluation. The pMIC target is defined as 
+
+pMIC = − log 10 (MIC mol /L) = 6 − log 10 (MIC μM). (1) Strict MIC pairs retain exact labels with at least one exact record, pMIC standard deviation at most 1.0 across repeated evidence, and median pMIC in the range 0–12. Repeated exact evidence is summarized by the median pMIC rather than by a single source record. The median aggregation prevents duplicated or repeated source records from being treated as independent labels, while still retaining exact sequence–species evidence when multiple records agree. It is a benchmark label rule rather than a meta-analysis of laboratory variability, so the resulting pMIC target should be interpreted as a standardized evaluation target. For classification endpoints, label construction is deliberately conservative: reported classification splits use rows with explicit endpoint labels, and absent activity evidence is not treated as a negative label. Exact MIC evidence is mapped into spectrum labels by 
+
+yspectrum =
+
+
+
+1, pMIC ≥ 5.0,
+
+0, pMIC ≤ 4.0,
+
+excluded , 4.0 < pMIC < 5.0.
+
+(2) Low-toxicity classification uses explicit toxicity labels, and HC50 uses exact hemolysis endpoints. Selectivity is computed from paired strict MIC and exact HC50 evidence as 
+
+pHC50 = − log 10 (HC50 mol /L) = 6 − log 10 (HC50 μM), (3) 
+
+SI log = pMIC − pHC50 . (4) 5AMPBench-MT AR XIV PREPRINT Binary 
+
+## MIC 
+
+## Spectrum 
+
+## Low tox. 
+
+## HC50 
+
+## Selectivity 
+
+## Endpoint table 
+
+UniProtKB 
+
+APD6 
+
+CAMPR4 
+
+DBAASP 
+
+DRAMP 3.0 
+
+GRAMPA 
+
+SATPdb 
+
+dbAMP 3.0 
+
+AMPDB 
+
+PEP-Lab 
+
+YADAMP 
+
+DADP 
+
+EC-SA 
+
+2025 
+
+> Source database or dataset
+
+30.5k - - - - -
+
+2.8k 3.3k 1.6k - - 534 
+
+10.8k 15.9k 11.2k - - 2.1k 
+
+14.5k 61.5k 31.3k 7.1k 1.6k 9k 
+
+12.4k 10.3k 6.9k - - 1.6k 
+
+5.8k 32.2k 13.4k - - 4.5k 
+
+8.1k - 1.3k - - -
+
+16.1k - 26.1k - - -
+
+1.6k - - - - -
+
+819 - 39 - - -
+
+- 4.4k 3k - - 748 
+
+- 819 867 - - 176 
+
+- 7.3k 7.3k - - 792 
+
+0
+
+1
+
+2
+
+3
+
+4
+
+> log10(source-linked rows + 1)
+
+Figure 3: Source-linked endpoint coverage in the released benchmark tables. Cells report provenance-retaining endpoint rows with non-exclusive log-scaled counts. Together, Eqs. (1) – (4) and the surrounding label rules prioritize traceable endpoint semantics over maximum label coverage. They also explain why the spectrum task must be read differently from the balanced binary task: an unobserved spectrum label is not treated as a confirmed negative, so AUPRC must be interpreted alongside MCC, balanced accuracy, and negative-class recall (specificity). Low-toxicity, HC50, and selectivity provide assay-derived safety-proxy evidence for follow-up decisions, but they are not clinical safety labels and should not be interpreted as evidence of in vivo safety. 
+
+3.3 Homology-controlled Split Construction 
+
+All main splits use sequence-cluster rather than row-level assignment because identical or near-identical peptides can recur across databases, assay records, species entries, and endpoint tables; row-level assignment could place the same backbone or a close homolog in both training and test through different provenance records. Using MMseqs2 [ 39 ], the multi-endpoint protocol forms clusters at 30% sequence identity with coverage 0.8, cov-mode 0, cluster-mode 2, and seed 42, and assigns each cluster to exactly one training, validation, or test partition. MIC follows the same cluster-level principle and additionally checks exact sequence–species pairs. The appendix overview in Table 4 reports the guarantees and boundary: all released tasks have complete row assignment and zero train–test overlap in exact peptide sequences or clusters formed at this threshold. However, the protocol does not hold out sources, databases, 6AMPBench-MT AR XIV PREPRINT 
+
+species, publications, or assays, and source databases may appear across splits. In MIC, 573 of 868 test species are represented in training, and 551 PubMed IDs are shared across the two partitions, covering 7,632 test rows. These counts describe provenance overlap, not reuse of exact sequences or sequence clusters. The joint multitask split globally assigns clusters formed at 30% sequence identity using a greedy 70/15/15 split, so target-task test clusters cannot enter auxiliary-task training. Accordingly, this is a homology-controlled benchmark of unseen peptide clusters, not an external prospective validation study. Three points carry into the experiments. First, provenance is retained before endpoint aggregation, so source identity and record links remain traceable after labels are routed into task tables. Second, endpoint tables are allowed to differ because MIC, spectrum, toxicity, HC50, and selectivity require different assay evidence. Third, all reported model comparisons use the same homology-controlled split logic, which keeps the emphasis on endpoint-specific behavior rather than on a single AMP-recognition score. 
+
+4 Experiments 
+
+The experiments mirror the three levels of the benchmark question. The binary task asks how models perform on AMP/non-AMP recognition under the benchmark split. MIC regression asks whether sequence and species information support quantitative potency prediction. The multi-endpoint and joint multitask setting asks whether models retain useful signal for spectrum, low toxicity, hemolysis, selectivity, and cross-endpoint sharing. Each subsection reports process, data, and test-set results within the homology-controlled setting. The goal is not to collapse these settings into one winner, but to show which readouts remain informative once endpoint semantics and split controls are fixed. 
+
+4.1 Experimental Protocol and Metrics 
+
+The evaluation protocol is organized by endpoint rather than by a single score. Its 161 endpoint-specific model evaluations are grouped as historical anchors, representation probes, or stress tests rather than ranked as one leaderboard. They span seven model families: statistical baselines, classical ML with handcrafted peptide features, small neural sequence and shared multitask models, protein-LM embeddings, graph neural baselines, LLM/QLoRA baselines, and AMP-specific external tools. The inventory includes 38 binary AMP, 37 MIC, 19 spectrum, 14 spectrum-consensus, 19 low-toxicity, 17 HC50, 15 selectivity, and two early joint multitask evaluations. Classification tasks use AUROC, AUPRC, F1, MCC, balanced accuracy, and calibration-oriented scores when available. Thresholded metrics use validation-selected thresholds where recorded. Regression tasks use MAE, RMSE, R2, Pearson, Spearman, and ranking accuracy when available. This metric design keeps binary recognition, potency estimation, spectrum prediction, safety-proxy labels, and multitask behavior as separate readouts. Repeated-seed gaps keep the results at the level of endpoint test-set evidence rather than statistical-significance claims. Models discussed in the main-text rows carry citations there. Appendix-only PLM coverage adds ESM3-open-small and Ankh [ 8 , 17 ]; ProtBert shares the ProtTrans source already cited. Residue-graph rows use GCN, GAT, and GIN [ 22 , 44 , 51 ], with PepGB as a peptide-graph design reference [ 24 ]. Additional LLM rows cover Qwen2.5-Instruct and Mistral 7B [ 20 , 34 ], Gemma 3 and Phi-3.5 [ 1, 14 ], and Phi-4-mini [ 2 ]. CatBoost and MIC XGBoost are cited with the main results; multi-endpoint tree rows use LightGBM [ 21 ]. PepLM-GNN and PepGB are design references rather than direct task reproductions; external tools are historical rather than contamination-free baselines, and PLM/LLM pretraining overlap is unaudited. Main-text rows are representative; appendix figures retain full metrics and lower-ranked rows. The public release provides endpoint tables, splits, schema, validation report, manifest, checksums, and source-database licensing and terms metadata. Figure 4 reports task sizes and split allocations as evidence availability rather than endpoint prevalence. MIC and joint multitask tables are large because they pool many exact sequence–species assay rows or multiple endpoint labels, whereas HC50 and selectivity require exact hemolysis or paired activity–hemolysis evidence. The low-toxicity table is the explicit-toxicity subset, and the direct-unit MIC sensitivity table is a unit-conversion diagnostic, not a model-evaluation split. These imbalances condition how AUPRC, MCC, regression error, and multitask sharing should be interpreted. 
+
+4.2 Balanced AMP Binary Classification Process. The binary experiment evaluates model performance on historical AMP/non-AMP recognition under the homology-controlled split. The comparison includes AMP-specific external tools, protein-language-model embeddings with classifiers, and LLM/QLoRA baselines. Because the task is deliberately balanced, it is used as a historical anchor rather than as the primary evidence for assay-aware endpoint performance. Table 2 keeps the main text focused on MCC and balanced accuracy, while Fig. 6 reports the full binary metric set. 7AMPBench-MT AR XIV PREPRINT 1k 3k 10k 30k 100k        
+
+> Rows, log scale
+> Joint multitask
+> MIC
+> Binary AMP
+> Spectrum
+> Spectrum consensus
+> Selectivity
+> Low toxicity
+> HC50
+> 119,416
+> 73,656
+> 60,946
+> 37,022
+> 30,048
+> 9,774
+> 7,143
+> 1,595
+> A Endpoint table scale
+> 025 50 75 100
+> Split share (%) counts: train / valid / test
+> 84,368 / 17,524 / 17,524
+> 50,660 / 11,543 / 11,453
+> 42,664 / 9,141 / 9,141
+> 21,753 / 7,661 / 7,608
+> 17,703 / 6,203 / 6,142
+> 6,177 / 1,790 / 1,807
+> 4,207 / 1,465 / 1,471
+> 1,008 / 294 / 293
+> B Homology-controlled split composition
+> Train Valid Test
+
+Figure 4: Endpoint-table sizes and homology-controlled train/validation/test allocation. The joint multitask total pools MIC, spectrum, low toxicity, and HC50 rows. Table 2: Representative balanced AMP binary-classification readouts. Higher is better. Model MCC Bal. Acc. Qwen3-4B (QLoRA) [53] 0.862 0.930 ESM-1b 650M (PLM embed.) [35] 0.856 0.927 DeepSeek-R1-Distill-Llama-8B (QLoRA) [15, 16] 0.853 0.926 Qwen3-8B (QLoRA) [53] 0.843 0.921 ProtGPT2 (PLM embed.) [11] 0.839 0.919 ProtT5-XL-BFD (PLM embed.) [9] 0.828 0.914 ampir (external tool) [12] 0.768 0.883 AMPScanner v2 (external tool) [45] 0.695 0.846 
+
+Note. Rows are representative binary evaluations. Full metrics are in the appendix. External tools and pretrained models are historical references, not contamination-free baselines. 
+
+Data. The balanced task contains 60,946 peptides split into 42,664 training rows, 9,141 validation rows, and 9,141 test rows. It uses the historical 10–50 amino-acid range, whereas endpoint tasks retain 5–100 amino acids to preserve assay evidence. Cross-task conclusions are therefore endpoint-level rather than length-controlled model comparisons. 
+
+Results. Binary recognition is strong across the leading binary rows. Qwen3-4B [ 53 ] with QLoRA [ 7] reaches MCC 0.862 and balanced accuracy 0.930. A protein-language-model embedding baseline, ESM-1b 650M [ 35 ], is close with MCC 0.856, and the leading AMP-specific external tool, ampir [ 12 ], reaches MCC 0.768. These strong binary scores provide a historical recognition reference, but they do not establish species-conditioned potency, toxicity, hemolysis, spectrum, or selectivity performance. 
+
+4.3 Species-conditioned MIC Regression Process. The MIC experiment evaluates quantitative potency as a sequence–species regression task. Rows provide peptide sequence and target species. Species encoding is summarized in the appendix overview. Figure 5 visualizes representative readouts from protein-language-model embeddings, graph neural baselines, classical feature-based regressors, small neural baselines, LLM/QLoRA numeric-generation baselines, and a statistical mean-backoff baseline. Fig. 7 reports the complete MIC result set. 8AMPBench-MT AR XIV PREPRINT 0.50 0.54 0.58 0.62 
+
+Test-set MAE for pMIC prediction (lower is better) 
+
+ESM-C 300M 
+
+ESM-2 150M 
+
+ESM-2 650M 
+
+SaProt-650M 
+
+ProtT5-XL 
+
+PepLM-GNN 
+
+CatBoost 
+
+Tiny Transformer 
+
+Qwen2.5-Coder 
+
+Mean Backoff 
+
+0.562 
+
+0.550 
+
+0.545 
+
+0.542 
+
+0.545 
+
+0.521 
+
+0.514 
+
+0.502 
+
+0.386 
+
+0.220  
+
+> best MAE
+
+Spearman      
+
+> PLM GNN Classical Small NN LLM Stat.
+
+Figure 5: MIC regression comparison on the homology-controlled pMIC test split. Points show MAE with 95% bootstrap intervals from 1000 resamples of retained single-run test predictions ( n = 11 ,453 ); Spearman is listed at right. The x-axis is zoomed from 0.49, lower MAE is better, and intervals are not multi-seed estimates. 
+
+Data. The MIC task contains 73,656 exact sequence–species pairs, split into 50,660 training rows, 11,543 validation rows, and 11,453 test rows. Species identity is part of the prediction problem, so species-conditioned features are allowed and potency is evaluated conditioned on both peptide sequence and target organism. This is a species-conditioned homology split, not a species-held-out or source-held-out benchmark. Test species represented in training and publications shared across splits are reported as residual provenance risks rather than treated as eliminated leakage. The target is pMIC, where a one-unit difference corresponds to a ten-fold concentration difference on the MIC scale. Lower MAE and RMSE indicate more accurate potency estimates, while Pearson, Spearman, R2, and ranking accuracy measure linear association, rank association, explained variance, and pairwise ordering quality. 
+
+Results. Protein-language-model embeddings form the leading MIC error cluster in the homology-controlled MIC evaluation. ESM-C 300M [ 10 ] gives the lowest MAE at 0.504, with RMSE 0.667, Pearson 0.550, Spearman 0.562, 
+
+R2 0.286, and ranking accuracy 0.700. The leading alternatives are tightly clustered: ESM-2 variants [ 25 ], SaProt-650M [ 40 ], and ProtT5-XL-UniRef50 [ 9] all fall between MAE 0.506 and 0.511. Figure 5 gives the same representative ordering with retained-prediction bootstrap intervals, showing that the leading PLM rows overlap under this single-run prediction resampling view. The PepLM-GNN graph row [52] follows this PLM cluster at MAE 0.516 and Spearman 0.521, numerically ahead of CatBoost on both readouts but still below the leading embeddings. Because this row adapts a peptide graph design to MIC regression rather than reproducing the original peptide–protein interaction task, the comparison is reported as a topology-aware baseline within the same split. The additional GNN rows in Fig. 7 are less competitive; simple residue graphs did not match the strongest sequence-representation rows. Classical models remain competitive but slightly behind the leading embeddings, with CatBoost [ 33 ] and XGBoost [ 5] at MAE 0.521 9AMPBench-MT AR XIV PREPRINT 
+
+Table 3: Representative endpoint signals and failure modes. Complete endpoint results are shown in the appendix data figures. Endpoint Representative readout Observed pattern Spectrum strict CatBoost [ 33 ]: AUPRC 0.999; MCC 0.000 High AUPRC; zero MCC Spectrum consensus CatBoost [ 33 ]: AUPRC 0.999; MCC 0.000 Same metric pattern Low toxicity ProtT5-XL-UniRef50 [9]: AUPRC 0.823; MCC 0.534 Nonzero MCC HC50 hemolysis ESM-2 650M [25]: MAE 0.433; Spearman 0.553 Positive rank association Selectivity ESM-C 600M [ 10 ]: MAE 0.621; R2 0.077 Low explained variance Joint multitask Shared Tiny Transformer multi-head [43]: MIC MAE 0.561; HC50 MAE 0.499; spectrum MCC 0.000 Mixed endpoint changes 
+
+Note. Rows are representative of stronger readouts, diagnostic failures, or pilot multitask behavior. Appendix data figures retain the full model inventory and lower-ranked cases. and 0.522. The remaining small sequence neural baselines are weaker, and the Qwen2.5-Coder numeric-generation baseline [ 19 ] with QLoRA [ 7] trails the embedding and classical models. The MIC task places PLM embeddings in the leading cluster, with the graph-based comparator adding a competitive but non-leading point of comparison. The margins among leading PLM variants remain modest rather than decisive. The best R2 remains below 0.3, so the result should be read as lower error and stronger endpoint ranking within the benchmark rather than as solved quantitative potency prediction. 
+
+4.4 Multi-endpoint and Joint Multitask Prediction Process. The multi-endpoint experiment asks whether models retain endpoint signal beyond binary AMP recognition and MIC potency. Single-task models cover spectrum, low toxicity, HC50 hemolysis, and selectivity. Two shared-encoder neural models cover joint MIC, spectrum, low toxicity, and HC50 prediction. Table 3 reports selected endpoint readouts rather than a full endpoint leaderboard. 
+
+Data. The single-task multi-endpoint tables include 37,022 spectrum rows, 30,048 spectrum-consensus rows, 7,143 low-toxicity rows, 1,595 HC50 rows, and 9,774 selectivity rows. The joint multitask table contains 119,416 rows across MIC, spectrum, low toxicity, and HC50, using the same low-toxicity subset. These counts are not harmonized into a complete endpoint matrix. They reflect the available evidence for each assay-derived or annotation-derived label. Strict spectrum maps pMIC ≥ 5 (MIC ≤ 10 μM) to positives and pMIC ≤ 4 (MIC ≥ 100 μM) to observed negatives, excluding the intervening decade. Low-toxicity retains rows with DBAASP-derived explicit toxicity labels. Label 1 means low toxicity, label 0 means observed toxicity, and missing toxicity evidence is not imputed. The spectrum tasks are positive-heavy evidence audits rather than ordinary balanced classifiers. Conventional supervised metrics are still reported, so absent target-group evidence is an interpretation boundary rather than redesigned training signal. MCC and balanced accuracy are necessary complements to AUPRC and F1. The safety-proxy readouts are smaller but more connected to follow-up decisions, which is why HC50 and selectivity are retained even though their regression tables are much narrower than MIC. 
+
+Results. The multi-endpoint results differ by endpoint. Spectrum is the most pronounced metric-failure case: Cat-Boost [ 33 ] reaches AUROC/AUPRC 0.810/0.999 in the strict spectrum setting, but MCC and balanced accuracy remain 0.000 and 0.500. The consensus-spectrum sensitivity row has the same pattern. This means that high PR-oriented scores do not imply useful observed-negative discrimination in the positive-heavy spectrum labels. Thresholded and calibration-oriented metrics are needed to expose whether the model is separating the scarce observed nega-tives. The appendix threshold diagnostic in Table 4 makes this failure mode explicit: CatBoost predicts all strict and consensus-spectrum test rows as positive at the validation-selected threshold, leaving no true negatives. The current spectrum endpoint should therefore be read mainly as a positive-evidence audit with limited observed-negative evidence. Low-toxicity classification is more informative at thresholded metrics: ProtT5-XL-UniRef50 [ 9] reaches AUROC/AUPRC 0.826/0.823 and MCC/balanced accuracy 0.534/0.767. HC50 hemolysis regression also contains measurable signal. ESM-2 650M [ 25 ] reaches MAE/RMSE 0.433/0.587 and Spearman/ R2 0.553/0.309. Selectivity is harder: ESM-C 600M [ 10 ] gives the lowest selectivity MAE in the table at 0.621, but its R2 is only 0.077. Joint multitask learning remains pilot evidence from two early shared baselines. The shared Tiny Transformer multi-head model [ 43 ] improves over the shared CNN multi-head baseline on MIC MAE and HC50 MAE, but it does not resolve 10 AMPBench-MT AR XIV PREPRINT 
+
+spectrum discrimination, where MCC and balanced accuracy remain 0.000 and 0.500. Fig. 7 provides the complete endpoint rows. These results support endpoint-by-endpoint evaluation rather than assuming that binary recognition or joint sharing transfers uniformly to all assay targets. 
+
+4.5 Experiment-level Summary 
+
+Read together, the experiments separate three kinds of evidence. Binary AMP recognition is comparatively tractable and remains useful as a historical anchor, but the limited paired-model diagnostic reported in the appendix (Table 4) does not support treating binary MCC as a proxy for MIC or spectrum behavior. MIC results point to a modest PLM-led potency cluster, with PepLM-GNN and classical regressors close but non-leading. The endpoint panel then shows where metric choice and label evidence matter most: spectrum can look strong under PR-oriented metrics while failing MCC and balanced accuracy, whereas low toxicity, HC50, and selectivity expose smaller but more assay-facing signals. These patterns argue for endpoint-level evidence rather than a single leaderboard. Main-text figures and tables show representative high-performing, historically relevant, or diagnostic cases. The appendix retains full metrics, lower-ranked rows, and diagnostic notes. Broader claims about external assay generalization, model-family dominance, or reliable cross-endpoint transfer require separate validation. 
+
+5 Conclusions and Future Work 
+
+AMPBench-MT evaluates endpoint-aware prediction signals for AMP prioritization by combining provenance-aware labels, MMseqs2 30% identity cluster splits, endpoint-specific metrics, and 161 endpoint-specific model evaluations across binary classification, species-conditioned MIC regression, and multi-endpoint prediction. The results keep binary recognition, species-conditioned potency, and behavior on safety-proxy readouts as separate evidence types: PLM embeddings form a modest leading MIC cluster, spectrum labels expose observed-negative discrimination limits, and early shared multitask baselines show mixed endpoint-dependent behavior. The evaluation controls sequence homology but does not hold out sources, databases, species, publications, or assays. Other limitations include limited uncertainty estimates, imbalanced spectrum labels, historical external tool baselines, unaudited overlap with PLM/LLM pretraining data, coverage restricted to canonical sequences, and a narrow multitask set. Future work should add external assay splits, held-out source, database, species, and assay diagnostics, multi-seed uncertainty, observed-negative spectrum evidence, modified-peptide coverage, and broader multitask architectures. 
+
+References 
+
+[1] Marah Abdin et al . 2024. Phi-3 Technical Report: A Highly Capable Language Model Locally on Your Phone. arXiv:2404.14219. [2] Abdelrahman Abouelenin et al . 2025. Phi-4-Mini Technical Report: Compact yet Powerful Multimodal Language Models via Mixture-of-LoRAs. arXiv:2503.01743. [3] Jianxiu Cai, Jielu Yan, Chonwai Un, Yapeng Wang, Francois-Xavier Campbell-Valois, and Shirley WI Siu. 2025. BERT-AmPEP60: A BERT-based transfer learning approach to predict the minimum inhibitory concentrations of antimicrobial peptides for Escherichia coli and Staphylococcus aureus. Journal of Chemical Information and Modeling 65, 7 (2025), 3186–3202. [4] Denise B Catacutan, Jeremie Alexander, Autumn Arnold, and Jonathan M Stokes. 2024. Machine learning in preclinical drug discovery. Nature Chemical Biology 20, 8 (2024), 960–973. [5] Tianqi Chen and Carlos Guestrin. 2016. XGBoost: A scalable tree boosting system. In Proceedings of the 22nd acm sigkdd international conference on knowledge discovery and data mining . 785–794. [6] Davide Chicco and Giuseppe Jurman. 2020. The advantages of the Matthews correlation coefficient (MCC) over F1 score and accuracy in binary classification evaluation. BMC genomics 21, 1 (2020), 6. [7] Tim Dettmers, Artidoro Pagnoni, Ari Holtzman, and Luke Zettlemoyer. 2023. QLoRA: Efficient finetuning of quantized LLMs. In Advances in Neural Information Processing Systems , Vol. 36. 10088–10115. [8] Ahmed Elnaggar et al . 2023. Ankh: Optimized protein language model unlocks general-purpose modelling. arXiv:2301.06568. [9] Ahmed Elnaggar, Michael Heinzinger, Christian Dallago, Ghalia Rehawi, Yu Wang, Llion Jones, Tom Gibbs, Tamas Feher, Christoph Angerer, Martin Steinegger, et al . 2022. ProtTrans: Toward understanding the language of life through self-supervised learning. IEEE transactions on pattern analysis and machine intelligence 44, 10 (2022), 7112–7127. 11 AMPBench-MT AR XIV PREPRINT 
+
+[10] ESM Team. 2024. ESM Cambrian: Revealing the mysteries of proteins with unsupervised learning. Evolution-aryScale Website. December 4, 2024. https://evolutionaryscale.ai/blog/esm-cambrian 
+
+[11] Noelia Ferruz, Steffen Schmidt, and Birte Höcker. 2022. ProtGPT2 is a deep unsupervised language model for protein design. Nature communications 13, 1 (2022), 4348. [12] Legana CHW Fingerhut, David J Miller, Jan M Strugnell, Norelle L Daly, and Ira R Cooke. 2020. ampir: an R package for fast genome-wide prediction of antimicrobial peptides. Bioinformatics 36, 21 (2020), 5262–5263. [13] Ulka Gawde, Shuvechha Chakraborty, Faiza Hanif Waghu, Ram Shankar Barai, Ashlesha Khanderkar, Rishikesh Indraguru, Tanmay Shirsat, and Susan Idicula-Thomas. 2023. CAMPR4: a database of natural and synthetic antimicrobial peptides. Nucleic Acids Research 51, D1 (2023), D377–D383. [14] Gemma Team. 2025. Gemma 3 Technical Report. arXiv:2503.19786. [15] Aaron Grattafiori, Abhimanyu Dubey, Abhinav Jauhri, Abhinav Pandey, Abhishek Kadian, Ahmad Al-Dahle, Aiesha Letman, Akhil Mathur, Alan Schelten, Alex Vaughan, et al . 2024. The Llama 3 herd of models. arXiv preprint arXiv:2407.21783 (2024). [16] Daya Guo, Dejian Yang, Haowei Zhang, Junxiao Song, Peiyi Wang, Qihao Zhu, Runxin Xu, Ruoyu Zhang, Shirong Ma, Xiao Bi, et al . 2025. DeepSeek-R1 incentivizes reasoning in LLMs through reinforcement learning. 
+
+Nature 645, 8081 (2025), 633–638. [17] Thomas Hayes et al . 2025. Simulating 500 million years of evolution with a language model. Science 387, 6736 (2025), 850–858. [18] Junjie Huang, Yanchao Xu, Yunfan Xue, Yue Huang, Xu Li, Xiaohui Chen, Yao Xu, Dongxiang Zhang, Peng Zhang, Junbo Zhao, et al . 2023. Identification of potent antimicrobial peptides via a machine-learning pipeline that mines the entire space of peptide sequences. Nature Biomedical Engineering 7, 6 (2023), 797–810. [19] Binyuan Hui, Jian Yang, Zeyu Cui, Jiaxi Yang, Dayiheng Liu, Lei Zhang, Tianyu Liu, Jiajun Zhang, Bowen Yu, Keming Lu, et al. 2024. Qwen2.5-Coder technical report. arXiv preprint arXiv:2409.12186 (2024). [20] Albert Q. Jiang et al. 2023. Mistral 7B. arXiv:2310.06825. [21] Guolin Ke, Qi Meng, Thomas Finley, Taifeng Wang, Wei Chen, Weidong Ma, Qiwei Ye, and Tie-Yan Liu. 2017. LightGBM: A highly efficient gradient boosting decision tree. In Advances in Neural Information Processing Systems , Vol. 30. [22] Thomas N Kipf and Max Welling. 2017. Semi-supervised classification with graph convolutional networks. In 
+
+International Conference on Learning Representations .[23] Anthony Lavertu, Jacques Corbeil, and Pascal Germain. 2026. QMAP: A benchmark for standardized evaluation of antimicrobial peptide MIC and hemolytic activity regression. Scientific Reports (2026). Published online June 3, 2026. [24] Yipin Lei, Xu Wang, Meng Fang, Han Li, Xiang Li, and Jianyang Zeng. 2024. PepGB: facilitating peptide drug discovery via graph neural networks. arXiv preprint arXiv:2401.14665 (2024). [25] Zeming Lin, Halil Akin, Roshan Rao, Brian Hie, Zhongkai Zhu, Wenting Lu, Nikita Smetanin, Robert Verkuil, Ori Kabeli, Yaniv Shmueli, et al . 2023. Evolutionary-scale prediction of atomic-level protein structure with a language model. Science 379, 6637 (2023), 1123–1130. [26] Rajat Kumar Mondal, Debarup Sen, Ankish Arya, and Sintu Kumar Samanta. 2023. Developing anti-microbial peptide database version 1 to provide comprehensive and exhaustive resource of manually curated AMPs. Scientific Reports 13, 1 (2023), 17843. [27] Mohsen Naghavi, Stein Emil Vollset, Kevin S Ikuta, Lucien R Swetschinski, Authia P Gray, Eve E Wool, Gisela Robles Aguilar, Tomislav Mestrovic, Georgia Smith, Chieh Han, et al . 2024. Global burden of bacterial antimicrobial resistance 1990–2021: a systematic analysis with forecasts to 2050. The Lancet 404, 10459 (2024), 1199–1226. [28] Mario Novkovi´ c, Juraj Simuni´ c, Viktor Bojovi´ c, Alessandro Tossi, and Davor Jureti´ c. 2012. DADP: the database of anuran defense peptides. Bioinformatics 28, 10 (2012), 1406–1407. [29] Sebastian Ojeda, Rafael Velasquez, Nicolás Aparicio, Juanita Puentes, Paula Cárdenas, Nicolás Andrade, Gabriel González, Sergio Rincón, Carolina Muñoz-Camargo, and Pablo Arbeláez. 2025. A standardized benchmark for multilabel antimicrobial peptide classification. In Advances in Neural Information Processing Systems , Vol. 38. [30] Stefano P Piotto, Lucia Sessa, Simona Concilio, and Pio Iannelli. 2012. YADAMP: yet another database of antimicrobial peptides. International journal of antimicrobial agents 39, 4 (2012), 346–351. 12 AMPBench-MT AR XIV PREPRINT 
+
+[31] Malak Pirtskhalava, Anthony A Amstrong, Maia Grigolava, Mindia Chubinidze, Evgenia Alimbarashvili, Boris Vishnepolsky, Andrei Gabrielian, Alex Rosenthal, Darrell E Hurt, and Michael Tartakovsky. 2021. DBAASP v3: database of antimicrobial/cytotoxic activity and structure of peptides as a resource for development of new therapeutics. Nucleic acids research 49, D1 (2021), D288–D297. [32] Francois Pognan, Mario Beilmann, Harrie CM Boonen, Andreas Czich, Gordon Dear, Philip Hewitt, Tomas Mow, Teija Oinonen, Adrian Roth, Thomas Steger-Hartmann, et al . 2023. The evolving role of investigative toxicology in the pharmaceutical industry. Nature reviews drug discovery 22, 4 (2023), 317–335. [33] Liudmila Prokhorenkova, Gleb Gusev, Aleksandr Vorobev, Anna Veronika Dorogush, and Andrey Gulin. 2018. CatBoost: Unbiased boosting with categorical features. In Advances in Neural Information Processing Systems ,Vol. 31. [34] Qwen Team. 2024. Qwen2.5 Technical Report. arXiv:2412.15115. [35] Alexander Rives, Joshua Meier, Tom Sercu, Siddharth Goyal, Zeming Lin, Jason Liu, Demi Guo, Myle Ott, C Lawrence Zitnick, Jerry Ma, et al . 2021. Biological structure and function emerge from scaling unsupervised learning to 250 million protein sequences. Proceedings of the national academy of sciences 118, 15 (2021), e2016239118. [36] Guobang Shi, Xinyue Kang, Fanyi Dong, Yanchao Liu, Ning Zhu, Yuxuan Hu, Hanmei Xu, Xingzhen Lao, and Heng Zheng. 2022. DRAMP 3.0: an enhanced comprehensive data repository of antimicrobial peptides. Nucleic acids research 50, D1 (2022), D488–D496. [37] Katarzyna Sidorczuk, Przemysław Gagat, Filip Pietluch, Jakub Kała, Dominik Rafacz, Laura B ˛ akała, Jadwiga Słowik, Rafał Kolenda, Stefan Rödiger, Legana CHW Fingerhut, et al . 2022. Benchmarks in antimicrobial peptide prediction are biased due to the selection of negative data. Briefings in Bioinformatics 23, 5 (2022), bbac343. [38] Sandeep Singh, Kumardeep Chaudhary, Sandeep Kumar Dhanda, Sherry Bhalla, Salman Sadullah Usmani, Ankur Gautam, Abhishek Tuknait, Piyush Agrawal, Deepika Mathur, and Gajendra PS Raghava. 2016. SATPdb: a database of structurally annotated therapeutic peptides. Nucleic acids research 44, D1 (2016), D1119–D1126. [39] Martin Steinegger and Johannes Söding. 2017. MMseqs2 enables sensitive protein sequence searching for the analysis of massive data sets. Nature biotechnology 35, 11 (2017), 1026–1028. [40] Jin Su, Chenchen Han, Yuyang Zhou, Junjie Shan, Xibin Zhou, and Fajie Yuan. 2024. SaProt: Protein language modeling with structure-aware vocabulary. In International Conference on Learning Representations .[41] Zhelyazko Terziyski, Margarita Terziyska, Ivelina Deseva, Stanka Hadzhikoleva, Albert Krastanov, Dasha Mihaylova, and Emil Hadzhikolev. 2023. PepLab platform: Database and software tools for analysis of food-derived bioactive peptides. Applied Sciences 13, 2 (2023), 961. [42] The UniProt Consortium. 2025. UniProt: the universal protein knowledgebase in 2025. Nucleic acids research 53, D1 (2025), D609–D617. [43] Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N Gomez, Łukasz Kaiser, and Illia Polosukhin. 2017. Attention is all you need. In Advances in Neural Information Processing Systems , Vol. 30. [44] Petar Veliˇ ckovi´ c, Guillem Cucurull, Arantxa Casanova, Adriana Romero, Pietro Liò, and Yoshua Bengio. 2018. Graph attention networks. In International Conference on Learning Representations .[45] Daniel Veltri, Uday Kamath, and Amarda Shehu. 2018. Deep learning improves antimicrobial peptide recognition. 
+
+Bioinformatics 34, 16 (2018), 2740–2747. [46] Fangping Wan, Felix Wong, James J Collins, and Cesar de la Fuente-Nunez. 2024. Machine learning for antimicrobial peptide identification and design. Nature Reviews Bioengineering 2, 5 (2024), 392–407. [47] Guangshun Wang, Cindy Schmidt, Xia Li, and Zhe Wang. 2026. APD6: the antimicrobial peptide database is expanded to promote research and development by deploying an unprecedented information pipeline. Nucleic Acids Research 54, D1 (2026), D363–D374. [48] Hanchen Wang, Tianfan Fu, Yuanqi Du, Wenhao Gao, Kexin Huang, Ziming Liu, Payal Chandak, Shengchao Liu, Peter Van Katwyk, Andreea Deac, et al . 2023. Scientific discovery in the age of artificial intelligence. Nature 620, 7972 (2023), 47–60. [49] Jacob Witten and Zack Witten. 2019. Deep learning regression model for antimicrobial peptide design. BioRxiv 
+
+(2019), 692681. [50] Felix Wong, Erica J Zheng, Jacqueline A Valeri, Nina M Donghia, Melis N Anahtar, Satotaka Omori, Alicia Li, Andres Cubillos-Ruiz, Aarti Krishnan, Wengong Jin, et al . 2024. Discovery of a structural class of antibiotics with explainable deep learning. Nature 626, 7997 (2024), 177–185. 13 AMPBench-MT AR XIV PREPRINT 
+
+[51] Keyulu Xu, Weihua Hu, Jure Leskovec, and Stefanie Jegelka. 2019. How powerful are graph neural networks?. In 
+
+International Conference on Learning Representations .[52] Ke Yan, Meijing Li, Shutao Chen, Tianyi Liu, Jing Hao, Bin Liu, and Zhen Li. 2026. PepLM-GNN: A graph neural network framework leveraging pre-trained language models for peptide-protein binding prediction. PLOS Computational Biology 22, 3 (2026), e1014084. [53] An Yang, Anfeng Li, Baosong Yang, Beichen Zhang, Binyuan Hui, Bo Zheng, Bowen Yu, Chang Gao, Chengen Huang, Chenxu Lv, et al. 2025. Qwen3 technical report. arXiv preprint arXiv:2505.09388 (2025). [54] Lantian Yao, Jiahui Guan, Peilin Xie, Chia-Ru Chung, Zhihao Zhao, Danhong Dong, Yilin Guo, Wenyang Zhang, Junyang Deng, Yuxuan Pang, et al . 2025. dbAMP 3.0: updated resource of antimicrobial activity and structural annotation of peptides in the post-pandemic era. Nucleic acids research 53, D1 (2025), D364–D376. [55] Jiahui Zhang, Rouyi Wang, Kuangqi Zhou, Tianshu Xiao, Lingyan Zhu, Yaosen Min, and Yang Wang. 2026. PepBenchmark: A standardized benchmark for peptide machine learning. In International Conference on Learning Representations .[56] Kang Zhang, Xin Yang, Yifei Wang, Yunfang Yu, Niu Huang, Gen Li, Xiaokun Li, Joseph C Wu, and Shengyong Yang. 2025. Artificial intelligence in drug development. Nature medicine 31, 1 (2025), 45–59. 14 AMPBench-MT AR XIV PREPRINT 
+
+Appendix. The appendix begins with the reproducibility and diagnostic overview in Table 4. Complete model-level results are then shown as data figures: Fig. 6 covers binary AMP recognition, Fig. 7 covers species-conditioned MIC regression, strict/consensus spectrum, and low-toxicity classification, and Fig. 8 covers HC50, selectivity, and joint multitask results. All reported model rows and metric values are retained in these figures; the cell shading is a within-metric visual aid and does not replace the printed values. Table 4: Appendix reproducibility, protocol, and diagnostic overview. 
+
+Evaluation inventory. 
+
+Category Evaluations Binary AMP 38 MIC 37 Spectrum 19 Spectrum consensus 14 Low toxicity 19 HC50 hemolysis 17 Selectivity 15 Joint multitask 2Total endpoint-specific model evaluations 161 
+
+Classification label counts. 
+
+Task All + All – Test + Test – Binary 30,473 30,473 4,570 4,571 Spectrum 36,625 397 7,578 30 Consensus 29,651 397 6,118 24 Low tox. 3,754 3,389 713 758 
+
+Public release. 
+
+Item Included files Public URL https://huggingface.co/datasets/ZihengZhou06/AMPBench-MT 
+
+Release 2026-07-08 License Research and Review Use License Data tables task CSVs, split CSVs, complete tables ( all.csv )Metadata/validation schema, task overview, split summary, validation report Integrity MANIFEST and SHA256 checksums 
+
+Model protocol and MIC species encoding. 
+
+Family Sequence/species input Prediction head or evaluator Protocol note Statistical Train sequence mean, species mean, then global mean Mean or backoff predictor MIC reference row; no learned species channel Classical ML Peptide features plus species one-hot, species mean, and species count priors Linear, kernel, tree, or boosting heads Unseen-species one-hot inputs are zero, with global or zero numeric priors Small neural Amino-acid tokens plus train-fitted species embedding CNN, MLP, Tiny Transformer, or multi-head shared encoder Lightweight controlled baselines PLM embeddings Frozen protein-LM sequence embedding plus train-fitted species embedding and numeric row features Shallow classifier or regressor MIC PLM heads map unseen species to a reserved unknown-species index GNN Residue graph plus a training-split species index GCN/GAT/GIN-style message passing MIC-only single-seed comparators LLM/QLoRA Prompt serializes peptide sequence and target species string QLoRA adapter or zero-shot parser Strict numeric parsing is applied, with failures reported as diagnostics External AMP tools Publicly available sequence-only AMP-specific tools Tool score or provided predictor Binary historical baselines; no MIC species channel 15 AMPBench-MT AR XIV PREPRINT 
+
+Post-hoc diagnostic checks. 
+
+Check Scope Diagnostic result Boundary Endpoint transfer Models matched by reported name MIC: n = 10 , Spearman ρ = −0.04 for binary MCC vs. −MAE ; spectrum: n = 4 with endpoint MCC fixed at 0; low tox.: n = 4 , ρ = 0 .60 
+
+Diagnostic only; small paired sets Split provenance Released task splits Sequence/cluster train–test overlap is 0 for all tasks; source databases are shared; 573/868 MIC test species occur in training, with 551 shared PubMed IDs Residual-risk diagnostic; not held-out validation MIC unit sensitivity Main vs. direct-unit MIC tables Direct-unit MIC sensitivity table has 65,658 pairs; 65,640 are shared with the main MIC table Sensitivity table only; no model-evaluation split Spectrum threshold CatBoost strict/consensus At threshold 0.05, all test rows are predicted positive: strict TP/FP/TN/FN = 7578/30/0/0; consensus = 6118/24/0/0 Explains MCC/Bal. Acc. failure MIC bootstrap 1000 test-set resamples ESM-C 300M: 0.504 [0.496, 0.512]; PepLM-GNN: 0.516 [0.508, 0.524]; CatBoost: 0.521 [0.513, 0.529] Single-run prediction bootstrap 
+
+Note. The overview records the released task inventory, release contents, label counts, model-family input conventions, and residual-risk diagnostics. In the class-count block, + denotes label 1 and – denotes label 0; for low toxicity, label 1 means low toxicity. Diagnostic rows use retained metric/prediction files, split files, or release files as indicated. Endpoint-transfer correlations match model rows by reported name across endpoints; they are not controlled paired experiments. Provenance rows are residual-risk diagnostics rather than held-out validation, and MIC intervals are single-run prediction bootstraps rather than multi-seed uncertainty. Complete model-level results are shown in Figs. 6–8. 16 AMPBench-MT AR XIV PREPRINT AUROC 
+
+↑ AUPRC 
+
+↑ MCC 
+
+↑ Bal. acc. 
+
+↑ F1 
+
+↑
+
+Brier 
+
+↓
+
+Qwen3-4B (QLoRA) 
+
+ESM-1b 650M (embedding, seed 43) 
+
+DeepSeek-R1-Distill-Llama-8B (QLoRA) 
+
+Llama-3.2-3B-Instruct (QLoRA) 
+
+Gemma-3-4B-it (QLoRA) 
+
+Qwen3-8B (QLoRA) 
+
+Qwen2.5-7B-Instruct (QLoRA) 
+
+ProtGPT2 (embedding, seed 42) 
+
+Qwen2.5-3B-Instruct (QLoRA) 
+
+Mistral-7B-Instruct-v0.2 (QLoRA) 
+
+Qwen2.5-1.5B-Instruct (QLoRA) 
+
+Qwen2.5-0.5B-Instruct (QLoRA) 
+
+ProtT5-XL-BFD (embedding, seed 42) 
+
+Qwen3-1.7B (QLoRA) 
+
+ProtBert-UniRef100 (embedding, seed 42) 
+
+ESM-1b 650M (embedding, seed 44) 
+
+Qwen3-0.6B (QLoRA) 
+
+ESM-1b 650M (embedding, seed 42) 
+
+Llama-3.2-1B-Instruct (QLoRA) 
+
+0.965 0.973 0.862 0.930 0.928 0.068 
+
+0.970 0.974 0.856 0.927 0.925 0.065 
+
+0.972 0.975 0.853 0.926 0.926 0.066 
+
+0.967 0.974 0.848 0.924 0.922 0.071 
+
+0.969 0.975 0.846 0.923 0.922 0.065 
+
+0.965 0.972 0.843 0.921 0.920 0.072 
+
+0.966 0.973 0.841 0.920 0.918 0.072 
+
+0.968 0.966 0.839 0.919 0.920 0.075 
+
+0.962 0.969 0.837 0.918 0.915 0.080 
+
+0.964 0.971 0.831 0.915 0.912 0.079 
+
+0.964 0.970 0.831 0.915 0.914 0.076 
+
+0.959 0.966 0.829 0.914 0.913 0.079 
+
+0.959 0.954 0.828 0.914 0.914 0.082 
+
+0.962 0.969 0.825 0.912 0.911 0.077 
+
+0.962 0.969 0.823 0.910 0.907 0.073 
+
+0.963 0.963 0.822 0.911 0.911 0.085 
+
+0.964 0.971 0.822 0.911 0.910 0.075 
+
+0.969 0.970 0.821 0.911 0.911 0.075 
+
+0.964 0.969 0.821 0.910 0.910 0.074 
+
+a Ranks 1-19 by MCC 
+
+AUROC 
+
+↑ AUPRC 
+
+↑ MCC 
+
+↑ Bal. acc. 
+
+↑ F1 
+
+↑
+
+Brier 
+
+↓
+
+Llama-3.1-8B-Instruct (QLoRA) 
+
+Phi-4-mini-instruct (QLoRA) 
+
+DeepSeek-R1-Distill-Qwen-7B (QLoRA) 
+
+Phi-3.5-mini-instruct (QLoRA) 
+
+ProtBert-UniRef100 (embedding, seed 44) 
+
+ProtBert-UniRef100 (embedding, seed 43) 
+
+ampir (external tool) 
+
+AMPScanner v2 (external tool) 
+
+Mistral-7B-Instruct-v0.3 (QLoRA) 
+
+Qwen2.5-7B-Instruct (zero-shot) 
+
+Gemma-3-4B-it (zero-shot) 
+
+Mistral-7B-Instruct-v0.2 (zero-shot) 
+
+Llama-3.1-8B-Instruct (zero-shot) 
+
+Qwen2.5-1.5B-Instruct (zero-shot) 
+
+Phi-3.5-mini-instruct (zero-shot) 
+
+Llama-3.2-1B-Instruct (zero-shot) 
+
+Llama-3.2-3B-Instruct (zero-shot) 
+
+Qwen2.5-3B-Instruct (zero-shot) 
+
+Qwen2.5-0.5B-Instruct (zero-shot) 
+
+0.966 0.971 0.820 0.910 0.910 0.072 
+
+0.962 0.967 0.820 0.910 0.910 0.077 
+
+0.963 0.969 0.818 0.909 0.909 0.079 
+
+0.956 0.964 0.798 0.899 0.896 0.098 
+
+0.949 0.951 0.781 0.890 0.890 0.098 
+
+0.956 0.961 0.775 0.887 0.889 0.095 
+
+0.936 0.945 0.768 0.883 0.878 0.103 
+
+0.918 0.915 0.695 0.846 0.853 0.142 
+
+0.880 0.859 0.654 0.827 0.824 0.137 
+
+0.581 0.565 0.127 0.557 0.440 0.489 
+
+0.584 0.588 0.113 0.531 0.196 0.500 
+
+0.583 0.549 0.113 0.553 0.621 0.495 
+
+0.556 0.571 0.112 0.539 0.276 0.379 
+
+0.524 0.492 0.105 0.545 0.635 0.287 
+
+0.518 0.504 0.050 0.522 0.616 0.290 
+
+0.497 0.496 0.012 0.501 0.665 0.282 
+
+0.468 0.467 -0.015 0.498 0.659 0.476 
+
+0.474 0.473 -0.021 0.492 0.613 0.499 
+
+0.404 0.434 -0.031 0.498 0.003 0.322 
+
+b Ranks 20-38 by MCC 
+
+Figure 6: Complete binary AMP/non-AMP classification results. All 38 reported model rows are retained and ordered by MCC, with panels split only for readability. Each cell prints the exact test metric; arrows indicate the preferred direction. Family markers are blue for PLMs, coral for LLMs, and teal for external AMP tools. Higher AUROC, AUPRC, MCC, balanced accuracy, and F1 are better, whereas lower Brier score is better. 17 AMPBench-MT AR XIV PREPRINT MAE 
+
+↓
+
+RMSE 
+
+↓
+
+R2
+
+↑ Pear. 
+
+↑ Spear. 
+
+↑ Rank acc. 
+
+↑
+
+ESM-C 300M 
+
+ESM-2 150M 
+
+ESM-2 650M 
+
+SaProt-650M 
+
+ProtT5-XL-UniRef50 
+
+ESM-2 8M 
+
+ESM-C 600M 
+
+PepLM-GNN* 
+
+CatBoost 
+
+XGBoost 
+
+ESM-2 35M 
+
+ESM-2 3B 
+
+ProtBert-BFD 
+
+ESM-C 6B 
+
+CNN Peptide Regression 
+
+Tiny Transformer Peptide Regression 
+
+ESM3-open-small 
+
+Ankh-base 
+
+Ridge Regression 
+
+0.504 0.667 0.286 0.550 0.562 0.700 
+
+0.506 0.663 0.295 0.558 0.550 0.693 
+
+0.509 0.666 0.288 0.555 0.545 0.687 
+
+0.510 0.670 0.280 0.542 0.542 0.684 
+
+0.510 0.669 0.282 0.532 0.545 0.698 
+
+0.511 0.671 0.278 0.536 0.541 0.683 
+
+0.513 0.681 0.256 0.543 0.562 0.696 
+
+0.516 0.682 0.255 0.525 0.521 0.678 
+
+0.521 0.680 0.259 0.518 0.514 0.681 
+
+0.522 0.678 0.263 0.519 0.512 0.680 
+
+0.523 0.685 0.246 0.523 0.530 0.685 
+
+0.524 0.689 0.239 0.524 0.516 0.680 
+
+0.527 0.686 0.244 0.509 0.515 0.670 
+
+0.529 0.685 0.248 0.499 0.488 0.667 
+
+0.533 0.690 0.237 0.496 0.483 0.654 
+
+0.534 0.686 0.244 0.501 0.502 0.670 
+
+0.534 0.689 0.239 0.517 0.493 0.669 
+
+0.540 0.726 0.154 0.483 0.517 0.673 
+
+0.555 0.716 0.177 0.431 0.441 0.641 
+
+a Ranks 1-19 by MAE 
+
+MAE 
+
+↓
+
+RMSE 
+
+↓
+
+R2
+
+↑ Pear. 
+
+↑ Spear. 
+
+↑ Rank acc. 
+
+↑
+
+Residue-chain GCN* 
+
+Ankh-large 
+
+PepGB GAT* 
+
+Qwen2.5-Coder-1.5B-Instruct 
+
+Residue-chain GIN* 
+
+Qwen2.5-1.5B-Instruct 
+
+Qwen3-0.6B 
+
+Qwen2.5-3B-Instruct 
+
+Qwen3-8B 
+
+Mean Backoff 
+
+Qwen2.5-0.5B-Instruct 
+
+Mistral-7B-Instruct-v0.3 
+
+Llama-3.1-8B-Instruct 
+
+Qwen2.5-7B-Instruct 
+
+DeepSeek-R1-Distill-Qwen-7B 
+
+Qwen3-1.7B 
+
+Qwen3-4B 
+
+DeepSeek-R1-Distill-Qwen-1.5B 
+
+0.558 0.722 0.165 0.471 0.470 0.652 
+
+0.568 0.751 0.095 0.377 0.452 0.647 
+
+0.576 0.739 0.123 0.393 0.385 0.622 
+
+0.592 0.764 0.063 0.402 0.386 0.608 
+
+0.604 0.782 0.019 0.455 0.452 0.645 
+
+0.608 0.788 0.003 0.351 0.319 0.596 
+
+0.608 0.778 0.029 0.373 0.343 0.602 
+
+0.612 0.799 -0.023 0.401 0.389 0.627 
+
+0.612 0.801 -0.028 0.382 0.377 0.613 
+
+0.613 0.782 0.018 0.214 0.220 0.500 
+
+0.629 0.811 -0.054 0.367 0.361 0.614 
+
+0.633 0.807 -0.046 0.077 0.066 0.505 
+
+0.635 0.826 -0.096 0.317 0.306 0.588 
+
+0.636 0.828 -0.101 0.356 0.341 0.604 
+
+0.640 0.837 -0.123 0.381 0.371 0.611 
+
+0.652 0.839 -0.130 0.364 0.347 0.605 
+
+0.661 0.862 -0.193 0.389 0.390 0.619 
+
+0.666 0.870 -0.214 0.348 0.338 0.612 
+
+b Ranks 20-37 by MAE AUROC 
+
+↑ AUPRC 
+
+↑ MCC 
+
+↑ Bal. acc. 
+
+↑ F1 
+
+↑
+
+Brier 
+
+↓
+
+Ankh-large 
+
+CNN Peptide 
+
+CatBoost 
+
+ESM-2 150M 
+
+ESM-2 3B 
+
+ESM-2 650M 
+
+ESM-C 600M 
+
+Llama-3.1-8B-Instruct 
+
+Mean Backoff 
+
+Qwen3-0.6B 
+
+Qwen3-4B 
+
+Qwen3-8B 
+
+LightGBM 
+
+ESM-C 300M 
+
+Ankh-base 
+
+Tiny Transformer 
+
+ProtT5-XL-UniRef50 
+
+ESM-2 8M 
+
+Ridge Regression 
+
+0.663 0.998 0.000 0.500 0.998 0.062 
+
+0.707 0.998 0.000 0.500 0.998 0.103 
+
+0.810 0.999 0.000 0.500 0.998 0.043 
+
+0.704 0.998 0.000 0.500 0.998 0.088 
+
+0.754 0.999 0.000 0.500 0.998 0.078 
+
+0.713 0.998 0.000 0.500 0.998 0.074 
+
+0.762 0.999 0.000 0.500 0.998 0.047 
+
+0.502 0.996 0.000 0.500 0.998 0.004 
+
+0.643 0.997 0.000 0.500 0.998 0.004 
+
+0.568 0.996 0.000 0.500 0.998 0.004 
+
+0.551 0.996 0.000 0.500 0.998 0.004 
+
+0.505 0.996 0.000 0.500 0.998 0.004 
+
+0.741 0.998 0.000 0.500 0.998 0.005 
+
+0.759 0.999 -0.001 0.500 0.998 0.078 
+
+0.676 0.998 -0.001 0.500 0.998 0.062 
+
+0.797 0.999 -0.001 0.500 0.998 0.051 
+
+0.714 0.998 -0.001 0.500 0.998 0.057 
+
+0.742 0.998 -0.002 0.499 0.997 0.064 
+
+0.595 0.997 -0.006 0.496 0.994 0.027 
+
+a Strict spectrum 
+
+AUROC 
+
+↑ AUPRC 
+
+↑ MCC 
+
+↑ Bal. acc. 
+
+↑ F1 
+
+↑
+
+Brier 
+
+↓
+
+Ankh-base 
+
+CatBoost 
+
+ESM-2 150M 
+
+ESM-C 300M 
+
+ESM-C 600M 
+
+Mean Backoff 
+
+ProtT5-XL-UniRef50 
+
+Qwen3-0.6B 
+
+Qwen3-4B 
+
+LightGBM 
+
+ESM-2 8M 
+
+ESM-2 650M 
+
+CNN Peptide 
+
+Ridge Regression 
+
+0.762 0.998 0.000 0.500 0.998 0.075 
+
+0.810 0.999 0.000 0.500 0.998 0.033 
+
+0.743 0.998 0.000 0.500 0.998 0.075 
+
+0.817 0.999 0.000 0.500 0.998 0.036 
+
+0.807 0.999 0.000 0.500 0.998 0.040 
+
+0.639 0.997 0.000 0.500 0.998 0.004 
+
+0.806 0.999 0.000 0.500 0.998 0.045 
+
+0.638 0.997 0.000 0.500 0.998 0.004 
+
+0.528 0.997 0.000 0.500 0.998 0.004 
+
+0.771 0.999 0.000 0.500 0.998 0.004 
+
+0.743 0.998 -0.001 0.500 0.998 0.051 
+
+0.798 0.999 -0.001 0.500 0.998 0.102 
+
+0.840 0.999 -0.002 0.500 0.998 0.116 
+
+0.654 0.998 -0.006 0.495 0.993 0.025 
+
+b Consensus spectrum 
+
+AUROC 
+
+↑ AUPRC 
+
+↑ MCC 
+
+↑ Bal. acc. 
+
+↑ F1 
+
+↑
+
+Brier 
+
+↓
+
+ProtT5-XL-UniRef50 
+
+ESM-2 150M 
+
+ESM-2 650M 
+
+ESM-C 600M 
+
+ESM-C 300M 
+
+CatBoost 
+
+ESM-2 3B 
+
+ESM-2 8M 
+
+CNN Peptide 
+
+Qwen3-8B 
+
+Tiny Transformer 
+
+LightGBM 
+
+Ridge Regression 
+
+Ankh-large 
+
+Qwen3-4B 
+
+Ankh-base 
+
+Llama-3.1-8B-Instruct 
+
+Mean Backoff 
+
+Qwen3-0.6B 
+
+0.826 0.823 0.534 0.767 0.763 0.184 
+
+0.810 0.808 0.488 0.743 0.729 0.182 
+
+0.818 0.796 0.469 0.731 0.747 0.181 
+
+0.815 0.767 0.468 0.733 0.742 0.178 
+
+0.814 0.766 0.467 0.733 0.737 0.186 
+
+0.810 0.787 0.437 0.709 0.739 0.180 
+
+0.788 0.746 0.433 0.716 0.719 0.200 
+
+0.785 0.757 0.418 0.707 0.721 0.200 
+
+0.792 0.761 0.407 0.696 0.725 0.192 
+
+0.784 0.759 0.393 0.690 0.717 0.190 
+
+0.778 0.747 0.391 0.692 0.712 0.196 
+
+0.817 0.798 0.377 0.663 0.721 0.175 
+
+0.731 0.707 0.294 0.635 0.686 0.221 
+
+0.755 0.727 0.285 0.625 0.688 0.222 
+
+0.733 0.684 0.274 0.621 0.683 0.211 
+
+0.722 0.709 0.271 0.633 0.658 0.212 
+
+0.637 0.590 0.123 0.551 0.638 0.243 
+
+0.547 0.512 0.123 0.551 0.638 0.260 
+
+0.582 0.544 0.000 0.500 0.653 0.250 
+
+c Low-toxicity classification 
+
+PLM LLM Tree/linear Small neural Statistical 
+
+Figure 7: Complete species-conditioned MIC, spectrum, and low-toxicity results. The upper matrix retains all 37 MIC rows ordered by MAE; its family markers are blue (PLM), coral (LLM), purple (GNN), green (tree/linear), ochre (small neural), and gray (statistical). The lower matrix retains all reported strict-spectrum, consensus-spectrum, and low-toxicity rows and includes its family key. Cells print exact test metrics and arrows indicate the preferred direction. For MIC, lower MAE/RMSE and higher R2, correlations, and ranking accuracy are preferred. Asterisks mark GNN rows adapted from the named graph designs rather than direct reproductions of their original tasks. Spectrum is a positive-evidence audit, so PR-oriented metrics are shown alongside thresholded and calibration-oriented metrics. 18 AMPBench-MT AR XIV PREPRINT MAE 
+
+↓
+
+RMSE 
+
+↓
+
+R2
+
+↑ Pear. 
+
+↑ Spear. 
+
+↑
+
+ESM-2 650M 
+
+ProtT5-XL-UniRef50 
+
+LightGBM 
+
+ESM-2 150M 
+
+ESM-C 300M 
+
+CatBoost 
+
+ESM-C 600M 
+
+ESM-2 8M 
+
+CNN Peptide 
+
+Ankh-base 
+
+Ankh-large 
+
+Tiny Transformer 
+
+Mean Backoff 
+
+Qwen3-0.6B 
+
+Qwen3-8B 
+
+Qwen3-4B* 
+
+Ridge Regression 
+
+0.433 0.587 0.309 0.576 0.553 
+
+0.454 0.627 0.213 0.490 0.483 
+
+0.465 0.645 0.165 0.412 0.406 
+
+0.470 0.627 0.213 0.494 0.460 
+
+0.473 0.646 0.164 0.421 0.426 
+
+0.473 0.640 0.180 0.441 0.398 
+
+0.483 0.666 0.111 0.395 0.441 
+
+0.487 0.685 0.060 0.356 0.409 
+
+0.496 0.676 0.085 0.397 0.330 
+
+0.498 0.678 0.077 0.334 0.373 
+
+0.502 0.684 0.062 0.330 0.369 
+
+0.507 0.683 0.064 0.404 0.401 
+
+0.515 0.702 0.013 0.157 0.123 
+
+0.520 0.715 -0.026 0.162 0.182 
+
+0.531 0.725 -0.054 0.037 0.071 
+
+0.531 0.725 -0.054 N/A N/A 
+
+0.707 0.954 -0.825 0.177 0.224 
+
+a HC50 hemolysis 
+
+MAE 
+
+↓
+
+RMSE 
+
+↓
+
+R2
+
+↑ Pear. 
+
+↑ Spear. 
+
+↑
+
+ESM-C 600M 
+
+ESM-2 8M 
+
+ESM-2 150M 
+
+LightGBM 
+
+ProtT5-XL-UniRef50 
+
+Ankh-base 
+
+CatBoost 
+
+ESM-C 300M 
+
+ESM-2 650M 
+
+CNN Peptide 
+
+Qwen3-4B 
+
+Qwen3-0.6B 
+
+Mean Backoff 
+
+Tiny Transformer 
+
+Ridge Regression 
+
+0.621 0.822 0.077 0.389 0.423 
+
+0.624 0.813 0.097 0.360 0.369 
+
+0.638 0.826 0.068 0.359 0.393 
+
+0.640 0.844 0.026 0.246 0.257 
+
+0.642 0.825 0.069 0.329 0.351 
+
+0.642 0.835 0.046 0.331 0.357 
+
+0.642 0.831 0.056 0.256 0.267 
+
+0.648 0.851 0.010 0.315 0.356 
+
+0.651 0.848 0.019 0.312 0.338 
+
+0.656 0.829 0.062 0.339 0.350 
+
+0.662 0.833 0.052 0.289 0.284 
+
+0.665 0.854 0.003 0.230 0.238 
+
+0.676 0.863 -0.019 0.203 0.225 
+
+0.684 0.869 -0.032 0.260 0.266 
+
+1.131 1.567 -2.353 0.094 0.140 
+
+b Selectivity 
+
+MAE 
+
+↓
+
+RMSE 
+
+↓
+
+R2
+
+↑ Spear. 
+
+↑
+
+Shared CNN multi-head / MIC 
+
+Shared CNN multi-head / HC50 hemolysis 
+
+Shared Tiny Transformer multi-head / MIC 
+
+Shared Tiny Transformer multi-head / HC50 hemolysis 
+
+0.569 0.743 0.100 0.321 
+
+0.546 0.711 -0.066 0.359 
+
+0.561 0.730 0.132 0.404 
+
+0.499 0.671 0.049 0.441 
+
+c
+
+Joint multitask: regression 
+
+AUROC 
+
+↑ AUPRC 
+
+↑ MCC 
+
+↑ Bal. acc. 
+
+↑
+
+Brier 
+
+↓
+
+Shared CNN multi-head / Spectrum 
+
+Shared CNN multi-head / Low toxicity 
+
+Shared Tiny Transformer multi-head / Spectrum 
+
+Shared Tiny Transformer multi-head / Low toxicity 
+
+0.841 0.997 0.127 0.516 0.155 
+
+0.814 0.828 0.444 0.701 0.184 
+
+0.875 0.998 0.000 0.500 0.279 
+
+0.812 0.815 0.444 0.713 0.182 
+
+d
+
+Joint multitask: classification 
+
+PLM LLM Tree/linear Small neural Statistical 
+
+Figure 8: Complete HC50, selectivity, and joint multitask results. Panel (a) gives HC50 hemolysis regression, panel (b) gives selectivity regression, and panels (c,d) give the joint multitask regression and classification rows. All reported rows are retained for each endpoint. Each cell prints the exact test metric, arrows indicate the preferred direction, and the colored square identifies the model family. The asterisk marks the constant-prediction Qwen3-4B HC50 row; its Pearson and Spearman values are N/A because the prediction vector is constant. Other N/A cells indicate metrics not reported or not applicable to that endpoint. 19

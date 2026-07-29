@@ -41,17 +41,17 @@
 <section class="dpr-home-dashboard-card dpr-home-report-card">
   <div class="dpr-home-dashboard-header">
     <div>
-      <span class="dpr-home-dashboard-kicker">2026-07-28</span>
+      <span class="dpr-home-dashboard-kicker">2026-07-29</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">共 12 篇</strong>
+    <strong class="dpr-home-dashboard-count">共 13 篇</strong>
   </div>
   <dl class="dpr-home-dashboard-stats">
     <div class="dpr-home-dashboard-stat"><dt>累计更新</dt><dd>1 次</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>6</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>6</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>5</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>8</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-07-28 22:53:33 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-07-29 22:34:00 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -62,9 +62,7 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>今日精选12篇，聚焦AI驱动化学实验与催化剂逆向设计，两篇高分论文分别测试LLM在机器人化学实验室的鲁棒性及用扩散Transformer实现催化剂生成设计。</p>
-<p>强烈推荐《Stress-testing large language model agents》和《Catalyst Diffusion Transformer》，前者揭示了AI代理在真实实验中的脆弱性，后者开创了催化剂结构的生成式逆设计新范式。</p>
-<p>普通读者可关注速读中的《CP2K》（多尺度模拟工具）和《MS-GPT》（质谱解析新方法），拓展AI+化学的实用视野。</p>
+<p>今日13篇论文重点精读E(3)-等变图神经网络框架（9.0分）与多组分盐类机器学习势（8.0分）。最值得看的方向：MANDALA的观测引导电子结构算符学习，以及ML势预测钠钾氯化物热物性与相行为。普通读者可速读可靠性感知分子嗅觉表征与零样本药物表示学习等方向。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -73,12 +71,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">精读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">6 篇</strong>
+    <strong class="dpr-home-dashboard-count">5 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Stress-testing large language model agents in a robotic chemistry laboratory">Stress-testing large language model agents in a robotic chemistry laboratory</span></li><li><span class="dpr-home-dashboard-paper-title" title="Catalyst Diffusion Transformer: Generative Inverse Design of Heterogeneous Catalysts">Catalyst Diffusion Transformer: Generative Inverse Design of Heterogeneous Catalysts</span></li><li><span class="dpr-home-dashboard-paper-title" title="MEGA-CL: A Molecular Foundation Model for Generalizable ADMET Prediction through Graph External Attention and Contrastive Learning">MEGA-CL: A Molecular Foundation Model for Generalizable ADMET Prediction through Graph External Attention and Contrastive Learning</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="MANDALA: An E(3)-Equivariant Graph Neural Network Framework for Learning Electronic-Structure Operators with Observable Guidance">MANDALA: An E(3)-Equivariant Graph Neural Network Framework for Learning Electronic-Structure Operators with Observable Guidance</span></li><li><span class="dpr-home-dashboard-paper-title" title="Machine-Learning Potentials for sodium-potassium chloride mixtures: Predicting thermophysical properties and phase behavior of multicomponent salts">Machine-Learning Potentials for sodium-potassium chloride mixtures: Predicting thermophysical properties and phase behavior of multicomponent salts</span></li><li><span class="dpr-home-dashboard-paper-title" title="Variational kinetics: elementary reaction kinetics via conic optimisation">Variational kinetics: elementary reaction kinetics via conic optimisation</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>6</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>5</strong></span></div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-skim-card">
   <div class="dpr-home-dashboard-header">
@@ -86,12 +84,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">速读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">6 篇</strong>
+    <strong class="dpr-home-dashboard-count">8 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="CP2K: An electronic structure and molecular dynamics software package - Dynamics, Transport, and Spectroscopic Response">CP2K: An electronic structure and molecular dynamics software package - Dynamics, Transport, and Spectroscopic Response</span></li><li><span class="dpr-home-dashboard-paper-title" title="Transfer Learning Architectures for Scalable Multi-Fidelity Bayesian Optimization">Transfer Learning Architectures for Scalable Multi-Fidelity Bayesian Optimization</span></li><li><span class="dpr-home-dashboard-paper-title" title="MS-GPT: Rethinking MS/MS De Novo Structure Elucidation as Spectrum-Induced Posterior Querying of a Molecule-Language Model">MS-GPT: Rethinking MS/MS De Novo Structure Elucidation as Spectrum-Induced Posterior Querying of a Molecule-Language Model</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="An Ontology for Machine Learning Interatomic Potentials">An Ontology for Machine Learning Interatomic Potentials</span></li><li><span class="dpr-home-dashboard-paper-title" title="Beyond Predictive Accuracy: A Reliability-Aware Audit of Molecular Representations for Human Olfaction">Beyond Predictive Accuracy: A Reliability-Aware Audit of Molecular Representations for Human Olfaction</span></li><li><span class="dpr-home-dashboard-paper-title" title="From Cellular Responses to Pharmacological Domains: Multimodal Zero-Shot Drug Representation Learning">From Cellular Responses to Pharmacological Domains: Multimodal Zero-Shot Drug Representation Learning</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>6</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>8</strong></span></div>
 </section>
 </div>
 

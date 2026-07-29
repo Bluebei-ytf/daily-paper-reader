@@ -1,0 +1,2815 @@
+Title: Variational kinetics: elementary reaction kinetics via conic optimisation
+
+URL Source: https://arxiv.org/pdf/2607.25217v1
+
+Published Time: Wed, 29 Jul 2026 00:31:29 GMT
+
+Number of Pages: 54
+
+Markdown Content:
+# Variational kinetics: elementary reaction kinetics via conic optimisation 
+
+## Ronan M.T. Fleming 1,2,3 ∗
+
+## , Ines Thiele 1,2,4,5 
+
+> 1
+
+Digital Metabolic Twin Centre, 2School of Medicine, 3Institute for Clinical Trials, 
+
+> 4
+
+School of Microbiology, 5Ryan Institute, University of Galway, University Road, Galway, Ireland, 
+
+Abstract 
+
+Genome-scale modelling methods primarily predict reaction fluxes, whereas established high throughput experimental technologies primarily measure molecular species concentrations. This apparently paradoxical situation has arisen because implementing the nonlinear constraints that represent reaction kinetic rate equations is challenging without resorting to convenient yet inaccurate approximations or to expansions that are valid only near a reference state. We present a mathematically and computationally tractable solution to this problem. First, we introduce a mathematical reformulation of established knowledge of metabolic reactions and reaction kinetics in matrix–vector notation. We then present variational kinetics , a novel approach that satisfies steady state reaction kinetics at genome scale by exponential conic optimisation. The nonlinear rate law constraints are relaxed to exponential cones, which renders the feasible set convex, and satisfaction of elementary kinetics is recovered by minimising a strictly concave merit function over that set, which attains zero if, and only if, every rate law holds. We establish that a particular sequence of conic optimisation problems converges to a stationary point of this merit function, and that every such stationary point is a steady state satisfying elementary kinetics. Moiety conservation, thermodynamic constraints on elementary kinetic parameters, regularised steady states and linear optimisation of external reaction rates are each accommodated within the same conic formulation. We demonstrate the approach computationally on a genome-scale metabolic model. FT⋅lnc + lnk f  
+
+> vf
+> chord leaves the set
+> FT⋅lnc +lnk f
+> vf
+> same chord, now inside
+
+        
+
+> A⋅x≤b
+> FT⋅lnc +lnk f
+> vf
+> ϕ> 0
+> ϕ= 0
+> large ϕ
+> relax minimise
+
+Variational kinetics 
+
+Rate law: nonconvex    
+
+> vf= exp( FT⋅lnc +lnk f)
+
+Exponential cone: convex    
+
+> vf≥ exp( FT⋅lnc +lnk f)
+
+Concave merit: kinetics       
+
+> min ϕs. t. x∈
+> A strictly concave merit is zero exactly when every elementary rate law holds, and a sequence of conic problems converges there.
+> Fluxes and concentrations, jointly, at genome scale.
+
+Keywords Variational kinetics; exponential cone; conic optimisation; elementary reaction kinetics; genome-scale metabolic model. 
+
+# 1 Introduction 
+
+Metabolism is the network of enzyme-catalysed reactions through which cells extract energy and synthesise the molecules required for life. Reconstructed at the scale of an entire genome, this network underpins genome-scale models of metabolism, which have become standard tools for interpreting biochemical, genetic and clinical data and for engineering cellular chemistry. A metabolic network admits two complementary quantitative descrip-tions: the rates at which its reactions proceed, that is their fluxes, and the concentrations of the metabolites 
+
+> ∗
+
+To whom correspondence should be addressed: ronan.mt.fleming@gmail.com 
+
+1arXiv:2607.25217v1 [q-bio.MN] 28 Jul 2026 they interconvert [1]. A model that predicted both, consistently, would let measurements of one be interpreted in terms of the other — but the two descriptions have proven far easier to obtain apart than together. Constraint-based methods, such as flux balance analysis [2], predict fluxes from network stoichiometry together with an optimisation principle. They scale readily to genome-scale networks, but deliberately omit reaction kinetics and therefore cannot predict metabolite concentrations. High-throughput technologies, by contrast, increasingly measure concentrations rather than fluxes. The quantities that are easiest to predict are thus not the quantities that are easiest to measure. Perfectly closing this gap requires introduction of reaction-kinetic rate laws that couple concentrations to fluxes in a thermodynamically consistent manner. However, the corresponding constraints are nonlinear, the resulting feasible set is non-convex [3], and therefore satisfying them at genome-scale has proven both mathematically and computationally demanding. There are many modelling methods that introduce various aspects of reaction-kinetics, thermodynamic con-sistency, or both, into genome-scale models. We do not attempt an exhaustive reference list, rather we refer to certain approaches as examples of the challenges associated with different classes of methods. Thermodynamic constraints on the direction of reactions can be applied by introduction of thermochemical constraints [4], but this relies on extrapolation from measured thermochemical data [5] and sufficient metabolomic data. Thermody-namic constraints on combinations of reaction directions can be efficiently satisfied at genome-scale using linear optimisation [6] and combined with constraints relating the ratio of unidirectional fluxes to thermodynamic driving force [7] using non-linear yet convex optimisation [8], which can also be biased using available omics data [9]. However, these methods omit constraints relating molecular species abundance (enzymes, metabolites) to absolute reaction rates. A complementary line of work takes a flux distribution as given and predicts the accompanying metabolite concentrations by convex optimisation: the max-min driving force method [10] selects concentrations that maximise the smallest thermodynamic driving force along a pathway, while enzyme cost minimisation [11] selects them to minimise the total enzyme demand implied by the rate laws. These formulations are convex and scale well, but they presuppose a known flux distribution and enforce only thermodynamic feasibility, or an enzyme-cost optimum, rather than the elementary rate law itself, so they determine concentrations for a given flux rather than fluxes and concentrations together. Provided that kinetic constraints and kinetic parameters are formulated in a thermodynamically consistent manner [12], introduction of reaction-kinetic rate laws obviates the need to apply separate thermodynamic constraints. As introduction of reaction-kinetic rate laws is challenging, a variety of different methods have instead attempted to represent various aspects of reaction kinetics using approximations to rate laws. Reaction rates can be bounded from above using the product of 𝑘 𝑐𝑎𝑡 times the concentration of the catalysing enzyme and this, together with an upper bound for the available enzyme pool, results in a scalable linear approximation to reaction kinetics [13, 14, 15] but does not take into account non-linear kinetic effects such as saturation, thermodynamic driving force, or regulation. Rate laws may be approximated by a log-linear expansion about a reference state, in which the logarithm of a reaction rate is a linear function of the logarithms of the reactant concentrations [16]. The closely related linear-logarithmic (lin-log) kinetics [17] instead make the rate itself, scaled by enzyme level, a linear function of the logarithmic concentrations, taking the elasticities of metabolic control analysis as its parameters. However, these approximations share a common compromise as expansions are built about a fixed reference state and lose accuracy away from it (cf. Supplementary Figure 4). An alternative stepwise approach is to represent reaction-kinetic rate laws but anchor a model ensemble to reference steady states, e.g., obtained from fluxomic data across many strains, then prune it using perturbation data [18, 19, 20], but this requires sufficient reference data at genome-scale, and the retained ensemble is not uniquely identified, so its predictions remain sensitive to the choice of reference state and to the sampling and pruning procedure. Reaction kinetics rate laws, and various approximations thereof, can be added to genome-scale kinetic models then the feasible set of fluxes, concentrations and parameters can be sampled in a manner consistent with experimental data [21, 22], however the feasible set is non-linear and non-convex so there are no guarantees that the numerical sample distribution will match the theoretically desired distribution. Alternatively, one can embed nonlinear rate laws directly into a constraint-based model and predict network states using mixed-integer nonlinear optimisation algorithms that exploit the mathematical properties particular to systems of reaction rate laws [23], however reliable convergence is not guaranteed as the network grows. Mass-action stoichiometric simulation builds dynamic models by mapping measured concentrations and fluxes onto the network [24, 25], but it requires simultaneous measurements of concentrations and fluxes to fix the model, and its mass-action form neglects enzyme saturation and allosteric regulation, so it is accurate only near the state at which it was parameterised. A common tension runs through these approaches: one must either approximate the kinetics and forfeit biochemical fidelity, depend on a pre-specified reference state and extensive parameterisation and forfeit uniqueness and identifiability, or confront a nonconvex optimisation that does not reliably scale. What remains missing is a formulation of steady-state elementary reaction kinetics that is at once mathematically exact, independent of any reference state, and expressed as a tractable optimisation that determines reaction fluxes and metabolite concentrations together. Here we present variational kinetics, an approach that reformulates steady-state elementary reaction kinetics 2as an optimisation problem and solves it at genome scale through a sequence of exponential conic optimisation problems. There is prior reason to expect such a reformulation to be attainable: the thermodynamic and kinetic relationships that govern an elementary reaction are log-linear in the chemical potentials of its species, and the exponential cone captures exactly this log-linear structure, so it was plausible in advance that elementary kinetics could be cast as conic optimisation without approximation. We first restate established results on metabolic reactions and reaction kinetics in a consistent matrix-vector notation; we then develop the variational kinetics formulation together with the numerical method used to solve it, and characterise the conditions under which the iterative scheme converges to a steady state; finally we illustrate the approach on a genome-scale model of dopaminergic neuronal metabolism. Our aim throughout is to answer a single question: can thermodynamically and kinetically consistent reaction fluxes and metabolite concentrations be predicted at genome scale from network structure and kinetic parameters alone, without approximate rate laws and without a pre-specified reference state? 
+
+# 2 Notation 
+
+Throughout , ℝ, ℝ𝑛 , and ℝ𝑚×𝑛 denote the field of real numbers, the vector space of 𝑛 -tuples of real numbers, and the space of 𝑚 × 𝑛 matrices with entries in ℝ, respectively. Similarly, ℤ, ℤ𝑛 , ℤ𝑚×𝑛 stand for integer numbers, the vector space of 𝑛 -tuples of integer number, and the space of matrices with entries in ℤ, respectively. ℝ𝑛 ≥0 and 
+
+ℝ𝑛 >0 denote non-negative real 𝑛 -tuples and positive real 𝑛 -tuples in ℝ𝑛 , respectively, and ℤ𝑛 ≥0 and ℤ𝑛 >0 denote non-negative integer 𝑛 -tuples and positive integer 𝑛 -tuples in ℤ𝑛 , respectively. We use Householder notation, that is a matrix is denoted by uppercase Roman, such as 𝐴 ∈ ℝ 𝑚×𝑛 . 𝐴 i and 𝐴 :,j denote the 𝑖 𝑡ℎ row and the 𝑗 𝑡ℎ 
+
+column of 𝐴 , respectively, where 𝑖 ∈ 1, … , 𝑚 and 𝑗 ∈ 1, … , 𝑛 . Note that subscript indexes are lower case Roman letters set in normal font like i, rather than italic 𝑖 . 𝐴 𝑇 denotes the transpose of a matrix 𝐴 . 1 denotes a vector of all ones and 𝐼 denote an identity matrix, with dimensions appropriate to the circumstance. A calligraphic, uppercase, roman letter, e.g., 𝒜 , denotes a set, multiset or sequence, with {⋅, ⋅} denoting an unordered pair, 
+
+(⋅, ⋅) denoting an ordered pair and (⋅, … , ⋅) denoting a sequence. Let |𝒜| denote the cardinality of the set 𝒜 .The dot product of 𝑥 and 𝑦 is denoted by 𝑥 𝑇 ⋅ 𝑦 , the Hadamard product (element-wise product) is denoted by 𝑥 ⊙ 𝑦 ,the Hadamard divisor (element-wise division) is denoted by 𝑥 ⊘ 𝑦 . Such products and divisors of vectors require both vectors to have compatible dimensions. Where 𝑥 is a vector 𝑥 −1 = 1 ⊘ 𝑥 both denote a component-wise inverse. [ ⋅, ⋅ ] denotes horizontal concatenation and [ ⋅⋅ ] or [ ⋅; ⋅ ] denote vertical concatenation. Also, exp (𝑥) of a vector 𝑥 means component-wise exponential. Where a diagonal matrix formed from a vector is required it is written diag (⋅) , while the Hadamard product is used wherever both operands are vectors of the same dimension. 
+
+∇ is the gradient of a scalar valued function, or, for a vector valued function, the matrix whose columns are the gradients of the components. The expression 𝑓(𝑎 ∣ 𝑏) means that the vector valued function 𝑓 has a vector variable argument 𝑎 , given a vector of parameters 𝑏 . Let sign (𝑥) ≔⎧{⎨{⎩1 if 𝑥 > 0, −1 if 𝑥 < 0, 0 if 𝑥 = 0, 
+
+and component-wise where 𝑥 is a vector. A disadvantage of reformulating nonlinear mathematical models in terms of conic optimisation is an expan-sion in the number of variables. With expansion of terms beyond the 26 letters in the Roman alphabet, one is forced to compromise on established notation guidelines in a manner that maintains a reasonable correspond-ence between symbols in a scientific paper and the corresponding symbols in computer programming code that are supposed to have the same meaning. The exponential or natural logarithm of a vector is meant component-wise and exp (ln (0)) ∶= 0 . For example, let 𝑥 denote a vector, then ln (𝑥) denotes the component-wise natural logarithm of that vector and 𝑙𝑛𝑥 denotes a variable that is envisaged to equal ln (𝑥) at the optimum of a conic optimisation problem, within tolerances specified by parameters input into a numerical optimisation solver. This approach enables transparency in representation of correspondence between related variables, avoids premature exhaustion of the Roman alphabet, while marginally extending beyond Householder notation guidelines. The following exceptions to the conventions above are retained, because each is well established in its own literature, named after a person, or needed to avoid a typographic ambiguity. • ℓ denotes the vector of moiety concentrations. A lower case script ell is used in place of 𝑙 so that it cannot be confused with the digit one. • ℛ, 𝒯 and 𝒫 denote the gas constant, temperature and pressure. These are scalars, not sets, but the calligraphic forms are conventional in chemical thermodynamics. Note that ℛ(⋅) also denotes the range of a matrix, which is a set; the two are distinguished by the presence of an argument. 3• ℒ denotes a Lagrangian, after Lagrange. It is a function rather than a set. • 𝑉 max and 𝐾 𝑀 denote the limiting rate and the Michaelis constant of a Michaelis-Menten rate law. These are scalars in upper case Roman, which is standard in enzyme kinetics. • Units of measurement are set in upright type, that is K for kelvin, atm for atmosphere, mol for mole and L for litre. • A symbol that carries one established meaning in the biochemical literature and a different established meaning in the optimisation literature is not disambiguated here. For example 𝐹 denotes the forward stoichiometric matrix in the sections on reaction kinetics and the matrix of the affine conic constraint in the sections on conic optimisation, each being standard in its own field. The section in which a symbol appears determines which meaning is intended. 
+
+# 3 Mathematical formulation of reaction kinetics 
+
+## 3.1 Reaction stoichiometry 
+
+Consider a biochemical network with 𝑚 molecular species and 𝑛 reactions. Henceforth, species means molecular species. Typically, though not always 𝑚 < 𝑛 . We assume that all net reactions are reversible and that each can be represented by a pair of unidirectional, forward and reverse, reactions. With respect to the forward direction, let the relative quantity, or stoichiometry , of species 𝑖 participating as a substrate or catalyst in a 
+
+forward reaction 𝑗 , be a whole number entry 𝐹 i,j > 0 , in a forward stoichiometric matrix 𝐹 ∈ ℤ 𝑚×𝑛 . Likewise, with respect to the reverse direction, let the stoichiometry of species 𝑖 participating as a substrate or catalyst in 
+
+reverse reaction 𝑗 , be an entry 𝑅 i,j > 0 , in a reverse stoichiometric matrix 𝑅 ∈ ℤ 𝑚×𝑛 . Then, 𝑁 ∈ ℤ 𝑚×𝑛 ≔ 𝑅−𝐹 
+
+is a (net) stoichiometric matrix, where 𝑁 i,j is the number of instances of molecule 𝑖 that are consumed (negative) or produced (positive) in reaction 𝑗 . We assume that each column of 𝑁 corresponds a reaction where mass is conserved. 
+
+## 3.2 Elementary reaction kinetics 
+
+Elementary reaction kinetics refers to the study of the individual, simple steps that occur during a chemical reaction at the molecular level. Each elementary reaction represents a single molecular event, such as the breaking or formation of a chemical bond. An elementary reaction is one for which no reaction intermediates have been detected or need to be postulated in order to describe the chemical reaction on a molecular scale. Elementary reactions provide a detailed, step-by-step description of how a substrate interacts with an enzyme at the molecular level. Let 𝑣 𝑓 ∈ ℝ 𝑛 >0 and 𝑣 𝑟 ∈ ℝ 𝑛 >0 denote forward and reverse elementary reaction rates, both of which are a function of species concentrations 𝑐 ∈ ℝ 𝑚 >0 as well as forward and reverse elementary kinetic parameters, denoted 𝑘 𝑓 ∈ ℝ 𝑛 >0 and 𝑘 𝑟 ∈ ℝ 𝑛 >0 respectively. Any reaction rate law assumes that reaction rate is a function of concentrations and kinetic parameters, so let the net reaction rate be 
+
+𝑣 𝑛𝑒𝑡 (𝑐 ∣ 𝑘 𝑓 , 𝑘 𝑟 ) ≔ 𝑣 𝑓 (𝑐 ∣ 𝑘 𝑓 ) − 𝑣 𝑟 (𝑐 ∣ 𝑘 𝑟 ). 
+
+Henceforth, we assume that the rate of an elementary reaction is proportional to the product of the concentra-tions of each of substrate (or catalyst), each to the power of their respective stoichiometry in the reaction. It follows that elementary kinetics for the forward and reverse reaction rates of reaction 𝑗 are given by 
+
+𝑣 𝑓 j(𝑐 ∣ 𝑘 𝑓 j) ≔ 𝑘 𝑓 j ∏ 𝑐 𝐹 i,j  
+
+> i
+
+,𝑣 𝑟 j(𝑐 ∣ 𝑘 𝑟 j) ≔ 𝑘 𝑟 j ∏ 𝑐 𝑅 i,j  
+
+> i
+
+.
+
+Using matrix vector notation and elementary logarithmic and exponential identities, we formulate elementary kinetics for the forward and reverse reaction rate vectors as 
+
+𝑣 𝑓 (𝑐 ∣ 𝑘 𝑓 ) = exp (ln (𝑘 𝑓 ) + 𝐹 𝑇 ⋅ ln (𝑐)), (1) 
+
+𝑣 𝑟 (𝑐 ∣ 𝑘 𝑟 ) = exp (ln (𝑘 𝑟 ) + 𝑅 𝑇 ⋅ ln (𝑐)). (2) The exponential or natural logarithm of a vector is meant component-wise 1. A set of concentrations, kinetic parameters and rates that satisfy Eq. (1) and Eq. (2) are said to be kinetically feasible . Taking the logarithm of both sides of Eqs. (1) and (2) we have ln (𝑣 𝑓 ) = ln (𝑘 𝑓 ) + 𝐹 𝑇 ⋅ ln (𝑐), (3) ln (𝑣 𝑟 ) = ln (𝑘 𝑟 ) + 𝑅 𝑇 ⋅ ln (𝑐). (4)    
+
+> 1Strictly, it is not proper to take the logarithm of a unit that has physical dimensions. This difficulty can be avoided by considering 𝑐 as a vector of mole fractions rather than concentrations (Eq. 19.93 in [26]).
+
+4Assuming elementary reaction kinetics, net rate is 
+
+𝑣 𝑛𝑒𝑡 (𝑐 ∣ 𝑘 𝑓 , 𝑘 𝑟 ) = 𝑣 𝑓 (𝑐 ∣ 𝑘 𝑓 ) − 𝑣 𝑟 (𝑐 ∣ 𝑘 𝑟 ) = exp (ln (𝑘 𝑓 ) + 𝐹 𝑇 ⋅ ln (𝑐)) − exp (ln (𝑘 𝑟 ) + 𝑅 𝑇 ⋅ ln (𝑐)). (5) Note that net rate is a function of species concentration given kinetic parameters. That is, for now we assume we are given kinetic parameters and are only interested in modelling concentrations and rates. Of course, in reality the situation is more complicated as, at best, one has experimental estimates of kinetic parameters. 
+
+## 3.3 Steady state 
+
+With respect to time 𝑡 , the rate of change of species concentrations is given by the dot product of net reaction stoichiometry and net reaction rate ̇𝑐 ≔ 𝑑𝑐 𝑑𝑡 = 𝑁 ⋅ 𝑣 𝑛𝑒𝑡 (𝑐 ∣ 𝑘 𝑓 , 𝑘 𝑟 ), 
+
+which is an ordinary differential equation. When ̇ 𝑐 i = 0 the rate of production equals the rate of consumption of species 𝑖 , that is, species 𝑖 is at a steady state. When ̇ 𝑐 i > 0 the rate of production is greater than the rate of consumption of species 𝑖 and when ̇ 𝑐 i < 0 the rate of production is less than the rate of consumption of species 
+
+𝑖 . Assuming elementary reaction kinetics, Eq. 5, we have ̇𝑐 = 𝑁 ⋅ ( exp (ln (𝑘 𝑓 ) + 𝐹 𝑇 ⋅ ln (𝑐)) − exp (ln (𝑘 𝑟 ) + 𝑅 𝑇 ⋅ ln (𝑐))), = [𝑁 , −𝑁 ] ⋅ exp (ln ([ 𝑘 𝑓 
+
+𝑘 𝑟 
+
+]) + [𝐹 , 𝑅] 𝑇 ⋅ ln (𝑐)) = ([𝑅, 𝐹 ] − [𝐹 , 𝑅]) ⋅ exp (ln ([ 𝑘 𝑓 
+
+𝑘 𝑟 
+
+]) + [𝐹 , 𝑅] 𝑇 ⋅ ln (𝑐)) (6) where the latter are obtained by gathering related terms and substituting 𝑁 = 𝑅 − 𝐹 to present, in matrix vector format, the fundamental equation representing evolution of concentration with respect to time according to elementary reaction kinetics. 
+
+## 3.4 Mass balance 
+
+Let 𝐵 ∈ ℤ 𝑚×𝑘 be a stoichiometric matrix, where each column corresponds to an external reaction, which is a modelling construct used to represent the exchange of mass between a biochemical network and its environ-ment. Let 𝑤 ∈ ℝ 𝑘 denote net exchange reaction rate. Assuming mass balance , the rate of change of species concentrations is equal to the net rate of exchange with the environment. By convention, this is expressed as ̇𝑐 = −𝐵 ⋅ 𝑤 
+
+or equivalently 
+
+𝑁 ⋅ (𝑣 𝑓 (𝑐 ∣ 𝑘 𝑓 ) − 𝑣 𝑟 (𝑐 ∣ 𝑘 𝑟 )) + 𝐵 ⋅ 𝑤 = 0𝑁 ⋅ 𝑣 𝑛𝑒𝑡 (𝑐 ∣ 𝑘 𝑓 , 𝑘 𝑟 ) + 𝐵 ⋅ 𝑤 = 0. (7) Note that with this convention, if 𝑤 j < 0 and 𝐵 i,j < 0 , then this means that species 𝑖 is input from the environment, while if 𝑤 j > 0 and 𝐵 i,j < 0 , then this means that species 𝑖 is output to the environment. Eq. (7) means that production + input = consumption + output for every species. Henceforth, for brevity, we use the term steady state to mean either a strict steady state, for molecular species not exchanged across the boundary of the system, or for species that are exchanged across the boundary (strictly mass balance). For each metabolite, whether this means strictly steady state or mass balance, is evident from the context. 
+
+## 3.5 Moiety conservation 
+
+Every genome-scale stoichiometric matrix has linearly dependent rows, that is 𝑟 ≔ rank (𝑁 ) < 𝑚 . Let 𝐿 ∈ ℤ(𝑚−𝑟)×𝑚 denote a left nullspace basis for 𝑁 , that is 𝐿 ⋅ 𝑁 = 0. The number of linearly dependent rows, or row rank deficiency, is 𝑚 − 𝑟 . Each linearly dependent row corresponds to a conserved moiety, which is a chemical substructure that remains invariant with respect to the chemical transformations in a given network [27]. This 
+
+moiety conservation imposes constraints on the relationship between an initial species concentration vector at time zero 𝑐 0 ∈ ℝ 𝑚 ≥0 and all subsequent species concentrations at time 𝑡 , denoted 𝑐 ≔ 𝑐(𝑡) ∈ ℝ 𝑚 ≥0 , since 
+
+∫
+
+> 𝑡 0
+
+𝑁 ⋅ 𝑣 𝑛𝑒𝑡 (𝑐) 𝑑𝑡 = 𝑐 − 𝑐 0
+
+0 = 𝐿 ⋅ (𝑐 − 𝑐 0). (8) 5Given a stoichiometric matrix and molecular structures for each species, using atom mapping and graph theor-etical algorithms, it is possible to compute a non-negative left nullspace basis 𝐿 ∈ ℤ (𝑚−𝑟)×𝑚 ≥0 where 𝐿 i,j is equal to the number of instances of conserved moiety 𝑖 in metabolite 𝑗 [27, 28]. Hence, Eq. (8) is referred to as a moiety conservation constraint [29] and 𝐿 a moiety incidence matrix [28]. 
+
+## 3.6 Mass balance subject to elementary reaction kinetics 
+
+If one assumes that a system is at a steady state and that all reactions must satisfy elementary reaction kinetics, then this requires the solution to the following system of equations 
+
+𝑁 ⋅ ( exp (ln (𝑘 𝑓 ) + 𝐹 𝑇 ⋅ ln (𝑐)) − exp (ln (𝑘 𝑟 ) + 𝑅 𝑇 ⋅ ln (𝑐))) + 𝐵 ⋅ 𝑤 = 0. (9) Due to the exponential and logarithmic terms, it is clear that Eq. (9) is non-linear. Furthermore, the set of all solutions to Eq. (9) is known not to be convex , i.e., if one draws a straight line between two points in that set, then there may be points along that line which are not in that set. This non-convexity makes it challenging to find solutions to Eq. (9), e.g., for the high dimensional models that typically arise from genome-scale metabolic models. Furthermore, due to various reasons, the uncertainty in our knowledge of many kinetic parameters is large, so in a modelling context 𝑘 𝑓 and 𝑘 𝑟 are not fixed parameters, but rather variables that may be penalised from their deviation to a subset of known experimentally measured kinetic parameters. 
+
+## 3.7 Moiety conserved elementary reaction kinetics 
+
+Biochemical networks are open systems that are forced away from equilibrium by exchange of mass with their environment. Typically this is modelled with a set of exchange reactions, each of which is a modelling construct (pseudoreaction) that does not conserve mass and either uptakes species from the environment or secretes species to the environment. However, to the best of the authors’ knowledge, there exist no conditions established to guarantee that such a system admits a kinetic steady state. Previously, we established an approach to force a biochemical network away from equilibrium such that a non-equilibrium steady state still exists [30]. Acorresponding existence theorem is proven below in terms of ordinary differential equation theory. 
+
+Theorem 1. Let the dynamical equation for mass conserved elementary kinetics be ̇𝑐 = (𝑅 − 𝐹 ) ⋅ (𝑘 𝑓 ⊙ exp (𝐹 𝑇 ⋅ ln (𝑐)) − 𝑘 𝑟 ⊙ exp (𝑅 𝑇 ⋅ ln (𝑐))) , (10) 
+
+where 𝑐 = 𝑐(𝑡) ∈ ℝ 𝑚 >0 is a species concentrations at time 𝑡 > 0 ,̇ 𝑐 ∈ ℝ 𝑚 is the time derivative of concentrations and 𝑘 𝑓 , 𝑘 𝑟 ∈ ℝ 𝑛 ≥0 are non-negative forward and reverse kinetic parameters and 𝐹 , 𝑅 ∈ ℤ 𝑚×𝑛 ≥0 are forward and reverse stoichiometric matrices. Assuming a finite and strictly positive initial concentration 𝑐(0) ∈ ℝ 𝑚 >0 , and the existence of at least one strictly positive vector ℓ ∈ ℝ 𝑚 >0 , such that 
+
+(𝑅 − 𝐹 ) 𝑇 ⋅ ℓ = 0. 
+
+then there exists at least one finite and non-negative steady state concentration 𝑐 ⋆ ∈ ℝ 𝑚 >0 , such that ̇ 𝑐 = 0 .Proof. Consider10 an autonomous ordinary differential equation ̇𝑐 i =
+
+> 𝑛
+
+∑
+
+> j=1
+
+(𝑅 i,j − 𝐹 i,j ) (𝑘 𝑓𝑗 𝑚 
+
+∏
+
+> i=1
+
+𝑐 𝐹 i,j  
+
+> i
+
+− 𝑘 𝑟𝑗 𝑚 
+
+∏
+
+> i=1
+
+𝑐 𝑅 i,j  
+
+> i
+
+) , 𝑐(0) > 0. (11) By assumption, the system satisfies concentration non-negativity: if 𝑐 i(𝑡) = 0 for some 𝑖 , then ̇ 𝑐 i(𝑡) ≥ 0 . Hence the nonnegative orthant ℝ𝑚 ≥0 is forward invariant. Multiplying(10) by ℓ ∈ ℝ 𝑚 >0 yields 
+
+ℓ𝑇 ⋅̇ 𝑐 = ℓ 𝑇 ⋅ (𝑅 − 𝐹 ) ⋅ (⋅) = 0, 
+
+and therefore 
+
+ℓ𝑇 ⋅ 𝑐(𝑡) = ℓ 𝑇 ⋅ 𝑐(0) ∀ 𝑡 ≥ 0. (12) Define 
+
+Ω ≔ { 𝑐 ∈ ℝ 𝑚 ≥0 ∶ ℓ 𝑇 ⋅ 𝑐 = ℓ 𝑇 ⋅ 𝑐(0) }. 
+
+Because ℓ ≻ 0 , each component satisfies 
+
+0 ≤ 𝑐 i ≤ ℓ𝑇 ⋅ 𝑐(0) ℓi
+
+,
+
+so Ω is nonempty, closed, bounded, and convex, hence compact. By(12) and forward invariance of ℝ𝑚 ≥0 , Ω is invariant under the dynamics. 6Write the right-hand side of(11) as the vector field 𝑔(𝑐) ≔ (𝑅−𝐹 )⋅(𝑘 𝑓 ⊙ exp (𝐹 𝑇 ⋅ ln (𝑐)) − 𝑘 𝑟 ⊙ exp (𝑅 𝑇 ⋅ ln (𝑐))) .The reaction rates, written componentwise as monomials in(11), extend continuously to ℝ𝑚 ≥0 , so 𝑔 is continuous on Ω. Since these monomials are smooth on ℝ𝑚 >0 , solutions are unique, and for each 𝜏 > 0 the time-𝜏 flow map 
+
+Φ𝜏 ∶ Ω → Ω, Φ𝜏 (𝑐 0) = 𝑐(𝜏), 
+
+is a well-defined continuous self-map of Ω.Fix a sequence 𝜏 𝑛 ↓ 0 . For each 𝑛 , Φ𝜏 𝑛 maps the compact convex set Ω continuously into itself, so Brouwer’s fixed point theorem yields 𝑐 𝑛 ∈ Ω with 
+
+Φ𝜏 𝑛 (𝑐 𝑛 ) = 𝑐 𝑛 . (13) A point fixed by Φ𝜏 𝑛 has a 𝜏 𝑛 -periodic orbit and is not yet a steady state, since any nonconstant orbit whose period divides 𝜏 𝑛 is also fixed by Φ𝜏 𝑛 . To extract an equilibrium, use compactness of Ω to pass to a subsequence with 𝑐 𝑛 → 𝑐 ⋆ ∈ Ω . In integral form, 
+
+0 = Φ 𝜏 𝑛 (𝑐 𝑛 ) − 𝑐 𝑛 = ∫ 
+
+> 𝜏 𝑛
+> 0
+
+𝑔(Φ 𝑠 (𝑐 𝑛 )) 𝑑𝑠, 
+
+so dividing by 𝜏 𝑛 gives the time average 
+
+1𝜏 𝑛 
+
+∫
+
+> 𝜏 𝑛
+> 0
+
+𝑔(Φ 𝑠 (𝑐 𝑛 )) 𝑑𝑠 = 0. (14) Because 𝑔 is bounded on the compact set Ω, for every 𝑠 ∈ [0, 𝜏 𝑛 ]‖Φ 𝑠 (𝑐 𝑛 ) − 𝑐 ⋆‖ ≤ 𝜏 𝑛 sup 
+
+> 𝑐∈Ω
+
+‖𝑔(𝑐)‖ + ‖𝑐 𝑛 − 𝑐 ⋆‖ ⟶ 0 
+
+uniformly in 𝑠 as 𝑛 → ∞ . Since 𝑔 is uniformly continuous on Ω, the integrand converges uniformly to 𝑔(𝑐 ⋆),and hence the average in(14) converges to 𝑔(𝑐 ⋆). Therefore 
+
+𝑔(𝑐 ⋆) = 0, i.e. ̇ 𝑐 ⋆ = 0, 
+
+so 𝑐 ⋆ is a steady state of (11), with 𝑐 ⋆ ⪰ 0 and finite (cf.. Figure 1 for an illustration of this argument). This completes the proof. 
+
+## 3.8 Thermodynamically feasible kinetic parameters 
+
+We assume chemical potential 𝑢 ∈ ℝ 𝑚 is 
+
+𝑢 ≔ 𝑢 ∘ + ℛ𝒯 ln (𝑐) 
+
+where 𝑢 ∘ ∈ ℝ 𝑚 is a vector of standard chemical potentials. This is a simplification of chemical potential in biochemical thermodynamics, but the mathematical form is the same for a variety of more sophisticated formulations (cf Appendix E) . The change in chemical potential for a system of biochemical reactions is denoted 
+
+Δ𝑢 ≔ 𝑁 𝑇 ⋅ 𝑢. 
+
+At thermodynamic equilibrium for all reactions, the sum of substrate chemical potentials equals the sum of product chemical potentials for each reaction, so the change in chemical potential for all reactions is zero and therefore 
+
+𝑁 𝑇 ⋅ 𝑢 = 0 ⇔ −𝑁 𝑇 ⋅ 𝑢 ∘
+
+ℛ𝒯 = 𝑁 𝑇 ⋅ ln (𝑐 𝑒𝑞 ), 
+
+where 𝑐 𝑒𝑞 ∈ ℝ 𝑚 is a vector of species concentrations at equilibrium. At thermodynamic equilibrium, without a driving force, the forward and reverse elementary reaction rates must be equal (detailed balance [26]). This requirement means that elementary kinetic parameters are thermodynamically constrained, as the following 7c
+
+## c⋆
+
+## Φτ (c) = c, ˙c  = 0 
+
+## Ω = { c ≥ 0 : ℓT c = ℓT c(0) }
+
+## (a) Brouwer gives a fi xed point of Φτ ,but it may sit on a nonconstant pe-riodic orbit in Ω, not at a rest point. 
+
+## c
+
+## c⋆
+
+Φτ1 (c)
+
+## τ1 > τ2 > τ3 ↓ 0
+
+## 1
+
+## τn
+
+## Z τn
+
+> 0
+
+## g(Φs(c)) ds → g(c⋆) = 0 
+
+## (b) As τn ↓ 0 the return displacement 
+
+## Φτn (c) − c shrinks; its time-average is the velocity, forcing g(c⋆) = 0. Figure 1: Illustration of a key part of the proof of Theorem 1 (a) A single-time statement Φ𝜏 (𝑐 ⋆) = 𝑐 ⋆ for one fixed 𝜏 > 0 is not by itself enough to conclude ̇ 𝑐 ⋆ = 0 . It asserts only that the orbit through 𝑐 ⋆ returns to 𝑐 ⋆
+
+after time 𝜏 , i.e. that the orbit is 𝜏 -periodic. A nonconstant periodic orbit whose period divides 𝜏 satisfies the same fixed-point equation while having ̇ 𝑐 ≠ 0 throughout, so a fixed point of Φ𝜏 need not be an equilibrium. (b) Letting 𝜏 𝑛 ↓ 0 removes this gap: the time-averaged velocity over [0, 𝜏 𝑛 ] vanishes at each 𝑐 𝑛 , and in the limit this average becomes the instantaneous velocity 𝑔(𝑐 ⋆), forcing 𝑔(𝑐 ⋆) = 0 .sequence of algebraic steps show 
+
+𝑣 𝑓 (𝑐 𝑒𝑞 |𝑘 𝑓 ) − 𝑣 𝑟 (𝑐 𝑒𝑞 |𝑘 𝑟 ) = 0𝑣 𝑓 (𝑐 𝑒𝑞 |𝑘 𝑓 ) = 𝑣 𝑟 (𝑐 𝑒𝑞 |𝑘 𝑟 )
+
+exp (ln (𝑘 𝑓 ) + 𝐹 𝑇 ⋅ ln (𝑐 𝑒𝑞 )) = exp (ln (𝑘 𝑟 ) + 𝑅 𝑇 ⋅ ln (𝑐 𝑒𝑞 )) 
+
+ln (𝑘 𝑓 ) + 𝐹 𝑇 ⋅ ln (𝑐 𝑒𝑞 ) = ln (𝑘 𝑟 ) + 𝑅 𝑇 ⋅ ln (𝑐 𝑒𝑞 )
+
+ln (𝑘 𝑓 ) − ln (𝑘 𝑟 ) = 𝑅 𝑇 ⋅ ln (𝑐 𝑒𝑞 ) − 𝐹 𝑇 ⋅ ln (𝑐 𝑒𝑞 )
+
+ln ( 𝑘 𝑓 
+
+𝑘 𝑟 
+
+) = (−𝐹 + 𝑅) 𝑇 ⋅ ln (𝑐 𝑒𝑞 )
+
+ln ( 𝑘 𝑓 
+
+𝑘 𝑟 
+
+) = 𝑁 𝑇 ⋅ ln (𝑐 𝑒𝑞 )
+
+ln ( 𝑘 𝑓 
+
+𝑘 𝑟 
+
+) = −𝑁 𝑇 ⋅ 𝑢 ∘
+
+ℛ𝒯 (15) Elementary reaction kinetics (2) coupled with the thermodynamic constraints in Eq. (15) is referred to as mass action kinetics , represented by the following pair of equation systems ̇𝑐 = 𝑁 ⋅ ( exp (ln (𝑘 𝑓 ) + 𝐹 𝑇 ⋅ ln (𝑐)) − exp (ln (𝑘 𝑟 ) + 𝑅 𝑇 ⋅ ln (𝑐))), 
+
+ln ( 𝑘 𝑓 
+
+𝑘 𝑟 
+
+) = −𝑁 𝑇 ⋅ 𝑢 ∘
+
+ℛ𝒯 . (16) 
+
+## 3.9 Thermodynamic constraints on reaction rates 
+
+Thermodynamic constraints on kinetic reactions imply thermodynamic constraints on reaction rates. To observe this implication, start with the definition of elementary reaction kinetics for the forward and reverse rates in 8Eq. (1) and (2) and let 𝑣 𝑓 = 𝑣 𝑓 (𝑐 ∣ 𝑘 𝑓 ) and 𝑣 𝑟 = 𝑣 𝑟 (𝑐 ∣ 𝑘 𝑟 ), so we have 
+
+𝑣 𝑓 
+
+𝑣 𝑟 
+
+= exp (ln (𝑘 𝑓 ) + 𝐹 𝑇 ⋅ ln (𝑐)) 
+
+exp (ln (𝑘 𝑟 ) + 𝑅 𝑇 ⋅ ln (𝑐)) = exp (ln (𝑘 𝑓 ) − ln (𝑘 𝑟 ) + 𝐹 𝑇 ⋅ ln (𝑐) − 𝑅 𝑇 ⋅ ln (𝑐)) = exp (ln (𝑘 𝑓 ) − ln (𝑘 𝑟 )) ⊙ exp (𝐹 𝑇 ⋅ ln (𝑐) − 𝑅 𝑇 ⋅ ln (𝑐)) = exp (ln (𝑘 𝑓 ) − ln (𝑘 𝑟 )) ⊙ exp (−𝑁 𝑇 ⋅ ln (𝑐)) = ( 𝑘 𝑓 
+
+𝑘 𝑟 
+
+) ⊙ exp (−𝑁 𝑇 ⋅ ln (𝑐)). 
+
+Taking the logarithm of both sides, we have ln ( 𝑣 𝑓 
+
+𝑣 𝑟 
+
+) = ln ( 𝑘 𝑓 
+
+𝑘 𝑟 
+
+) − 𝑁 𝑇 ⋅ ln (𝑐). 
+
+Using the thermodynamic constraints on kinetic parameters in (15) we observe that ln ( 𝑣 𝑓 
+
+𝑣 𝑟 
+
+) = −𝑁 𝑇 ⋅ 𝑢 ∘
+
+ℛ𝒯 − 𝑁 𝑇 ⋅ ln (𝑐), ℛ𝒯 ln ( 𝑣 𝑓 
+
+𝑣 𝑟 
+
+) = −𝑁 𝑇 ⋅ (𝑢 ∘ + ℛ𝒯 ln (𝑐)). 
+
+Using the definition of chemical potential in Eq. (178) we then obtain 
+
+ℛ𝒯 ln ( 𝑣 𝑓 
+
+𝑣 𝑟 
+
+) = −𝑁 𝑇 ⋅ 𝑢 (17) which is a thermodynamic constraint on reaction rates that must hold for any pair of forward and reverse rates and any potential at a given instance, regardless of whether a system is at equilibrium or not, and regardless if a system is in a dynamic or steady state. Eq. (17) incorporates a representation of energy conservation, since each species is assigned a single chemical potential. Eq. (17) also incorporates a representation of the second law of thermodynamics, since 
+
+𝑣 𝑓 = 𝑣 𝑟 ⇔ 𝑁 𝑇 ⋅ 𝑢 = 0 𝑣 𝑓 > 𝑣 𝑟 ⇔ 𝑁 𝑇 ⋅ 𝑢 < 0 𝑣 𝑓 < 𝑣 𝑟 ⇔ 𝑁 𝑇 ⋅ 𝑢 > 0 
+
+which ensures that the net rate of each reaction is zero at thermodynamic equilibrium, and away from thermo-dynamic equilibrium the sign of net rate is opposite to the sign of change in chemical potential, i.e. , net rate is down a gradient in chemical potential. 
+
+## 3.10 A thermodynamically open system admitting an elementary kinetic steady state 
+
+Given a stoichiometric matrix 𝑁 ∈ ℤ 𝑚×𝑛 and a moiety incidence matrix 𝐿 ∈ ℤ (𝑚−𝑟)×𝑚 ≥0 consider the cyclic stoichiometric matrix [27] 
+
+𝐶 ≔ [ 𝑁 −𝐼 0 𝐿 ] ∈ ℤ (2𝑚−𝑟)×(𝑛+𝑚) (18) where each of the additional 𝑚 columns is termed a perpetireaction , which is a modelling construct that repres-ents the transformation of a single metabolite into its constituent conserved moieties. Appendix C establishes that rank (𝐶) = 𝑚 , the matrix 
+
+[ 𝐼 𝑛 
+
+𝑁 ] ∈ ℤ (𝑛+𝑚)×𝑛 (19) is a basis for the right nullspace of 𝐶 , and the matrix [ 𝐿, 𝐼 𝑚−𝑟 ] ∈ ℕ (𝑚−𝑟)×(2𝑚−𝑟) is a basis for the left nullspace of 𝐶 . Since every row of 19 contains at least one non-zero, every reaction in 𝐶 participates in at least one vector in the nullspace of 𝐶 . We shall refer back to this property in a subsequent section. Since 
+
+[ 𝐿 𝐼 ] 𝑇 1 > 0 every reaction in 𝐶 is stoichiometrically consistent [31] so by Theorem 1, the corresponding elementary kinetic system admits at least one steady state. 9Assume a system of chemical reactions defined by a cyclic stoichiometric matrix 18 with corresponding parameter vectors 𝑘 𝑓 , 𝑘 𝑟 ∈ ℝ 𝑛 and 𝑝 𝑓 , 𝑝 𝑟 ∈ ℝ 𝑚 . If both are thermodynamically feasible then the Hadamard divisors of forward and reverse parameters form a vector in the range of the cyclic stoichiometric matrix, ℛ(𝐶 𝑇 ).That is, there exists a 𝑢 ∈ ℝ 𝑚 and 𝑞 ∈ ℝ 𝑚−𝑟 such that 
+
+[ ln (𝑘 𝑓 ⊘ 𝑘 𝑟 )
+
+ln (𝑝 𝑓 ⊘ 𝑝 𝑟 ) ] = [ 𝑁 −𝐼 0 𝐿 ]
+
+> 𝑇
+
+⋅ [ 𝑢 𝑞 ] ∈ ℛ(𝐶 𝑇 ). (20) Equivalently ln (𝑘 𝑓 ⊘ 𝑘 𝑟 ) = 𝑁 𝑇 ⋅ 𝑢, 
+
+ln (𝑝 𝑓 ⊘ 𝑝 𝑟 ) = −𝑢 + 𝐿 𝑇 ⋅ 𝑞. 
+
+In contrast, if both 𝑘 𝑓 , 𝑘 𝑟 and 𝑝 𝑓 , 𝑝 𝑟 are thermodynamically infeasible then the Hadamard divisors of forward and reverse parameters form a vector in the nullspace of the cyclic stoichiometric matrix 𝒩(𝐶) . That is 
+
+[ 𝑁 −𝐼 0 𝐿 ] ⋅ [ ln (𝑘 𝑓 ⊘ 𝑘 𝑟 )
+
+ln (𝑝 𝑓 ⊘ 𝑝 𝑟 ) ] = 0, 
+
+or equivalently 
+
+𝑁 ln (𝑘 𝑓 ⊘ 𝑘 𝑟 ) = ln (𝑝 𝑓 ⊘ 𝑝 𝑟 ) , 𝐿 ln (𝑝 𝑓 ⊘ 𝑝 𝑟 ) = 0. 
+
+However, if 𝑘 𝑓 , 𝑘 𝑟 are thermodynamically feasible but 𝑝 𝑓 , 𝑝 𝑟 are thermodynamically infeasible, then there exists a 𝑢 ∈ ℝ 𝑚 such that ln (𝑘 𝑓 ⊘ 𝑘 𝑟 ) = 𝑁 𝑇 ⋅ 𝑢, 𝐿 ln (𝑝 𝑓 ⊘ 𝑝 𝑟 ) = 0. 
+
+Let ̄ 𝑁 ∈ ℤ 𝑚×𝑟 denote a basis for the range of the internal reactions ℛ(𝑁 ) , then ln (𝑝 𝑓 ⊘ 𝑝 𝑟 ) =̄ 𝑁 𝑤 ⇒ 𝐿 ln (𝑝 𝑓 ⊘ 𝑝 𝑟 ) = 0 (21) where 𝑤 ∈ ℝ 𝑟 . Without loss of generality, let ln (𝑝 𝑟 ) = 0 , therefore ln (𝑝 𝑓 ) =̄ 𝑁 𝑤. Let ℓ ∈ ℝ 𝑚−𝑟 >0 denote the concentration of each conserved moiety. Given a cyclic stoichiometric matrix (18), with the aforementioned parameterisation, the dynamical equation for the corresponding elementary reaction kinetic system is 
+
+[ 𝑁 −𝐼 0 𝐿 ] exp ([ ln (𝑘 𝑓 )
+
+ln (𝑝 𝑓 ) ] + [ 𝐹 𝐼 0 0 ]
+
+> 𝑇
+
+⋅ [ ln (𝑐) 
+
+ln (ℓ) ]) … (22) 
+
+− [ 𝑁 −𝐼 0 𝐿 ] exp ([ ln (𝑘 𝑟 )
+
+ln (𝑝 𝑟 ) ] + [ 𝑅 00 𝐿 ]
+
+> 𝑇
+
+⋅ [ ln (𝑐) 
+
+ln (ℓ) ]) = [̇ 𝑐̇ ℓ ] , (23) and steady states satisfy 
+
+(𝑅 − 𝐹 ) ⋅ ( exp (ln (𝑘 𝑓 ) + 𝐹 𝑇 ⋅ ln (𝑐)) − exp (ln (𝑘 𝑟 ) + 𝑅 𝑇 ⋅ ln (𝑐))) … (24) 
+
+−(𝑅 − 𝐹 ) ( exp (ln (𝑝 𝑓 ) + ln (𝑐)) + exp (ln (𝑝 𝑟 ) + 𝐿 𝑇 ⋅ ln (ℓ))) = 0, (25) 
+
+𝐿 ( exp (ln (𝑝 𝑓 ) + ln (𝑐)) − exp (ln (𝑝 𝑟 ) + 𝐿 𝑇 ⋅ ln (ℓ))) = 0. (26) By Theorem (1), we are assured a solution to (24) and (26) exists. Moreover, since (26) is implied by (24), then (26) is redundant. We now show that thermodynamic infeasibility of the exchange parameters forces the guaranteed steady state out of equilibrium. A system of cyclic mass-action kinetics is detailed balanced when every forward elementary rate equals its reverse, 𝑣 𝑓 = 𝑣 𝑟 . The following result shows that this cannot occur once the perpeti parameters violate the Wegscheider conditions, even when the internal kinetic parameters 𝑘 𝑓 , 𝑘 𝑟 remain thermodynamically feasible. 10 Theorem 2. Consider the cyclic stoichiometric system(18) with parameters 𝑘 𝑓 , 𝑘 𝑟 ∈ ℝ 𝑛 and 𝑝 𝑓 , 𝑝 𝑟 ∈ ℝ 𝑚 , and let a steady state be guaranteed by Theorem 1. Assume 𝑘 𝑓 , 𝑘 𝑟 are thermodynamically feasible but 𝑝 𝑓 , 𝑝 𝑟 are thermodynamically infeasible, so that there exist 𝑢 ∈ ℝ 𝑚 and 𝑤 ∈ ℝ 𝑟 such that 
+
+ln (𝑘 𝑓 ⊘ 𝑘 𝑟 ) = 𝑁 𝑇 ⋅ 𝑢, ln (𝑝 𝑓 ⊘ 𝑝 𝑟 ) =̄ 𝑁 𝑤, 
+
+where ̄ 𝑁 is a basis for the range ℛ(𝑁 ) . Then the steady state does not satisfy detailed balance; that is, 𝑣 𝑓 ≠ 𝑣 𝑟 .Proof. By (20) the cyclic system is thermodynamically feasible exactly when the combined log-parameter vector lies in ℛ(𝐶 𝑇 ). Since (19) is a basis for the right nullspace of 𝐶 and ℛ(𝐶 𝑇 ) = 𝒩(𝐶) ⟂, this membership is equivalent to the single cycle condition obtained by pairing the parameter vector with that basis, 
+
+𝑎 ≔ [ 𝐼 𝑛 
+
+𝑁 ]
+
+> 𝑇
+
+⋅ [ ln (𝑘 𝑓 ⊘ 𝑘 𝑟 )
+
+ln (𝑝 𝑓 ⊘ 𝑝 𝑟 ) ] = ln (𝑘 𝑓 ⊘ 𝑘 𝑟 ) + 𝑁 𝑇 ⋅ ln (𝑝 𝑓 ⊘ 𝑝 𝑟 ) = 0. (27) With ln (𝑘 𝑓 ⊘ 𝑘 𝑟 ) = 𝑁 𝑇 ⋅ 𝑢 and ln (𝑝 𝑓 ⊘ 𝑝 𝑟 ) =̄ 𝑁 𝑤 , condition (27) reads 𝑁 𝑇 ⋅ (𝑢 +̄ 𝑁 𝑤) = 0 ; the assumed thermodynamic infeasibility of 𝑝 𝑓 , 𝑝 𝑟 is precisely the failure of this identity, so 𝑎 ≠ 0 . Suppose now, to the contrary, that the steady state were detailed balanced, that is 𝑣 𝑓 = 𝑣 𝑟 . Then the internal net flux 𝑣 ≔ 𝑣 𝑓 − 𝑣 𝑟 
+
+vanishes, and the species balance (24), which reads 𝑁 𝑣 = 𝑏 for the perpeti net flux 𝑏 ≔ 𝑝 𝑓 ⊙𝑐−𝑝 𝑟 ⊙exp (𝐿 𝑇 ⋅ln ℓ) ,forces 𝑏 = 0 as well. Every forward rate then equals its reverse, so there is a state (𝑐, ℓ) with ln (𝑘 𝑓 ⊘ 𝑘 𝑟 ) = 𝑁 𝑇 ⋅ ln 𝑐 and ln (𝑝 𝑓 ⊘ 𝑝 𝑟 ) = − ln 𝑐 + 𝐿 𝑇 ⋅ ln ℓ; equivalently 
+
+[ ln (𝑘 𝑓 ⊘ 𝑘 𝑟 )
+
+ln (𝑝 𝑓 ⊘ 𝑝 𝑟 ) ] = 𝐶 𝑇 ⋅ [ ln 𝑐 
+
+ln ℓ ] ∈ ℛ(𝐶 𝑇 ). 
+
+Pairing this with the nullspace basis(19) and using 𝐶 [𝐼 𝑛 ; 𝑁 ] = 0 gives 𝑎 = [𝐼 𝑛 ; 𝑁 ] 𝑇 ⋅𝐶 𝑇 ⋅[ ln 𝑐; ln ℓ] = (𝐶 [𝐼 𝑛 ; 𝑁 ]) 𝑇 ⋅[ln 𝑐; ln ℓ] = 0 , contradicting 𝑎 ≠ 0 . Hence 𝑣 𝑓 ≠ 𝑣 𝑟 , so the internal reactions carry a nonzero net flux and the steady state does not satisfy detailed balance. The obstruction is the single cycle affinity 𝑎 in (27): thermodynamic feasibility of the full cyclic system is equivalent to 𝑎 = 0 . By (21) the infeasible exchange parameters satisfy 𝐿 ln (𝑝 𝑓 ⊘ 𝑝 𝑟 ) = 0 , so ln (𝑝 𝑓 ⊘ 𝑝 𝑟 ) ∈ ℛ(𝑁 ) . The entire thermodynamic driving therefore lies within the internal cycle space ℛ(𝑁 ) , and it is the perpeti reactions that sustain the resulting nonequilibrium steady state. Note that detailed balance is the condition 𝑣 𝑓 = 𝑣 𝑟 ; Theorem2 asserts its negation. The strictly positive conservation vector required by Theorem1 is furnished by the cyclic construction itself. Every left-null vector of 𝐶 has the form ℓ = [𝐿 𝑇 ⋅ 𝑦; 𝑦] with 𝑦 ∈ ℝ 𝑚−𝑟 : its metabolite block is 𝐿 𝑇 ⋅ 𝑦 and its moiety block is 𝑦 . Choosing 𝑦 > 0 , and recalling that 𝐿 ≥ 0 with every metabolite belonging to at least one conserved moiety, so that each column of 𝐿 contains a positive entry, one obtains 𝐿 𝑇 ⋅ 𝑦 > 0 and hence 
+
+ℓ > 0 strictly. The cyclic matrix 𝐶 is therefore constructed precisely so that the strictly positive left-null vector demanded by Theorem1 is guaranteed to exist, and this vector depends only on the structural matrices 𝑁 and 
+
+𝐿 , not on any kinetic parameter values. In particular, arbitrarily setting the parameters 𝑝 𝑓 , 𝑝 𝑟 but keeping 𝐶 ,
+
+𝐿 or 𝑁 invariant, means ℓ > 0 is preserved and a steady state continues to exist. Consistently with Theorem2, thermodynamic infeasibility of the perpeti parameters is not merely permitted but is the mechanism that drives this guaranteed steady state away from equilibrium, so that the internal reactions carry a nonzero net flux. 
+
+## 3.11 Mathematical classification of elementary reaction kinetics 
+
+Classification of a function in mathematical terms is important when one seeks to identify whether there exist established algorithms and software that either enables one to obtain a numerical solution that is in the zero set of that function, or numerically optimise over the zero set of that function. This section attempts to mathematically classify the function (6), and can be omitted on a first pass, but is a topic we shall return to in the discussion. Recall that 𝑄 ∈ ℝ 𝑚×𝑚 is positive definite if 𝑥 𝑇 ⋅ 𝑄 ⋅ 𝑥 > 0 for all 𝑥 ∈ ℝ 𝑚 ≠ 0 while 𝐴 is indefinite if there exist 𝑥 1 and 𝑥 2 such that 𝑥 𝑇 1 ⋅ 𝐴 ⋅ 𝑥 1 > 0 and 𝑥 𝑇 2 ⋅ 𝐴𝑥 2 < 0 .Given the cyclic stoichiometric matrix in 18, the corresponding forward and reverse stoichiometric matrices are denoted ̄𝐹 ≔ [ 𝐹 𝐼 𝑚 
+
+0 0 ]̄ 𝑅 ≔ [ 𝑅 00 𝐿 ] ∈ ℝ (2𝑚−𝑟)×(𝑛+𝑚) .
+
+Consider the following coordinate transformations 
+
+𝑘 ≔ [ln (𝑘 𝑓 ); ln (𝑝 𝑓 ); ln (𝑘 𝑟 ); ln (𝑝 𝑟 )], 𝑥 ≔ [ln (𝑐); ln (ℓ)]. 
+
+11 Therefore the set of steady sates is 
+
+𝑓(𝑥) ≔ ([̄𝑅,̄ 𝐹 ] − [̄𝐹 ,̄ 𝑅]) ⋅ exp (𝑘 + [̄𝐹 ,̄ 𝑅] 𝑇 ⋅ 𝑥) = 0, (28) 
+
+= [̄𝑅,̄ 𝐹 ] ⋅ exp (𝑘 + [̄𝐹 ,̄ 𝑅] 𝑇 ⋅ 𝑥) − [̄𝐹 ,̄ 𝑅] ⋅ exp (𝑘 + [̄𝐹 ,̄ 𝑅] 𝑇 ⋅ 𝑥) = 0. 
+
+By definition [̄𝐹 ,̄ 𝑅] has non-negative entries. Furthermore, under biochemically realistic assumptions [1], 
+
+[̄𝐹 ,̄ 𝑅] is full row rank. This is a form of kinetic consistency, in the sense that the stoichiometric signatures of the metabolites across the forward and reverse elementary reactions, are linearly independent, and it underpins the duality between fluxes and concentrations in biochemical networks [1]. Define the following split of 𝑓(𝑥) 
+
+into two parts 
+
+𝑓(𝑥) ≔ ∇𝜑(𝑥) − 𝑎(𝑥) 
+
+where 
+
+𝜑(𝑥) ∶= 1𝑇 ⋅ exp (𝑘 + [̄𝐹 ,̄ 𝑅] 𝑇 ⋅ 𝑥), ∇𝜑(𝑥) = [̄𝐹 ,̄ 𝑅] ⋅ exp (𝑘 + [̄𝐹 ,̄ 𝑅] 𝑇 ⋅ 𝑥) > 0, ∇2𝜑(𝑥) = [̄𝐹 ,̄ 𝑅] ⋅ diag (exp (𝑘 + [̄𝐹 ,̄ 𝑅] 𝑇 ⋅ 𝑥)) ⋅ [̄𝐹 ,̄ 𝑅] 𝑇 ,𝑎(𝑥) ∶= [̄𝑅,̄ 𝐹 ] ⋅ exp (𝑘 + [̄𝐹 ,̄ 𝑅] 𝑇 ⋅ 𝑥) > 0, ∇𝑎(𝑥) = [̄𝐹 ,̄ 𝑅] ⋅ diag (exp (𝑘 + [̄𝐹 ,̄ 𝑅] 𝑇 ⋅ 𝑥)) ⋅ [̄𝑅,̄ 𝐹 ] 𝑇 ,∇𝑓(𝑥) = ∇2𝜑(𝑥) − ∇𝑎(𝑥). 
+
+Since exp is a convex function and [̄𝐹 ,̄ 𝑅] is full row rank then 𝜑(𝑥) is a strictly convex function of 𝑥 , so its gradient ∇𝜑(𝑥) ∈ ℝ 𝑚 ≥0 is strictly monotone and is equal to the rate of consumption of each species, and 
+
+∇2𝜑(𝑥) ∈ ℝ 𝑚×𝑚 is a symmetric positive definite matrix. Full row rank of [̄𝐹 ,̄ 𝑅] makes the Hessian ∇2𝜑(𝑥) 
+
+is positive definite rather than merely positive semidefinite. In contrast, 𝑎(𝑥) ∈ ℝ 𝑚 ≥0 is the rate of production of each species and ∇𝑎(𝑥) ∈ ℝ 𝑚×𝑚 is an asymmetric indefinite matrix, so it is not the gradient of any scalar valued function. Also, the Hessian of a strictly convex function is positive definite and vice versa. Therefore 
+
+∇𝑓(𝑥) is the difference between a positive definite and an asymmetric square matrix, which may be indefinite, in which case ∇𝑓(𝑥) is not the Hessian of any convex function [32]. This makes it difficult to solve for 𝑥 
+
+such that 𝑓(𝑥) = 0 with established algorithms using convex optimisation or monotone variational inequality theory [33]. For a restricted class of biochemical networks, previously we established that 𝑓(⋅) is not monotone, however it is duplomonotone , that is 𝑓(𝑥) 𝑇 ⋅ ∇𝑓(𝑥) ⋅ 𝑓(𝑥) ≥ 0 . This enabled formulation of a globally convergent algorithm whose stationary states solve 𝑓(𝑥) = 0 , but it is not known if 𝑓(⋅) is duplomonotone in general [34]. Moreover, even if 𝑓(⋅) is duplomonotone, there still remains the unsolved problem to optimise over the set 
+
+Ω ≔ {𝑥 | 𝑓(𝑥) = 0} .Note that, to express concentration dynamics in the logarithmic coordinate, differentiate 𝑐 = exp (𝑥) 
+
+component-wise ̇𝑐 = exp (𝑥) ⊙̇ 𝑥 = exp (𝑥) ⊙̇ 𝑥. 
+
+Because exp (𝑥) is componentwise invertible the velocity field in the logarithmic coordinate is ̇𝑥 = exp (𝑥) ⊙ ⋅̇𝑐 = − exp (𝑥) ⊙ 𝑓(𝑥). 
+
+The steady-state set is identical in both coordinates, ̇𝑐 = 0 ⟺̇ 𝑥 = 0 ⟺ 𝑓(𝑥) = 0. 
+
+As such, up to coordinate transformation, 𝑓(𝑥) = 0 is the fundamental equation defining the set of steady states of a network. 
+
+# 4 Constraint-based modelling of biochemical networks 
+
+Instead of trying to directly find a solution to Eq (9), or in addition Eq. (16), the field of constraint-based modelling of biochemical networks arose, whereby a subset of the constraints represented by (16) are either removed or relaxed, and an optimisation problem was formulated to select an optimal vector that also satisfied the resulting simplified system of equations. The motivation for introducing the particular optimisation problems in this section is that each retains a subset of the (primal) constraints on a kinetically feasible steady state but their objectives are different and each of their optimality conditions correspond to different subsets of the feasible set of kinetically feasible steady states. In particular, as explained in Section 7, Theorem 4 establishes that these subsets form a nested chain of sets 𝒮 4 ⊆ 𝒮 3 ⊆ 𝒮 2 ⊆ 𝒮 1, with the variational kinetics algorithm optimising towards the innermost set 𝒮 4 of elementary kinetic steady states. This is further interpreted in Section 7. The first such optimisation problem was a linear optimisation problem. 12 4.1 Linear optimisation: Introduction 
+
+The standard form of a linear optimisation problem is min  
+
+> 𝑥
+
+𝑐 𝑇 ⋅ 𝑥 
+
+s.t. 𝐴 ⋅ 𝑥 ≤ 𝑏 (29) where 𝑐 ∈ ℝ 𝑛 is a coefficient vector, 𝑐 𝑇 ⋅ 𝑥 is a linear objective function, 𝑥 ∈ ℝ 𝑛 is a vector of variables 𝑐 ∈ ℝ 𝑛 is a given vector of coefficients, 𝐴 ∈ ℝ 𝑚×𝑛 is a given linear constraint matrix and 𝑏 ∈ ℝ 𝑚 is a given vector of data. The constraints in Eq. (29) define a polyhedral convex set, which may either be empty (no solution exists), admit one solution (hence no need for an optimisation problem) or admit an infinite number of solutions (well posed optimisation problem). Optimisation of the objective function is expressed as minimisation by convention and results in identification of an optimal vector 𝑥 ⋆ wherein the value of 𝑐 𝑇 ⋅ 𝑥 ⋆ is minimal, i.e. there does not exist another vector satisfying 𝐴 ⋅ 𝑥 ≤ 𝑏 such that the value of the objective is any less. Two distinct vectors 
+
+𝑥 ⋆1 and 𝑥 ⋆2 are referred to as alternate optimal solutions if 𝑐 𝑇 ⋅ 𝑥 ⋆1 = 𝑐 𝑇 ⋅ 𝑥 ⋆2. In general, there exist an infinite number of optimal vectors 𝑥 ⋆ that each have the same minimal value of the objective function. 2
+
+## 4.2 Flux balance analysis 
+
+Rather than modelling a system of reactions in terms of mass action kinetics, an alternative approach is to represent net reaction rate as a variable rather than as a function of kinetic parameters and species concen-trations. Recall that when assuming elementary reaction kinetics, net rate is the difference between a pair of unidirectional reactions, each of which is an explicit function of kinetic parameters and species concentrations, cf Eq. (5). An advantage of this approach is that the set of net rate vectors that satisfy steady state is a polyhedral convex set. This enables one to formulate and efficiently solve various optimisation problems where the solution is a rate vector that is optimal with respect to a particular objective function. When the objective function is linear, this approach is known as flux balance analysis and is represented by the optimisation problem min  
+
+> 𝑣,𝑤
+
+𝑐 𝑇 ⋅ 𝑣 + 𝑑 𝑇 ⋅ 𝑤 
+
+s.t. 𝑁 ⋅ 𝑣 + 𝐵 ⋅ 𝑤 = 0 (30) 
+
+𝑙 ≤ 𝑣 ≤ 𝑢, (31) where 𝑣 ∈ ℝ 𝑛 is a vector of net rates, one for each internal reaction in the biochemical system and 𝑐 ∈ ℝ 𝑛 
+
+is a given vector of linear objective coefficients, one for each internal reaction. Furthermore, to represent the exchange of mass between the system and its environment 𝑤 ∈ ℝ 𝑘 is a vector of net rates, one for each external reaction and 𝑑 ∈ ℝ 𝑘 is a given vector of linear objective coefficients, one for each exchange reaction . Often, in applications 𝑐 = 0 and only one 𝑑 i ≠ 0 .As before, 𝑁 ∈ ℝ 𝑚×𝑛 is a stoichiometric matrix representing internal reactions and 𝐵 is a stoichiometric matrix representing external reactions. Compare the first constraint in Problem (30) with the steady state constraint in Eq. (7). Both seem similar but they are fundamentally different as in Eq. (7) net rate is a function of concentrations and kinetic parameters, while in Problem (30) net rate is a variable vector that is not a function of any other variables or parameters, which makes it substantially less constrained. In Problem (30) the last constraint is a set of box constraints, represented by lower and upper bounds on the net rate for each reaction, 𝑙, 𝑢 ∈ ℝ 𝑛 . Qualitatively, these bounds may be set based on known directionality of biochemical reactions. The convention is that net rate is positive for a reaction that proceeds from substrates to products in a left to right direction when expressed as a reaction equation. In most metabolic networks, irreversible reactions are represented with bounds like 0 ≤ 𝑣 ≤ 𝑢 so net rate must be positive. Reversible reactions are represented as −∞ ≤ 𝑣 ≤ ∞ which means that box constraint is not active. Quantitatively such bounds may be set based on experimentally measured reaction rates, e.g., in an in vitro culture, by measuring the difference between fresh and spent medium concentrations, one may estimate the rate of uptake or secretion of a metabolite by a system, which can be used to set quantitative bounds on exchange reaction rates. Generally, there are also box constraints on net external reaction rates. 
+
+## 4.3 Cycle-free flux balance analysis 
+
+Inspired by Desouki et al. [6], we previously observed [35] that a thermodynamically feasible flux may be computed by a single linear optimisation problem    
+
+> 2Such problems are solved using a numerical optimisation solver that represents real valued numbers in finite precision, so typically a value of 𝑥 ⋆
+> i= 10 −6 or less should be considered zero (though this depends on the optimisation solver).
+
+13 min  
+
+> 𝑧,𝑤
+
+‖𝑣‖ 1 + 𝑐 𝑇 ⋅ 𝑤 
+
+s.t. 𝑁 ⋅ 𝑣 + 𝐵 ⋅ 𝑤 = 0 ∶ 𝑦 𝑙 ≤ 𝑣 ≤ 𝑢 ∶ 𝑠 𝑙 𝑤 ≤ 𝑤 ≤ 𝑢 𝑤 ∶ 𝑡 
+
+(32) where 𝑙 and 𝑢 denote lower and upper bounds on internal reaction fluxes, with the constraint that 𝑙 ∈ {0, −∞} 𝑛 
+
+and 𝑢 ∈ {0, ∞} 𝑛 , while 𝑙 𝑤 ∈ ℝ 𝑘 and 𝑢 𝑤 ∈ ℝ 𝑘 denote lower and upper bounds on external reaction fluxes, respectively. The vectors 𝑦 ∈ ℝ 𝑚 , 𝑠 ∈ ℝ 𝑚 and 𝑡 ∈ ℝ 𝑚 , are dual variables to the steady state constraint, bounds on internal reaction rates and bounds on external reaction rates, respectively. The optimality conditions of Problem 32 are 
+
+𝑁 ⋅ 𝑣 ⋆ + 𝐵 ⋅ 𝑤 ⋆ = 0∇ ‖𝑣 ⋆‖1 = sign (𝑣 ⋆) = −𝑁 𝑇 ⋅ 𝑦 ⋆ − 𝑠 ⋆
+
+𝑐 = −𝐵 𝑇 ⋅ 𝑦 ⋆ − 𝑡 ⋆
+
+where −𝑦 ⋆ may interpreted as a vector proportional to the chemical potentials of each metabolite and −𝑁 𝑇  
+
+> j
+
+⋅ 𝑦 ⋆
+
+is proportional to the change of chemical potential for reaction 𝑗 . When 𝑙 ∈ {0, −∞} 𝑛 and 𝑢 ∈ {0, ∞} 𝑛 then the optimal dual variable 𝑠 ⋆ 
+
+> j
+
+to the inequality constraints on internal reaction 𝑗 , is non-zero if and only if 𝑣 ⋆
+
+> j
+
+is zero, that is 𝑧 ⋆ 
+
+> j
+
+= 0 ⟺ 𝑠 ⋆ 
+
+> j
+
+≠ 0 and 𝑣 ⋆ 
+
+> j
+
+≠ 0 ⟺ 𝑠 ⋆ 
+
+> j
+
+= 0 . Therefore 𝑣 ⋆ 
+
+> j
+
+≠ 0 ⟺ sign (𝑣 ⋆ 
+
+> j
+
+) = −𝑁 𝑇  
+
+> j
+
+⋅ 𝑦 ⋆,which enforces energy conservation and the second law of thermodynamics on the optimal vector of nonzero internal reaction fluxes [8]. However, when 𝑧 j = 0 , this is a relaxation of the thermodynamic sign constraint sign (𝑣 j) = − sign (𝑁 𝑇  
+
+> j
+
+⋅ 𝑦) , since 𝑣 ⋆ 
+
+> j
+
+= 0 ⟺ 𝑣 ⋆ 
+
+> j
+
+= 𝑁 𝑇  
+
+> j
+
+⋅ 𝑦 ⋆ + 𝑠 ⋆ 
+
+> j
+
+= 0 , so 𝑣 ⋆ 
+
+> j
+
+= 0 ⟺ 𝑁 𝑇  
+
+> j
+
+⋅ 𝑦 ⋆ = −𝑠 ⋆ 
+
+> j
+
+and therefore 
+
+𝑣 j = 0 ⇎ 𝑁 𝑇  
+
+> j
+
+⋅𝑦 = 0 . Biochemically, one may interpret this relaxation as saying that a zero internal reaction flux does not imply a zero change in chemical potential. For example, a nonzero change in chemical potential may still be consistent with zero net flux when an enzyme is absent for the corresponding reaction. To summarise, herein we define thermodynamic consistency as the requirement that any nonzero net flux be driven by a change in chemical potential for the corresponding reaction, that is 
+
+𝑣 ⋆ 
+
+> j
+
+> 0 ⇒ 𝑁 𝑇  
+
+> j
+
+⋅ 𝑦 ⋆ < 0, 𝑣 ⋆ 
+
+> j
+
+< 0 ⇒ 𝑁 𝑇  
+
+> j
+
+⋅ 𝑦 ⋆ > 0. 
+
+However, a reactions must admit a non-zero flux that is thermodynamically consistent to be deemed thermo-dynamically flux consistent, so we omit reactions where zero net flux is the only thermodynamically consistent solution obtained. 
+
+## 4.4 Convex optimisation: Introduction 
+
+4.4.1 Convex functions 
+
+In convex optimisation, the constraints define a polyhedral convex, set while the objective may be non-linear, but it must be convex function . The epigraph of a function is the set of points lying on or above the function’s graph. A function is convex if and only if its epigraph is a convex set. The function 𝜙(𝑥) ∶ ℝ 𝑛 → ℝ given by 
+
+𝑥 𝑇 ⋅ 𝑥 is convex. Given ℎ ∈ ℝ 𝑛 , the quadratic function 𝜙(𝑥 ∣ ℎ) ∶ ℝ 𝑛 → ℝ , given by 
+
+𝜙(𝑥 ∣ ℎ) ≔ 1/2(ℎ − 𝑥) 𝑇 ⋅ (ℎ − 𝑥) 
+
+is convex. The exponential function 𝜙(𝑥) ∶ ℝ 𝑛 → ℝ , given by 
+
+𝜙(𝑥) ≔ 1𝑇 ⋅ exp (𝑥) 
+
+is convex. The negative entropy function 𝜙(𝑥) ∶ ℝ 𝑛 ≥0 → ℝ , given by 
+
+𝜙(𝑥) ≔ 𝑥 𝑇 ⋅ ln (𝑥) 
+
+is also convex. 
+
+4.4.2 Standard form convex optimisation 
+
+The standard form of a convex optimisation problem is min  
+
+> 𝑥
+
+𝜙(𝑥) 
+
+s.t. 𝐴 ⋅ 𝑥 ≤ 𝑏 (33) where 𝜙(𝑥) is a convex objective function, 𝑥 ∈ ℝ 𝑛 is a vector of variables, 𝐴 ∈ ℝ 𝑚×𝑛 is a given linear constraint matrix and 𝑏 ∈ ℝ 𝑚 is a given vector of data. 14 4.5 Entropic flux balance analysis 
+
+There are several shortcomings with flux balance analysis. An important one is that the prediction of internal reaction rate may not, and for genome-scale computational models usually do not, satisfy thermodynamic constraints. In particular do not satisfy energy conservation and the second law of thermodynamics. Previously, we developed a novel method to satisfy the aforementioned constraints using a convex optimisation problem [8]. Since the negative entropy function is convex, the following is a convex optimisation problem min    
+
+> 𝑣 𝑓 ,𝑣 𝑟 >0
+
+𝑣 𝑇 𝑓 ⋅ ln (𝑣 𝑓 ) + 𝑣 𝑇 𝑟 ⋅ ln (𝑣 𝑟 )
+
+s.t. 𝑁 ⋅ (𝑣 𝑓 − 𝑣 𝑟 ) + 𝐵 ⋅ 𝑤 = 0 ∶ 𝑦 () where we introduce the dual variable 𝑦 ∈ ℝ 𝑚 , which by convention is written to the right hand side of the primal constraints. The Lagrangian for this problem is 
+
+ℒ(𝑣 𝑓 , 𝑣 𝑟 , 𝑤, 𝑦) = 𝑣 𝑇 𝑓 ⋅ ln (𝑣 𝑓 ) + 𝑣 𝑇 𝑟 ⋅ ln (𝑣 𝑟 ) − 𝑦 𝑇 ⋅ (𝑁 ⋅ (𝑣 𝑓 − 𝑣 𝑟 ) + 𝐵 ⋅ 𝑤) 
+
+and by setting its partial derivatives to equal zero we obtain the optimality conditions for Problem (), which are 
+
+𝜕ℒ 𝜕𝑣 𝑓 
+
+= ln (𝑣 ⋆𝑓 ) + 1 + 𝑁 𝑇 ⋅ 𝑦 ⋆ = 0 (34) 
+
+𝜕ℒ 𝜕𝑣 𝑟 
+
+= ln (𝑣 ⋆𝑟 ) + 1 − 𝑁 𝑇 ⋅ 𝑦 ⋆ = 0 (35) 
+
+𝜕ℒ 𝜕𝑤 = 𝐵 𝑇 ⋅ 𝑦 ⋆ = 0 𝜕ℒ 𝜕𝑦 = 𝑁 ⋅ (𝑣 ⋆𝑓 − 𝑣 ⋆𝑟 ) + 𝐵 ⋅ 𝑤 ⋆ = 0 
+
+By subtracting (35) from (34) we obtain ln (𝑣 ⋆𝑓 ) − ln (𝑣 ⋆𝑟 ) + 2𝑁 𝑇 ⋅ 𝑦 ⋆ = 0
+
+ln ( 𝑣 ⋆𝑓 
+
+𝑣 ⋆𝑟 
+
+) = −2𝑁 𝑇 ⋅ 𝑦 ⋆. (36) Comparing (36) with (17), we can see that the optimality conditions of Problem () satisfy the desired ther-modynamic constraints and 2𝑦 ∗ can be interpreted as a vector proportional to the chemical potential of each species. Consider Problem () with the addition of box constraints and a linear objective on external net rates min    
+
+> 𝑣 𝑓 ,𝑣 𝑟 ,𝑤
+
+𝑣 𝑇 𝑓 ⋅ ln (𝑣 𝑓 ) + 𝑣 𝑇 𝑟 ⋅ ln (𝑣 𝑟 ) + 𝑑 𝑇 ⋅ 𝑤 
+
+s.t. 𝑁 ⋅ (𝑣 𝑓 − 𝑣 𝑟 ) + 𝐵 ⋅ 𝑤 = 0 ∶ −𝑦 (37) 
+
+𝑙 − (𝑣 𝑓 − 𝑣 𝑟 ) ≤ 0 ∶ −𝑧 𝑙 (38) 
+
+(𝑣 𝑓 − 𝑣 𝑟 ) − 𝑢 ≤ 0 ∶ −𝑧 𝑢 (39) where 𝑙, 𝑢 ∈ ℝ 𝑛 are given lower and upper bounds on internal net rate and where 𝑦 ∈ ℝ 𝑚 , 𝑧 𝑙 ∈ ℝ 𝑛 ≥0 and 
+
+𝑧 𝑢 ∈ ℝ 𝑛 ≥0 are dual variables to the steady state constraints, lower bounds on internal net rate, and upper bounds on internal net rate, respectively. A dual variable to an equality constraint may be positive or negative, while a dual variable to an inequality constraint must be restricted in sign. By convention, they are non-negative. The Lagrangian for problem (37) is 
+
+ℒ(𝑣 𝑓 , 𝑣 𝑟 , 𝑤, 𝑦, 𝑧 𝑙 , 𝑧 𝑢 ) ≔ 𝑣 𝑇 𝑓 ⋅ln (𝑣 𝑓 )+𝑣 𝑇 𝑟 ⋅ln (𝑣 𝑟 )−𝑦 𝑇 ⋅(𝑁 ⋅(𝑣 𝑓 −𝑣 𝑟 )+𝐵⋅𝑤)−𝑧 𝑇 𝑙 ⋅(𝑙−(𝑣 𝑓 −𝑣 𝑟 ))−𝑧 𝑇 𝑢 ⋅((𝑣 𝑓 −𝑣 𝑟 )−𝑢)+𝑑 𝑇 ⋅𝑤 
+
+(40) and its partial derivatives are 
+
+𝜕ℒ 𝜕𝑣 𝑓 
+
+= ln (𝑣 ⋆𝑓 ) + 1 − 𝑁 𝑇 ⋅ 𝑦 ⋆ + 𝑧 ⋆𝑙 − 𝑧 ⋆𝑢 = 0 (41) 
+
+𝜕ℒ 𝜕𝑣 𝑟 
+
+= ln (𝑣 ⋆𝑟 ) + 1 + 𝑁 𝑇 ⋅ 𝑦 ⋆ − 𝑧 ⋆𝑙 + 𝑧 ⋆𝑢 = 0 (42) 
+
+𝜕ℒ 𝜕𝑤 = 𝑑 − 𝐵 𝑇 ⋅ 𝑦 ⋆ = 0 𝜕ℒ 𝜕𝑦 = 𝑁 ⋅ (𝑣 ⋆𝑓 − 𝑣 ⋆𝑟 ) + 𝐵 ⋅ 𝑤 ⋆ = 0 
+
+15 Additionally, it can be shown (5.5 in [36]) that an optimum solution satisfies 
+
+𝑧 ⋆𝑙 ⊙ (𝑙 − (𝑣 ⋆𝑓 − 𝑣 ⋆𝑟 )) = 0 (43) 
+
+𝑧 ⋆𝑢 ⊙ ((𝑣 ⋆𝑓 − 𝑣 ⋆𝑟 ) − 𝑢) = 0 (44) where ⊙ denotes the component-wise (Hadamard) product of a pair of vector arguments. These are referred to as complementary slackness conditions, because 
+
+𝑧 ⋆𝑙𝑗 > 0 ⇔ 𝑙 j − (𝑣 ⋆𝑓𝑗 − 𝑣 ⋆𝑟𝑗 ) = 0, 𝑧 ⋆𝑙𝑗 = 0 ⇔ 𝑙 j − (𝑣 ⋆𝑓𝑗 − 𝑣 ⋆𝑟𝑗 ) < 0, 
+
+and the same for the upper bound constraints, under strict complementarity. By subtracting (42) from (41) we obtain ln (𝑣 ⋆𝑓 ) − ln (𝑣 ⋆𝑟 ) − 2𝑁 𝑇 ⋅ 𝑦 ⋆ + 2(𝑧 ⋆𝑙 − 𝑧 ⋆𝑢 ) = 0, 
+
+ln ( 𝑣 ⋆𝑓 
+
+𝑣 ⋆𝑟 
+
+) = 2 (𝑁 𝑇 ⋅ 𝑦 ⋆ − (𝑧 ⋆𝑙 − 𝑧 ⋆𝑢 )) . (45) The dual variables to the box constraints in (45) could potentially interfere with satisfaction of 17, so context-specific models must be generated in a thermodynamically consistent way [37], and bounds on net rate must be set in a thermodynamically consistent way to avoid this issue [35]. Essentially, a solution to Problem (37) will be thermodynamically feasible provided Problem (37) is posed in a way that admits a thermodynamically feasible solution [35]. The existence of a thermodynamically feasible solution is necessary, but not sufficient, for the existence of a kinetically feasible solution, as elaborated further below (cf Section (7)). 
+
+Entropic flux balance analysis is a parameterised variant of Problem () that also enables penalisation of devi-ation from measured rates [38]. Compared with a variety of constraint-based modelling approaches, entropic flux balance analysis has been shown to enable superior predictions of reaction rates in a context specific model of dopaminergic neuronal metabolism. . However, entropy maximisation alone it has several shortcomings. Each primal solution ( 𝑣 ⋆𝑓 , 𝑣 ⋆𝑟 ) to an entropic flux balance analysis problem is a unique function of input parameters, but it is not obvious what the most appropriate parameterisation is. Maximisation of the relative entropy of unidirectional fluxes, with a prior derived from transcriptomic data, has been demonstrated to further increase prediction accuracy [9], which partly addresses the question of the ideal parameters. However, entropy maxim-isation tends to bias net rate to reactions whose stoichiometric coefficients are large in magnitude because, all else being equal, for a single unit of rate, a reaction with large stoichiometric coefficient will move more mass than one with a small stoichiometric coefficient. This issue arises because of reactions in a model with high molecularity, which are lumped representations of sets of reactions. With (relative) entropy maximisation, the predicted potentials are linearly dependent, since the stoichiomet-ric matrix is row rank deficient. Therefore, only the predicted change in chemical potential ( 𝑁 𝑇 ⋅ 𝑦 ⋆) is unique, not the potential vector 𝑦 ⋆ itself. The variables experimentally measured most frequently are species concen-trations while (entropic) flux balance analysis predicts rates and change in chemical potential. This makes comparison of measurements and predictions difficult. When concentrations of molecular species are not rep-resented as variables, it makes it difficult to incorporate data on metabolite concentrations. While predicted rates are thermodynamically feasible, they may not satisfy known reaction rate laws and as such they are not guaranteed to be kinetically feasible. Because known reaction rate laws are not represented, an important estab-lished feature of (bio)chemistry is not represented, potentially resulting in prediction artefacts. This motivates a search for novel modelling methods that also incorporate kinetic constraints, yet retain the theoretical and numerical advantages of convex optimisation methods. 
+
+# 5 Variational elementary kinetics 
+
+## 5.1 Conic optimisation: Introduction 
+
+In conic optimisation , the objective is linear, but the constraints are an intersection of a polyhedral convex set and one or more convex cones . A cone 𝒦 is proper when it is (a) closed (contains its boundary or more technically limit points), (b) pointed, 𝒦 ∩ (−𝒦) = {0} and (c) it has nonempty interior. A proper convex cone 
+
+defines a convex set. Henceforth, for brevity, cone means proper convex cone. A conic inequality is a constraint 
+
+𝑥 ∈ 𝒦 
+
+where 𝒦 is a proper convex cone. Each conic inequality satisfies certain properties, e.g., a conic inequality is preserved by non-negative linear combinations, that is 
+
+𝑥 ∈ 𝒦, 𝑦 ∈ 𝒦 ⇒ 𝛼𝑥 + 𝛽𝑦 ∈ 𝒦 ∀𝛼, 𝛽 ≥ 0. 
+
+16 A simple example of a cone is the set defined by the non-negative orthant, 
+
+𝒦 ≥0 ≔ {𝑥 ∈ ℝ 𝑛 ∣ 𝑥 ≥ 0} ⇔ 𝑥 ∈ 𝒦 ≥0 .
+
+The boundary of a cone is denoted 𝜕𝒦 . The boundary of the non-negative orthant cone is where there exists at least one coordinate that is zero, that is 
+
+𝜕𝒦 ≥0 ≔ {𝑥 ∈ ℝ 𝑛 ∣ 𝑥 ≥ 0, ∃𝑥 j = 0} 
+
+The interior of a cone is denoted int 𝒦 . The interior of the non-negative orthant cone is the set of points where all coordinates are strictly positive, that is int 𝒦 ≥0 ≔ {𝑥 ∈ ℝ 𝑛 ∣ 𝑥 > 0} . 
+
+Conic optimisation is focused on optimisation over certain types of cones that admit the expression of a well behaved barrier function, that is a smooth function with mathematical properties that enable an interior point algorithms to enforce feasibility with respect to a conic equality, while optimising within the cone. For example, the exponential cone is a 3 dimensional cone defined 3 as the closure of the set of points that satisfy 
+
+𝒦 𝑒𝑥𝑝 ≔ {(𝑥 1, 𝑥 2, 𝑥 3) ∣ 𝑥 1 ≥ 𝑥 2 exp ( 𝑥 3
+
+𝑥 2
+
+) , 𝑥 1, 𝑥 2 > 0} ⇔ ⎛⎜⎝𝑥 1
+
+𝑥 2
+
+𝑥 3
+
+⎞⎟⎠∈ 𝒦 𝑒𝑥𝑝 ⊂ ℝ 3. (46) Observe that the epigraph of an exponential function is a two dimensional slice of an exponential cone where 
+
+𝑥 2 = 1 , that is 
+
+⎛⎜⎝𝑥 1
+
+1𝑥 3
+
+⎞⎟⎠∈ 𝒦 𝑒𝑥𝑝 ⇔ 𝑥 1 ≥ exp (𝑥 3) , 𝑥 1 > 0. 
+
+Equivalently, the exponential cone may be defined in logarithmic rather than exponential terms as the closure of the set of points that satisfy 
+
+𝒦 𝑒𝑥𝑝 ≔ {(𝑥 1, 𝑥 2, 𝑥 3) ∣ −𝑥 3 ≥ 𝑥 2 ln ( 𝑥 2
+
+𝑥 1
+
+) , 𝑥 1, 𝑥 2 > 0} ⇔ ⎛⎜⎝𝑥 1
+
+𝑥 2
+
+𝑥 3
+
+⎞⎟⎠∈ 𝒦 𝑒𝑥𝑝 ⊂ ℝ 3. (47) The rotated quadratic cone is a 2 + 𝑛 dimensional cone 
+
+𝒬 2+𝑛 ≔ {(𝑥, 𝑦, 𝑧) ∣ 2𝑥𝑦 ≥ 𝑧 21 + 𝑧 22 + … + 𝑧 2𝑛 , 𝑥 ≥ 0, 𝑦 ≥ 0} ⇔ ⎛⎜⎜⎜⎜⎜⎜⎝𝑥 𝑦 𝑧 1
+
+⋮𝑧 𝑛 
+
+⎞⎟⎟⎟⎟⎟⎟⎠∈ 𝒬 2+𝑛 ,
+
+which is a 2+𝑛 dimensional cone. Any positive semidefinite matrix may be factorised as 𝐻 𝑇 ⋅𝐻 , where 𝐻 ∈ ℝ 𝑘×𝑛 
+
+and 𝑘 = rank (𝐻) . Given such a factor 𝐻 and a vector ℎ ∈ ℝ 𝑛 a convex quadratic set can be represented by a rotated quadratic cone of the form 
+
+𝑡 ≥ 1/2 (ℎ − 𝑥) 𝑇 ⋅ 𝐻 𝑇 ⋅ 𝐻 ⋅ (ℎ − 𝑥) ⇔ ⎛⎜⎝𝑡 1𝐻 ⋅ (𝑥 − ℎ) ⎞⎟⎠∈ 𝒬 2+𝑛 , (48) which is an affine quadratic constraint. Any convex constraint can be represented as a conic inequality, with minor modifications to make 𝒦 proper. A cone can be constructed from any convex function 𝜙(𝑥) ∶ ℝ 𝑛 → ℝ because the epigraph of the perspective of a convex function is a convex cone. It follows, that any constraint involving a convex function 𝜙(𝑥 1) ∶ ℝ 𝑚 → ℝ 
+
+can be represented as a conic linear inequality, that is 
+
+𝑥 3 ≥ 𝜙(𝑥 1) ⇔ ⎛⎜⎝𝑥 1
+
+1𝑥 3
+
+⎞⎟⎠∈ 𝒦 𝜙 .  
+
+> 3Warning: some articles in the literature define the same exponential cone but with a different convention for the order of the variables 𝑥 1, 𝑥 2, 𝑥 3.Throughout, we stick to the convention adopted by the MOSEK conic optimisation solver an its associated documentation, e.g., https://docs.mosek.com/modeling-cookbook/expo.html
+
+17 Let 𝐴 ∈ ℝ 𝑚×𝑛 , 𝑏 ∈ ℝ 𝑚 , 𝐹 ∈ ℝ 𝑘×𝑛 and 𝑔 ∈ ℝ 𝑘 , then the standard form for a conic optimisation problem is min  
+
+> 𝑥
+
+𝑐 𝑇 ⋅ 𝑥 
+
+s.t. 𝐴 ⋅ 𝑥 ≤ 𝑏, (49) 
+
+𝐹 ⋅ 𝑥 + 𝑔 ∈ 𝒦. (50) In practice, current conic optimisation solvers support a limited number of types of cones, therefore whether a problem can be solved by a given solver depends on which types of cone the solver supports. 
+
+## 5.2 Conification of elementary reaction kinetics 
+
+Our novel approach is to reformulate Eq. (9) into a system of equations that represent a convex set, which is amenable to optimisation, yet satisfy Eq. (9) at the solution to an optimisation problem. Eq. (9) may be rewritten as 
+
+𝑁 ⋅ (𝑣 𝑓 − 𝑣 𝑟 ) + 𝐵 ⋅ 𝑤 = 0, (51) 
+
+𝑣 𝑓 = exp (ln (𝑘 𝑓 ) + 𝐹 𝑇 ⋅ ln (𝑐)), (52) 
+
+𝑣 𝑟 = exp (ln (𝑘 𝑟 ) + 𝑅 𝑇 ⋅ ln (𝑐)), (53) which still represents the same non-convex set as Eq. (9). By introducing logarithmic variables in place of kinetic parameters and concentration, 
+
+𝑙𝑛𝑘 𝑓 ≔ ln (𝑘 𝑓 ) , (54) 
+
+𝑙𝑛𝑘 𝑟 ≔ ln (𝑘 𝑟 ) , (55) 
+
+𝑙𝑛𝑐 ≔ ln (𝑐) , (56) then Eq. (51), (52) and (53) become 
+
+𝑁 ⋅ (𝑣 𝑓 − 𝑣 𝑟 ) + 𝐵 ⋅ 𝑤 = 0, (57) 
+
+𝑣 𝑓 = exp (𝑙𝑛𝑘 𝑓 + 𝐹 𝑇 ⋅ 𝑙𝑛𝑐), (58) 
+
+𝑣 𝑟 = exp (𝑙𝑛𝑘 𝑟 + 𝑅 𝑇 ⋅ 𝑙𝑛𝑐), (59) 
+
+𝑘 𝑓 = exp (𝑙𝑛𝑘 𝑓 ), (60) 
+
+𝑘 𝑟 = exp (𝑙𝑛𝑘 𝑟 ), (61) 
+
+𝑐 = exp (𝑙𝑛𝑐), (62) which, again, still represents the same non-convex set as Eq. (9). Assume we have a solution (𝑣 𝑓 , 𝑣 𝑟 , 𝑙𝑛𝑘 𝑓 , 𝑙𝑛𝑘 𝑟 , 𝑙𝑛𝑐) 
+
+to Eq. (57)-(59), then it is straightforward to compute the exponentials of 𝑙𝑛𝑘 𝑓 , 𝑙𝑛𝑘 𝑟 , 𝑙𝑛𝑐 to obtain 𝑘 𝑓 , 𝑘 𝑟 , 𝑐 so for the sake of clarity, we will momentarily omit (60), (61) and (62) from consideration. Eq. (52) and (53) each involves an exponential term, which can be relaxed by replacing each equality by an inequality to give 
+
+𝑁 ⋅ (𝑣 𝑓 − 𝑣 𝑟 ) + 𝐵 ⋅ 𝑤 = 0, (63) 
+
+𝑣 𝑓 ≥ exp (𝑙𝑛𝑘 𝑓 + 𝐹 𝑇 ⋅ 𝑙𝑛𝑐), (64) 
+
+𝑣 𝑟 ≥ exp (𝑙𝑛𝑘 𝑟 + 𝑅 𝑇 ⋅ 𝑙𝑛𝑐), (65) It is clear that Eq. (63) represents a (polyhedral) convex set. However, each of the inequalities (64) and (65) also represents a convex set, even though it is nonlinear. This can be appreciated by recognising that the exponential is a convex function which is the same as saying that the epigraph of an exponential function is a convex set. In fact, each term of the form 𝑥 1 ≥ exp (𝑥 3) is a two dimensional plane within an exponential cone (46) with 𝑥 2 = 1. That is, one may express each of the constraints involving an exponential term as either of the two equivalent forms 
+
+𝑥 1 ≥ exp (𝑥 3) ⟺ ⎛⎜⎝𝑥 1
+
+1𝑥 3
+
+⎞⎟⎠∈ 𝒦 𝑒𝑥𝑝 ,
+
+where it is implicit in this representation that 𝑥 2 = 1 . Therefore, Eq. (63), (64) and (65) may be expressed as 18 𝑁 ⋅ (𝑣 𝑓 − 𝑣 𝑟 ) + 𝐵 ⋅ 𝑤 = 0, (66) 
+
+⎛⎜⎝𝑣 𝑓 
+
+1𝐹 𝑇 ⋅ 𝑙𝑛𝑐 + 𝑙𝑛𝑘 𝑓 
+
+⎞⎟⎠∈ 𝒦 𝑛 𝑒𝑥𝑝 , (67) 
+
+⎛⎜⎝𝑣 𝑟 
+
+1𝑅 𝑇 ⋅ 𝑙𝑛𝑐 + 𝑙𝑛𝑘 𝑟 
+
+⎞⎟⎠∈ 𝒦 𝑛 𝑒𝑥𝑝 , (68) where there are a set of 𝑛 exponential cone constraints, one for each forward reaction, and a second set 𝑛 
+
+exponential cone constraints, one for each reverse reaction. The order of the variables is to be interpreted as set of 𝑛 component-wise exponential cone constraints, where 1 is a 𝑛 × 1 dimensional vector of constants. That is 
+
+⎛⎜⎝𝑣 𝑓 
+
+1𝐹 𝑇 ⋅ 𝑙𝑛𝑐 + 𝑙𝑛𝑘 𝑓 
+
+⎞⎟⎠∈ 𝒦 𝑛 𝑒𝑥𝑝 ⟺ ⎛⎜⎝𝑣 𝑓𝑗 
+
+1𝐹 𝑇  
+
+> :,j
+
+⋅ 𝑙𝑛𝑐 + 𝑙𝑛𝑘 𝑓, j
+
+⎞⎟⎠∈ 𝒦 𝑒𝑥𝑝 ∀ j ∈ 1 … 𝑛. 
+
+Without loss of generality, assume that we are given logarithmic kinetic parameters 𝑙𝑛𝑘 𝑓 and 𝑙𝑛𝑘 𝑟 . Constraints (66)-(68) define a nonlinear, yet convex set, at the boundary of which are solutions to Eq. (57)-(59), which may be obtained at the optimum of the following conic optimisation problem min    
+
+> 𝑣 𝑓 ,𝑣 𝑟 𝑤,𝑙𝑛𝑐
+
+𝑐 𝑇 𝑣 𝑓 ⋅ 𝑣 𝑓 + 𝑐 𝑇 𝑣 𝑟 ⋅ 𝑣 𝑟 + 𝑐 𝑇 𝑙𝑛𝑐 ⋅ 𝑙𝑛𝑐 
+
+s.t. 𝑁 ⋅ (𝑣 𝑓 − 𝑣 𝑟 ) + 𝐵 ⋅ 𝑤 = 0 (69) 
+
+⎛⎜⎝𝑣 𝑓 
+
+1𝐹 𝑇 ⋅ 𝑙𝑛𝑐 + 𝑙𝑛𝑘 𝑓 
+
+⎞⎟⎠∈ 𝒦 𝑛 𝑒𝑥𝑝 ⟺ 𝑣 𝑓 ≥ exp (𝐹 𝑇 ⋅ 𝑙𝑛𝑐 + 𝑙𝑛𝑘 𝑓 ) (70) 
+
+⎛⎜⎝𝑣 𝑟 
+
+1𝑅 𝑇 ⋅ 𝑙𝑛𝑐 + 𝑙𝑛𝑘 𝑟 
+
+⎞⎟⎠∈ 𝒦 𝑛 𝑒𝑥𝑝 ⟺ 𝑣 𝑟 ≥ exp (𝑅 𝑇 ⋅ 𝑙𝑛𝑐 + 𝑙𝑛𝑘 𝑟 ) . (71) This begs the question, how does one choose the parameters 𝑐 𝑣 𝑓 , 𝑐 𝑣 𝑟 and 𝑐 𝑙𝑛𝑐 such that the optimal solution to this problem lies at the boundary of each exponential cone, where 𝑣 ⋆𝑓 = exp (𝐹 𝑇 ⋅ 𝑙𝑛𝑐 ⋆ + 𝑙𝑛𝑘 𝑓 ) and 𝑣 ⋆𝑟 =
+
+exp (𝑅 𝑇 ⋅ 𝑙𝑛𝑐 ⋆ + 𝑙𝑛𝑘 𝑟 )? An answer to this questions requires some additional conic optimisation theory, which is framed in terms of generic conic optimisation problem. 
+
+## 5.3 Correspondence with reaction kinetics 
+
+The correspondence between the reaction kinetic problem 69 and the generic conic optimisation problem 49 can be understood from the following 
+
+𝑥 ≔ ⎡⎢⎢⎢⎢⎣𝑣 𝑓 
+
+𝑣 𝑟 
+
+11𝑙𝑛𝑐 𝑤 ⎤⎥⎥⎥⎥⎦, 𝑐 ≔ ⎡⎢⎢⎢⎢⎢⎣𝑐 𝑣 𝑓 
+
+𝑐 𝑣 𝑟 
+
+00𝑐 𝑙𝑛𝑐 
+
+0⎤⎥⎥⎥⎥⎥⎦, 𝐴 ≔ [ 𝑁 −𝑁 0 0 0 ] , 𝑏 ≔ 𝐵 ⋅ 𝑤, 
+
+and 
+
+𝐹 ≔ ⎡⎢⎢⎢⎢⎣𝐼 0 0 0 0 00 0 0 𝐼 0 00 0 𝐹 𝑇 0 0 00 𝐼 0 0 0 00 0 0 0 𝐼 00 0 𝑅 𝑇 0 0 0⎤⎥⎥⎥⎥⎦, 𝑔 ≔ ⎡⎢⎢⎢⎢⎣00𝑙𝑛𝑘 𝑓 
+
+00𝑙𝑛𝑘 𝑟 
+
+⎤⎥⎥⎥⎥⎦,
+
+19 where 
+
+𝐹 1 ≔ [ 𝐼 0 0 0 0 00 𝐼 0 0 0 0 ] , 𝑔 1 ≔ [ 00 ] , 𝐹 2 ≔ [ 0 0 0 𝐼 0 00 0 0 0 𝐼 0 ] , 𝑔 1 ≔ [ 00 ] , 𝐹 3 ≔ [ 0 0 𝐹 𝑇 0 0 00 0 𝑅 𝑇 0 0 0 ] , 𝑔 1 ≔ [ 𝑙𝑛𝑘 𝑓 
+
+𝑙𝑛𝑘 𝑓 
+
+] , 
+
+and therefore the exponential cone constraints are 
+
+𝐹 1 ⋅ 𝑥 + 𝑔 1 ≥ exp (𝐹 3 ⋅ 𝑥 + 𝑔 3) , 𝐹 2 ⋅ 𝑥 + 𝑔 2 = 1, 
+
+with equality of each row when the corresponding exponential cone constraint is active. 
+
+## 5.4 Conic optimisation: optimality conditions 
+
+5.4.1 Dual cone 
+
+We define a dual cone as 
+
+𝒦 ⋆ ≔ {𝑠 ∈ ℝ 𝑛 ∣ 𝑥 𝑇 ⋅ 𝑠 ≥ 0 ∀𝑥 ∈ 𝒦} . 
+
+Since 𝑥 ∈ 𝒦 , 𝑠 ∈ 𝒦 ⋆ and 𝑥 𝑇 ⋅ 𝑠 ≥ 0 then 𝑥 and 𝑠 are referred to as primal and dual variables, as they reside within primal and dual cones. Where 𝒦 is a proper convex cone, the dual cone 𝒦 ⋆ has the following properties, (a) it is a proper cone, (b) the dual of the dual cone is the primal cone, that is (𝒦 ⋆)⋆ = 𝒦 , and (c) the interior of the dual cone int 𝒦 ⋆ is given by int 𝒦 ⋆ = {𝑠 ∈ ℝ 𝑛 ∣ 𝑠 ≠ 0, 𝑥 ≠ 0, 𝑥 𝑇 ⋅ 𝑠 > 0 ∀𝑥 ∈ 𝒦} . 
+
+Let 𝐴 ∈ ℝ 𝑚×𝑛 , then dual of a linear subspace is the orthogonal subspace. For example let the nullspace be ℒ ≔ {𝑥 ∈ ℝ 𝑛 ∣ 𝐴𝑥 = 0} then the dual to the nullspace is ℒ⟂ = ℒ ⋆, which is the row space ℒ⟂ = ℒ ⋆ ={𝑠 ∈ ℝ 𝑛 ∣ 𝑠 = 𝐴 𝑇 ⋅ 𝑧, 𝑧 ∈ ℝ 𝑚 }. The dual of the exponential cone is the closure 
+
+𝒦 ⋆𝑒𝑥𝑝 ≔ cl {(𝑠 1, 𝑠 2, 𝑠 3) ∣ 𝑠 1 ≥ −𝑠 3 exp ( 𝑠 2
+
+𝑠 3
+
+− 1) , 𝑠 1 > 0, 𝑠 3 < 0} ⇔ ⎛⎜⎝𝑠 1
+
+𝑠 2
+
+𝑠 3
+
+⎞⎟⎠∈ 𝒦 ⋆𝑒𝑥𝑝 . (72) The non-negative orthant cone 
+
+𝒦 ≔ ℝ 𝑛 ≥0 
+
+is self-dual since the dual of the non-negative orthant is the non-negative orthant, that is 
+
+ℝ𝑛 ≥0 = {𝑠 ∣ 𝑥 𝑇 ⋅ 𝑠 ≥ 0, ∀𝑥 ∈ 𝑅 𝑛 ≥0 } = 𝒦 ⋆.
+
+5.4.2 Optimality conditions 
+
+Let 𝐴 ∈ ℝ 𝑚×𝑛 , 𝑏 ∈ ℝ 𝑚 , 𝐹 ∈ ℝ 3𝑘×𝑛 and 𝑔 ∈ ℝ 3𝑘 , then consider the primal exponential conic linear optimisation 
+
+problem min  
+
+> 𝑥
+
+𝑐 𝑇 ⋅ 𝑥 
+
+s.t. 𝐴 ⋅ 𝑥 = 𝑏 ∶ 𝑦 (73) 
+
+𝐹 ⋅ 𝑥 + 𝑔 ∈ 𝒦 𝑘 𝑒𝑥𝑝 ∶ 𝑠 (74) where 𝑦 ∈ ℝ 𝑚 is a vector of dual variables to the linear equality constraints and 𝑠 ∈ ℝ 3𝑘 is a vector of dual variables to each conically constrained term. The Lagrangian analogue of problem (73) is 
+
+ℒ(𝑥, 𝑦, 𝑠) ≔ 𝑐 𝑇 ⋅ 𝑥 − 𝑦 𝑇 ⋅ (𝐴 ⋅ 𝑥 − 𝑏) − 𝑠 𝑇 ⋅ (𝐹 ⋅ 𝑥 + 𝑔) (75) 
+
+𝐹 ⋅ 𝑥 + 𝑔 ∈ 𝒦 𝑠 ∈ 𝒦 ⋆ (76) The gradient of the Lagrangian with respect to 𝑥 and 𝑦 are zero at the optimum of problem (73), that is 
+
+𝜕ℒ(𝑥, 𝑦, 𝑠) 𝜕𝑥 = 𝑐 − 𝐴 𝑇 ⋅ 𝑦 ⋆ − 𝐹 𝑇 ⋅ 𝑠 ⋆ = 0 𝜕ℒ(𝑥, 𝑦, 𝑠) 𝜕𝑦 = 𝑏 − 𝐴𝑥 ⋆ = 0. 
+
+20 Since 𝐹 ⋅ 𝑥 + 𝑔 ∈ 𝒦 and 𝑠 ∈ 𝒦 ⋆ we have 𝑠 𝑇 ⋅ (𝐹 ⋅ 𝑥 + 𝑔) ≥ 0 because they are primal and dual variables. At the optimum of 75 we have the complementarity condition 
+
+𝑠 ⋆𝑇 ⋅ (𝐹 ⋅ 𝑥 ⋆ + 𝑔) = 0, 
+
+because if 𝑠 𝑇 ⋅ (𝐹 ⋅ 𝑥 + 𝑔) > 0 then it would be possible to further minimise the Lagrangian, which contradicts minimality, therefore 𝑠 𝑇 ⋅ (𝐹 ⋅ 𝑥 + 𝑔) = 0 . This is a complementary condition, rather than complementary slackness as in (43) or (44) as 𝑠 𝑇 ⋅ (𝐹 ⋅ 𝑥 + 𝑔) = 0 does not imply that 𝑠 ⊙ (𝐹 ⋅ 𝑥 + 𝑔) = 0. 
+
+Actually, there is one complementarity condition involving 3 primal and 3 dual terms per primal exponential conic constraint. Specifically, each cone corresponds to one complementarity constraint of the form 
+
+𝑠 1(𝐹 ⋅ 𝑥 + 𝑔) 1 + 𝑠 2(𝐹 ⋅ 𝑥 + 𝑔) 2 + 𝑠 2(𝐹 ⋅ 𝑥 + 𝑔) 2 = 0. 
+
+We now express these conditions for a set of 𝑘 exponential cones in matrix-vector form. Let 𝐵 ∈ {0, 1} 𝑘×3𝑘 be a matrix where 𝑘 is the number of exponential cones in the cone product 𝒦 𝑘 𝑒𝑥𝑝 , and 3𝑘 is the number of rows of 
+
+𝐹 , each corresponding to a conically constrained term. Let 𝐵 i,j = 1 if cone 𝑖 involves conically constrained term 
+
+𝑗 and zero otherwise. Then the set of complementarity conditions may be expressed as 𝐵 ⋅ (𝑠 ⋆ ⊙ (𝐹 ⋅ 𝑥 ⋆ + 𝑔)) = 0 .Combining the aforementioned constraints then 𝑥 , 𝑦 and 𝑠 are optimal if and only if 
+
+𝐴 ⋅ 𝑥 ⋆ − 𝑏 = 0, ∶ 𝑦 ⋆ (77) 
+
+𝑐 − 𝐴 𝑇 ⋅ 𝑦 ⋆ − 𝐹 𝑇 ⋅ 𝑠 ⋆ = 0, ∶ 𝑥 ⋆ (78) 
+
+𝐹 ⋅ 𝑥 ⋆ + 𝑔 ∈ 𝒦, ∶ 𝑠 ⋆ (79) 
+
+𝑠 ⋆ ∈ 𝒦 ⋆, (80) 
+
+𝐵 ⋅ (𝑠 ⋆ ⊙ (𝐹 ⋅ 𝑥 ⋆ + 𝑔)) = 0, (81) which represent the optimality conditions of Problem 73, and the corresponding dual variables. 
+
+5.4.3 Primal and dual problems in conic optimisation 
+
+Let 𝐹 ∈ ℝ 𝑘×𝑛 and 𝑔 ∈ ℝ 𝑘 . Note that we follow the notation in the conic optimisation community by using 𝐹 to denote the matrix in the affine conic constraints, which clashes with the use of the same upper case roman letter for forward stoichiometric matrix. Let 𝑐 ⋆ ≔ 𝑐 𝑇 ⋅ 𝑥 ⋆ denote the optimal value of the objective of the following primal conic linear optimisation problem min  
+
+> 𝑥
+
+𝑐 𝑇 ⋅ 𝑥 
+
+s.t. 𝐹 ⋅ 𝑥 + 𝑔 ∈ 𝒦 ∶ s (82) Let 𝑑 ⋆ ≔ 𝑔 𝑇 ⋅ 𝑦 ⋆ be the optimal value of the following dual conic linear optimisation problem max  
+
+> 𝑦
+
+𝑔 𝑇 ⋅ 𝑦 
+
+s.t. 𝑐 − 𝐹 𝑇 ⋅ 𝑦 = 0 :𝑥 (83) 
+
+𝑦 ∈ 𝒦 ⋆ (84) then, without exception, weak duality holds 
+
+𝑐 ⋆ = 𝑐 𝑇 ⋅ 𝑥 ⋆ ≥ 𝑑 ⋆ = −𝑔 𝑇 ⋅ 𝑦 ⋆.
+
+If the primal or dual problem is strictly feasible, then strong duality holds, that is 𝑐 ⋆ = 𝑑 ⋆. If the primal is 
+
+strictly feasible, then the dual optimum is attained if, 𝑑 ⋆ is finite. If 𝑑 ⋆ is not finite, a solver will report that the dual problem is unbounded. If the dual is strictly feasible, then the primal optimum is attained, if 𝑐 ⋆ is finite. If 𝑐 ⋆ is not finite, a solver will report that the primal problem is unbounded. This is more restrictive than linear programming duality, where the strong duality holds if the primal or dual problem is feasible (not strictly feasible). 
+
+## 5.5 Variational elementary kinetics: optimality conditions 
+
+The primal optimisation problem in Problem (69), with the addition of dual variables is 21 min    
+
+> 𝑣 𝑓 ,𝑣 𝑟 ,𝑤,𝑙𝑛𝑐
+
+𝑐 𝑇 𝑣 𝑓 ⋅ 𝑣 𝑓 + 𝑐 𝑇 𝑣 𝑟 ⋅ 𝑣 𝑟 + 𝑐 𝑇 𝑙𝑛𝑐 ⋅ 𝑙𝑛𝑐 
+
+s.t. 𝑁 ⋅ (𝑣 𝑓 − 𝑣 𝑟 ) + 𝐵 ⋅ 𝑤 = 0 ∶ −𝑦 (85) 
+
+⎛⎜⎝𝑣 𝑓 
+
+1𝐹 𝑇 ⋅ 𝑙𝑛𝑐 + 𝑙𝑛𝑘 𝑓 
+
+⎞⎟⎠∈ 𝒦 𝑛 𝑒𝑥𝑝 ∶ − ⎛⎜⎝𝑠 𝑣𝑓 
+
+𝑠 𝑓1 
+
+𝑠 𝐹 
+
+⎞⎟⎠
+
+(86) 
+
+⎛⎜⎝𝑣 𝑟 
+
+1𝑅 𝑇 ⋅ 𝑙𝑛𝑐 + 𝑙𝑛𝑘 𝑟 
+
+⎞⎟⎠∈ 𝒦 𝑛 𝑒𝑥𝑝 ∶ − ⎛⎜⎝𝑠 𝑣𝑟 
+
+𝑠 𝑟1 
+
+𝑠 𝑅 
+
+⎞⎟⎠
+
+(87) Note that 𝑠 is used to denote any dual variable to a cone constraint, its subscript is reflective of the corresponding primal term and 𝑠 𝑣𝑓 , 𝑠 𝑣𝑟 𝑠 𝑓1 , 𝑠 𝑟1 , 𝑠 𝐹 , 𝑠 𝑅 ∈ ℝ 𝑛 . The Lagrangian corresponding to Problem (85) is 
+
+ℒ(𝑣 𝑓 , 𝑣 𝑟 , 𝑤, 𝑙𝑛𝑐, 𝑦, 𝑠) ≔ 𝑐 𝑇 𝑣 𝑓 ⋅ 𝑣 𝑓 + 𝑐 𝑇 𝑣 𝑟 ⋅ 𝑣 𝑟 + 𝑐 𝑇 𝑙𝑛𝑐 ⋅ 𝑙𝑛𝑐 − 𝑦 𝑇 ⋅ (𝑁 ⋅ (𝑣 𝑓 − 𝑣 𝑟 ) + 𝐵 ⋅ 𝑤) (88) 
+
+− ⎛⎜⎝𝑠 𝑣𝑓 
+
+𝑠 𝑓1 
+
+𝑠 𝐹 
+
+⎞⎟⎠
+
+> 𝑇
+
+⋅ ⎛⎜⎝𝑣 𝑓 
+
+1𝐹 𝑇 ⋅ 𝑙𝑛𝑐 + 𝑙𝑛𝑘 𝑓 
+
+⎞⎟⎠− ⎛⎜⎝𝑠 𝑣𝑟 
+
+𝑠 𝑟1 
+
+𝑠 𝑅 
+
+⎞⎟⎠
+
+> 𝑇
+
+⋅ ⎛⎜⎝𝑣 𝑟 
+
+1𝑅 𝑇 ⋅ 𝑙𝑛𝑐 + 𝑙𝑛𝑘 𝑟 
+
+⎞⎟⎠
+
+(89) 
+
+⎛⎜⎝𝑣 𝑓 
+
+1𝐹 𝑇 ⋅ 𝑙𝑛𝑐 + 𝑙𝑛𝑘 𝑓 
+
+⎞⎟⎠∈ 𝒦 𝑛 𝑒𝑥𝑝 , ⎛⎜⎝𝑣 𝑟 
+
+1𝑅 𝑇 ⋅ 𝑙𝑛𝑐 + 𝑙𝑛𝑘 𝑟 
+
+⎞⎟⎠∈ 𝒦 𝑛 𝑒𝑥𝑝 (90) 
+
+⎛⎜⎝𝑠 𝑣𝑓 
+
+𝑠 𝑓1 
+
+𝑠 𝐹 
+
+⎞⎟⎠∈ 𝒦 𝑛⋆ 𝑒𝑥𝑝 , ⎛⎜⎝𝑠 𝑣𝑟 
+
+𝑠 𝑟1 
+
+𝑠 𝑅 
+
+⎞⎟⎠∈ 𝒦 𝑛⋆ 𝑒𝑥𝑝 
+
+where the last two pairs of terms represent the requirement for primal and dual terms to be constrained to lie within primal and dual exponential cones. The optimality conditions may be obtained by (a) setting the partial derivatives of the Lagrangian with respect to the variables 𝑣 𝑓 , 𝑣 𝑟 , 𝑤, 𝑙𝑛𝑐, 𝑦 to zero, that is (85) 
+
+𝜕ℒ 𝜕𝑣 𝑓 
+
+= 𝑐 𝑣 𝑓 − 𝑁 𝑇 ⋅ 𝑦 ⋆ − 𝑠 ⋆𝑣𝑓 = 0 (91) 
+
+𝜕ℒ 𝜕𝑣 𝑟 
+
+= 𝑐 𝑣 𝑟 + 𝑁 𝑇 ⋅ 𝑦 ⋆ − 𝑠 ⋆𝑣𝑟 = 0 (92) 
+
+𝜕ℒ 𝜕𝑤 = −𝐵 𝑇 ⋅ 𝑦 ⋆ = 0 𝜕ℒ 𝜕𝑙𝑛𝑐 = 𝑐 𝑙𝑛𝑐 − 𝐹 ⋅ 𝑠 ⋆𝐹 − 𝑅 ⋅ 𝑠 ⋆𝑅 = 0 (93) 
+
+𝜕ℒ 𝜕𝑦 = 𝑁 ⋅ (𝑣 ⋆𝑓 − 𝑣 ⋆𝑟 ) + 𝐵 ⋅ 𝑤 ⋆ = 0 
+
+(b) expressing the complementarity conditions between primal and dual variables, and 
+
+⎛⎜⎝𝑠 ⋆𝑣𝑓 
+
+𝑠 ⋆𝑓1 
+
+𝑠 ⋆𝐹 
+
+⎞⎟⎠
+
+> 𝑇
+
+⋅ ⎛⎜⎝𝑣 ⋆𝑓 
+
+1𝐹 𝑇 ⋅ 𝑙𝑛𝑐 ⋆ + 𝑙𝑛𝑘 𝑓 
+
+⎞⎟⎠= 0 (94) 
+
+⎛⎜⎝𝑠 ⋆𝑣𝑟 
+
+𝑠 ⋆𝑟1 
+
+𝑠 ⋆𝑅 
+
+⎞⎟⎠
+
+> 𝑇
+
+⋅ ⎛⎜⎝𝑣 ⋆𝑟 
+
+1𝑅 𝑇 ⋅ 𝑙𝑛𝑐 ⋆ + 𝑙𝑛𝑘 𝑟 
+
+⎞⎟⎠= 0
+
+(c) specifying that the primal and dual terms are constrained to reside within primal and dual conic cones, respectively, with 22 ⎛⎜⎝𝑣 ⋆𝑓 
+
+1𝐹 𝑇 ⋅ 𝑙𝑛𝑐 ⋆ + 𝑙𝑛𝑘 𝑓 
+
+⎞⎟⎠∈ 𝒦 𝑛 𝑒𝑥𝑝 ⎛⎜⎝𝑣 ⋆𝑟 
+
+1𝑅 𝑇 ⋅ 𝑙𝑛𝑐 ⋆ + 𝑙𝑛𝑘 𝑟 
+
+⎞⎟⎠∈ 𝒦 𝑛 𝑒𝑥𝑝 
+
+⎛⎜⎝𝑠 ⋆𝑣𝑓 
+
+𝑠 ⋆𝑓1 
+
+𝑠 ⋆𝐹 
+
+⎞⎟⎠∈ 𝒦 ⋆ 𝑛 𝑒𝑥𝑝 ⎛⎜⎝𝑠 ⋆𝑣𝑟 
+
+𝑠 ⋆𝑟1 
+
+𝑠 ⋆𝑅 
+
+⎞⎟⎠∈ 𝒦 ⋆ 𝑛 𝑒𝑥𝑝 
+
+where by the definition of the primal exponential cone we have 𝑣 ⋆𝑓 , 𝑣 ⋆𝑟 > 0 and from the definition of the closure of the dual exponential cone we have 𝑠 ⋆𝑣𝑓 , 𝑠 ⋆𝑣𝑟 > 0 and 𝑠 ⋆𝐹 , 𝑠 ⋆𝑅 < 0 .Elementary reaction kinetics requires satisfaction of the constraints 
+
+[ 𝑣 𝑓 
+
+𝑣 𝑟 
+
+] = exp ([ 𝐹 , 𝑅 ] 𝑇 ⋅ 𝑙𝑛𝑐 + [ 𝑙𝑛𝑘 𝑓 
+
+𝑙𝑛𝑘 𝑟 
+
+]) , (95) while the optimality conditions of Problem (85) has relaxed these constraints to 
+
+⎛⎜⎝𝑣 ⋆𝑓 
+
+1𝐹 𝑇 ⋅ 𝑙𝑛𝑐 ⋆ + 𝑙𝑛𝑘 𝑓 
+
+⎞⎟⎠∈ 𝒦 𝑛 𝑒𝑥𝑝 ⇔ 𝑣 ⋆𝑓 ≥ exp (𝐹 𝑇 ⋅ 𝑙𝑛𝑐 ⋆ + 𝑙𝑛𝑘 𝑓 ) , ⎛⎜⎝𝑣 ⋆𝑟 
+
+1𝑅 𝑇 ⋅ 𝑙𝑛𝑐 ⋆ + 𝑙𝑛𝑘 𝑟 
+
+⎞⎟⎠∈ 𝒦 𝑛 𝑒𝑥𝑝 ⇔ 𝑣 ⋆𝑟 ≥ exp (𝑅 𝑇 ⋅ 𝑙𝑛𝑐 ⋆ + 𝑙𝑛𝑘 𝑟 ) . 
+
+so when any one of these inequalities is strict, the corresponding unidirectional flux is in the interior of an exponential cone. Let (𝑣 •𝑓 , 𝑣 •𝑟 , 𝑙𝑛𝑐 •) denote an optimal solution of Problem (85) that is also at the boundary of the exponential cone, that is 
+
+⎛⎜⎝𝑣 •𝑓 
+
+1𝐹 𝑇 ⋅ 𝑙𝑛𝑐 • + 𝑙𝑛𝑘 𝑓 
+
+⎞⎟⎠∈ 𝜕𝒦 𝑛 𝑒𝑥𝑝 ⇔ 𝑣 •𝑓 = exp (𝐹 𝑇 ⋅ 𝑙𝑛𝑐 • + 𝑙𝑛𝑘 𝑓 ) , (96) 
+
+⎛⎜⎝𝑣 •𝑟 
+
+1𝑅 𝑇 ⋅ 𝑙𝑛𝑐 • + 𝑙𝑛𝑘 𝑟 
+
+⎞⎟⎠∈ 𝜕𝒦 𝑛 𝑒𝑥𝑝 ⇔ 𝑣 •𝑟 = exp (𝑅 𝑇 ⋅ 𝑙𝑛𝑐 • + 𝑙𝑛𝑘 𝑟 ) , (97) which are identical to constraints in Eq. (95) required for elementary reaction kinetics to hold. Problem (85) has two free parameter vectors 𝑐 𝑣 𝑓 ∈ ℝ 𝑛 and 𝑐 𝑣 𝑟 ∈ ℝ 𝑛 .The optimality conditions (91) and (92) relate the free parameters 𝑐 𝑣 𝑓 ∈ ℝ 𝑛 and 𝑐 𝑣 𝑟 ∈ ℝ 𝑛 to the dual variables via 
+
+−𝑐 𝑣 𝑟 + 𝑠 ⋆𝑣 𝑟 = 𝑁 𝑇 ⋅ 𝑦 ⋆ = 𝑐 𝑣 𝑓 − 𝑠 ⋆𝑣 𝑓 
+
+and since 𝑠 ⋆𝑣 𝑓 , 𝑠 ⋆𝑣 𝑟 ℝ𝑛 ≥0 , we have 
+
+−𝑐 𝑣 𝑟 ≤ 𝑁 𝑇 ⋅ 𝑦 ⋆ ≤ 𝑐 𝑣 𝑓 
+
+which demonstrates that the values of −𝑐 𝑣 𝑟 and 𝑐 𝑣 𝑓 are lower and upper bounds on 𝑁 𝑇 ⋅𝑦 ⋆, therefore −𝑐 𝑣 𝑟 ≤ 𝑐 𝑣 𝑓 ,therefore 0 ≤ 𝑐 𝑣 𝑓 + 𝑐 𝑣 𝑟 . A sufficient condition for the latter is 𝑐 𝑣 𝑓 , 𝑐 𝑣 𝑟 ∈ ℝ 𝑛 ≥0 . The optimality condition (93) relates the free parameters 𝑐 𝑙𝑛𝑐 to the dual variables via 
+
+𝑐 𝑙𝑛𝑐 = [ 𝐹 , 𝑅 ] ⋅ [ 𝑠 ⋆𝐹 
+
+𝑠 ⋆𝑅 
+
+] (98) but since 𝑠 ⋆𝐹 , 𝑠 ⋆𝑅 ≤ 0 and [ 𝐹 , 𝑅 ] ∈ ℝ 𝑚×2𝑛 ≥0 , then 𝑐 𝑙𝑛𝑐 ∈ ℝ 𝑚 ≤0 , that is, the objective coefficients corresponding to logarithmic concentration must be negative. An intuitive explanation of signs of the linear objective coefficients is that prior to a stationary point 
+
+[ 𝑣 𝑓 
+
+𝑣 𝑟 
+
+] > exp ([ 𝐹 , 𝑅 ] 𝑇 ⋅ 𝑙𝑛𝑐 + [ 𝑙𝑛𝑘 𝑓 
+
+𝑙𝑛𝑘 𝑟 
+
+]) , 
+
+therefore minimising 𝑣 𝑓 and 𝑣 𝑟 and maximising 𝑙𝑛𝑐 will encourage each exponential cone constraint to be active at an optimal solution. For any choice of positive values for the entries of 𝑐 𝑓 , 𝑐 𝑟 and negative values for the entries of 𝑐 𝑙𝑛𝑐 one can obtain an optimal solution to Problem (85) where (96) and (97) are satisfied, provided the linear constraints are omitted. Therefore, in Section (6) we introduce an algorithm, consisting of a iterative sequence of conic optimisation problems, to optimise these parameters and prove its convergence and in Section (7) we demonstrate that it converges to satisfy (96) and (97). 23 6 Convergence of a sequence of conic optimisation problems 
+
+## 6.1 Conic optimisation: classes of optimal solutions 
+
+In this section, we introduce an algorithm that considers the linear objective coefficient vectors, (𝑐 𝑓 , 𝑐 𝑟 , 𝑐 𝑙𝑛𝑐 ) in (85), as parameters to be optimised such that elementary kinetics is satisfied. This algorithm is explained as an abstract sequence of exponential conic linear optimisation Problems, each as in (73), rather than directly in terms of kinetics because the result is more general and the explanation more concise. In Problem 73 a constraint is said to be active if perturbing it would change the value of the optimal linear objective. Given the input data {𝑐, 𝐴, 𝑏, 𝐹 , 𝑔} , optimality conditions in Equations 77 - 81 define an optimal solution to Problem 73 and each non-zero entry in one of optimal variable vectors in the set {𝑦 ⋆, 𝑥 ⋆, 𝑠 ⋆} indicates a constraint that is active at an optimal solution. Equivalently, the dual variable corresponding to the active primal constraint, or primal variable corresponding to the active dual constraint is nonzero. For Problem 73, assuming the input data 
+
+{𝐴, 𝑏, 𝐹 , 𝑔} are invariant, it is the vector of linear objective coefficients 𝑐 ∈ ℝ 𝑛 that determines the constraints that are active at an optimal solution. From this perspective, the set of optimal variable vectors {𝑦 ⋆, 𝑥 ⋆, 𝑠 ⋆} is a nonlinear function of a parameter 𝑐 .The solutions to Problem 73, each a function of a particular linear objective coefficient vector 𝑐 ∈ ℝ 𝑛 , may be classed by the combination of optimality constraints that are active, equivalently the set of optimal variable vectors {𝑦 ⋆, 𝑥 ⋆, 𝑠 ⋆} that are non-zero. In certain circumstances, we seek a class of optimal solution where each of the conic constraints are active, equivalently each 𝑠 ⋆ ≠ 0 . For example, a nonlinear yet convex conic constraint is a relaxation of a desired nonlinear and non-convex constraint, one may seek a optimal solution where that conic constraint is active. For example, given Problem (73), we may seek to identify a 𝑐 • such that each exponential cone constraint is active at an optimal solution, equivalently the corresponding dual variables are nonzero, that is 𝑠 ⋆ 
+
+> j
+
+(𝑐 •) ≠ 0 in (77-81) for all 𝑗 ∈ 1 … 3𝑘 . In the following, we approach the problem of identifying a 𝑐 • such that 𝑠 ⋆ 
+
+> j
+
+(𝑐 •) ≠ 0 as a major optimisation problem, where a merit function 𝜙 ∶ ℝ 𝑛 → ℝ is minimised subject to constraints, denoted 𝒳 , by solving an iterative sequence of minor conic optimisation problems, each of the form 73. First, in Section 6 Theorem 3 demonstrates, in an abstract sense, that this iterative sequence of conic optimisation problems converges to a stationary point of the merit function, subject to the constraints. We do not attempt to demonstrate, for the abstract case, that each stationary point corresponds to a solution where a set of exponential conic constraints is active, because it depends on the particular properties of the input data {𝐴, 𝑏, 𝐹 , 𝑔} . However, in Section 7, Theorem 4 demonstrates, for the particular constraints that appear in variational elementary kinetics, each stationary point must correspond to an optimal solution where every exponential cone constraint in Problem 85 is active. 
+
+## 6.2 Convergence to stationarity 
+
+The theorem below introduces an iterative sequence of conic optimisation problems that converges to a stationary point. 
+
+Theorem 3. Let 𝐴 ∈ ℝ 𝑚×𝑛 , 𝑏 ∈ ℝ 𝑚 , 𝐹 ∈ ℝ 3𝑘×𝑛 , and 𝑔 ∈ ℝ 3𝑘 . Partition 𝐹 and 𝑔 into 𝑣 -row blocks 
+
+𝐹 = ⎡⎢⎣𝐹 1
+
+𝐹 2
+
+𝐹 3
+
+⎤⎥⎦, 𝑔 = ⎡⎢⎣𝑔 1
+
+𝑔 2
+
+𝑔 3
+
+⎤⎥⎦, 𝐹 i ∈ ℝ 𝑣×𝑛 , 𝑔 i ∈ ℝ 𝑣 (i = 1, 2, 3). 
+
+Define the convex feasible set 
+
+𝒳 ≔ {𝑥 ∈ ℝ 𝑛 ∶ 𝐴 ⋅ 𝑥 ≤ 𝑏, 𝐹 ⋅ 𝑥 + 𝑔 ∈ 𝒦 𝑣 𝑒𝑥𝑝 , 𝐹 2 ⋅ 𝑥 + 𝑔 2 = 1} . (99) 
+
+Assume 𝒳 is nonempty and compact. Define the boundary-seeking merit function 𝜙 ∶ ℝ 𝑛 → ℝ by 
+
+𝜙(𝑥) ≔ 1 𝑇 ⋅ ( (𝐹 1𝑥 + 𝑔 1) − exp (𝐹 3𝑥 + 𝑔 3) + ln (𝐹 1𝑥 + 𝑔 1) − (𝐹 3𝑥 + 𝑔 3) ) , (100) 
+
+and the major optimisation problem min  
+
+> 𝑥
+
+𝜙(𝑥) 
+
+s.t. 𝑥 ∈ 𝒳, (101) 
+
+where 𝜙(𝑥) ≥ 0 and 
+
+𝜙(𝑥) = 0 ⟺ 𝐹 1𝑥 + 𝑔 1 = exp (𝐹 3𝑥 + 𝑔 3) . 
+
+Consider the iterative scheme: choose any 𝑥 0 ∈ 𝒳 , and for each 𝑘 ≥ 0 select 
+
+𝑥 𝑘+1 ∈ arg min  
+
+> 𝑥∈𝒳
+
+∇𝜙(𝑥 k)𝑇 ⋅ 𝑥. (102) 24 −2.0  −1.5  −1.0  −0.5  0.0  0.5  1.0  1.5  2.0 
+
+> x3 = FT ⋅ lnc  + lnk f
+> 0
+> 1
+> 2
+> 3
+> 4
+> 5
+> 6
+> 7
+> 8
+> x1 = vf
+> (−1,  e−1 )(0, 1) (1,  e)
+> asymptote  x1 → 0
+> tangent lies below: slope = value =  ex3
+> chord lies above
+> epigraph  x1 ≥ exp( x3)
+> (a) The exponential on the slice  x2 = 1
+> x1 = exp( x3)
+> tangent at  x3 = 0
+> chord
+> −2.0  −1.5  −1.0  −0.5  0.0  0.5  1.0  1.5  2.0
+> x3 = FT ⋅ lnc  + lnk f
+> 0
+> 1
+> 2
+> 3
+> 4
+> 5
+> 6
+> 7
+> 8
+> x1 = vf
+> interior:  ϕ = 4.39 = ( x1 − exp  x3) + (ln  x1 − x3)= 3.00 + 1.39
+> ϕ = 0 on ∂ exp :elementary kinetics holds
+> (b) Epigraph shaded by the merit  ϕ
+> −2.0  −1.5  −1.0  −0.5  0.0  0.5  1.0  1.5  2.0
+> x3 = FT ⋅ lnc  + lnk f
+> 0
+> 1
+> 2
+> 3
+> 4
+> 5
+> 6
+> 7
+> 8
+> x1 = vf
+>  ∩ ∂ exp : ϕ = 0, elementary kinetics holds
+> cone + linear row active
+> Ai ⋅ x ≤ bi
+> raised  vmin
+> f :min  ϕ = 1.89 > 0, cone inactive
+> vf ≤ vmax
+> f
+> vf ≥ vmin
+> f
+> lnc  bounds
+> 
+> (c) Linear rows ∩ epigraph = feasible set  
+> 0.0
+> 1.5
+> 3.0
+> 4.5
+> 6.0
+> 7.5
+> 9.0
+> 10.5
+> 12.0
+> merit  ϕFigure 2: Building the variational kinetics feasible set from the exponential cone. All three panels are drawn on the two-dimensional slice  𝑥 2 = 1  of the exponential cone
+> 𝒦 𝑒𝑥𝑝  of (46), on which cone membership reduces to the epigraph of the exponential,  𝑥 1 ≥ exp (𝑥 3). For a single forward reaction the slice is read kinetically by  𝑥 1 = 𝑣 𝑓
+> and  𝑥 3 = 𝐹  𝑇  ⋅ 𝑙𝑛𝑐 + 𝑙𝑛𝑘 𝑓  , so the curve  𝑥 1 = exp (𝑥 3) is the elementary forward rate law (58) and the region above it is its conic relaxation  𝑣 𝑓  ≥ exp (𝐹  𝑇  ⋅ 𝑙𝑛𝑐 + 𝑙𝑛𝑘 𝑓  )
+> of (64). (a) The exponential, with the points  (−1, 𝑒 −1 ), (0, 1)  and  (1, 𝑒)  marked. Two constructions establish that the region above the curve is convex, which is what permits the relaxation to be conic at all:  every chord joining two points of the curve lies above it (green), and every tangent lies below it (red, drawn at  𝑥 3 = 0 ,where the slope equals the value because exp is its own derivative). The curve approaches  𝑥 1 → 0  as  𝑥 3 → −∞  without attaining it, the kinetic content being that the elementary rate law returns a strictly positive forward flux at every finite concentration.  (b) The same epigraph, shaded by the boundaryseeking merit function (100), which for one forward reaction is  𝜙 = (𝑣 𝑓  − exp (𝐹  𝑇  ⋅ 𝑙𝑛𝑐 + 𝑙𝑛𝑘 𝑓  )) + ( ln  𝑣 𝑓  − 𝐹  𝑇  ⋅ 𝑙𝑛𝑐 − 𝑙𝑛𝑘 𝑓  ). It is nonnegative throughout the epigraph and vanishes exactly on the boundary  𝜕𝒦 𝑒𝑥𝑝  (dashed), where the rate law holds with equality. The white segment decomposes  𝜙  at the interior point  (𝑥 3, 𝑥 1) = (0, 4)  into its two additive contributions, the linear gap  𝑣 𝑓  − exp (𝐹  𝑇  ⋅ 𝑙𝑛𝑐 + 𝑙𝑛𝑘 𝑓  ) = 3.00  and the logarithmic gap ln  𝑣 𝑓  − 𝐹  𝑇  ⋅ 𝑙𝑛𝑐 − 𝑙𝑛𝑘 𝑓  = 1.39 , so that  𝜙 = 4.39 ; the two vanish together and only on the boundary, which is why a strictly positive  𝜙  certifies that at least one exponential cone constraint is inactive. Note that  𝜙  is strictly  concave , its Hessian on this slice being diag (−1/𝑥 21, −  exp (𝑥 3)) , so minimising it is not a convex programme and its minimum over a compact convex set is attained at an extreme point of that set. (c) The feasible set  𝒳  of (99), formed as the intersection of the linear rows  𝐴 ⋅ 𝑥 ≤ 𝑏  (orange) with the epigraph. Four rows are the box bounds any kinetic model carries,  𝑣 min
+> 𝑓  ≤ 𝑣 𝑓  ≤ 𝑣 max
+> 𝑓  , and the two bounds on  𝑙𝑛𝑐 ; the fifth,  𝐴 i ⋅ 𝑥 ≤ 𝑏 i, is a general row coupling flux to the rate exponent, as a steady state row does once projected onto this slice. The bold arc is  𝒳 ∩ 𝜕𝒦 𝑒𝑥𝑝 , the kinetically consistent subset on which  𝜙 = 0 . It is a continuum rather than a single point, so the merit alone does not determine the solution and the remaining constraints select within it; its two endpoints,  (−0.693, 0.500)  and  (1.059, 2.883) , are points at which the exponential cone and a linear row are simultaneously active. The dashed line shows the consequence of raising  𝑣 min
+> 𝑓  until the polyhedron no longer reaches the boundary: no feasible point then satisfies elementary kinetics, and min  𝜙  over  𝒳  is attained at the vertex marked by the diamond,  (0.75, 3.50) , with  𝜙 ⋆ = 1.89 > 0  and the exponential cone inactive throughout  𝒳 . This is the strictly positive merit stationary point that additional assumptions on the data  {𝐴, 𝑏, 𝐹 , 𝑔}  are required to exclude, and detecting it is precisely what the sign of  𝜙  at convergence is for.
+
+25 Then 
+
+(i)(Concavity) 𝜙 is concave on 𝒳 , and ∇𝜙(𝑥) exists for all 𝑥 ∈ 𝒳 .
+
+(ii)(Lyapunov descent) The sequence {𝜙(𝑥 k)} is nonincreasing, and with 
+
+𝛿 k ≔ ∇𝜙(𝑥 k)𝑇 ⋅ (𝑥 k − 𝑥 𝑘+1 ) ≥ 0, 
+
+one has the one-step decrease bound 
+
+𝜙(𝑥 𝑘+1 ) ≤ 𝜙(𝑥 k) − 𝛿 k ∀𝑘 ≥ 0. (103) 
+
+(iii) (Summability of stationarity gaps) ∑∞ 
+
+> k=0
+
+𝛿 k < ∞ , hence 𝛿 k → 0 .
+
+(iv) (Limit points are stationary, equivalently Variational Inequality solutions) Every accumulation point 𝑥 • of {𝑥 k} is a stationary point of Problem 101, equivalently, it satisfies the variational inequality 
+
+∇𝜙(𝑥 •)𝑇 ⋅ (𝑥 − 𝑥 •) ≥ 0 ∀𝑥 ∈ 𝒳. (104) 
+
+Proof. Note that 𝑥 𝑘+1 is the optimum of Problem (73) with 𝑐 ≔ ∇𝜙(𝑥 k). Step 1: Concavity and explicit gradient. When 𝑥 ∈ 𝒳 , the constraint 𝐹 ⋅𝑥+𝑔 ∈ 𝒦 𝑣 𝑒𝑥𝑝 implies 𝐹 1𝑥+𝑔 1 > 0 componentwise, hence ln (𝐹 1𝑥+𝑔 1)
+
+and (𝐹 1𝑥+𝑔 1)−1 are well-defined. In (100) each summand is a sum of: a linear function of 𝑥 , plus ln (⋅) composed with an affine map, plus − exp (⋅) composed with an affine map, plus another linear function of 𝑥 . Since ln is concave on (0, ∞) and exp is convex on ℝ, the function − exp is concave, and composing concave functions with affine maps preserves concavity on their domains. Therefore 𝜙 is concave on any set where 𝐹 1𝑥 + 𝑔 1 > 0 
+
+componentwise; in particular, it is concave on 𝒳 . The gradient of 𝜙 is 
+
+∇𝜙(𝑥) = 𝐹 𝑇 1 ⋅ (1 + (𝐹 1𝑥 + 𝑔 1)−1 ) − 𝐹 𝑇 3 ⋅ ( exp (𝐹 3𝑥 + 𝑔 3) + 1). (105) For 𝑥 ∈ 𝒳 , 𝐹 1𝑥 + 𝑔 1 > 0 , so (𝐹 1𝑥 + 𝑔 1)−1 is well-defined and ∇𝜙(𝑥) exists on 𝒳 .
+
+Step 2: Supporting hyperplane inequality for concave 𝜙 . A standard consequence of concavity and differentiability is that for all 𝑥, 𝑦 in the domain of 𝜙 ,
+
+𝜙(𝑦) ≤ 𝜙(𝑥) + ∇𝜙(𝑥) 𝑇 ⋅ (𝑦 − 𝑥). (106) We will apply (106) with 𝑥 = 𝑥 k and 𝑦 = 𝑥 𝑘+1 .
+
+Step 3: Optimality of 𝑥 𝑘+1 in the linearised exponential-conic subproblem. By definition (102), 
+
+𝑥 𝑘+1 minimises the linear functional 𝑥 ↦ ∇𝜙(𝑥 k)𝑇 ⋅ 𝑥 over 𝒳 . Hence, for every 𝑥 ∈ 𝒳 ,
+
+∇𝜙(𝑥 k)𝑇 ⋅ 𝑥 𝑘+1 ≤ ∇𝜙(𝑥 k)𝑇 ⋅ 𝑥. (107) In particular, taking 𝑥 = 𝑥 k ∈ 𝒳 gives 
+
+∇𝜙(𝑥 k)𝑇 ⋅ (𝑥 𝑘+1 − 𝑥 k) ≤ 0. (108) Define the stationarity gap 
+
+𝛿 k ≔ ∇𝜙(𝑥 k)𝑇 ⋅ (𝑥 k − 𝑥 𝑘+1 ) ≥ 0, (109) which is nonnegative by (108). 
+
+Step 4: Lyapunov descent inequality. Apply the supporting inequality (106) with 𝑥 = 𝑥 k and 𝑦 = 𝑥 𝑘+1 :
+
+𝜙(𝑥 𝑘+1 ) ≤ 𝜙(𝑥 k) + ∇𝜙(𝑥 k)𝑇 ⋅ (𝑥 𝑘+1 − 𝑥 k). 
+
+Using (108) (or equivalently (109)) yields 
+
+𝜙(𝑥 𝑘+1 ) ≤ 𝜙(𝑥 k) − 𝛿 k,
+
+which is exactly (103) (cf. Figure 3). In particular, 𝜙(𝑥 𝑘+1 ) ≤ 𝜙(𝑥 k), so {𝜙(𝑥 k)} is nonincreasing. Thus 𝜙 is a (discrete-time) Lyapunov function for the iteration (102). 
+
+Proof. Step 5: Summability of 𝛿 k and 𝛿 k → 0 . Because 𝒳 is compact and 𝜙 is continuous on 𝒳 , 𝜙 attains a finite lower bound on 𝒳 :
+
+𝜙 inf ≔ inf  
+
+> 𝑥∈𝒳
+
+𝜙(𝑥) > −∞. 
+
+26 0.0 0.2 0.4 0.6 0.8 1.0 step fraction γ along xk → xk + 1 
+
+# 0.25 
+
+# 0.50 
+
+# 0.75 
+
+# 1.00 
+
+# 1.25 
+
+# 1.50 
+
+# 1.75 
+
+# 2.00 merit  ϕ
+
+# xk
+
+# xk + 1 (LP vertex) 
+
+# δk ≥ 0 
+
+## merit ϕ (concave) 
+
+## linear model ϕ(xk) − γ δ kFigure 3: Concavity, the full step, and the guaranteed decrease underlying the convergence proof. Along the segment from the current iterate 𝑥 k to the linear-minimisation vertex 𝑥 𝑘+1 , parameterised by the step fraction 
+
+𝛾 ∈ [0, 1] , the merit 𝜙 (blue) is concave, so it lies below its supporting line 𝜙(𝑥 k) − 𝛾 𝛿 k (dashed), where 
+
+𝛿 k = ∇𝜙(𝑥 k)𝑇 ⋅ (𝑥 k − 𝑥 𝑘+1 ) ≥ 0 is the stationarity gap. At the full step 𝛾 = 1 (reaching 𝑥 𝑘+1 ) this gives 
+
+𝜙(𝑥 𝑘+1 ) ≤ 𝜙(𝑥 k) − 𝛿 k, the monotone decrease underlying the Lyapunov argument. 27 Sum (103) from 𝑘 = 0 to k = 𝑛 − 1 :
+
+𝜙(𝑥 n) ≤ 𝜙(𝑥 0) − 
+
+> 𝑛−1
+
+∑
+
+> k=0
+
+𝛿 k.
+
+Rearrange and use 𝜙(𝑥 n) ≥ 𝜙 inf :
+
+> 𝑛−1
+
+∑
+
+> k=0
+
+𝛿 k ≤ 𝜙(𝑥 0) − 𝜙(𝑥 n) ≤ 𝜙(𝑥 0) − 𝜙 inf .
+
+Letting 𝑁 → ∞ shows ∑∞ 
+
+> k=0
+
+𝛿 k < ∞ . Since each 𝛿 k ≥ 0 , it follows that 𝛿 k → 0 .
+
+Step 6: Accumulation points satisfy the variational inequality. Let 𝑥 • be any accumulation point of {𝑥 k}. Since 𝒳 is compact and all iterates lie in 𝒳 , there exists a subsequence {𝑥 kj } such that 
+
+𝑥 kj → 𝑥 • ∈ 𝒳 as 𝑗 → ∞. 
+
+We prove that 𝑥 • satisfies (104). Assume for contradiction that (104) fails. Then there exists ̂ 𝑥 ∈ 𝒳 and a scalar 𝜀 > 0 such that 
+
+∇𝜙(𝑥 •)𝑇 ⋅ (̂𝑥 − 𝑥 •) ≤ −2𝜀. (110) Because ∇𝜙 is continuous on 𝒳 (see (105) and continuity of exp and reciprocal on 𝐹 1𝑥 + 𝑔 1 > 0 , we have 
+
+∇𝜙(𝑥 kj ) → ∇𝜙(𝑥 •). Also 𝑥 kj → 𝑥 •. Therefore the scalar sequence 
+
+∇𝜙(𝑥 kj )𝑇 ⋅ (̂𝑥 − 𝑥 kj )
+
+converges to ∇𝜙(𝑥 •)𝑇 ⋅ (̂𝑥 − 𝑥 •). Hence, for all sufficiently large 𝑗 ,
+
+∇𝜙(𝑥 kj )𝑇 ⋅ (̂𝑥 − 𝑥 kj ) ≤ −𝜀. (111) Rearranging (111) gives 
+
+∇𝜙(𝑥 kj )𝑇 ⋅ (𝑥 kj −̂ 𝑥) ≥ 𝜀. (112) Now use the defining optimality property (107) for the step from 𝑥 kj to 𝑥 𝑘 j+1 , choosing 𝑥 =̂ 𝑥 :
+
+∇𝜙(𝑥 kj )𝑇 ⋅ 𝑥 𝑘 j+1 ≤ ∇𝜙(𝑥 kj )𝑇 ⋅̂ 𝑥, 
+
+which is equivalent to 
+
+∇𝜙(𝑥 kj )𝑇 ⋅ (𝑥 kj − 𝑥 𝑘 j+1 ) ≥ ∇𝜙(𝑥 kj )𝑇 ⋅ (𝑥 kj −̂ 𝑥). (113) The left-hand side is 𝛿 kj by (109), so (113) and (112) imply 
+
+𝛿 kj ≥ 𝜀 for all sufficiently large 𝑗. 
+
+This contradicts 𝛿 k → 0 proven in Step 5. Therefore the assumption (110) was false, and 𝑥 • satisfies (104). Since 𝑥 • was an arbitrary accumulation point, every accumulation point satisfies (104). This completes the proof. Theorem 3 demonstrates the iteration 102 converges to a stationary point 𝑥 • of the merit function 𝜙 subject to the constraints 𝒳 , defined as a solution to the variational inequality (104). Furthermore, there may exist multiple solutions to the variational inequality (104). It is a standard result in variational analysis ( $6.13 in [33]) that, for any convex set 𝒳 , and any mapping 𝑓(𝑥) ∶ 𝒳 → ℝ 𝑛 , a solution 𝑥 • to the variational inequality (104) may be interpreted as 
+
+𝑥 • ∈ arg min 
+
+> 𝑥∈𝒳
+
+𝑓(𝑥 •)𝑇 ⋅ 𝑥. 
+
+The affine function 𝑥 → 𝑓(𝑥 •)𝑇 ⋅ 𝑥 defines a supporting hyperplane to the convex set 𝒳 at 𝑥 •. The halfspace 
+
+{𝑥 ∶ 𝑓(𝑥 •)𝑇 ⋅ (𝑥 − 𝑥 •) ≥ 0} contains all of 𝒳 while the hyperplane 𝑓(𝑥 •)𝑇 ⋅ (𝑥 − 𝑥 •) = 0 touches 𝒳 at 𝑥 •, so 𝑥 •
+
+cannot be a strict interior point of 𝒳 because an interior point admits feasible perturbations in both directions of any vector. A solution to the variational inequality (104) does not imply that any 𝑥 • is on the boundary of any particular combination of the constraints that define 𝒳 . Equivalently, it does not imply that any particular combination of the constraints that define 𝒳 are active. Note that a stationary point may be interpreted as a fixed point of the iteration (102), where 𝑥 • ≔ 𝑥 𝑘+1 = 𝑥 k.
+
+There are two types of constraints on the feasible set 99: (i) a linear constraint, defined by 𝐴 i ⋅ 𝑥 ≤ 𝑏 i, that is active when 𝐴 i𝑥 = 𝑏 i, and, (ii) an exponential cone constraint defined by (𝐹 1𝑥 + 𝑔 1)i ≥ exp (𝐹 3𝑥 + 𝑔 3)i, that is active when (𝐹 1𝑥 + 𝑔 1)i = exp (𝐹 3𝑥 + 𝑔 3)i. The merit function 100, illustrated in Figure 2, is zero when all 28 exponential cone constraints are active and strictly positive when at least one exponential cone constraint is inactive, that is 
+
+𝜙(𝑥) = 0 ⟺ (𝐹 1𝑥 + 𝑔 1) = exp (𝐹 3𝑥 + 𝑔 3), 𝜙(𝑥) > 0 ⟺ ∃ 𝑖 ∈ 1 … 𝑣, 𝑠.𝑡. (𝐹 1𝑥 + 𝑔 1)i > exp (𝐹 3𝑥 + 𝑔 3)i.
+
+Therefore, a stationary point with at least one exponential cone constraint inactive (strict interior) may be recognised by a strictly positive merit function 𝜙(𝑥 •) > 0 . To ensure that every stationary point corresponds to activity of every exponential cone constraint, one requires additional assumptions on the input data {𝐴, 𝑏, 𝐹 , 𝑔} .That is, additional assumptions are required to eliminate the existence of a stationary point where one or more exponential cone constraints is inactive. It may be that exponential cone and linear constraints are simultaneously active. Theorem 3 proves stationarity of accumulation points, not convergence of the entire sequence to a unique point. Supplementary Section F describes an adaptive sequential conic linear approximation algorithm that numer-ically implements the iterative mathematical algorithm in Theorem 3. It is but one approach to implements the iterative mathematical algorithm. It is included for completeness, underlies the numerical experiments in 10, but is agnostic to the biochemical origins that motivated it and is purely a numerical optimisation construct. The solver was developed with the assistance of AI coding tools (Claude, Anthropic; OpenAI Codex). 
+
+## 6.3 Correspondence with reaction kinetics 
+
+Theorem (3) may be applied reaction kinetics by defining the exponential boundary-seeking merit function 
+
+𝜙(𝑣 𝑓 , 𝑣 𝑟 , 𝑙𝑛𝑐) ≔ 1 𝑇 ⋅ ([ 𝑣 𝑓 
+
+𝑣 𝑟 
+
+] − exp ([𝐹 , 𝑅] 𝑇 ⋅ 𝑙𝑛𝑐 + [ 𝑙𝑛𝑘 𝑓 
+
+𝑙𝑛𝑘 𝑟 
+
+]) + ln ([ 𝑣 𝑓 
+
+𝑣 𝑟 
+
+]) − [𝐹 , 𝑅] 𝑇 ⋅ 𝑙𝑛𝑐 − [ 𝑙𝑛𝑘 𝑓 
+
+𝑙𝑛𝑘 𝑟 
+
+]) , 
+
+(114) with partial derivatives 
+
+∇𝑣 𝑓 𝜙 = 1 + 1 ⊘ 𝑣 𝑓 
+
+∇𝑣 𝑟 𝜙 = 1 + 1 ⊘ 𝑣 𝑟 
+
+∇𝑙𝑛𝑐 𝜙 = − [𝐹 , 𝑅] ⋅ ( exp ([𝐹 , 𝑅] 𝑇 ⋅ 𝑙𝑛𝑐 + [ 𝑙𝑛𝑘 𝑓 
+
+𝑙𝑛𝑘 𝑟 
+
+]) + 1) . 
+
+Theorem (3) proves that an iterative sequence of exponential conic optimisation problems each of the form of (49), generates descent of this merit function over the feasible set, with convergence to a stationary state. The correspondence between the general exponential conic optimisation problem in (49) and reaction kinetic optimisation Problem (85) is provided in Section 5.3. In particular, at the (𝑘 + 1) 𝑡ℎ iteration of the iterative sequence, the linear objective coefficients in Problem (85) are 
+
+𝑐 (𝑘+1) 𝑣 𝑓 ≔ ∇ 𝑣 𝑓 𝜙 = 1 + 1 ⊘ 𝑣 (𝑘) 𝑓 , (115) 
+
+𝑐 (𝑘+1) 𝑣 𝑟 ≔ ∇ 𝑣 𝑟 𝜙 = 1 + 1 ⊘ 𝑣 (𝑘) 𝑟 , (116) 
+
+𝑐 (𝑘+1) 𝑙𝑛𝑐 ≔ ∇ 𝑙𝑛𝑐 𝜙 = − [𝐹 , 𝑅] ⋅ ( exp ([𝐹 , 𝑅] 𝑇 ⋅ 𝑙𝑛𝑐 (𝑘) + [ 𝑙𝑛𝑘 𝑓 
+
+𝑙𝑛𝑘 𝑟 
+
+]) + 1) . (117) where {𝑣 (𝑘) 𝑓 , 𝑣 (𝑘) 𝑟 , 𝑐 (𝑘) 𝑙𝑛𝑐 } are the optimal values of the previous minor exponential conic optimisation problem. 
+
+# 7 Variational kinetics: convergence to a steady state 
+
+The following theorem establishes sufficient conditions on the input data {𝐹 , 𝑅} such that {𝑣 •𝑓 , 𝑣 •𝑟 , 𝑙𝑛𝑐 •} is a stationary point of the merit function 𝜙 subject to the constraints in problem (85) (with 𝑏 ≔ 𝐵 ⋅ 𝑤 ), implies that elementary reaction kinetics is satisfied, that is, 
+
+[ 𝑣 •𝑓 
+
+𝑣 •𝑟 
+
+] = exp ([𝐹 , 𝑅] 𝑇 ⋅ 𝑙𝑛𝑐 • + [ 𝑙𝑛𝑘 𝑓 
+
+𝑙𝑛𝑘 𝑟 
+
+]) . 
+
+Theorem 4. Let 𝑁 ∈ ℝ 𝑚×𝑛 and 𝑏 ∈ ℝ 𝑚 . Let 𝐹 , 𝑅 ∈ ℝ 𝑚×𝑛 ≥0 , where 𝑁 = 𝑅 − 𝐹 , and let the variables be 
+
+𝑣 𝑓 , 𝑣 𝑟 ∈ ℝ 𝑛 and 𝑙𝑛𝑐 ∈ ℝ 𝑚 . Define the slack vectors 
+
+𝛿 𝑓 ∶= 𝑣 𝑓 − exp (𝐹 𝑇 ⋅ 𝑙𝑛𝑐 + 𝑙𝑛𝑘 𝑓 ) ≥ 0, 𝛿 𝑟 ∶= 𝑣 𝑟 − exp (𝑅 𝑇 ⋅ 𝑙𝑛𝑐 + 𝑙𝑛𝑘 𝑟 ) ≥ 0, 
+
+29 and the sets 𝒮 4 ⊆ 𝒮 3 ⊆ 𝒮 2 ⊆ 𝒮 1 by: 
+
+𝒮 1 ∶= {(𝑣 𝑓 , 𝑣 𝑟 , 𝑙𝑛𝑐) ∶ 𝑁 (𝑣 𝑓 − 𝑣 𝑟 ) = 𝑏, 𝑣 𝑓 ≥ exp (𝐹 𝑇 ⋅ 𝑙𝑛𝑐 + 𝑙𝑛𝑘 𝑓 ), 𝑣 𝑟 ≥ exp (𝑅 𝑇 ⋅ 𝑙𝑛𝑐 + 𝑙𝑛𝑘 𝑟 ), 𝑣 𝑓 > 0, 𝑣 𝑟 > 0}, 𝒮 2 ∶= {(𝑣 𝑓 , 𝑣 𝑟 , 𝑙𝑛𝑐) ∈ 𝒮 1 ∶ ∃𝑢 ∈ ℝ 𝑚 s.t. sign (𝑣 𝑓 − 𝑣 𝑟 ) = − sign (𝑁 𝑇 ⋅ 𝑢)}, 𝒮 3 ∶= {(𝑣 𝑓 , 𝑣 𝑟 , 𝑙𝑛𝑐) ∈ 𝒮 1 ∶ ∃𝑢 ∈ ℝ 𝑚 s.t. ln (𝑣 𝑓 ⊘ 𝑣 𝑟 ) = −𝑁 𝑇 ⋅ 𝑢 ⟺ ln (𝑣 𝑓 ⊘ 𝑣 𝑟 ) ∈ ℛ(𝑁 𝑇 )}, 𝒮 4 ∶= {(𝑣 𝑓 , 𝑣 𝑟 , 𝑙𝑛𝑐) ∈ 𝒮 1 ∶ 𝑣 𝑓 = exp (𝐹 𝑇 ⋅ 𝑙𝑛𝑐 + 𝑙𝑛𝑘 𝑓 ), 𝑣 𝑟 = exp (𝑅 𝑇 ⋅ 𝑙𝑛𝑐 + 𝑙𝑛𝑘 𝑟 )}, 
+
+where 𝑙𝑛𝑐 ∈ ℝ 𝑚 . On the domain {𝑣 𝑓 , 𝑣 𝑟 , 𝑙𝑛𝑐} ∈ 𝒮 1, define the continuously differentiable merit function 
+
+𝜙(𝑣 𝑓 , 𝑣 𝑟 , 𝑙𝑛𝑐) ∶= 1𝑇 ⋅ ( [ 𝑣 𝑓 
+
+𝑣 𝑟 
+
+] − exp ([𝐹 , 𝑅] 𝑇 ⋅ 𝑙𝑛𝑐 + [ 𝑙𝑛𝑘 𝑓 
+
+𝑙𝑛𝑘 𝑟 
+
+]) + ln ( [ 𝑣 𝑓 
+
+𝑣 𝑟 
+
+] ) − [𝐹 , 𝑅] 𝑇 ⋅ 𝑙𝑛𝑐 − [ 𝑙𝑛𝑘 𝑓 
+
+𝑙𝑛𝑘 𝑟 
+
+] ). (118) 
+
+A point (𝑣 •𝑓 , 𝑣 •𝑟 , 𝑙𝑛𝑐 •) ∈ 𝒮 1 is called a first-order stationary point of 𝜙 over 𝒮 1 if, for every direction (𝑑 𝑓 , 𝑑 𝑟 , 𝑑 𝑐 ) ∈ ℝ2𝑛+𝑚 for which there exists 𝜖 > 0 such that 
+
+(𝑣 •𝑓 + 𝛼𝑑 𝑓 , 𝑣 •𝑟 + 𝛼𝑑 𝑟 , 𝑙𝑛𝑐 • + 𝛼𝑑 𝑐 ) ∈ 𝒮 1, ∀𝛼 ∈ [0, 𝜖], 
+
+the directional derivative is non-negative, that is 
+
+∇𝜙(𝑣 •𝑓 , 𝑣 •𝑟 , 𝑙𝑛𝑐 •)𝑇 ⋅ ⎡⎢⎣𝑑 𝑓 
+
+𝑑 𝑟 
+
+𝑑 𝑐 
+
+⎤⎥⎦≥ 0. (119) 
+
+Assume the data satisfy the following: (2.1) (Independent forward and reverse stoichiometry) For every 𝑗 ∈ {1, … , 𝑛} ,supp (𝐹 :,j ) ∩ supp (𝑅 :,j ) = ∅, 𝐹 :,j ≠ 0, 𝑅 :,j ≠ 0. (120) 
+
+(2.2) (Cyclic flux consistency ) Every reaction participates in at least one stoichiometrically balanced cycle. That is, for every 𝑗 , there exists a 𝑧 ∈ ℝ 𝑛 such that 
+
+𝑁 𝑧 = 0, 𝑧 j ≠ 0. (121) 
+
+Then every first-order stationary point (𝑣 •𝑓 , 𝑣 •𝑟 , 𝑙𝑛𝑐 •) ∈ 𝒮 1 lies in 𝒮 4. Equivalently, 
+
+[ 𝑣 •𝑓 
+
+𝑣 •𝑟 
+
+] = exp ([𝐹 , 𝑅] 𝑇 ⋅ 𝑙𝑛𝑐 • + [ 𝑙𝑛𝑘 𝑓 
+
+𝑙𝑛𝑘 𝑟 
+
+]) . 
+
+so there is no bidirectional slack and no unidirectional slack in the kinetic inequalities at (𝑣 •𝑓 , 𝑣 •𝑟 , 𝑙𝑛𝑐 •).Proof. We prove three claims: Claim 1: No stationary point lies in 𝒮 1 ∖ 𝒮 2. Claim 2: No stationary point lies in 𝒮 2 ∖ 𝒮 3. Claim 3: No stationary point lies in 𝒮 3 ∖ 𝒮 4. Since 𝒮 4 ⊆ 𝒮 3 ⊆ 𝒮 2 ⊆ 𝒮 1, these claims imply any stationary point in 𝒮 1 must lie in 𝒮 4. To rule out stationary of the merit function (118) at a point (𝑣 𝑓 , 𝑣 𝑟 , 𝑙𝑛𝑐) ,it suffices to establish the existence of one feasible direction with strictly negative directional derivative (119). All stationary statements are made with respect to the feasible set 𝒮 1, even if it leaves 𝒮 2 or 𝒮 3. Thus, in each claim it suffices to construct a descent direction that remains feasible in 𝒮 1. For clarity, henceforth in this section we omit the constants 𝑘 𝑓 , 𝑘 𝑟 . Preliminaries (first order feasibility for kinetic inequalities). For each 𝑗 , in the forward direction, if 
+
+𝑣 𝑓 (𝑗) = exp (𝐹 𝑇  
+
+> :,j
+
+⋅ 𝑙𝑛𝑐) (122) then we require the direction 𝑑 𝑐 to satisfy 𝑣 𝑓 (𝑗) ≥ exp (𝐹 𝑇  
+
+> :,j
+
+⋅ 𝑙𝑛𝑐) for a small step 𝛼𝑑 𝑐 , where 𝛼 > 0 , that is 
+
+𝑣 𝑓 (𝑗) + 𝛼𝑑 𝑓 (𝑗) ≥ exp (𝐹 𝑇  
+
+> :,j
+
+⋅ (𝑙𝑛𝑐 + 𝛼𝑑 𝑐 )). (123) The first-order expansion of exp (𝐹 𝑇  
+
+> :,j
+
+⋅ 𝑙𝑛𝑐) is exp (𝐹 𝑇  
+
+> :,j
+
+⋅ (𝑙𝑛𝑐 + 𝛼𝑑 𝑐 )) = exp (𝐹 𝑇  
+
+> :,j
+
+⋅ 𝑙𝑛𝑐)(1 + 𝛼𝐹 𝑇  
+
+> :,j
+
+⋅ 𝑑 𝑐 + 𝑜(𝛼)). 
+
+30 where 𝑜(𝛼) denotes a remainder satisfying 𝑜(𝛼)/𝛼 → 0 as 𝛼 ↓ 0 . Adding 𝛼𝑑 𝑓 (𝑗) and then subtracting exp (𝐹 𝑇  
+
+> :,j
+
+⋅(𝑙𝑛𝑐 + 𝛼𝑑 𝑐 )) from 122, we have 
+
+𝑣 𝑓 (𝑗) + 𝛼𝑑 𝑓 (𝑗) − exp (𝐹 𝑇  
+
+> :,j
+
+⋅ (𝑙𝑛𝑐 + 𝛼𝑑 𝑐 )) = exp (𝐹 𝑇  
+
+> :,j
+
+⋅ 𝑙𝑛𝑐) + 𝛼𝑑 𝑓 (𝑗) − exp (𝐹 𝑇  
+
+> :,j
+
+⋅ 𝑙𝑛𝑐)(1 + 𝛼𝐹 𝑇  
+
+> :,j
+
+⋅ 𝑑 𝑐 + 𝑜(𝛼)), = 𝛼 (𝑑 𝑓 (𝑗) − exp (𝐹 𝑇  
+
+> :,j
+
+⋅ 𝑙𝑛𝑐) (𝐹 𝑇  
+
+> :,j
+
+⋅ 𝑑 𝑐 )) + 𝑜(𝛼). 
+
+Thus a sufficient first-order condition to ensure 123 holds for sufficiently small 𝛼 is 
+
+𝑑 𝑓 (𝑗) − exp (𝐹 𝑇  
+
+> :,j
+
+⋅ 𝑙𝑛𝑐) (𝐹 𝑇  
+
+> :,j
+
+⋅ 𝑑 𝑐 ) ≥ 0. (124) Similarly, for a reverse direction, if 𝑣 𝑟 (𝑗) = exp (𝑅 𝑇  
+
+> :,j
+
+⋅ 𝑙𝑛𝑐) , a sufficient first-order condition to ensure 𝑣 𝑟 (𝑗) + 𝛼𝑑 𝑟 (𝑗) ≥ exp (𝑅 𝑇  
+
+> :,j
+
+⋅ (𝑙𝑛𝑐 + 𝛼𝑑 𝑐 )) for a sufficiently small 𝛼 is 
+
+𝑑 𝑟 (𝑗) − exp (𝑅 𝑇  
+
+> :,j
+
+⋅ 𝑙𝑛𝑐) (𝑅 𝑇  
+
+> :,j
+
+⋅ 𝑑 𝑐 ) ≥ 0. (125) Slack forward or reverse directions impose no restriction on 𝑑 𝑐 . Gradient sign facts. Since ∇𝑣 𝑓 𝜙 = 1+𝑣 −1 𝑓 > 0 
+
+and ∇𝑣 𝑟 𝜙 = 1 + 𝑣 −1 𝑟 > 0 , for any 𝑑 𝑓 ≤ 0 , 𝑑 𝑟 ≤ 0 with (𝑑 𝑓 , 𝑑 𝑟 ) ≠ 0 ,
+
+(∇ 𝑣 𝑓 𝜙) 𝑇 ⋅ 𝑑 𝑓 + (∇ 𝑣 𝑟 𝜙) 𝑇 ⋅ 𝑑 𝑟 < 0. 
+
+Justification of Claim 1. Take any (𝑣 𝑓 , 𝑣 𝑟 , 𝑙𝑛𝑐) ∈ 𝒮 1 ∖ 𝒮 2 and orthogonally decompose the net flux as 
+
+𝑣 𝑓 − 𝑣 𝑟 = 𝑣 + 𝑧 with 𝑣 ∈ ℛ(𝑁 𝑇 ), 𝑧 ∈ 𝒩(𝑁 ) , so 𝑁 𝑣 = 𝑏 and 𝑁 𝑧 = 0 . If 𝑧 = 0 then 𝑣 𝑓 − 𝑣 𝑟 = 𝑁 𝑇 ⋅̄ 𝑢 for some ̄𝑢 ; with 𝑢 ∶= −̄𝑢 we get sign (𝑣 𝑓 − 𝑣 𝑟 ) = − sign (𝑁 𝑇 ⋅ 𝑢) , which is the membership condition for 𝒮 2, contradicting 
+
+(𝑣 𝑓 , 𝑣 𝑟 , 𝑙𝑛𝑐) ∈ 𝒮 1 ∖ 𝒮 2. Hence 𝑧 ≠ 0 . Decompose 𝑧 as follows: 
+
+𝑧 = 𝑧 𝑓 − 𝑧 𝑟 , 𝑧 𝑓 ≥ 0, 𝑧 𝑟 ≥ 0, 𝑧 𝑓 ⊙ 𝑧 𝑟 = 0, (126) so 𝑧 𝑓 and 𝑧 𝑟 are non-negative and have disjoint support. Set 𝑑 𝑓 ∶= −𝑧 𝑓 , 𝑑 𝑟 ∶= −𝑧 𝑟 . Since 𝑧 ≠ 0 and 𝑧 𝑓 , 𝑧 𝑟 
+
+have disjoint support, (𝑑 𝑓 , 𝑑 𝑟 ) ≠ 0 ; moreover 𝑁 (𝑑 𝑓 − 𝑑 𝑟 ) = 𝑁 (−𝑧) = −𝑁 𝑧 = 0 , so the steady-state equality 
+
+𝑁 (𝑣 𝑓 − 𝑣 𝑟 ) = 𝑏 is preserved to first order. The log-concentration 𝑙𝑛𝑐 does not appear in this equality, so its direction 𝑑 𝑐 is unconstrained by it: rescaling 𝑑 𝑐 ↦ 𝜆𝑑 𝑐 leaves 𝑁 (𝑑 𝑓 − 𝑑 𝑟 ) = 0 intact and 𝑑 𝑐 enters only the exponential cone tightness conditions, which are positively homogeneous in 𝑑 𝑐 . Hence there is 𝜖 > 0 with 
+
+(𝑣 𝑓 + 𝛼𝑑 𝑓 , 𝑣 𝑟 + 𝛼𝑑 𝑟 , 𝑙𝑛𝑐 + 𝛼𝑑 𝑐 ) ∈ 𝒮 1 for 𝛼 ∈ [0, 𝜖] , and scaling 𝑑 𝑐 then the whole direction by 𝜏 ∈ (0, 1) 
+
+yields ∇𝜙(𝑣 𝑓 , 𝑣 𝑟 , 𝑙𝑛𝑐) 𝑇 ⋅ (𝑑 𝑓 , 𝑑 𝑟 , 𝑑 𝑐 ) < 0 , the strictness using (𝑑 𝑓 , 𝑑 𝑟 ) ≠ 0 . This contradicts stationarity, so no stationary point lies in 𝒮 1 ∖ 𝒮 2. Claim 2. Take any (𝑣 𝑓 , 𝑣 𝑟 , 𝑙𝑛𝑐) ∈ 𝒮 2 ∖ 𝒮 3. By the characterisation of 𝒮 3
+
+this membership gives ln (𝑣 𝑓 ⊘ 𝑣 𝑟 ) ∉ ℛ(𝑁 𝑇 ) = 𝒩(𝑁 ) ⟂, so the component of ln (𝑣 𝑓 ⊘ 𝑣 𝑟 ) in 𝒩(𝑁 ) is nonzero: for any 𝑍 whose columns span 𝒩(𝑁 ) (so 𝑁 𝑍 = 0 ), 𝑍 𝑇 ⋅ ln (𝑣 𝑓 ⊘ 𝑣 𝑟 ) ≠ 0 . Hence there is 𝑧 ∈ 𝒩(𝑁 ) with 
+
+𝑧 j ≠ 0 for some 𝑗 ; in particular 𝑧 ≠ 0 . Split 𝑧 = 𝑧 𝑓 − 𝑧 𝑟 as in 126 and set 𝑑 𝑓 ∶= −𝑧 𝑓 , 𝑑 𝑟 ∶= −𝑧 𝑟 . As in Claim 1, (𝑑 𝑓 , 𝑑 𝑟 ) = (−𝑧 𝑓 , −𝑧 𝑟 ) ≠ 0 and 𝑁 (𝑑 𝑓 − 𝑑 𝑟 ) = −𝑁 𝑧 = 0 , so the direction is nonzero and preserves the steady-state equality to first order. Choosing 𝑑 𝑐 as in Claim 1 so the exponential cone tightness conditions (124)–(125) hold with slack gives 𝜖 > 0 with the perturbed point in 𝒮 1 for 𝛼 ∈ [0, 𝜖] , and rescaling 𝑑 𝑐 yields 
+
+∇𝜙 𝑇 ⋅ (𝑑 𝑓 , 𝑑 𝑟 , 𝑑 𝑐 ) < 0 . The strict inequality requires (𝑑 𝑓 , 𝑑 𝑟 ) ≠ 0 : the first-order descent is carried by the flux terms, whose contribution is proportional to (𝑑 𝑓 , 𝑑 𝑟 ) and would vanish if (𝑑 𝑓 , 𝑑 𝑟 ) = 0 ; nonzeroness is exactly what the 𝒮 2 ∖ 𝒮 3 membership provides. This contradicts stationarity, so no stationary point lies in 𝒮 2 ∖ 𝒮 3.
+
+Claim 3. Take any (𝑣 𝑓 , 𝑣 𝑟 , 𝑙𝑛𝑐) ∈ 𝒮 3 ∖ 𝒮 4. Then 𝛿 𝑓 ≠ 0 or 𝛿 𝑟 ≠ 0 , so there exists at least one index 𝑗 such that either 
+
+𝑣 𝑓 (𝑗) > exp (𝐹 𝑇  
+
+> :,j
+
+⋅ (𝑙𝑛𝑐)) or 𝑣 𝑟 (𝑗) > exp (𝑅 𝑇  
+
+> :,j
+
+⋅ (𝑙𝑛𝑐)). 
+
+We treat the case 𝛿 𝑟 ≠ 0 ⟺ 𝑣 𝑟 (𝑗) > exp (𝑅 𝑇  
+
+> :,j
+
+⋅ (𝑙𝑛𝑐)) ; the other case is symmetric. Because 𝑣 𝑟 (𝑗) is strictly above exp (𝑅 𝑇  
+
+> :,j
+
+⋅ (𝑙𝑛𝑐)) , there exists 𝜖 > 0 such that for all 𝛼 ∈ (0, 𝜖] ,
+
+𝑣 𝑟 (𝑗) − 𝛼 ≥ exp (𝑅 𝑇  
+
+> :,j
+
+⋅ (𝑙𝑛𝑐)). 
+
+Thus decreasing 𝑣 𝑟 (𝑗) slightly does not violate the reverse inequality at index 𝑗 . By (121), choose 𝑧 ∈ 𝒩 (𝑁 ) 
+
+and 𝑧 j ≠ 0 . If necessary replace 𝑧 ← −𝑧 so that 𝑧 j < 0 . Decompose 𝑧 as in 126 and define 
+
+𝑑 𝑓 ∶= −𝑧 𝑓 , 𝑑 𝑟 ∶= −𝑧 𝑟 .
+
+Then 𝑁 (𝑑 𝑓 − 𝑑 𝑟 ) = 0 , so the equality constraint is preserved to first order. Since 𝑧 j < 0 then 𝑧 𝑟 (𝑗) = −𝑧 j > 0 so 
+
+𝑑 𝑟 (𝑗) = −𝑧 𝑟 (𝑗) < 0 decreases 𝑣 𝑟 (𝑗) . Choose 𝑑 𝑐 as in Claim 1 so that (124)–(125) hold on the tight sets, ensuring feasibility in 𝒮 1 for small steps. As in Claim 1, scaling 𝑑 𝑐 if necessary yields a feasible direction with 
+
+∇𝜙(𝑣 𝑓 , 𝑣 𝑟 , 𝑙𝑛𝑐) 𝑇 ⋅ ⎡⎢⎣𝑑 𝑓 
+
+𝑑 𝑟 
+
+𝑑 𝑐 
+
+⎤⎥⎦< 0, 
+
+31 contradicting stationarity. Hence no stationary point lies in 𝒮 3 ∖ 𝒮 4. Combining Claims 1–3, every first-order stationary point (𝑣 •𝑓 , 𝑣 •𝑟 , 𝑙𝑛𝑐 •) ∈ 𝒮 1 must lie in 𝒮 4, so all kinetic inequalities are tight, that is 
+
+𝑣 •𝑓 = exp (𝐹 𝑇 ⋅ 𝑙𝑛𝑐 •), 𝑣 •𝑟 = exp (𝑅 𝑇 ⋅ 𝑙𝑛𝑐 •). 
+
+## 7.1 Interpretation of Theorem (4). 
+
+The right hand side of both kinetic inequalities 𝑣 𝑓 ≥ exp (𝐹 𝑇 ⋅ 𝑙𝑛𝑐 + 𝑙𝑛𝑘 𝑓 ) and 𝑣 𝑟 ≥ exp (𝑅 𝑇 ⋅ 𝑙𝑛𝑐 + 𝑙𝑛𝑘 𝑟 ) are lower bounds on each one-way rate implied by elementary kinetics. The slack vectors 𝛿 𝑓 and 𝛿 𝑟 therefore quantify the extent to which the chosen rates are in excess of what is kinetically implied by 𝑙𝑛𝑐 . In biochemical terms, nonzero slack corresponds to a “rate assignment” that cannot be attributed to the stated substrate/product dependencies alone (e.g., it would implicitly require unmodelled activation, inhibition, regulation, or additional species). The merit function 𝜙 is a separable barrier-like penalty that strictly prefers smaller positive one-way fluxes while also penalising positive slack vectors. Its gradient with respect to 𝑣 𝑓 and 𝑣 𝑟 is strictly positive component-wise; consequently, any feasible perturbation that decreases any component of 𝑣 𝑓 or 𝑣 𝑟 produces an immediate decrease in the merit value, unless doing so violates feasibility. The proof leverages this fact by explicitly con-structing feasible “rate-reducing” directions and showing that, unless all kinetic inequalities are tight, such a direction always exists. The three-stage argument admits a direct biochemical interpretation. In 𝒮 1 ∖ 𝒮 2, the net flux vector 𝑣 𝑓 − 𝑣 𝑟 
+
+contains a component lying in the internal flux cycle space 𝒩(𝑁 ) . Such cycle flux can circulate without changing the external exchange balance 𝑏 [6]. The proof shows that whenever such a cyclic component is present, one can reduce a subset of one-way rates along the cycle while maintaining the steady-state balance 𝑁 (𝑣 𝑓 − 𝑣 𝑟 ) = 𝑏 .Because 𝜙 strictly decreases when one-way rates decrease, any point with a removable cyclic component cannot be stationary. This corresponds to the biochemical notion that purely internal futile cycling is disfavoured by the merit: it is “unproductive” with respect to meeting the exchange demands 𝑏 , yet it increases one-way turnover. 𝒮 1 corresponds to the feasible set of Problem 30. 𝒮 2 corresponds to the set of optimal solutions to Problem 32. In 𝒮 2 ∖ 𝒮 3, the natural log ratio ln (𝑣 𝑓 ⊘ 𝑣 𝑟 ) is not compatible with a potential-like representation in the stoichiometric row space. Biochemically, ln (𝑣 𝑓 ⊘ 𝑣 𝑟 ) plays the role of a force term (affinity-like quantity) driving the net direction of each reaction; requiring ln (𝑣 𝑓 ⊘ 𝑣 𝑟 ) ∈ ℛ(𝑁 𝑇 ) enforces that these forces are consistent with a globally defined set of chemical potentials. The proof shows that if this compatibility fails, then there again exists a nullspace direction along which one can decrease one-way rates without affecting the steady state constraints, contradicting stationarity. 𝒮 3 corresponds to optimality condition 36 in one of the optimality conditions of Problem 37, which requires ln (𝑣 𝑓 ⊘ 𝑣 𝑟 ) ∈ ℛ(𝑁 𝑇 ).Finally, in 𝒮 3 ∖ 𝒮 4, the system is already “potential-consistent” (the ln forward/reverse ratios can be written as −𝑁 𝑇 ⋅ 𝑢 ), but at least one kinetic inequality is slack. In biochemical terms, this means that even though the directionality pattern is consistent with a global potential, at least one reaction has an excess one-way rate beyond what the concentrations would imply. The cyclic flux consistency assumption ensures that for any reaction index 𝑗 exhibiting slack, there exists an internal cycle that includes reaction 𝑗 . This guarantees a feasible cycle-based perturbation that reduces the slack one-way rate at 𝑗 while preserving the net exchanges 𝑏 .Hence slack cannot persist at stationarity: the only stationary configurations are those in which every one-way rate is exactly matched to the monomial kinetics implied by ln 𝑐 , i.e., 𝛿 𝑓 = 𝛿 𝑟 = 0 . The innermost set 𝒮 4 is the set of elementary kinetic steady states, in which both kinetic inequalities hold with equality (1, 2); it is the feasible set of the variational kinetics problem 69, over which the algorithm optimises. The proof is structured in stages because different types of non-physical or non-minimal behaviour arise from distinct geometric features of the feasible set. Internal cycling ( 𝒮 1 ∖ 𝒮 2), thermodynamic inconsistency ( 𝒮 2 ∖ 𝒮 3), and kinetic slack ( 𝒮 3 ∖ 𝒮 4) correspond to progressively stronger notions of feasibility that may be difficult to be ruled out by a single argument. Each stage identifies one source of excess in the merit function and constructs a descent direction tailored to that mechanism, while maintaining feasibility with respect to all constraints. This staged approach mirrors a biochemical hierarchy from mass-balance yet net flux direction inconsistent with thermodynamics (𝒮 1 ∖ 𝒮 2), to steady state and net flux direction consistent with thermodynamics, yet inconsistent with the ratio of forward over reverse unidirectional fluxes (𝒮 2 ∖ 𝒮 3), to steady state and full thermodynamic consistency yet kinetic inconsistency (𝒮 3 ∖ 𝒮 4), and makes explicit how the merit function eliminates each form of inconsistency in turn. Overall, the proof formalises the following biochemical principle: if a flux configuration contains any remov-able internal cycling or any excess one-way turnover beyond that implied by concentrations, then the merit function provides a direction of feasible improvement that reduces total one-way turnover while maintaining the same external demands. Under assumptions (120)-(121), the only points where this is no longer possible 32 are those where all kinetic inequalities are tight, meaning the rates are fully explained by the kinetic monomials for the same 𝑙𝑛𝑐 . This justifies the method as a constructive mechanism for eliminating futile internal cycling and enforcing kinetically coherent one-way rates consistent with steady-state exchange requirements. At a stationary point of Theorem (3) the objective in Problem (85) is 
+
+𝑐 𝑇 𝑣 𝑓 ⋅ 𝑣 •𝑓 ≔ (1 + 1 ⊘ 𝑣 •𝑓 )𝑇 
+
+⋅ 𝑣 •𝑓 = 1𝑇 ⋅ 𝑣 •𝑓 + 𝑛 𝑐 𝑇 𝑣 𝑟 ⋅ 𝑣 •𝑟 ≔ (1 + 1 ⊘ 𝑣 •𝑟 )𝑇 ⋅ 𝑣 •𝑟 = 1𝑇 ⋅ 𝑣 •𝑟 + 𝑛 𝑐 𝑇 𝑙𝑛𝑐 ⋅ 𝑙𝑛𝑐 • ≔ − ([𝐹 , 𝑅] ⋅ exp ([𝐹 , 𝑅] 𝑇 ⋅ 𝑙𝑛𝑐 • + [ 𝑙𝑛𝑘 𝑓 
+
+𝑙𝑛𝑘 𝑟 
+
+]) + 1) 
+
+> 𝑇
+
+⋅ 𝑙𝑛𝑐 • = ∇𝜙(𝑙𝑛𝑐 •)𝑇 ⋅ 𝑙𝑛𝑐 •
+
+which may be interpreted as minimising the sum of unidirectional fluxes and maximising the rate of consumption of every species weighted by the logarithm of species concentration. 
+
+# 8 Additional constraints and regularisation 
+
+Section 5, 6 and 7 establish convergence properties for an algorithm to obtain a steady state, as defined by Eq. 9. Beyond that, there are additional constraints that can be added, such as moiety conservation and thermodynamic constraints on kinetic parameters. Strictly, Theorem 4 applies to solutions to Eq. 9, but in practice, addition of the constraints below is observed to be numerically compatible with convergence to satisfaction of elementary kinetics also. 
+
+## 8.1 Moiety conservation constraints 
+
+The moiety conservation constraints in Eq. (8) are linear in linear concentrations, while the formulation of variational elementary kinetics in Problem (69) is expressed in terms of logarithmic concentrations, therefore to add moiety conservation to Problem (69), one can employ an exponential cone to constrain the relationship between linear and logarithmic concentration variables then add terms to optimise to the boundary of this cone, to give the conic optimisation problem min  
+
+> 𝑐,𝑙𝑛𝑐
+
+𝑐 𝑇 𝑐 ⋅ 𝑐 + 𝑐 𝑇 𝑙𝑛𝑐 ⋅ 𝑙𝑛𝑐 
+
+s.t. 𝐿 ⋅ 𝑐 = 𝐿 ⋅ 𝑐(0), (127) 
+
+⎛⎜⎝𝑐 1𝑙𝑛𝑐 ⎞⎟⎠∈ 𝒦 𝑚 𝑒𝑥𝑝 , (128) where at an optimum we have 𝑐 ⋆ 
+
+> i
+
+= exp (𝑙𝑛𝑐 ⋆ 
+
+> i
+
+) when 𝑐 i and 𝑙𝑛𝑐 i lie on the exponential face of the 𝑖 𝑡ℎ exponential cone. 
+
+## 8.2 Thermodynamic constraints on elementary kinetic parameters 
+
+In an extension to (69), logarithmic forward and reverse kinetic parameters may be modelled as variables, in which case it is possible to implement thermodynamic constraints on kinetic parameters using 
+
+𝑙𝑛𝑘 𝑓 − 𝑙𝑛𝑘 𝑟 + 𝑁 𝑇 ⋅ 𝑢 ∘ = 0, (129) which is linear system of equations in logarithmic variables. 
+
+## 8.3 Regularisation of kinetic steady states 
+
+Assuming a solution exists to (9) implies that there exists an optimal solution to (69), where each exponential cone constraint is active, that is, the optimal solution is on the exponential face of each exponential cone. However, it may occur that there does not exist a steady state solution to (7) that also satisfies the elementary reaction rate laws (52) and (53), as well as box constraints on internal and external reaction rates. As described in 3.5, replacement of stoichiometrically inconsistent exchange reactions with perpetireactions, that are stoi-chiometrically consistent but driven by intentionally thermodynamically infeasible kinetic parameters, is the principled and theoretically supported approach to ensure there exists a non-equilibrium steady state. However, in practice there are a large cadre of established modes that employ exchange reactions so it is useful to have the option to solve for a regularised steady state solution that penalises deviation from steady state in case the 33 given exchange reactions are not compatible with a kinetically feasible steady state. This can be achieved by the addition of a quadratic penalty on a regularisation variable, 𝑟 ∈ ℝ 𝑚 , which is conically representable with a rotated quadratic cone, that is min    
+
+> 𝑣 𝑓, 𝑣 𝑟 ,𝑤,𝑟,𝑡 𝑟 ,
+
+𝑐 𝑡 𝑟 ⋅ 𝑡 𝑟 
+
+s.t. 𝑁 ⋅ (𝑣 𝑓 − 𝑣 𝑟 ) + 𝑟 + 𝐵 ⋅ 𝑤 = 0, (130) 
+
+⎛⎜⎝𝑡 𝑟 
+
+1𝐻 𝑟 ⋅ 𝑟 ⎞⎟⎠∈ 𝒬 2+𝑚 . (131) where 𝑡 𝑟 ∈ ℝ ≥0 is an auxiliary variable. Penalisation can be weighted for or against different molecular species by selection of a suitable set of weights on the diagonal of 𝐻 𝑟 ∈ ℝ 𝑚×𝑚 , but the default is 𝐻 𝑟 ≔ 𝐼 , Regularisation enables one to relax one or more steady state constraints in (7) yet still satisfy elementary reaction kinetics, in the case where a solution to (9) does not exist. 
+
+## 8.4 Optimisation of network states 
+
+A key feature of constraint-based modelling is the ability to optimise over a feasible set of network states. In flux balance analysis, such optimisation is over a feasible set of steady state fluxes. Typically, optimisation is of one or more exchange fluxes, rather than internal fluxes. Although optimisation over any linear combination of internal and external fluxes is possible, internal fluxes with support in the nullspace of the internal stoichiometric matrix must be bounded by given lower or upper bounds to avoid an unbounded optimisation problem, if any of those reactions is optimised. In entropic flux balance analysis [8], every thermodynamically feasible steady state net flux can be obtained as a function of parameters corresponding to internal reactions that may be interpreted as prior information in a relative entropy optimisation problem [9]. Entropic flux balance analysis can also include optimisation of any linear combination of external net fluxes, via a trade off between (relative) entropy optimisation of internal fluxes and optimisation of exchange fluxes. However, this is not optimisation 
+
+over a set of thermodynamically feasible fluxes, because that set is non-convex. In variational kinetics, it is currently not possible to arbitrarily optimise internal net fluxes, concentrations, or kinetic parameters, without interfering with convergence to satisfaction of elementary reaction kinetics, because it is the objective coefficients corresponding to unidirectional fluxes, concentrations ( ± kinetic parameters) that are iteratively optimised to ensure that elementary reaction kinetics is satisfied. However, one can optimise over the set of net external fluxes as in flux balance analysis, by adding a linear objective over exchange reactions, that is 𝑐 𝑇 𝑤 ⋅𝑤 . In practice, in each conic optimisation problem in the terms in the linear objective compete with one another, therefore it is beneficial to add scalar parameter to balance optimisation of exchange fluxes with satisfaction of kinetics, that is \alpha_{w}c_{w}^{T}\cdot w. each term in the linear objective. Therefore, to establish priorities between the different objectives within the combined formulation of variational elementary kinetics, we introduce non-negative scalar weights, denoted 
+
+𝛼 𝑥 ∈ ℝ ≥0 where the subscript 𝑥 is replaced by a symbol that corresponds to the primal variable. That is, the objective in the combined formulation of variational elementary kinetics becomes min 𝛼 𝑣 𝑓 𝑐 𝑇 𝑣 𝑓 ⋅ 𝑣 𝑓 + 𝛼 𝑣 𝑟 𝑐 𝑇 𝑣 𝑟 ⋅ 𝑣 𝑟 + 𝛼 𝑙𝑛𝑘 𝑓 𝑐 𝑇 𝑙𝑛𝑘 𝑓 ⋅ 𝑙𝑛𝑘 𝑓 + 𝛼 𝑙𝑛𝑘 𝑟 𝑐 𝑇 𝑙𝑛𝑘 𝑟 ⋅ 𝑙𝑛𝑘 𝑟 … (132) 
+
++𝛼 𝑙𝑛𝑐 𝑐 𝑇 𝑙𝑛𝑐 ⋅ 𝑙𝑛𝑐 … + 𝛼 𝑐 𝑐 𝑇 𝑐 ⋅ 𝑐 … (133) 
+
++𝛼 𝑡 𝑟 𝑐 𝑇 𝑡 𝑟 ⋅ 𝑡 𝑟 … (134) 
+
++𝛼 𝑤 𝑐 𝑇 𝑤 ⋅ 𝑤. (135) The relative values of these scalar weights substantially affects the type of variational kinetic solution obtained. 
+
+# 9 Variational elementary kinetics 
+
+In this section, each of the conic optimisation problems in the preceding sections is combined into a single conic optimisation problem. Each constraint is represented with the corresponding dual variables, where 𝑦 denotes a dual variable to a linear equality constraint, 𝑠 denotes a dual variable to a cone constraint and 𝑧 denotes a dual variable to a box constraint. The subscript to these dual variables is chosen to reflect a correspondence to a primal term. The combined formulation of variational elementary kinetics is 34 min 𝑐 𝑇 𝑣 𝑓 ⋅ 𝑣 𝑓 + 𝑐 𝑇 𝑣 𝑟 ⋅ 𝑣 𝑟 + 𝑐 𝑇 𝑙𝑛𝑐 ⋅ 𝑙𝑛𝑐 + 𝑐 𝑇 𝑙𝑛𝑘 𝑓 ⋅ 𝑙𝑛𝑘 𝑓 + 𝑐 𝑇 𝑙𝑛𝑘 𝑟 ⋅ 𝑙𝑛𝑘 𝑟 … (136) 
+
++𝑐 𝑇 𝑐 ⋅ 𝑐 … (137) 
+
++𝑐 𝑇 𝑡 𝑟 ⋅ 𝑡 𝑟 … (138) 
+
++𝑐 𝑇 𝑤 ⋅ 𝑤 (139) s.t. 𝑁 ⋅ (𝑣 𝑓 − 𝑣 𝑟 ) + 𝑟 + 𝐵 ⋅ 𝑤 = 0 ∶ 𝑦 𝑁 (140) 
+
+𝑙𝑛𝑘 𝑓 − 𝑙𝑛𝑘 𝑟 + 𝑁 𝑇 ⋅ 𝑢 ∘ = 0 ∶ 𝑦 𝑢 ∘ (141) 
+
+𝐿 ⋅ 𝑐 = 𝐿 ⋅ 𝑐(0) ∶ 𝑦 𝐿 (142) 
+
+⎛⎜⎝𝑣 𝑓 
+
+1𝐹 𝑇 ⋅ 𝑙𝑛𝑐 + 𝑙𝑛𝑘 𝑓 
+
+⎞⎟⎠∈ 𝒦 𝑛 𝑒𝑥𝑝 ∶ ⎛⎜⎝𝑠 𝑣𝑓 
+
+𝑠 𝑓1 
+
+𝑠 𝐹 
+
+⎞⎟⎠, (143) 
+
+⎛⎜⎝𝑣 𝑟 
+
+1𝑅 𝑇 ⋅ 𝑙𝑛𝑐 + 𝑙𝑛𝑘 𝑟 
+
+⎞⎟⎠∈ 𝒦 𝑛 𝑒𝑥𝑝 ∶ ⎛⎜⎝𝑠 𝑣𝑟 
+
+𝑠 𝑟1 
+
+𝑠 𝑅 
+
+⎞⎟⎠, (144) 
+
+⎛⎜⎝𝑐 1𝑙𝑛𝑐 ⎞⎟⎠∈ 𝒦 𝑚 𝑒𝑥𝑝 ∶ ⎛⎜⎝𝑠 𝑐 
+
+𝑠 𝑐1 
+
+𝑠 𝑙𝑛𝑐 
+
+⎞⎟⎠, (145) 
+
+⎛⎜⎝𝑡 𝑟 
+
+1𝐻 𝑟 ⋅ 𝑟 ⎞⎟⎠∈ 𝒬 2+𝑚 ∶ ⎛⎜⎝𝑠 𝑡 𝑟 
+
+𝑠 𝑟1 
+
+𝑠 𝐻 𝑟 
+
+⎞⎟⎠. (146) The following are the intent of the terms in the objective. The linear coefficients in the terms (136) are iteratively updated to optimise fluxes, logarithmic concentrations, and logarithmic kinetic parameters (unless they are fixed) so the corresponding exponential cone constraints representing elementary kinetics are active at a stationary state (143). The linear coefficients in the term (137) is iteratively updated to so the corresponding exponential cone constraints ((143),144,145) are active at a stationary state and therefore 𝑐 • = exp (𝑙𝑛𝑐 •). The term (138) implements regularisation of steady state constraints. The term (139) implements linear optimisation of net external reaction flux. The following are the intent of the equality constraints. Equation (140) implements regularised steady state, in conjunction with the term (138) and the rotated quadratic cone (146). Equation (141) implements thermodynamic constraints on logarithmic elementary kinetic parameters. Finally, Eq. (142) implements moiety conservation. When implementing this conic optimisation problem numerically, one must encode upper and lower bounds for each variable, but they may be specified to be unbounded, except in the case where they are required to be fixed to be a certain given value specified as prior data, or where an unbounded variable may result in an unbounded optimisation problem, e.g., upper bounds on elementary fluxes and lower bounds on logarithmic concentrations. The following additional inequality constraints are used to constrain unidirectional fluxes, net internal reaction fluxes, net exchange reaction fluxes, logarithmic concentrations, logarithmic kinetic parameters and logarithmic standard Gibbs energies of formation 
+
+𝑣 𝑓 ≤ 𝑢 𝑣 𝑓 ∶ −𝑧 𝑣 𝑓 , (147) 
+
+𝑣 𝑟 ≤ 𝑢 𝑣 𝑟 ∶ −𝑧 𝑣 𝑟 , (148) 
+
+𝑙 𝑣 ≤ 𝑣 𝑓 − 𝑣 𝑟 ≤ 𝑢 𝑣 ∶ 𝑧 𝑣 ≔ 𝑧 𝑙𝑣 − 𝑧 𝑢𝑣 , (149) 
+
+𝑙 𝑤 ≤ 𝑤 ≤ 𝑢 𝑤 ∶ 𝑧 𝑤 ≔ 𝑧 𝑙𝑤 − 𝑧 𝑢𝑤 , (150) 
+
+𝑙 𝑙𝑛𝑐 ≤ 𝑙𝑛𝑐 ≤ 𝑢 𝑙𝑛𝑐 ∶ 𝑧 𝑙𝑛𝑐 ≔ 𝑧 𝑙𝑙𝑛𝑐 − 𝑧 𝑢𝑙𝑛𝑐 , (151) 
+
+𝑙 𝑙𝑛𝑘 𝑓 ≤ 𝑙𝑛𝑘 𝑓 ≤ 𝑢 𝑙𝑛𝑘 𝑓 ∶ 𝑧 𝑙𝑛𝑘 𝑓 ≔ 𝑧 𝑙𝑙𝑛𝑘 𝑓 − 𝑧 𝑢𝑙𝑛𝑘 𝑓 , (152) 
+
+𝑙 𝑙𝑛𝑘 𝑟 ≤ 𝑙𝑛𝑘 𝑟 ≤ 𝑢 𝑙𝑛𝑘 𝑟 ∶ 𝑧 𝑙𝑛𝑘 𝑟 ≔ 𝑧 𝑙𝑙𝑛𝑘 𝑟 − 𝑧 𝑢𝑙𝑛𝑘 𝑟 , (153) 
+
+𝑙 𝑢 ∘ ≤ 𝑢 ∘ ≤ 𝑢 𝑢 ∘ ∶ 𝑧 𝑢 ∘ ≔ 𝑧 𝑙𝑢 ∘ − 𝑧 𝑢𝑢 ∘ . (154) For each box constraint, a net dual vector and two non-negative dual vectors corresponding to lower and upper bound constraints are introduced, with dimensions corresponding to the primal variable concerned, e.g., 𝑙 𝑣 ∈ ℝ 𝑛 
+
+and 𝑢 𝑣 ∈ ℝ 𝑛 denote lower and upper bounds on net flux 𝑣 𝑓 − 𝑣 𝑟 , 𝑧 𝑙𝑣 ∈ ℝ 𝑛 denotes a non-negative dual vector to the lower bound constraint and 𝑧 𝑢𝑣 ∈ ℝ 𝑛 denotes a non-negative dual vector to the upper bound constraint, with the dual vector corresponding to box constraints on net flux defined as the difference between these two vectors, that is 𝑧 𝑣 ≔ 𝑧 𝑙𝑣 −𝑧 𝑢𝑣 . The upper bounds on the unidirectional fluxes are one-sided, so each introduces a single non-negative dual vector, 𝑧 𝑣 𝑓 , 𝑧 𝑣 𝑟 ∈ ℝ 𝑛 ≥0 , rather than a net dual vector. The Lagrangian corresponding to 35 the combined formulation of variational kinetics expressed as Problem (136)-(154) is provided in Supplementary Section 9. 
+
+# 10 Numerical experiments 
+
+Numerical experiments are presented as a rendered computational narrative (Supplementary_File_1.html 
+
+https://doi.org/10.5281/zenodo.21633862 ) generated by the MATLAB R2024b (Mathworks Inc.) numer-ical computing environment, using the COBRA Toolbox (v3.8beta, specifically SHA-1 shorthand: 4713424eb) [39] that accesses an implementation of the sequential conic solver https://doi.org/10.5281/zenodo.21633862 
+
+https://github.com/Digital-Metabolic-Twin-Centre/varkin (SHA-1 shorthand: b130be3) and an industrial qual-ity conic optimisation solver (MOSEK Version 11.2.0, feasibility and optimality tolerance 1𝑒 − 6 ), on a work-station (x86_64, Intel(R) Core(TM) i9-10980XE CPU @ 3.00GHz) running a Linux operating system (Linux 6.17.0-35-generic #35~24.04.1-Ubuntu). The computational narrative can be applied to a variety of genome-scale metabolic models but in this section, results are summarised for experiments with a stoichiometrically, flux and thermodynamically flux consistent subset [35, 37] of a generic human genome-scale metabolic model (Recon3, [40]), containing 5,835 metabolites and 8,791 internal reactions. Supplementary File 1 contains three numerical experiments. The three experiments differ in what boundary condition b is and what extra constraints are imposed. Experiment 1 (VK1) — satisfaction of elementary kinetics. The plainest case: find a concentration vector consistent with the elementary kinetics at steady state, kinetic parameters fixed at their given values, no synthetic target to recover and no moiety conservation. Constraints are the exponential cone kinetics, the hard steady state equality, and the concentration/flux bounds; all penalties off. It converged trivially a single major iteration with a clean conic certificate (less than kinetic equality tolerance 𝑡𝑜𝑙𝐸𝑋𝑃 ≔ 5𝑒 − 5 ). Experiment 2 (VK2) — recover a steady state from a known boundary condition. Here a random, ther-modynamically feasible kinetic steady state is generated, from a random concentration vector and fixed kinetic parameters, 𝑙𝑛𝑘 𝑓 = 𝑙𝑛𝑘 𝑟 = 0 , the corresponding boundary flux 𝑏 = 𝑁 ⋅ ( exp (ln (𝑘 𝑓 ) + 𝐹 𝑇 ⋅ ln (𝑐)) − exp (ln (𝑘 𝑟 ) + 𝑅 𝑇 ⋅ ln (𝑐))) is computed from and the solver must find a steady state satisfying that same 𝑏 (with kinetic parameters fixed, but no knowledge of the generating 𝑐 ). This is the controlled test of whether the algorithm can recover it. Constraints are the same as VK1, the steady-state equality against the generated 𝑏 , and bounds scaled to include the test concentrations and fluxes, but no moiety conservation. It converged, with the help of several reflected kinetic leaf iterates (cf. Supplementary Section F): to less than the kinetic equality tolerance 
+
+𝑡𝑜𝑙𝐸𝑋𝑃 ≔ 5𝑒 − 5 . An interesting point to note is that, at least for this model, the constraints defined uniquely the net internal flux. Experiment 3 (VK3) — recover a moiety-conserved steady state. Same generate-and-recover setup as VK2, with the added requirement that the recovered steady state also respect moiety conservation, so the feasible set gains the conserved-moiety linear equalities on top of VK2’s kinetics, steady-state, and bound blocks. Converged maximum kinetic equality violation to approximately the kinetic equality tolerance 𝑡𝑜𝑙𝐸𝑋𝑃 ≔ 5𝑒 − 5 , at major iteration 18. An interesting point to note is that, at least for this model, the constraints defined uniquely the net internal flux, and less so the unidirectional fluxes, but not concentrations. 
+
+# 11 Discussion 
+
+Variational kinetics is the first computationally tractable modelling method that enables satisfaction of ele-mentary reaction kinetic rate law constraints at genome-scale without recourse to mathematical approximation. Given a biochemical network with 𝑚 molecular species and 𝑛 reactions, the problem of finding an 𝑚 dimen-sional concentration vector within the non-convex set satisfying elementary reaction kinetics and equilibrium or non-equilibrium steady state constraints is expressed as the minimisation of a strictly concave function over the intersection of convex exponential cones and an affine subspace defined by linear equalities and inequalities. The steady state constraint is the affine subspace, the concentration and unidirectional flux bounds are the linear inequalities, and the relaxations of the elementary kinetic constraints are the exponential cones. These coexist in one convex conic feasible set, and it is over that set that the strictly concave function is minimised. That function is strictly positive on the feasible set and attains a zero local minimum if, and only if, the 2𝑛 elementary kinetic constraints are satisfied, a pair for each reversible reaction. Its minimisation by a particular sequence of conic optimisation problems is guaranteed to find a solution to a variational kinetic problem, provided that such a solution exists. The difficulty that this addresses is intrinsic to the problem. A set is non-convex when there exists a line between two points in that set where an interval of that line lies outside the set. It has long been recognised that the set of thermodynamically feasible steady state fluxes is non-convex [3], and the set of concentrations that also satisfy elementary kinetic rate law constraints is likewise non-convex. Furthermore, the fundamental equation 36 defining the set of non-equilibrium steady states of a biochemical network, Eq. (28), has an asymmetric gradient, that is a transposed Jacobian that is not symmetric, so a non-equilibrium steady state cannot, in general, be obtained by minimisation of scalar valued function. This fact alone eliminates a wide variety of established optimisation algorithms. Numerically, Eq. (28) is not a monotone function for a wide variety of genome-scale metabolic models, and previously we demonstrated a specific biochemical network that was provably not monotone, but rather a generalised monotone function termed a duplomonotone function [34]. Whether all biochemical networks give rise to a duplomonotone function is an open question, though numerical tests support such a conclusion. It is the difficulty of categorising this fundamental equation in terms specific enough to admit established algorithms at high dimension that motivates the development of tailored algorithms. An optimisation problem is convex when a convex function is minimised, equivalently when a concave function is maximised, over a convex set. It is conic when a linear function is optimised over a convex conic set, that is an intersection of convex cones. In the optimisation literature conic optimisation is therefore described as a subclass of convex optimisation, in which the objective is linear and each constraint defines a convex set, and since the minimisation of any convex function can be expressed as the minimisation of a linear function subject to conic constraints [41], that subclass is a structured one rather than a restrictive one, admitting polynomial-time algorithms whenever the cone is tractable. Minimising a strictly concave function over a conic set satisfies the convex set requirement but violates the convex objective requirement, so the minimisation lies outside the convex class. The direction matters, because maximising that same strictly concave function over the same set is a convex problem. When a strictly concave function is minimised over a conic set it attains its local minima on the extreme points of the feasible set, and where those cones have curved and continuous boundaries there is, in general, a continuum of local minima. From a biological perspective the exponential cone has substantial value for the mathematical modelling of biochemical networks, leveraging fundamental and applied algorithmic developments in this area [42, 43, 44]. Conic formulations enable powerful, structure-exploiting solvers, but they require the non-linear parts of a modelling problem to be expressible in terms of particular convex cones, which we have established is the case for non-linear kinetic and thermodynamic constraints. It is likely that there are other, lesser known cones of substantial relevance to biology. We envisage that this potential will encourage greater appreciation of conic optimisation among the biological modelling community, and motivate mathematical progress on the characterisation of novel cones that admit efficient optimisation algorithms. A key advantage of variational kinetics is that it rests on a sequence of conic optimisation problems, and so inherits the tractability, reliability and scalability of convex optimisation: efficient algorithms of polynomial-time complexity, solutions that are robust and reproducible, increasing solver support, and a well-developed duality theory. Every kinetic steady state corresponds to a local minimum of the strictly concave merit function, and every local minimum of that function is a global minimum, which avoids the non-global local minima, heuristics and starting point sensitivity that complicate both analysis and computation in alternative approaches. It is expected that, in general, there exist multiple kinetic steady states compatible with the given constraints, and it is a strength of variational kinetics that the sequence of conic optimisation problems is not intrinsically biased toward any particular one of them. That absence of bias is not the same as independence of the initial point. Each conic optimisation problem in the sequence starts from an initial feasible point, and which of the admissible kinetic steady states is returned does depend on that point, so further analysis is required to establish the nature of this dependence. We hypothesise that such analysis will be tractable, given the substantial literature relating perturbations in convex optimisation parameters to perturbations in their solutions, e.g., [45]. Although exponential cones represent relaxations of elementary kinetics, the convexity of the feasible set guarantees that an optimal solution satisfies elementary reaction kinetic constraints to within the numerical tolerances set by the optimisation solver. This presumes that a steady state kinetic solution exists [30], that the objective driving satisfaction of elementary kinetics is not dominated by a competing objective, and that the numerical values of the data, e.g., the stoichiometric coefficients [46], are sufficiently well scaled in comparison to the precision of the numerical implementation. The computational experiments reported herein exercise these properties in three regimes. The first isolates satisfaction of elementary reaction kinetics, with the competing penalties inactive and violation of mass balance admitted under a quadratic penalty. The second tests whether a kinetic steady state that is known to exist can be recovered from the boundary condition that it satisfies. The third repeats that test with moiety conservation imposed, so that the predicted steady state must conserve moieties as well as satisfy the same boundary condition. Set against these merits are several limitations, some intrinsic and some that we envisage being overcome in future work. A disadvantage of any comprehensive approach to modelling biochemical reaction networks is that each type of constraint or data requires the definition of a new variable, whose biochemical interpretation depends on prior understanding of the mathematical form of the physicochemical and biochemical constraints concerned. As the number of different constraints and variables increases, any modelling formalism becomes more challenging to understand. This is compounded in conic optimisation, where auxiliary variables are required to express the problem in a form amenable to solution with established conic optimisation solvers. Some of these variables have accessible biochemical interpretations, e.g., an upper bound on the total internal net reaction rate, while others are unfamiliar and therefore harder to interpret biochemically. Our approach to 37 managing this proliferation is a consistent nomenclature, with subscripts specific to particular instances of the same type of variable, and repeated use of as few cones as possible. Nevertheless, understanding this approach does require a basic familiarity with conic optimisation, which is less widespread in the biochemical modelling community than, say, linear optimisation. A second limitation concerns the rate laws themselves. Elementary kinetic rate laws based on mass-action kinetics are valid only for true elementary steps under ideal, well-mixed, dilute conditions. Where a reaction involves complex mechanisms, non-ideal behaviour, heterogeneous phases, transport limitations or biological regulation, alternative mechanistic or phenomenological rate laws are required. Genome-scale models predom-inantly represent enzyme-catalysed reactions as overall rather than elementary reactions, which is partly an artefact of their development for prediction with early constraint-based modelling approaches, and partly a pragmatic response to pathways whose stoichiometry or chemical structural specification is unclear for want of experimental data, e.g., lipid metabolism. Lumped reactions create a particular difficulty here, because the standard transformed reaction Gibbs energy of a lumped reaction is the sum over the series of overall reac-tions lumped together. An artificially large negative standard transformed reaction Gibbs energy makes the thermodynamic constraint on the difference between logarithmic pseudoelementary kinetic parameters numer-ically awkward, since the relative values of those parameters then differ greatly in magnitude. In turn the unidirectional forward rate becomes artificially large and the reverse rate artificially small, or vice versa, either of which strains the finite precision arithmetic of a numerical optimisation solver. This motivates continued reconstruction effort, combining manual and algorithmic approaches, to split lumped reactions, and it war-rants further analysis of whether variational kinetics can be extended to phenomenological kinetic rate laws [47, 48] applied systematically at genome-scale through a formalism admissible to tractable computation, e.g., convenience kinetics [49]. Herein variational kinetics is presented primarily as a means to represent elementary kinetic constraints for a biochemical reaction network in which all molecular species concentrations are assumed to be at steady state. That assumption can be relaxed by admitting deviation from steady state under a quadratic penalty, where the deviation may be interpreted as a discrete differential of molecular species concentrations with a time unit consistent with the reaction rates. We likewise admit quadratic penalisation of deviation from given molecular species concentrations, assuming that the mean concentrations are compatible with a steady state. One could then consider an iterative scheme in which molecular species concentrations are fixed at the sum of the concentrations and the concentration deviation from the previous iteration, so that the quadratic penalty enforces a form of continuity, or smoothing, of trajectories with respect to time. Application to biochemical network dynamics via damped gradient flow is thus one of a variety of natural theoretical extensions. 
+
+# 12 Conclusions 
+
+Variational kinetics is a novel, scalable biochemical network modelling method that enables satisfaction of elementary reaction kinetics in non-equilibrium steady states, optionally with the addition of moiety conser-vation and thermodynamic constraints on elementary kinetic parameters. These constraints couple variables representing unidirectional fluxes, molecular species concentrations and, optionally, (pseudo)elementary kinetic variables, unless they are specified as given parameters. All variables can be constrained by given lower and upper bounds. Optionally, quadratic penalisation of deviations from steady state constraints enables a kinet-ically feasible state to be obtained despite conflicting constraints. Linear optimisation of external net reaction rates enables representation of biologically motivated objectives, subject to the aforementioned constraints. The method is implemented by a sequence of conic optimisation problems that is globally convergent to an elementary reaction kinetic steady state, which is demonstrated to exist for any stoichiometrically consistent biochemical network. Variational kinetics is envisaged to provide a foundation for genome-scale biochemical network modelling, extending the focus of constraint-based modelling beyond metabolism and bringing kinetic modelling within reach at genome-scale. 
+
+CRediT authorship contribution statement Ronan M.T. Fleming: Conceptualisation, Methodology, Software, Formal analysis, Validation, Visualization, Writing - original draft, Writing - review and editing, Funding acquisition. Ines Thiele: Funding acquisition, Resources, Writing - review and editing. 
+
+Declaration of competing interest The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper. 
+
+Data availability The genome-scale metabolic model used (code/ data/ raw/ iDopaNeuroC_VK_withL.mat), the computational narrative (src/ matlab/ JTB/ driver_optimizeVKmodel_VK1to3.mlx) that reproduces the numerical experiments in Section 10, as well as all of the source code implementing variational kinetics, includ-ing the sequential conic solver is available at https://github.com/Digital-Metabolic-Twin-Centre/varkin (SHA-1 38 b130be3). Reproduction of numerical computations requires a numerical computing environment MATLAB R2024b (Mathworks Inc.), the COBRA Toolbox (v3.8beta, specifically SHA-1 shorthand: 4713424eb) and a conic optimisation solver (MOSEK Version 11.2.0, feasibility and optimality tolerance 1𝑒 − 6 ), a commercial solver for which free academic licences are available. The absolute paths in the narrative have to be updated to reflect the location that, e.g, iDopaNeuroC_VK_withL.mat exists on each system. 
+
+Acknowledgements This work was funded by the European Union Horizon Europe Framework Programme within the ’Reconstruction and Computational Modelling for Inherited Metabolic Diseases’ project (Recon4IMD, 101080997), the European Research Council under the European Union Horizon Europe research and innovation programme for the ’Innovative whole-body metabolism models for personalised medicine’ project (AVATAR, 101125633) and the European Commission, Research and Innovation action within the ’Systems Medicine of Mitochondrial Parkinson’s Disease’ project (SysMedPD, 668738), the U.S. National Institutes of Health and Department of Energy interagency, collaborative research award for the ’Multiscale Molecular Systems Biology: Reconstruction and Model Optimization’ project (U01GM102098) and the U.S. Department of Energy (Office of Biological and Environmental Research) under the ’Numerical Optimization Algorithms and Software for Systems Biology’ project (DE-FG02-09ER25917). 
+
+Declaration of generative AI and AI-assisted technologies in the manuscript preparation process 
+
+During the preparation of this work the authors used Claude (Anthropic), accessed through the Claude Code command-line interface, in order to draft and revise passages of manuscript text, to draft figure captions, and to write the Python source code that deterministically render Figure 1,2,3 and Supplementary Figure 5 from instances of the equations defined in this manuscript. No general-purpose generative AI image tool was used to create or alter any figure, and no image representing primary observed or experimental data was created or altered by AI; all graphical output is produced by versioned, re-executable plotting code. After using this tool, the authors reviewed and edited the content and take full responsibility for the content of the published article. 
+
+# References 
+
+[1] R. M. T. Fleming et al. “Conditions for Duality between Fluxes and Concentrations in Biochemical Networks”. In: Journal of Theoretical Biology 409 (Nov. 2016), pp. 1–10. [2] J. D. Orth, I. Thiele and B. Ø. Palsson. “What Is Flux Balance Analysis?” In: Nature Biotechnology 28.3 (Mar. 2010), pp. 245–248. [3] H. Qian, D. A. Beard and S.-D. Liang. “Stoichiometric Network Theory for Nonequilibrium Biochemical Systems”. In: European Journal of Biochemistry 270.3 (2003), pp. 415–421. [4] E. N. Smith et al. “Thermo-Flux: Generation and Analysis of Thermodynamic-Stoichiometric Metabolic Network Models”. In: Molecular Systems Biology (July 2026). [5] E. Noor et al. “Consistent Estimation of Gibbs Energy Using Component Contributions”. In: PLOS Computational Biology 9.7 (July 2013), e1003098. [6] A. A. Desouki et al. “CycleFreeFlux: Efficient Removal of Thermodynamically Infeasible Loops from Flux Distributions”. In: Bioinformatics 31.13 (July 2015), pp. 2159–2165. [7] D. A. Beard and H. Qian. “Relationship between Thermodynamic Driving Force and One-Way Fluxes in Reversible Processes.” In: PloS One 2.1 (2007), e144. [8] R. M. T. Fleming et al. “A Variational Principle for Computing Nonequilibrium Fluxes and Potentials in Genome-Scale Biochemical Networks”. In: Journal of Theoretical Biology 292 (Jan. 2012), pp. 71–77. [9] N. Améstica-Toledo et al. “Thermodynamically Enabled and Reaction Attuned Estimation of Metabolic Fluxes”. In: iScience 29.6 (June 2026), p. 115822. [10] E. Noor et al. “Pathway Thermodynamics Highlights Kinetic Obstacles in Central Metabolism”. In: PLOS Computational Biology 10.2 (Feb. 2014), e1003483. [11] W. Liebermeister and E. Noor. “The Enzyme Cost of given Metabolic Flux Distributions, as a Function of Logarithmic Metabolite Levels, Is Convex”. In: arXiv preprint arXiv:1501.02454 (2015). [12] T. Lubitz et al. “Parameter Balancing in Kinetic Models of Cell Metabolism.” In: The Journal of Physical Chemistry. B 114.49 (2010), pp. 16298–303. [13] I. Domenzain et al. Reconstruction of a Catalogue of Genome-Scale Metabolic Models with Enzymatic Constraints Using GECKO 2.0 | Nature Communications . https://www.nature.com/articles/s41467-022-31421-1. May 2023. 39 [14] R. Adadi et al. Prediction of Microbial Growth Rate versus Biomass Yield by a Metabolic Network with Kinetic Parameters | PLOS Computational Biology . May 2023. [15] B. J. Sánchez et al. “Improving the Phenotype Predictions of a Yeast Genome‐scale Metabolic Model by Incorporating Enzymatic Constraints”. In: Molecular Systems Biology 13.8 (Aug. 2017), p. 935. [16] M. A. Savageau. “Biochemical systems analysis. III. Dynamic solutions using a power-law approximation”. In: Journal of Theoretical Biology 26.2 (1970), pp. 215–226. [17] V. Hatzimanikatis and J. E. Bailey. “Effects of Spatiotemporal Variations on Metabolic Control: Ap-proximate Analysis Using (Log)Linear Kinetic Models.” In: Biotechnology and Bioengineering 54.2 (1997), pp. 91–104. [18] L. M. Tran, M. L. Rizk and J. C. Liao. “Ensemble Modeling of Metabolic Networks”. In: Biophysical Journal 95.12 (Dec. 2008), pp. 5606–5617. [19] A. Khodayari et al. “A Kinetic Model of Escherichia Coli Core Metabolism Satisfying Multiple Sets of Mutant Flux Data”. In: Metabolic Engineering 25 (Sept. 2014), pp. 50–62. [20] A. Khodayari and C. D. Maranas. “A Genome-Scale Escherichia Coli Kinetic Metabolic Model k-Ecoli457 Satisfying Flux Data for Multiple Mutant Strains”. In: Nature Communications 7.1 (Dec. 2016), p. 13806. [21] L. Miskovic and V. Hatzimanikatis. “Production of Biofuels and Biochemicals: In Need of an ORACLE”. In: Trends in Biotechnology 28.8 (Aug. 2010), pp. 391–397. [22] I. Toumpe et al. Scalable Biophysical Constraints for Physiologically Consistent Metabolic States . July 2026. [23] P. S. Bekiaris and S. Klamt. “COBRA-k: A Powerful Framework Bridging Constraint-Based and Kinetic Metabolic Modeling”. In: Science AdvAnceS (2026). [24] N. Jamshidi and B. Ø. Palsson. “Mass Action Stoichiometric Simulation Models: Incorporating Kinetics and Regulation into Stoichiometric Models.” In: Biophysical Journal 98.2 (2010), pp. 175–85. [25] Z. B. Haiman et al. “MASSpy: Building, Simulating, and Visualizing Dynamic Biological Models in Python Using Mass Action Kinetics”. In: PLOS Computational Biology 17.1 (Jan. 2021). Ed. by P. Mendes, e1008208. [26] R. S. Berry, S. A. Rice and J. Ross. Physical Chemistry . 2 edition. New York, NY: Oxford University Press, Mar. 2000. [27] S. Ghaderi et al. “Structural Conserved Moiety Splitting of a Stoichiometric Matrix”. In: Journal of Theoretical Biology 499 (Aug. 2020), p. 110276. [28] H. Rahou et al. “Characterisation of Conserved and Reacting Moieties in Chemical Reaction Networks”. In: Journal of Theoretical Biology (Jan. 2026), p. 112348. [29] R. Heinrich and S. Schuster. The Regulation of Cellular Systems . New York: Chapman & Hall, 1996. [30] R. M. Fleming and I. Thiele. “Mass Conserved Elementary Kinetics Is Sufficient for the Existence of a Non-Equilibrium Steady State Concentration”. In: Journal of Theoretical Biology 314 (Dec. 2012), pp. 173– 181. [31] A. Gevorgyan, M. G. Poolman and D. A. Fell. “Detection of Stoichiometric Inconsistencies in Biomolecular Models.” In: Bioinformatics 24.19 (2008), pp. 2245–51. [32] S. P. Boyd and L. Vandenberghe. Convex Optimization . Cambridge, UK; New York: Cambridge University Press, 2004. [33] R. T. Rockafellar and R. J. B. Wets. Variational Analysis . Ed. by M. Berger et al. Vol. 317. Grundlehren Der Mathematischen Wissenschaften. Berlin, Heidelberg: Springer Berlin Heidelberg, 1998. [34] F. J. A. Artacho and R. M. T. Fleming. “Globally Convergent Algorithms for Finding Zeros of Du-plomonotone Mappings”. In: Optimization Letters 9.569 (Sept. 2014), pp. 1–16. [35] R. M. T. Fleming et al. “Cardinality Optimization in Constraint-Based Modelling: Application to Human Metabolism”. In: Bioinformatics 39.9 (Sept. 2023), btad450. [36] S. Boyd and L. Vandenberghe. Convex Optimization . Cambridge university press, 2009. [37] G. Preciat et al. “XomicsToModel: Omics Data Integration and Generation of Thermodynamically Con-sistent Metabolic Models”. In: Nature Protocols (Dec. 2025), pp. 1–42. [38] G. Preciat et al. “Mechanistic Model-Driven Exometabolomic Characterisation of Human Dopaminergic Neuronal Metabolism”. In: (submitted) (2023). [39] L. Heirendt et al. “Creation and Analysis of Biochemical Constraint-Based Models Using the COBRA Toolbox v.3.0”. In: Nature Protocols 14.3 (Mar. 2019), p. 639. 40 [40] E. Brunk et al. “Recon3D Enables a Three-Dimensional View of Gene Variation in Human Metabolism”. In: Nature Biotechnology 36 (Feb. 2018), p. 272. [41] A. Ben-Tal and A. S. Nemirovskij. Lectures on Modern Convex Optimization: Analysis, Algorithms, and Engineering Applications . MPS-SIAM Series on Optimization. Philadelphia: Society for Industrial and Applied Mathematics Mathematical Programming Society, 2001. [42] R. Chares. “Cones and Interior-Point Algorithms for Structured Convex Optimization Involving Powers and Exponentials”. PhD thesis. Louvain-la-Neuve, Belgium: Université catholique de Louvain, 2009. [43] E. D. Andersen and K. D. Andersen. “The Mosek Interior Point Optimizer for Linear Programming: An Implementation of the Homogeneous Algorithm”. In: High Performance Optimization . Ed. by P. M. Pardalos et al. Vol. 33. Boston, MA: Springer US, 2000, pp. 197–232. [44] J. Dahl and E. D. Andersen. “A Primal-Dual Interior-Point Algorithm for Nonsymmetric Exponential-Cone Optimization”. In: Mathematical Programming 194.1 (July 2022), pp. 341–370. [45] A. L. Dontchev and R. T. Rockafellar. “Primal-Dual Solution Perturbations in Convex Optimization”. In: 
+
+Set-Valued Analysis 9.1-2 (Mar. 2001), pp. 49–65. [46] D. Ma et al. “Reliable and Efficient Solution of Genome-Scale Models of Metabolism and Macromolecular Expression”. In: Scientific Reports 7 (Jan. 2017), srep40863. [47] A. Cornish-Bowden. Fundamentals of Enzyme Kinetics . Reprint. London: Butterworths, 1981. [48] P. F. Cook and W. W. Cleland. Enzyme Kinetics and Mechanism . London: Garland Science, 2007. [49] W. Liebermeister and E. Klipp. “Bringing Metabolic Networks to Life: Convenience Rate Law and Ther-modynamic Constraints”. In: Theoretical Biology and Medical Modelling 3.1 (Dec. 2006), p. 41. [50] W. R. Smith and R. W. Missen. Chemical Reaction Equilibrium Analysis . Wiley, Oct. 1982. [51] B. D. Bennett et al. “Absolute Metabolite Concentrations and Implied Enzyme Active Site Occupancy in Escherichia Coli.” In: Nature Chemical Biology 5.8 (2009), pp. 593–9. [52] P. Atkins et al. Atkins’ Physical Chemistry . Twelfth Edition, Twelfth Edition. Oxford, New York: Oxford University Press, Dec. 2022. [53] R. A. Alberty. Thermodynamics of Biochemical Reactions . Wiley-Interscience, 2003. [54] H. S. Haraldsdóttir, I. Thiele and R. M. T. Fleming. “Quantitative Assignment of Reaction Directionality in a Multicompartmental Human Metabolic Reconstruction”. In: Biophysical Journal 102 (2012), pp. 1703– 1711. 41 A Local rate-law approximations 
+
+Figure 4 illustrates how local rate-law approximations lose accuracy away from the reference state. 0 1 2 3 4 5 6 7 8metabolite concentration c
+
+# −0.4 
+
+# −0.2 
+
+# 0.0 
+
+# 0.2 
+
+# 0.4 
+
+# 0.6 
+
+# 0.8 
+
+# 1.0 
+
+# 1.2 reaction rate  v
+
+## reference state c0
+
+## (all agree to fi rst order) 
+
+lin -log turns negative 
+
+mechanistic (Michaelis-Menten) 
+
+power-law v0 (c/c0)ε
+
+lin-log v0 (1 + εln( c/c0)) 
+
+Figure 4: Local rate-law approximations lose accuracy away from the reference state. The mechanistic Michaelis-Menten rate 𝑣 = 𝑉 max 𝑐/(𝐾 𝑀 + 𝑐) (black) is approximated at a reference concentration 𝑐 0 by the power-law / S-system form 𝑣 0(𝑐/𝑐 0)𝜀 (blue) and the linear-logarithmic (lin-log) form 𝑣 0(1 + 𝜀 ln (𝑐/𝑐 0)) (red), both built from the reference elasticity 𝜀 = 𝐾 𝑀 /(𝐾 𝑀 + 𝑐 0). All three agree to first order at 𝑐 0 but diverge away from it, the lin-log form even turning negative at low concentration. 
+
+# B Elementary exponential and logarithmic identities 
+
+Let 𝑥, 𝑦 ∈ ℝ >0 , then the following hold exp (ln (𝑥)) = 𝑥 
+
+exp (𝑥 + 𝑦) = exp (𝑥) ⋅ exp (𝑦) 
+
+ln (𝑥𝑦) = ln (𝑥) + ln (𝑦) 𝑥𝑦 = exp (ln (𝑥𝑦)) = exp (ln (𝑥) + ln (𝑦)) = exp (ln (𝑥)) ⋅ exp (ln (𝑦)) 𝑥 2𝑦 = exp (2 ln (𝑥) + ln (𝑦)) = exp (2 ln (𝑥)) ⋅ exp (ln (𝑦)) ∏ 𝑥 𝑎 i 
+
+> i
+
+= exp (𝑎 𝑇 ⋅ ln (𝑥)) 
+
+exp (0) = 1
+
+ln ( 𝑥 𝑦 ) = ln (𝑥) − ln (𝑦) 
+
+ln (𝑥 𝑦 ) = 𝑦 ln (𝑥) − ln (𝑥) = ln ( 1𝑥 )
+
+42 C Cyclic stoichiometric matrix 
+
+Theorem 5. Let ̄𝑁 ≔ [ 𝑁 −𝐼 𝑚 
+
+0 𝐿 ] ∈ ℝ (2𝑚−𝑟)×(𝑛+𝑚) , (155) 
+
+where 
+
+𝑁 ∈ ℝ 𝑚×𝑛 , 𝐿 ∈ ℝ (𝑚−𝑟)×𝑚 ,
+
+satisfy 
+
+𝐿𝑁 = 0, rank (𝑁 ) = 𝑟, rank (𝐿) = 𝑚 − 𝑟. 
+
+Then: (i) The left nullspace of ̄ 𝑁 is 
+
+𝒩 ℓ(̄𝑁 ) = {[ 𝐿 𝑇 
+
+𝐼 𝑚−𝑟 
+
+] 𝑦 ∶ 𝑦 ∈ ℝ 𝑚−𝑟 } , (156) 
+
+so a basis is given by the rows of [𝐿 𝐼 𝑚−𝑟 ], and 
+
+dim 𝒩 ℓ(̄𝑁 ) = 𝑚 − 𝑟. 
+
+(ii) The right nullspace of ̄ 𝑁 is 
+
+𝒩 𝑟 (̄𝑁 ) = {[ 𝐼 𝑛 
+
+𝑁 ] 𝑣 ∶ 𝑣 ∈ ℝ 𝑛 } , (157) 
+
+so a basis is given by the columns of [𝐼 𝑛 
+
+𝑁 ], and 
+
+dim 𝒩 𝑟 (̄𝑁 ) = 𝑛. 
+
+(iii) The rank of ̄ 𝑁 is rank (̄𝑁 ) = 𝑚. 
+
+Proof. Left nullspace. Let 𝑦 ∈ ℝ 2𝑚−𝑟 be a left-null vector of ̄ 𝑁 , written in block form as 
+
+𝑦 = [ 𝑎 𝑏 ] , 𝑎 ∈ ℝ 𝑚 , 𝑏 ∈ ℝ 𝑚−𝑟 .
+
+Then 𝑦 𝑇 ⋅̄ 𝑁 = 0 is equivalent to 
+
+{𝑎 𝑇 ⋅ 𝑁 = 0, −𝑎 𝑇 + 𝑏 𝑇 ⋅ 𝐿 = 0. (158) From 𝑎 𝑇 ⋅ 𝑁 = 0 and the assumption that the rows of 𝐿 span the left nullspace of 𝑁 , there exists 𝑡 ∈ ℝ 𝑚−𝑟 such that 𝑎 𝑇 = 𝑡 𝑇 ⋅ 𝐿 . Substituting into the second equation of 158 gives 
+
+−𝑡 𝑇 ⋅ 𝐿 + 𝑏 𝑇 ⋅ 𝐿 = 0 ⟺ (𝑏 𝑇 − 𝑡 𝑇 )𝐿 = 0. 
+
+Since rank (𝐿) = 𝑚 − 𝑟 , 𝐿 has full row rank, hence (𝑏 𝑇 − 𝑡 𝑇 )𝐿 = 0 implies 𝑏 𝑇 = 𝑡 𝑇 . Therefore 
+
+𝑦 𝑇 = [𝑡 𝑇 ⋅ 𝐿 𝑡 𝑇 ] = 𝑡 𝑇 ⋅ [𝐿 𝐼 𝑚−𝑟 ] . 
+
+Thus every left-null vector of ̄ 𝑁 is a linear combination of the rows of [𝐿 𝐼 𝑚−𝑟 ].Conversely, a direct computation yields 
+
+[𝐿 𝐼 𝑚−𝑟 ] [ 𝑁 −𝐼 𝑚 
+
+0 𝐿 ] = [𝐿𝑁 −𝐿 + 𝐿] = [0 0] , 
+
+so every row of [𝐿 𝐼 𝑚−𝑟 ] lies in 𝒩 ℓ(̄𝑁 ) . Because these rows are linearly independent, they form a basis and dim 𝒩 ℓ(̄𝑁 ) = 𝑚 − 𝑟 . Equivalently, 
+
+𝒩 ℓ(̄𝑁 ) = {[ 𝐿 𝑇 
+
+𝐼 𝑚−𝑟 
+
+] 𝑦 ∶ 𝑦 ∈ ℝ 𝑚−𝑟 } . 
+
+Right nullspace. Let 𝑥 ∈ ℝ 𝑛+𝑚 be written as 
+
+𝑥 = [ 𝑣 𝑤 ] , 𝑣 ∈ ℝ 𝑛 , 𝑤 ∈ ℝ 𝑚 .
+
+43 Then ̄ 𝑁 𝑥 = 0 is equivalent to the block equations 
+
+𝑁 𝑣 − 𝑤 = 0, 𝐿𝑤 = 0. (2) The first equation in (2) implies 𝑤 = 𝑁 𝑣 . Substituting into the second gives 
+
+𝐿𝑤 = 𝐿𝑁 𝑣 = 0, 
+
+which holds for every 𝑣 ∈ ℝ 𝑛 because 𝐿𝑁 = 0 . Hence 
+
+𝒩 𝑟 (̄𝑁 ) = {[ 𝑣 𝑁 𝑣 ] ∶ 𝑣 ∈ ℝ 𝑛 } , 
+
+and the columns of [𝐼 𝑛 
+
+𝑁 ] form a basis, so dim 𝒩 𝑟 (̄𝑁 ) = 𝑛 .
+
+Rank. By rank–nullity applied to ̄ 𝑁 ∈ ℝ (2𝑚−𝑟)×(𝑛+𝑚) ,rank (̄𝑁 ) + dim 𝒩 ℓ(̄𝑁 ) = 2𝑚 − 𝑟, 
+
+so using dim 𝒩 ℓ(̄𝑁 ) = 𝑚 − 𝑟 yields rank (̄𝑁 ) = (2𝑚 − 𝑟) − (𝑚 − 𝑟) = 𝑚. 
+
+Given 155, the forward and reverse stoichiometric matrices are ̄𝐹 ≔ [ 𝐹 𝐼 𝑚 
+
+0 0 ]̄ 𝑅 ≔ [ 𝑅 00 𝐿 ] ∈ ℝ (2𝑚−𝑟)×(𝑛+𝑚) ,
+
+and their horizontal concatenation is 
+
+[̄ 𝐹 ,̄ 𝑅 ] = [ 𝐹 𝐼 𝑚 𝑅 00 0 0 𝐿 ]
+
+with rank ([̄ 𝐹 ,̄ 𝑅 ]) = 2𝑚 − 𝑟 , since rank (𝐿) = 𝑚 − 𝑟 . Note that rank ([ 𝐹 , 𝐼 𝑚 , 𝑅 ]) = 𝑚 irrespective of rank ([ 𝐹 , 𝑅 ]) .
+
+# D Optimality conditions 
+
+The Lagrangian corresponding to the combined formulation of variational kinetics expressed as Problem (136)-(154) in Section 9 is 
+
+ℒ(𝑣 𝑓 , 𝑣 𝑟 , 𝑙𝑛𝑘 𝑓 , 𝑙𝑛𝑘 𝑟 , 𝑙𝑛𝑐, 𝑐, 𝑢 ∘, 𝑟, 𝑤, 𝑡 𝑟 , … 𝑦 𝑁 , 𝑦 𝑢 ∘ , 𝑦 𝐿 , 𝑠 𝑣 𝑓 , 𝑠 𝑓 1 , 𝑠 𝐹 , 𝑠 𝑣 𝑟 , 𝑠 𝑟 1 , 𝑠 𝑅 , 𝑠 𝑐 , 𝑠 𝑐 1 , 𝑠 𝑙𝑛𝑐 , 𝑠 𝑐𝑒 , 𝑠 𝑡 𝑟 , 𝑠 𝑟1 , 𝑠 𝐻 𝑟 ) ≔ 𝑐 𝑇 𝑣 𝑓 ⋅ 𝑣 𝑓 + 𝑐 𝑇 𝑣 𝑟 ⋅ 𝑣 𝑟 + 𝑐 𝑇 𝑙𝑛𝑘 𝑓 ⋅ 𝑙𝑛𝑘 𝑓 + 𝑐 𝑇 𝑙𝑛𝑘 𝑟 ⋅ 𝑙𝑛𝑘 𝑟 + 𝑐 𝑇 𝑤 ⋅ 𝑤 + 𝑐 𝑇 𝑙𝑛𝑐 ⋅ 𝑙𝑛𝑐 + 𝑐 𝑇 𝑐 ⋅ 𝑐 … +𝑐 𝑇 𝑡 𝑟 ⋅ 𝑡 𝑟 …+𝑦 𝑇 𝑁 ⋅ (𝑁 ⋅ (𝑣 𝑓 − 𝑣 𝑟 ) + 𝑟 + 𝐵 ⋅ 𝑤) … +𝑦 𝑇 𝑢 ∘ ⋅ (𝑙𝑛𝑘 𝑓 − 𝑙𝑛𝑘 𝑟 + 𝑁 𝑇 ⋅ 𝑢 ∘) … +𝑦 𝑇 𝐿 ⋅ (𝐿 ⋅ 𝑐 − 𝐿 ⋅ 𝑐(0)) … + ⎛⎜⎝𝑠 𝑣 𝑓 
+
+𝑠 𝑓 1
+
+𝑠 𝐹 
+
+⎞⎟⎠
+
+> 𝑇
+
+⋅ ⎛⎜⎝𝑣 𝑓 
+
+1𝐹 𝑇 ⋅ 𝑙𝑛𝑐 + 𝑙𝑛𝑘 𝑓 
+
+⎞⎟⎠+ ⎛⎜⎝𝑠 𝑣 𝑟 
+
+𝑠 𝑟1 
+
+𝑠 𝑅 
+
+⎞⎟⎠
+
+> 𝑇
+
+⋅ ⎛⎜⎝𝑣 𝑟 
+
+1𝑅 𝑇 ⋅ 𝑙𝑛𝑐 + 𝑙𝑛𝑘 𝑟 
+
+⎞⎟⎠+ ⎛⎜⎝𝑠 𝑐 
+
+𝑠 𝑐 1
+
+𝑠 𝑙𝑛𝑐 
+
+⎞⎟⎠
+
+> 𝑇
+
+⋅ ⎛⎜⎝𝑐 1𝑙𝑛𝑐 ⎞⎟⎠…+ ⎛⎜⎝𝑠 𝑡 𝑟 
+
+𝑠 𝑟1 
+
+𝑠 𝐻 𝑟 
+
+⎞⎟⎠
+
+> 𝑇
+
+⋅ ⎛⎜⎝𝑡 𝑟 
+
+1𝐻 𝑟 ⋅ 𝑟 ⎞⎟⎠…+𝑧 𝑇 𝑣 𝑓 ⋅ (𝑢 𝑣 𝑓 − 𝑣 𝑓 ) + 𝑧 𝑇 𝑣 𝑟 ⋅ (𝑢 𝑣 𝑟 − 𝑣 𝑟 ) … +𝑧 𝑇 𝑙𝑣 ⋅ ((𝑣 𝑓 − 𝑣 𝑟 ) − 𝑙 𝑣 ) + 𝑧 𝑇 𝑢𝑣 ⋅ (𝑢 𝑣 − (𝑣 𝑓 − 𝑣 𝑟 )) + 𝑧 𝑇 𝑙𝑤 ⋅ (𝑤 − 𝑙 𝑤 ) + 𝑧 𝑇 𝑢𝑤 ⋅ (𝑢 𝑤 − 𝑤) … +𝑧 𝑇 𝑙𝑙𝑛𝑘𝑓 ⋅ (𝑙𝑛𝑘𝑓 − 𝑙 𝑙𝑛𝑘𝑓 ) + 𝑧 𝑇 𝑢𝑙𝑛𝑘𝑓 ⋅ (𝑢 𝑙𝑛𝑘𝑓 − 𝑙𝑛𝑘𝑓) + 𝑧 𝑇 𝑙𝑙𝑛𝑘𝑟 ⋅ (𝑙𝑛𝑘𝑟 − 𝑙 𝑙𝑛𝑘𝑟 ) + 𝑧 𝑇 𝑢𝑙𝑛𝑘𝑟 ⋅ (𝑢 𝑙𝑛𝑘𝑟 − 𝑙𝑛𝑘𝑟) … +𝑧 𝑇 𝑙𝑙𝑛𝑐 ⋅ (𝑙𝑛𝑐 − 𝑙 𝑙𝑛𝑐 ) + 𝑧 𝑇 𝑢𝑙𝑛𝑐 ⋅ (𝑢 𝑙𝑛𝑐 − 𝑙𝑛𝑐) + 𝑧 𝑇 𝑙𝑢 ∘ ⋅ (𝑢 ∘ − 𝑙 𝑢 ∘ ) + 𝑧 𝑇 𝑢𝑢 ∘ ⋅ (𝑢 𝑢 ∘ − 𝑢 ∘), 
+
+44 where we require that the following dual variables are non-negative 𝑧 𝑣 𝑓 , 𝑧 𝑣 𝑟 , 𝑧 𝑙𝑣 , 𝑧 𝑢𝑣 , 𝑧 𝑙𝑙𝑛𝑘𝑓 , 𝑧 𝑢𝑙𝑛𝑘𝑓 , 𝑧 𝑙𝑙𝑛𝑘𝑟 , 𝑧 𝑢𝑙𝑛𝑘𝑟 ∈ℝ𝑛 ≥0 , 𝑧 𝑙𝑤 , 𝑧 𝑢𝑤 ∈ ℝ 𝑘 ≥0 , 𝑧 𝑙𝑙𝑛𝑐 , 𝑧 𝑢𝑙𝑛𝑐 , 𝑧 𝑇 𝑙𝑢 ∘ , 𝑧 𝑢𝑢 ∘ ∈ ℝ 𝑚 ≥0 and that the primal and dual variables are feasible with respect to the primal and dual cones, that is 
+
+⎛⎜⎝𝑣 𝑓 
+
+1𝐹 𝑇 ⋅ 𝑙𝑛𝑐 + 𝑙𝑛𝑘 𝑓 
+
+⎞⎟⎠∈ 𝒦 𝑛 𝑒𝑥𝑝 , ⎛⎜⎝𝑠 𝑣𝑓 
+
+𝑠 𝑓1 
+
+𝑠 𝐹 
+
+⎞⎟⎠∈ 𝒦 ⋆ 𝑛 𝑒𝑥𝑝 , (159) 
+
+⎛⎜⎝𝑣 𝑟 
+
+1𝑅 𝑇 ⋅ 𝑙𝑛𝑐 + 𝑙𝑛𝑘 𝑟 
+
+⎞⎟⎠∈ 𝒦 𝑛 𝑒𝑥𝑝 , ⎛⎜⎝𝑠 𝑣𝑟 
+
+𝑠 𝑟1 
+
+𝑠 𝑅 
+
+⎞⎟⎠∈ 𝒦 ⋆ 𝑛 𝑒𝑥𝑝 , (160) 
+
+⎛⎜⎝𝑐 1𝑙𝑛𝑐 ⎞⎟⎠∈ 𝒦 𝑚 𝑒𝑥𝑝 , ⎛⎜⎝𝑠 𝑐 
+
+𝑠 𝑐1 
+
+𝑠 𝑙𝑛𝑐 
+
+⎞⎟⎠∈ 𝒦 ⋆ 𝑚 𝑒𝑥𝑝 , (161) 
+
+⎛⎜⎝𝑡 𝑟 
+
+1𝐻 𝑟 ⋅ 𝑟 ⎞⎟⎠∈ 𝒬 2+𝑚 , ⎛⎜⎝𝑠 𝑡 𝑟 
+
+𝑠 𝑟1 
+
+𝑠 𝐻 𝑟 
+
+⎞⎟⎠∈ 𝒬 ⋆ 2+𝑚 . (162) Derivation of the optimality conditions to a general conic optimisation problem are described elsewhere ( $5.9.2 [32]). The optimality conditions to Problem (136)-(154) may be obtained by setting the partial derivatives of the Lagrangian with respect to the variables 𝑣 𝑓 , 𝑣 𝑟 , 𝑙𝑛𝑘 𝑓 , 𝑙𝑛𝑘 𝑟 , 𝑙𝑛𝑐, 𝑐, 𝑢 ∘, 𝑟, 𝑤, 𝑡 𝑟 , 𝑦 𝑁 , 𝑦 𝑢 ∘ and 𝑦 𝐿 to zero, that is 
+
+𝜕ℒ 𝜕𝑣 𝑓 
+
+= 𝑐 𝑣 𝑓 − 𝑁 𝑇 ⋅ 𝑦 ⋆𝑁 − 𝑠 ⋆𝑣𝑓 − 𝑠 ⋆𝑒𝑓1 + 𝑠 ⋆𝑒𝑓 − 𝑠 ⋆𝑣𝑓𝑒 − 𝑧 ⋆𝑣 𝑓 + 𝑧 ⋆𝑣 = 0 (163) 
+
+𝜕ℒ 𝜕𝑣 𝑟 
+
+= 𝑐 𝑣 𝑟 + 𝑁 𝑇 ⋅ 𝑦 ⋆𝑁 − 𝑠 ⋆𝑣𝑟 − 𝑠 ⋆𝑒𝑟1 + 𝑠 ⋆𝑒𝑟 − 𝑠 ⋆𝑣𝑟𝑒 − 𝑧 ⋆𝑣 𝑟 − 𝑧 ⋆𝑣 = 0 (164) 
+
+𝜕ℒ 𝜕𝑙𝑛𝑘 𝑓 
+
+= 𝑐 𝑙𝑛𝑘 𝑓 − 𝑦 ⋆𝑢 ∘ − 𝑠 ⋆𝐹 − 𝑧 ⋆𝑙𝑛𝑘𝑓 = 0 (165) 
+
+𝜕ℒ 𝜕𝑙𝑛𝑘 𝑟 
+
+= 𝑐 𝑙𝑛𝑘 𝑟 + 𝑦 ⋆𝑢 ∘ − 𝑠 ⋆𝑅 − 𝑧 ⋆𝑙𝑛𝑘𝑟 = 0 (166) 
+
+𝜕ℒ 𝜕𝑙𝑛𝑐 = 𝑐 𝑙𝑛𝑐 − 𝐹 ⋅ 𝑠 ⋆𝐹 − 𝑅 ⋅ 𝑠 ⋆𝑅 − 𝑠 ⋆𝑙𝑛𝑐 − 𝑧 ⋆𝑙𝑛𝑐 = 0 (167) 
+
+𝜕ℒ 𝜕𝑐 = 𝑐 𝑐 + 𝑠 ⋆𝑐 𝑒 − 𝑠 ⋆𝑐 − 𝑧 ⋆𝑐 + 𝐿 𝑇 ⋅ 𝑦 ⋆𝐿 = 0 (168) 
+
+𝜕ℒ 𝜕𝑢 ∘ = 𝑐 𝑢 ∘ − 𝑧 ⋆𝑢 ∘ + 𝑁 ⋅ 𝑦 ⋆𝑢 ∘ = 0 (169) 
+
+𝜕ℒ 𝜕𝑟 = 𝑐 𝑟 − 𝐻 𝑟 ⋅ 𝑠 ⋆𝐻 𝑟 − 𝑧 ⋆𝑟 + 𝑦 ⋆𝑁 = 0 (170) 
+
+𝜕ℒ 𝜕𝑤 = 𝑐 𝑤 − 𝐵 𝑇 ⋅ 𝑦 ⋆𝑁 − 𝑧 ⋆𝑤 = 0 (171) 
+
+𝜕ℒ 𝜕𝑡 𝑟 
+
+= 𝑐 𝑡 𝑟 − 𝑠 ⋆𝑡 𝑟 − 𝑧 ⋆𝑡 𝑟 = 0 (172) 
+
+𝜕ℒ 𝜕𝑦 𝑁 
+
+= 𝑁 ⋅ (𝑣 ⋆𝑓 − 𝑣 ⋆𝑟 ) + 𝑟 ⋆ + 𝐵 ⋅ 𝑤 ⋆ = 0 𝜕ℒ 𝜕𝑦 𝑢 ∘
+
+= 𝑙𝑛𝑘 ⋆𝑓 − 𝑙𝑛𝑘 ⋆𝑟 + 𝑁 𝑇 ⋅ 𝑢 ∘⋆ = 0 (173) 
+
+𝜕ℒ 𝜕𝑦 𝐿 
+
+= 𝐿 ⋅ 𝑐 ⋆ − 𝐿 ⋅ 𝑐(0) = 0 (174) and expressing the complementarity constraints between primal and dual terms, that is 45 ⎛⎜⎜⎝𝑠 ⋆𝑣 𝑓 
+
+𝑠 ⋆𝑓1 
+
+𝑠 ⋆𝐹 
+
+⎞⎟⎟⎠
+
+> 𝑇
+
+⋅ ⎛⎜⎝𝑣 ⋆𝑓 
+
+1𝐹 𝑇 ⋅ 𝑙𝑛𝑐 ⋆ + 𝑙𝑛𝑘 ⋆𝑓 
+
+⎞⎟⎠= 0𝑛𝑥1 (175) 
+
+⎛⎜⎝𝑠 ⋆𝑣 𝑟 
+
+𝑠 ⋆𝑟1 
+
+𝑠 ⋆𝑅 
+
+⎞⎟⎠
+
+> 𝑇
+
+⋅ ⎛⎜⎝𝑣 ⋆𝑟 
+
+1𝑅 𝑇 ⋅ 𝑙𝑛𝑐 ⋆ + 𝑙𝑛𝑘 ⋆𝑟 
+
+⎞⎟⎠= 0𝑛𝑥1 
+
+⎛⎜⎝𝑠 ⋆𝑐 
+
+𝑠 ⋆𝑐1 
+
+𝑠 ⋆𝑙𝑛𝑐 
+
+⎞⎟⎠
+
+> 𝑇
+
+⋅ ⎛⎜⎝𝑐 ⋆
+
+1𝑙𝑛𝑐 ⋆
+
+⎞⎟⎠= 0𝑚𝑥1 (176) 
+
+⎛⎜⎝𝑠 ⋆𝑡 𝑟 
+
+𝑠 ⋆𝑟1 
+
+𝑠 ⋆𝐻 𝑟 
+
+⎞⎟⎠
+
+> 𝑇
+
+⋅ ⎛⎜⎝𝑡 ⋆𝑟 
+
+1𝐻 𝑟 ⋅ 𝑟 ⋆
+
+⎞⎟⎠= 01×1 (177) where 0𝑛𝑥1 denotes a set of 𝑛 complementarity constraints, one for each reaction, and similarly for other zero vectors as indicated above. The final parts of the optimality conditions to Problem (136)-(154) are to specify that the primal and dual terms are constrained to reside within primal and dual conic cones, respectively, that is Eqs. (159)-(162), with the addition of ⋆ to each variable to denote optimality. 
+
+# E Chemical potential 
+
+We assume constant temperature, 𝒯 = 310.15 K, constant pressure, 𝒫 = 1 atm, and let 𝑥 ∈ ℝ 𝑚 be a vector of mole fractions of molecular species in a solution. Assuming an ideal solution, the chemical potential is 
+
+𝑢 ≔ 𝑢 ∘(𝒯, 𝒫, 𝑥 ∘) + ℛ𝒯 ln (𝑥) 
+
+where 𝑢 ∘(𝒯, 𝒫, 𝑥 ∘) is the chemical potential at a standard mole fraction 𝑥 ∘ ∈ ℝ 𝑚 (3.7.1.2.2 in [50]) and ℛ is the gas constant. The molar concentration of pure water is 𝑐 ∘𝑤 = 55.28 mol/L, while in typical biochemical solutions the estimated total concentration of solutes is ~ 0.3 mol/L [51], which is ∼ 180 times less than the molar concentration of water solvent so a distinction between solvent and solute is appropriate (5.3 in [52]. We assume Raoult’s law for the solvent, where the standard mole fraction approaches unity, 𝑥 ∘𝑤 → 1 , and corresponds to a molar concentration of pure water 𝑐 ∘𝑤 = 55.28 mol/L, consistent with pure water at the aforementioned temperature and pressure. We assume Henry’s law for each solute, where the standard mole fraction approaches zero, 𝑥 ∘ → 0 , and we assume the standard concentration of each solute is 𝑐 ∘ = 1 mol/L. Following an established approach to biochemical thermodynamics [53], refined for multi-compartmental sys-tems [54], we assume constant compartment-specific pH [54], constant compartment-specific electrical potentials [54], and define standard transformed chemical potential as 
+
+𝑢 ∘′ ≔ 𝑢 ∘(𝒯, 𝒫, 𝑥 ∘) + ℛ𝒯 ln (𝑎) , 
+
+where 𝑎 ∈ ℝ 𝑚 is the activity coefficient of each molecular species, estimated using the extended Debye-Hückel equation ( §3.6 in [53]). This absorbs an approximation to non-ideal behaviour into the standard transformed term, enabling definition of transformed chemical potential as 
+
+𝑢 ≔ 𝑢 ∘′ + ℛ𝒯 ln (𝑥) = 𝑢 ∘′ + ℛ𝒯 ln ( 𝑐 
+
+1𝑇 ⋅ 𝑐 ) (178) where we assume 𝑥 = 𝑐 /1𝑇 ⋅𝑐 , where 𝑐 ∈ ℝ 𝑚 is a vector of molar concentrations. Transformed (standard) chemical potential is usually distinguished from (standard) chemical potential with ′ but henceforth we assume (standard) chemical potential is transformed and omit the prime for clarity. For an ideal-dilute solution, assuming the approximation 1𝑇 ⋅ 𝑐 ≈ 𝑐 ∘𝑤 , standard chemical potential in terms of concentration may be related (Eq 3.7-23 in [50]) to standard chemical potential in terms of mole fraction using 
+
+𝑢 ∘(𝒯, 𝒫, 𝑐 ∘) ≔ 𝑢 ∘(𝒯, 𝒫, 𝑥 ∘) − ℛ𝒯 ln (𝑐 ∘𝑤 ) . (179) 
+
+# F Adaptive Sequential Conic Linear Approximation Algorithm 
+
+## F.1 Purpose and problem class 
+
+This section describes the adaptive sequential conic linear approximation algorithm used to solve the combined formulation of variational elementary kinetics of Section 9. That problem is itself a conic optimisation problem, 46 so a single conic solve returns an optimal solution, but not in general one at which the exponential cone constraints representing elementary kinetics are active. It is activity of those constraints that makes an optimal solution satisfy elementary reaction kinetics, and Theorem 4 establishes that, for the constraints of variational elementary kinetics, every stationary point of the iteration below has that property. The algorithm therefore treats the linear objective coefficients on the kinetic exponential-cone variables as parameters rather than as given data, and updates them across a sequence of conic optimisation problems until each of those constraints is active. Every problem in that sequence is an inner problem, solved by a conic optimiser, whose endpoint supplies only a candidate search direction. Progress is measured instead by a nonlinear outer merit, assembled from the exponential-cone boundary residuals and evaluated after each candidate step, so the inner objective that generates a direction is distinct from the outer merit that decides whether the resulting step is accepted. Theorem 3 of Section 6 establishes, for the abstract sequence, convergence to a stationary point of the outer merit subject to the constraints. What follows is a concrete realisation of that scheme, together with the initialisation, step safeguards and adaptive strategy portfolio that it requires in order to converge on a genome-scale model. The next subsection states the algorithm in full as pseudocode. The subsections after it define each of its ingredients in turn: the base conic model, the exponential-cone boundary residuals and the outer merit derived from them, the working scaling and fixed columns, the construction of an initial point, the portfolio of inner conic models, the step safeguards and line search, the portfolio controller, and the finalisation and audit of the returned primal-dual tuple. The description is independent of programming language and follows the notation of Section 2. 
+
+## F.2 Algorithmic summary 
+
+The following summary gives the logical flow of the algorithm, in the order of the subsections below. 
+
+Definitions. Working feasible set 𝒳 ≔ {𝑥 ∈ ℝ 𝑛 ∶ 𝑏 𝑙 ≤ 𝐴 ⋅ 𝑥 ≤ 𝑏 𝑢 , 𝑙 ≤ 𝑥 ≤ 𝑢, 𝐹 ⋅ 𝑥 + 𝑑 ∈ 𝒦} .Active reduced exponential-cone images 𝑡 1(𝑥) ≔ 𝐹 1 ⋅ 𝑥 + 𝑑 1 and 𝑡 3(𝑥) ≔ 𝐹 3 ⋅ 𝑥 + 𝑑 3.Boundary residuals ℎ(𝑥) ≔ 𝑡 1(𝑥) − exp (𝑡 3(𝑥)) and 𝑔(𝑥) ≔ ln (𝑡 1(𝑥)) − 𝑡 3(𝑥) .Outer merit 𝜙(𝑥) ≔ 1𝑇 ⋅ ℎ(𝑥) + 1𝑇 ⋅ 𝑔(𝑥) .Convergence residual 𝜃(𝑥) ≔ max {‖ℎ(𝑥)‖ ∞ , ‖𝑔(𝑥)‖ ∞}.Working scaling and fixed columns. 1 if explicit row scaling is active then 𝐴 ← 𝑆 ⋅ 𝐴 , 𝑏 𝑙 ← 𝑆 ⋅ 𝑏 𝑙 and 𝑏 𝑢 ← 𝑆 ⋅ 𝑏 𝑢 ,leaving 𝐹 , 𝑑 , 𝑙 , 𝑢 and the caller objective 𝑎 unscaled. 2 ℱ ← the structurally fixed columns; when projection is enabled, every candidate start, inner endpoint and accepted trial point is projected onto {𝑥 ∶ 𝑥 ℱ =𝑙 ℱ = 𝑢 ℱ}.Initialisation. 3 𝑎 0 ← 𝑎 with the active merit-column entries set to zero. 4 for each start mode, in the order centred feasible, elastic feasible, feasible, relaxed feasible, all-ones, do 5 for the centred feasible mode, solve the elastic Phase I problem, then the centring problem driving 𝑡 1 → 1 and 𝑡 3 → 0 , then, if the raw explicit residual exceeds the repair threshold, the one-norm-movement-penalised repair problem. 6 𝑥 0 ← the candidate point, projected onto the fixed-column subspace. 7 if 𝑟 exp (𝑥 0) ≤ 𝜏 start , or the soft repaired-centred allowance is met, then accept 𝑥 0 and leave the loop. 8 if no start mode is accepted then stop: there is no usable initial point. Outer loop. 9 𝑘 ← 0 ; select the first strategy of the portfolio. 10 while 𝑘 < 𝑘 max do 11 evaluate 𝜙(𝑥 𝑘 ), ℎ, 𝑔 , 𝜃(𝑥 𝑘 ), ∇𝜙(𝑥 𝑘 ) and the curvature diagnostics. 12 if 𝜃(𝑥 𝑘 ) ≤ 𝜏 stop then stop: the outer loop has converged. 13 repeat 14 build the inner conic model of the current strategy over 𝒳 :cost approximation, minimising (𝑐 𝑘 
+
+> in
+
+)𝑇 ⋅𝑥 with 𝑐 𝑘  
+
+> in
+
+the active merit gradient; reachable-boundary cost approximation, adding the boundary attraction 
+
+𝜂 𝑘 
+
+> bd
+
+(𝑎 𝑘 
+
+> bd
+
+)𝑇 ⋅ 𝑥 and the target-centred rotated quadratic penalty; 
+
+47 block-curvature regularised cost approximation; residual-balanced quadratically regularised cost approximation; quadratically regularised cost approximation; local-box quadratically regularised cost approximation, which adds temporary affine-image bounds on 𝑡 1 and 𝑡 3.15 solve the inner conic model and set 𝑑 𝑘 ← 𝑥 𝑘  
+
+> in
+
+− 𝑥 𝑘 ; for a safeguarded gradient strategy set 𝑑 𝑘 ← −∇𝜙(𝑥 𝑘 ) ⊘ max {1, ∥∇𝜙(𝑥 𝑘 )∥ ∞} instead. 16 if the inner solve failed, or 𝑑 𝑘 is not finite, then advance the strategy and return to step 14. 17 if ∇𝜙(𝑥 𝑘 )𝑇 ⋅ 𝑑 𝑘 ≥ −𝜏 desc , and the curvature-rescue model does not admit 
+
+𝑑 𝑘 , then advance the strategy and return to step 14. 18 𝜆 ← the least of the step caps: full step, explicit bound, log domain, exponential boundary, coefficient change and numerical movement. 19 while 𝜆 > 𝜆 min do 20 𝑥(𝜆) ← 𝑥 𝑘 + 𝜆𝑑 𝑘 , projected onto the fixed-column subspace. 21 accept 𝑥(𝜆) if 𝑟 exp (𝑥(𝜆)) ≤ 𝜏 exp , if 𝑡 1(𝑥(𝜆)) > 𝜂 1, if 
+
+𝜙(𝑥(𝜆)) ≤ 𝜙(𝑥 𝑘 ) + 𝜎𝜆∇𝜙(𝑥 𝑘 )𝑇 ⋅ 𝑑 𝑘 , and, once 𝜃(𝑥 𝑘 ) has entered the moderate-residual regime, if 𝜃(𝑥(𝜆)) ≤ 𝜃(𝑥 𝑘 ) − 𝛿 𝜃 + 𝜏 𝜃 .22 if 𝑥(𝜆) is accepted then leave the line search, else 𝜆 ← 𝛽𝜆 .23 if no trial point was accepted, or the accepted step is a microscopic boundary-limited step, then advance the strategy and return to step 14. 24 until a step is accepted, or every strategy has been attempted 25 if every strategy has been attempted without an accepted step then stop: the portfolio is exhausted. 26 𝑥 𝑘+1 ← 𝑥 𝑘 + 𝜆 k𝑑 𝑘 and 𝑘 ← 𝑘 + 1 .27 update the portfolio controller: after repeated calm accepted steps, probe back toward cost approximation, unless the high-curvature, repeated no-descent or small-residual suppressors apply; advance to a safer strategy on stagnation, on curvature dominance, or on boundary saturation. Finalisation. 28 𝑥 acc ← the last accepted outer iterate. 29 if polish is permitted then solve the unrestricted conic polish problem with the caller objective 𝑎 over 𝒳 , and accept its endpoint only if it passes the final explicit-feasibility, outer-residual and merit gates. 30 if no polished point is accepted then solve the fixed-primal recovery problem for dual variables at 𝑥 acc , without moving the primal point. 31 if that also fails then return 𝑥 acc with zero dual placeholders and a failure status. 32 audit the returned tuple: 𝜃 fin , the explicit residual in both the working and the original row units, and the Karush-Kuhn-Tucker residual of the returned pair. 33 report convergence from 𝜃 fin ≤ 𝜏 stop .
+
+## F.3 Base conic model 
+
+Let the primal variable be a column vector 𝑥 ∈ ℝ 𝑛 . The inner conic models are all built over a common feasible set, possibly augmented by temporary epigraph variables or temporary local rows. The unaugmented working feasible set is 
+
+𝒳 ≔ {𝑥 ∈ ℝ 𝑛 ∶ 𝑏 𝑙 ≤ 𝐴 ⋅ 𝑥 ≤ 𝑏 𝑢 , 𝑙 ≤ 𝑥 ≤ 𝑢, 𝐹 ⋅ 𝑥 + 𝑑 ∈ 𝒦} , 
+
+where 
+
+𝐴 ∈ ℝ 𝑝×𝑛 , 𝑏 𝑙 , 𝑏 𝑢 ∈ (ℝ ∪ {−∞, +∞}) 𝑝 , 𝑙, 𝑢 ∈ (ℝ ∪ {−∞, +∞}) 𝑛 ,𝐹 ∈ ℝ 𝑞×𝑛 , 𝑑 ∈ ℝ 𝑞 , 𝒦 = 𝒦 1 × ⋯ × 𝒦 𝑟 .
+
+All vector inequalities are understood componentwise. The finite lower and upper bounds in the first two displays define the explicit part of primal feasibility. The conic inclusion defines the affine conic part of primal feasibility. The caller-supplied linear objective is represented by a vector 𝑎 ∈ ℝ 𝑛 , but this objective is not the outer merit used to control the iterative boundary-matching process. For the combined formulation of variational elementary kinetics of Section 9, the vector 𝑎 collects the linear objective coefficients on the exponential-cone columns, which the algorithm treats as parameters and overwrites at every major iteration, together with the 48 two fixed coefficients 𝑐 𝑡 𝑟 and 𝑐 𝑤 of Eqs. (138) and (139), which lie on columns that no exponential cone touches. The inner conic objective of every strategy below is assembled from the outer merit gradient on the exponential-cone columns alone, and is zero on every other column, so the two fixed terms 𝑐 𝑇 𝑡 𝑟 ⋅ 𝑡 𝑟 and 𝑐 𝑇 𝑤 ⋅ 𝑤 
+
+do not themselves steer the outer iteration. They act at two points only: the initial point is constructed from 
+
+𝑎 with the exponential-cone entries set to zero, and the final polish solve minimises 𝑎 over the working conic model, its endpoint being accepted only if it passes the final feasibility and residual gates. For diagnostics and stopping tests, the explicit primal residual is defined as 
+
+𝑟 exp (𝑥) ≔ max {‖[𝑏 𝑙 − 𝐴 ⋅ 𝑥] +‖∞ , ‖[𝐴 ⋅ 𝑥 − 𝑏 𝑢 ]+‖∞ , ‖[𝑙 − 𝑥] +‖∞ , ‖[𝑥 − 𝑢] +‖∞} . 
+
+Here [⋅] + denotes the componentwise positive part. This residual is used as the raw explicit feasibility gate for accepted initial points and accepted outer trial points. 
+
+## F.4 Exponential-cone boundary residuals 
+
+The algorithm focuses on a subset of primal exponential-cone blocks. For each active block, the second cone coordinate is fixed at one after reduction. Thus each active block is represented by 
+
+(𝑥 1, 𝑥 2, 𝑥 3) = (𝑡 1(𝑥), 1, 𝑡 3(𝑥)). 
+
+The MOSEK primal exponential-cone convention is 
+
+(𝑥 1, 𝑥 2, 𝑥 3) ∈ 𝒦 𝑒𝑥𝑝 ⟺ 𝑥 1 ≥ 𝑥 2 exp (𝑥 3/𝑥 2), 𝑥 1 > 0, 𝑥 2 > 0. 
+
+The corresponding reduced feasibility condition is therefore 
+
+𝑡 1(𝑥) ≥ exp (𝑡 3(𝑥)), 𝑡 1(𝑥) > 0. 
+
+The active affine images are written as 
+
+𝑡 1(𝑥) ≔ 𝐹 1 ⋅ 𝑥 + 𝑑 1 ∈ ℝ 𝑚 , 𝑡 3(𝑥) ≔ 𝐹 3 ⋅ 𝑥 + 𝑑 3 ∈ ℝ 𝑚 ,
+
+where 𝐹 1, 𝐹 3 ∈ ℝ 𝑚×𝑛 select the first and third coordinates of the active reduced exponential-cone blocks after embedding them in the full primal space, with constant offsets 𝑑 1, 𝑑 3 ∈ ℝ 𝑚 . The two residual vectors are 
+
+ℎ(𝑥) ≔ 𝑡 1(𝑥) − exp (𝑡 3(𝑥)), 𝑔(𝑥) ≔ ln (𝑡 1(𝑥)) − 𝑡 3(𝑥). 
+
+The vector ℎ ∈ ℝ 𝑚 is an additive boundary gap. The vector 𝑔 ∈ ℝ 𝑚 is a logarithmic boundary gap. Both are zero on the reduced exponential-cone boundary 𝑡 1 = exp (𝑡 3), and both are nonnegative in the strictly feasible reduced exponential-cone region. Their simultaneous reduction gives a scale-aware measure of approach to the target boundary. The dual exponential cone is interpreted with the corresponding MOSEK convention 
+
+(𝑠 1, 𝑠 2, 𝑠 3) ∈ 𝒦 ∗𝑒𝑥𝑝 ⟺ 𝑠 1 ≥ −𝑠 3 exp ((𝑠 2/𝑠 3) − 1) , 
+
+where 𝑠 ∈ ℝ 𝑞 denotes the affine-conic dual vector. This convention is relevant for final primal-dual auditing, but the outer iteration itself is driven primarily by primal residuals ℎ and 𝑔 .
+
+## F.5 Outer merit and derivatives 
+
+The default outer merit is the sum of the additive and logarithmic boundary gaps: 
+
+𝜙(𝑥) ≔ 1𝑇 ⋅ ℎ(𝑥) + 1𝑇 ⋅ 𝑔(𝑥). 
+
+The associated convergence residual is not the scalar merit but the maximum componentwise residual 
+
+𝜃(𝑥) ≔ max {‖ℎ(𝑥)‖ ∞ , ‖𝑔(𝑥)‖ ∞} . 
+
+This distinction is important. The scalar merit aggregates all active blocks and is useful for line search, whereas 
+
+𝜃(𝑥) is the reported nonlinear stopping residual. Late in the iteration, a trial point may reduce the sum merit while worsening the largest component. The algorithm may therefore impose an additional maximum-residual acceptance gate after 𝜃(𝑥) enters a moderate residual regime. For the default merit, the gradient is 49 ∇𝜙(𝑥) = 𝐹 𝑇 1 ⋅ ( 1 + 𝑡 1(𝑥) −1 ) − 𝐹 𝑇 3 ⋅ ( 1 + exp (𝑡 3(𝑥))) , 
+
+where 𝑡 1(𝑥) −1 denotes the componentwise reciprocal. The gradient of ℎ is written, using the convention that the first dimension equals the number of variables and the second dimension equals the range dimension, as 
+
+∇ℎ(𝑥) = 𝐹 𝑇 1 − 𝐹 𝑇 3 ⋅ diag (exp (𝑡 3(𝑥))) ∈ ℝ 𝑛×𝑚 .
+
+## F.6 Working scaling and fixed columns 
+
+Before the initial point is constructed, the explicit linear rows may be scaled by a positive diagonal matrix. If row scaling is active, the working explicit constraints become 
+
+𝐴 sc ≔ 𝑆 ⋅ 𝐴, 𝑏 𝑙, sc ≔ 𝑆 ⋅ 𝑏 𝑙 , 𝑏 𝑢, sc ≔ 𝑆 ⋅ 𝑏 𝑢 ,
+
+where 𝑆 ∈ ℝ 𝑝×𝑝 is a positive diagonal matrix. The affine conic image 𝐹 ⋅ 𝑥 + 𝑑 , the variable bounds 𝑙 and 
+
+𝑢 , and the original conic objective vector 𝑎 are not scaled. Consequently, the exponential-cone boundary 
+
+𝑡 1(𝑥) = exp (𝑡 3(𝑥)) is unchanged. The entire initialisation, all inner models, all line searches, and finalisation use a single working representation, either scaled or unscaled. At return, explicit row duals are mapped back to the caller’s original row units. Some variables may be structurally fixed. Let the fixed-column set be denoted by ℱ ⊆ {1, … , 𝑛} . The fixed-column affine subspace is 
+
+{𝑥 ∈ ℝ 𝑛 ∶ 𝑥 ℱ = 𝑙 ℱ = 𝑢 ℱ}. 
+
+Candidate starts, inner endpoints, and accepted trial points are optionally projected back to this affine sub-space. This prevents a small fixed-bound residual in the initial point from being inherited throughout the outer iteration. 
+
+## F.7 Initialisation 
+
+The initialisation stage is not intended to minimise the original conic objective. Its purpose is to construct a numerically usable outer starting point 𝑥 0 in the working feasible set, compatible with fixed columns and well scaled for evaluating the nonlinear merit. To reduce the risk of choosing an extreme starting point, the active merit-column entries of the original conic objective are set to zero before the start problem is solved. The remaining inactive part may act only as a weak tie-breaker in the direct feasible start; the Phase I, centring and repair problems replace the objective entirely. The preferred initialisation is a centred feasible construction. First, an elastic Phase I conic problem is solved. This introduces nonnegative elastic variables that relax finite explicit row and variable bounds, while leaving the original affine conic geometry unchanged. In abstract form, the Phase I objective is min 1𝑇 ⋅ 𝑟 𝐴 𝑙 + 1𝑇 ⋅ 𝑟 𝐴 𝑢 + 1𝑇 ⋅ 𝑟 𝑥 𝑙 + 1𝑇 ⋅ 𝑟 𝑥 𝑢 ,
+
+subject to relaxed lower and upper explicit constraints and the original conic inclusion. The resulting point provides a feasible or nearly feasible reference for the second stage. Second, a centring conic problem is solved over the original feasible set. Its role is to place the reduced exponential-cone images near the well-scaled boundary point (1, 1, 0) . A representative centring problem is min 
+
+> 𝑥,𝑟 1,𝑟 3
+
+1𝑇 ⋅ 𝑟 1 + 1𝑇 ⋅ 𝑟 3
+
+subject to 𝑥 ∈ 𝒳, −𝑟 1 ≤ 𝑡 1(𝑥) − 1 ≤ 𝑟 1, −𝑟 3 ≤ 𝑡 3(𝑥) ≤ 𝑟 3,𝑟 1 ≥ 0, 𝑟 3 ≥ 0. 
+
+Thus the start is encouraged to satisfy 𝑡 1 approximately equal to one and 𝑡 3 approximately equal to zero. These values correspond to the reduced exponential-cone boundary point (𝑥 1, 𝑥 2, 𝑥 3) = (1, 1, 0) , since 1 = exp (0) .If the centred point is good in scaled units but misses the raw explicit feasibility gate, an optional raw-feasibility repair step solves another conic problem in the same feasible set while penalising movement from the centred reference. A typical repair penalty is a one-norm movement proxy. min  
+
+> 𝑥,𝑝,𝑞
+
+𝜔 rep 1𝑇 ⋅ (𝑝 + 𝑞) 
+
+subject to 𝑥 ∈ 𝒳, 𝑥 − 𝑥 ref ≤ 𝑝, 𝑥 ref − 𝑥 ≤ 𝑞, 𝑝 ≥ 0, 𝑞 ≥ 0. 
+
+50 Here 𝜔 rep > 0 is the repair penalty weight and 𝑝, 𝑞 ∈ ℝ 𝑛 are the nonnegative positive and negative parts of the movement from the centred reference 𝑥 ref .Other start modes can be used as fallbacks: a direct feasible conic solve, an elastic feasible solve, a relaxed feasible solve, and a last-resort all-ones algebraic point. Irrespective of the start mode, acceptance is governed by the same raw explicit residual gate 
+
+𝑟 exp (𝑥 0) ≤ 𝜏 start .
+
+A scaled residual may be retained for diagnosis, but it does not by itself make a raw-infeasible point acceptable. The one relaxation of this gate is that a centred start whose raw residual exceeds 𝜏 start is still admitted when the repair step strictly improved it and it meets a slightly larger soft allowance. This design ensures that the point entering the outer loop is feasible in the same row units used later by the explicit-bound step cap and by the line-search acceptance test. 
+
+## F.8 Adaptive portfolio of inner conic models 
+
+At each major iteration 𝑘 , the algorithm evaluates the current merit state at 𝑥 𝑘 and then chooses a strategy from an ordered portfolio. Each strategy builds an inner conic model whose feasible set is the working conic feasible set, possibly augmented by temporary local rows or convex epigraph variables. The inner objective is constructed from the current outer merit gradient, optional residual-balancing weights, and optional convex regularisation terms. The endpoint of the inner conic solve is not accepted directly; it defines a direction that must pass descent and line-search safeguards. 
+
+F.8.1 Cost approximation 
+
+The simplest strategy is cost approximation. It solves an inner conic problem of the form min  
+
+> 𝑥∈𝒳
+
+(𝑐 𝑘 
+
+> in
+
+)𝑇 ⋅ 𝑥, 
+
+where 𝑐 𝑘  
+
+> in
+
+∈ ℝ 𝑛 equals the active part of the current merit gradient, with fixed and structurally inactive slots suppressed and with optional small inactive tie-break terms. The endpoint 𝑥 𝑘  
+
+> in
+
+∈ ℝ 𝑛 defines the candidate direction 
+
+𝑑 𝑘 ≔ 𝑥 𝑘  
+
+> in
+
+− 𝑥 𝑘 ∈ ℝ 𝑛 .
+
+In an exact conic solve, if 𝑥 𝑘 is feasible for the same inner model and 𝑐 𝑘  
+
+> in
+
+is precisely the gradient model, the inner objective should not increase along this endpoint direction. A value of ∇𝜙(𝑥 𝑘 )𝑇 ⋅ 𝑑 𝑘 that is not sufficiently negative, specifically ∇𝜙(𝑥 𝑘 )𝑇 ⋅ 𝑑 𝑘 ≥ −𝜏 desc for a solver-tolerance-aware threshold 𝜏 desc ≥ 0 , is interpreted as a no-descent event and triggers diagnostics or a switch to a safer strategy, unless a curvature-rescue test on the finite-step second-order model admits the direction despite the failed first-order test. 
+
+F.8.2 Reachable-boundary cost approximation 
+
+The reachable-boundary cost approximation strategy augments the cost approximation model with a linear attraction toward a locally reachable exponential boundary. It first solves an auxiliary projection problem over the explicit feasible region to determine whether movement toward the local boundary is retained under the explicit constraints. Let 𝑤 𝑘 ∈ ℝ 𝑚 ≥0 be nonnegative weights selecting boundary-relevant residual components. With the gradient convention above, a boundary-attraction vector can be written as 
+
+𝑎 𝑘  
+
+> bd
+
+≔ ∇ℎ(𝑥 𝑘 ) ⋅ 𝑤 𝑘 ∈ ℝ 𝑛 .
+
+The inner objective is then biased by the additional linear term 
+
+𝜂 𝑘  
+
+> bd
+
+(𝑎 𝑘 
+
+> bd
+
+)𝑇 ⋅ 𝑥, 
+
+where the scalar 𝜂 𝑘  
+
+> bd
+
+is set to zero when the projection diagnostic indicates that useful boundary movement is not reachable. The purpose of this linear bias is not to introduce nonconvexity. Rather, it preserves conic representability while encouraging a direction whose first-order effect reduces the active boundary gap. In addition to this linear attraction, the reachable-boundary strategy also appends a convex target-centred penalty on the selected blocks. For each such block it introduces a nonnegative epigraph variable 𝑞 i ∈ ℝ ≥0 
+
+together with the curvature-scaled deviations of 𝑡 1(𝑥) and 𝑡 3(𝑥) from a projected boundary target, collected in a vector 𝑧 i ∈ ℝ 2, imposes (𝑞 i, 1, 𝑧 i) in a rotated quadratic cone (so that ‖𝑧 i‖22 ≤ 2𝑞 i), and adds the term 𝜇 ∑ i 𝑤 i𝑞 i
+
+to the inner objective, with the same nonnegative weights 𝑤 i and a penalty scale 𝜇 > 0 ; the curvature scaling is frozen at 𝑥 𝑘 . This penalty is a convex second-order-cone term, so the inner model remains conic-representable, and it is inert when 𝜇 = 0 or no block is selected. 51 F.8.3 Quadratic and local-box regularisation 
+
+When the first-order cost approximation becomes unreliable, the algorithm can add convex quadratic regular-isation while keeping the inner model conic representable. Let 𝑊 𝑥 ∈ ℝ 𝑛×𝑛 and 𝑊 1, 𝑊 3 ∈ ℝ 𝑚×𝑚 be nonnegative diagonal weight matrices. A representative quadratically regularised model is min (𝑐 𝑘 
+
+> in
+
+)𝑇 ⋅ 𝑥 + 𝜆 𝑥 𝜉 𝑥 + 𝜆 1𝜉 1 + 𝜆 3𝜉 3
+
+subject to 𝑥 ∈ 𝒳, ∥𝑊 1/2 𝑥 ⋅ (𝑥 − 𝑥 𝑘 )∥ 22 ≤ 𝜉 𝑥 ,∥𝑊 1/2 1 ⋅ (𝑡 1(𝑥) − 𝑡 1(𝑥 𝑘 ))∥ 22 ≤ 𝜉 1,∥𝑊 1/2 3 ⋅ (𝑡 3(𝑥) − 𝑡 3(𝑥 𝑘 ))∥ 22 ≤ 𝜉 3.
+
+Each squared-norm epigraph is represented by a rotated quadratic cone, for example by imposing (𝜉, 1, 𝑧) in a rotated quadratic cone so that ‖𝑧‖ 22 ≤ 2𝜉 . In a local-box variant, temporary affine-image bounds are also added: 
+
+∣𝑡 1(𝑥) − 𝑡 1(𝑥 𝑘 )∣ ≤ Δ 𝑘 1 , ∣𝑡 3(𝑥) − 𝑡 3(𝑥 𝑘 )∣ ≤ Δ 𝑘 3 .
+
+These local rows are temporary. They stabilise the inner endpoint by restricting movement in the affine images that control the exponential boundary, but they do not redefine the global feasible set. The local widths may be adapted according to the observed agreement between predicted and actual merit decrease. 
+
+F.8.4 Block-curvature and residual-balanced variants 
+
+A block-curvature variant applies conic quadratic regularisation selectively to exponential-cone blocks whose curvature diagnostics at the current iterate indicate that the linear model is unreliable. This avoids adding unnecessary epigraph variables to all blocks while still damping the directions that dominate the mismatch between the linear model and the observed merit change. A residual-balanced variant rescales the ℎ and 
+
+𝑔 contributions to the merit gradient so that one residual family does not numerically dominate the inner objective solely because of scale. 
+
+F.8.5 Safeguarded gradient directions 
+
+If the conic endpoint models fail to provide a useful direction, the portfolio includes safeguarded gradient directions. The basic gradient direction is 
+
+𝑑 𝑘 ≔ −∇𝜙(𝑥 𝑘 ) ⊘ max {1, ∥∇𝜙(𝑥 𝑘 )∥ ∞}, 
+
+with fixed and structural coordinates suppressed as required. A local-box gradient variant combines this direc-tion with the same affine-image neighbourhood restrictions used by local-box cost-approximation strategies. 
+
+## F.9 Step safeguards and line search 
+
+After a candidate direction 𝑑 𝑘 has been constructed, the algorithm searches along the ray 
+
+𝑥(𝜆) ≔ 𝑥 𝑘 + 𝜆𝑑 𝑘 , 𝜆 ≥ 0. 
+
+The first admissible trial step is the minimum of several independent caps. The explicit-bound cap is the largest step satisfying 
+
+𝑏 𝑙 − 𝜏 exp 1 ≤ 𝐴 ⋅ 𝑥(𝜆) ≤ 𝑏 𝑢 + 𝜏 exp 1, 𝑙 − 𝜏 exp 1 ≤ 𝑥(𝜆) ≤ 𝑢 + 𝜏 exp 1,
+
+where 𝜏 exp is the accepted-trial explicit feasibility tolerance in the current working row units. A log-domain cap prevents 𝑡 1 from approaching the logarithmic singularity: 
+
+𝑡 1(𝑥(𝜆)) > 𝜂 1.
+
+An exponential-boundary cap prevents a boundary-safe strategy from stepping across the reduced exponential graph. Along the trial ray the boundary gap is 52 ℎ(𝑥(𝜆)) = 𝑡 1(𝑥(𝜆)) − exp (𝑡 3(𝑥(𝜆))) ∈ ℝ 𝑚 .
+
+The boundary cap is the first positive 𝜆 at which any component of ℎ(𝑥(𝜆)) reaches zero, multiplied by a fraction-to-boundary safety factor. Additional caps can limit predicted coefficient changes and numerically excessive affine-image movement. These caps are diagnostic as well as protective: the active cap identifies whether a failed or tiny step was caused by explicit feasibility, log-domain safety, exponential-boundary safety, coefficient damping, or numerical movement damping. The primary line-search acceptance test is an Armijo condition on the outer merit: 
+
+𝜙(𝑥 𝑘 + 𝜆𝑑 𝑘 ) ≤ 𝜙(𝑥 𝑘 ) + 𝜎𝜆∇𝜙(𝑥 𝑘 )𝑇 ⋅ 𝑑 𝑘 , 0 < 𝜎 < 1. 
+
+A trial point must also satisfy the explicit feasibility gate and the log-domain gate. Once the maximum residual 
+
+𝜃(𝑥) is sufficiently small, the optional maximum-residual gate requires 
+
+𝜃(𝑥 𝑘 + 𝜆𝑑 𝑘 ) ≤ 𝜃(𝑥 𝑘 ) − 𝛿 𝜃 + 𝜏 𝜃 ,
+
+where 𝛿 𝜃 is a required decrease and 𝜏 𝜃 is an absolute or relative numerical allowance. If a trial fails, 𝜆 is reduced geometrically and the tests are repeated. The accepted update is 
+
+𝑥 𝑘+1 ≔ 𝑥 𝑘 + 𝜆 k𝑑 𝑘 .
+
+For nominal no-descent directions, a curvature-rescue test may be applied before rejection. This test evalu-ates a finite-step second-order model 
+
+Δ2(𝜆) ≔ 𝜆∇𝜙(𝑥 𝑘 )𝑇 ⋅ 𝑑 𝑘 − 𝜒 curv (𝜆𝑑 𝑘 ), 
+
+where 𝜒 curv is a positive curvature correction estimated from the exponential and logarithmic nonlinearities. A direction that is not a strict first-order descent direction can still proceed to line search if the finite-step model and the actual merit decrease are both favourable. 
+
+## F.10 Portfolio adaptation 
+
+The portfolio controller maintains an ordered list of strategies from simpler to safer or more regularised mod-els. The principal strategies are cost approximation, reachable-boundary cost approximation, block-curvature regularised cost approximation, residual-balanced quadratically regularised cost approximation, quadratically regularised cost approximation, local-box quadratically regularised cost approximation, safeguarded gradient, and local-box safeguarded gradient. A user-supplied order may use all or a subset of these strategies. The default order omits the two safeguarded gradient strategies, which are enabled only on request. Within each major iteration, if the current strategy fails to solve its inner conic problem, produces a nonfinite direction, produces a no-descent direction, or fails line search, or yields only a microscopic boundary-limited step, the controller advances to the next available strategy in the same major iteration. If all strategies have been attempted without an accepted step, the portfolio is exhausted. Conversely, after repeated calm accepted steps, the controller may probe back toward a simpler strategy, unless recent diagnostics indicate high curvature, repeated no-descent classifications, or a small-residual regime in which the simpler model is likely to repeat the previous failure mode. The controller also uses diagnostic triggers. A stagnation detector advances to a safer strategy when the same accepted strategy produces too little relative merit decrease over a short window. A curvature detector switches from ordinary cost approximation to a curvature-aware strategy when recent accepted cost-approximation rows have a large curvature ratio or a repeated dominant curvature block. A boundary-saturation detector recognises regimes in which the model remains feasible but the step is repeatedly throttled by exponential-boundary caps. 
+
+## F.11 Finalisation and returned certificate 
+
+The outer iteration returns an accepted primal point, but a downstream conic interface often requires a primal-dual tuple. The finalisation stage therefore separates three concepts: the last accepted outer primal point, the possibly polished returned primal point, and the dual certificate for the returned point. Let 𝑥 acc denote the last accepted outer iterate. The final accepted outer residual is 
+
+𝜃 acc ≔ 𝜃(𝑥 acc ). 
+
+If the finalisation policy permits polish, and either the residual is already below a polish threshold or polish is explicitly requested, an unrestricted conic polish solve is attempted using the caller-supplied objective 𝑎 over the original unboxed working conic model. A polished point is accepted only if it passes the final explicit-feasibility 53 and outer-residual acceptance gates. If polish is not attempted, fails, or is rejected, an auxiliary fixed-primal recovery problem may be solved to recover dual variables at 𝑥 acc without moving the primal point. The final returned point 𝑥 fin is audited in the same working row units used by the inner solves, and explicit residuals are also reported in the original input row units when row scaling was used. The final Karush-Kuhn-Tucker residual is evaluated on the actual returned primal-dual tuple, not merely on the auxiliary problem that produced it. The outer convergence status is determined from 
+
+𝜃 fin ≔ 𝜃(𝑥 fin ) = max {‖ℎ(𝑥 fin )‖ ∞ , ‖𝑔(𝑥 fin )‖ ∞} . 
+
+If polish moves the primal point and brings 𝜃 fin below the requested tolerance, the returned solution is classified as converged at the returned primal point even if the pre-polish portfolio stopped because all direction models were exhausted. This avoids conflating failure of the outer step generator with failure of the returned primal solution. 
+
+## F.12 Diagnostics and interpretation 
+
+The algorithm records compact diagnostic rows for initial starts, accepted steps, rejected attempts, and finalisa-tion. These diagnostics are not merely logging artefacts; they separate mathematically distinct failure modes. A solve failure means that the inner conic optimiser did not return a usable endpoint. A no-descent event means that the endpoint did not define a descent direction for the selected outer merit. A line-search failure means that a descent direction was found but no trial step satisfied the explicit feasibility, domain, boundary, merit, and maximum-residual gates. A microscopic boundary-limited step means that a formally acceptable step was so small, typically because of an exponential-boundary cap, that it was treated as no real progress. No-descent diagnostics compare the tested directional derivative, the movement in the actual inner objective, explicit feasibility of the current and endpoint points, and the Karush-Kuhn-Tucker residual of the endpoint. This distinction is important because a no-descent row can arise from stationarity, complementarity, loose endpoint feasibility, objective scaling, masking of structural variables, or local-box constraints. Boundary-skating diagnostics identify active components for which ℎ is already small and the first-order derivative points toward the exponential boundary, yielding a tiny fraction-to-boundary step. Curvature diagnostics estimate how much the nonlinear merit deviates from its first-order model and identify blocks that repeatedly dominate this deviation. The diagnostic summaries are used to interpret the solve and to guide the adaptive portfolio. They do not replace the mathematical acceptance gates. The reported solution should therefore be interpreted through three simultaneous quantities: explicit primal feasibility, outer nonlinear residual, and the final primal-dual Karush-Kuhn-Tucker residual. 
+
+## F.13 Convergence interpretation 
+
+The algorithm should be interpreted as a safeguarded sequential approximation approach rather than as a single monolithic conic optimisation problem. Each inner conic solve supplies a direction for a nonlinear boundary-matching merit; it does not by itself certify convergence of the outer problem. Conversely, a successful final polish can return a primal point satisfying the nonlinear residual tolerance even when the adaptive portfolio has exhausted its direction models. The most meaningful success criterion is therefore the final returned residual 
+
+𝜃 fin , together with explicit primal feasibility and the final Karush-Kuhn-Tucker audit of the returned tuple. The adaptive design is motivated by the mixed numerical regimes typical of large exponential-cone mod-els. Far from the boundary, a simple cost approximation often gives useful progress. Near the boundary, the same first-order model may become curvature dominated or boundary throttled. The portfolio addresses this by adding reachable-boundary attraction, conic quadratic regularisation, local affine-image boxes, residual balancing, and safeguarded gradient steps only when diagnostics indicate that the simpler model is insufficient. 54

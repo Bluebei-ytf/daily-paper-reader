@@ -1,0 +1,538 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-29T22:20:16.790986+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 5,
+    "deep_cap": 6,
+    "deep_selected": 5,
+    "quick_candidates": 8,
+    "quick_skim_target": 11,
+    "quick_selected": 8
+  },
+  "deep_dive": [
+    {
+      "id": "2607.24997v1",
+      "source": "arxiv",
+      "title": "MANDALA: An E(3)-Equivariant Graph Neural Network Framework for Learning Electronic-Structure Operators with Observable Guidance",
+      "abstract": "Electronic-structure calculations based on Kohn-Sham density functional theory remain indispensable in computational materials science and chemistry. Their computational cost, however, limits accessible system sizes and simulation times. At the same time, conventional machine-learning interatomic potentials (MLIPs), which are becoming the workhorse of large-scale materials modeling, usually target only energies and forces. They therefore leave out the quantum-operator-level information required to reconstruct band structures, densities of states, spatial charge distributions, and other electronic observables. \\texttt{Mandala} fills this methodological gap. It is a modular software framework for learning block-sparse electronic-structure matrices with E(3)-equivariant graph neural networks. The framework is built around a unified representation of atom-resolved Hamiltonian, overlap, and density matrices, together with reusable abstractions for basis conversion, sparse block handling, irreducible representation mapping, graph construction, model definition, and training. This design allows \\texttt{Mandala} to support heterogeneous chemical compositions, a wide range of neural architecture variants within one workflow, and multiple electronic-structure backends. \\texttt{Mandala} evaluates selected observables directly from the predicted operators, including band energy, electron count, density of states, and band structure. This connects electronic-structure learning and observable-guided modeling while retaining a representation tied to quantum-mechanical operators rather than only scalar or vector targets as in MLIPs. In this form, \\texttt{Mandala} is intended to complement atomistic interatomic potential workflows by resolving electronic structure and operator-derived observables within one scalable implementation.",
+      "authors": [
+        "Bartosz Brzoza",
+        "Wiktoria Szopa",
+        "Zakaria Elabid",
+        "Vincent Martinetto",
+        "Varadarajan Rengaraj",
+        "Mani Lokamani",
+        "Thomas D. Kühne",
+        "Attila Cangi"
+      ],
+      "primary_category": "cond-mat.mtrl-sci",
+      "categories": [
+        "cond-mat.mtrl-sci",
+        "physics.chem-ph"
+      ],
+      "published": "2026-07-27T18:54:23+00:00",
+      "link": "https://arxiv.org/pdf/2607.24997v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "E(3)-equivariant GNN framework for learning electronic-structure operators, accelerating quantum chemistry",
+      "llm_evidence_cn": "E(3)-等变GNN框架学习电子结构算子，加速量子化学",
+      "llm_evidence": "E(3)-等变GNN框架学习电子结构算子，加速量子化学",
+      "canonical_evidence": "E(3)-等变GNN框架学习电子结构算子，加速量子化学",
+      "llm_tldr_en": "Introduces MANDALA, a modular E(3)-equivariant GNN framework that predicts electronic-structure operators (e.g., Hamiltonian) from geometry, enabling reconstruction of band structures and charge densities with DFT accuracy at reduced cost.",
+      "llm_tldr_cn": "针对传统机器学习原子间势仅预测能量和力而忽略电子结构算子的问题，该论文提出MANDALA框架，基于E(3)-等变图神经网络学习哈密顿量等电子结构算子。该方法在保持对称性的同时，可重建能带、态密度和电荷分布。在多种材料上验证了准确性，显著降低了量子化学计算成本。",
+      "llm_tldr": "针对传统机器学习原子间势仅预测能量和力而忽略电子结构算子的问题，该论文提出MANDALA框架，基于E(3)-等变图神经网络学习哈密顿量等电子结构算子。该方法在保持对称性的同时，可重建能带、态密度和电荷分布。在多种材料上验证了准确性，显著降低了量子化学计算成本。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.25022v1",
+      "source": "arxiv",
+      "title": "Machine-Learning Potentials for sodium-potassium chloride mixtures: Predicting thermophysical properties and phase behavior of multicomponent salts",
+      "abstract": "Predicting the properties of multicomponent molten salts using density functional theory (DFT) remains challenging because the spatial and temporal scales required to evaluate transport properties and phase behavior are computationally prohibitive. In this work, we develop a moment tensor potential trained using a a DFT dataset of NaCl, KCl, NaCl-KCl mixtures, and the NaK alloy, enabling large-scale molecular dynamics simulations across wide ranges of temperatures and compositions. We systematically evaluate the effect of D3 dispersion corrections and apply the resulting potential to predict liquid densities, diffusion coefficients, radial distribution functions, heat capacities, thermal conductivities, and the NaCl-KCl phase diagram. The model successfully reproduces many temperature- and composition-dependent trends. However, systematic deviations in several absolute properties persist, highlighting the importance of experimental validation and calibration. These findings support a hybrid modeling framework in which first-principles-informed machine-learning potentials provide transferable predictive capability and mechanistic insight, while experimental data incorporated during model development or subsequent engineering assessments is necessary to improve quantitative accuracy.",
+      "authors": [
+        "Karim Zongo",
+        "Hao Sun",
+        "Zijian Meng",
+        "Christopher Maxwell",
+        "Edmanuel Torres",
+        "Laurent Karim Béland"
+      ],
+      "primary_category": "cond-mat.mtrl-sci",
+      "categories": [
+        "cond-mat.mtrl-sci"
+      ],
+      "published": "2026-07-27T19:31:36+00:00",
+      "link": "https://arxiv.org/pdf/2607.25022v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "machine learning potentials for molten salt molecular dynamics",
+      "llm_evidence_cn": "机器学习势能用于熔盐分子动力学",
+      "llm_evidence": "机器学习势能用于熔盐分子动力学",
+      "canonical_evidence": "机器学习势能用于熔盐分子动力学",
+      "llm_tldr_en": "Develops moment tensor potentials for NaCl-KCl mixtures to predict thermophysical properties via large-scale MD simulations.",
+      "llm_tldr_cn": "本文开发了用于NaCl-KCl混合熔盐的矩张量势，基于DFT数据集训练。该势能可在较大温度和组成范围内进行大规模分子动力学模拟，预测密度、扩散系数、径向分布函数和热容等热物理性质。该工作展示了机器学习势能在多组分盐相行为和输运性质预测中的高效性和准确性。",
+      "llm_tldr": "本文开发了用于NaCl-KCl混合熔盐的矩张量势，基于DFT数据集训练。该势能可在较大温度和组成范围内进行大规模分子动力学模拟，预测密度、扩散系数、径向分布函数和热容等热物理性质。该工作展示了机器学习势能在多组分盐相行为和输运性质预测中的高效性和准确性。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.25217v1",
+      "source": "arxiv",
+      "title": "Variational kinetics: elementary reaction kinetics via conic optimisation",
+      "abstract": "Genome-scale modelling methods primarily predict reaction fluxes, whereas established high throughput experimental technologies primarily measure molecular species concentrations.This apparently paradoxical situation has arisen because implementing the non-linear constraints that represent reaction kinetic rate equations is challenging without resorting to convenient yet inaccurate approximations or to expansions that are valid only near a reference state. We present a mathematically and computationally tractable solution to this problem. First, we introduce a mathematical reformulation of established knowledge of metabolic reactions and reaction kinetics in matrix-vector notation. We then present variational kinetics, a novel approach that satisfies steady state reaction kinetics at genome scale by exponential conic optimisation. The non-linear rate law constraints are relaxed to exponential cones, which renders the feasible set convex, and satisfaction of elementary kinetics is recovered by minimising a strictly concave merit function over that set, which attains zero if, and only if, every rate law holds. We establish that a particular sequence of conic optimisation problems converges to a stationary point of this merit function, and that every such stationary point is a steady state satisfying elementary kinetics. Moiety conservation, thermodynamic constraints on elementary kinetic parameters, regularised steady states and linear optimisation of external reaction rates are each accommodated within the same conic formulation. We demonstrate the approach computationally on a genome-scale metabolic model.",
+      "authors": [
+        "Ronan M. T. Fleming",
+        "Ines Thiele"
+      ],
+      "primary_category": "q-bio.MN",
+      "categories": [
+        "q-bio.MN"
+      ],
+      "published": "2026-07-28T02:46:00+00:00",
+      "link": "https://arxiv.org/pdf/2607.25217v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "variational kinetics for elementary reaction kinetics using conic optimization",
+      "llm_evidence_cn": "使用锥优化的变分动力学求解基元反应动力学",
+      "llm_evidence": "使用锥优化的变分动力学求解基元反应动力学",
+      "canonical_evidence": "使用锥优化的变分动力学求解基元反应动力学",
+      "llm_tldr_en": "Variational kinetics reformulates reaction rate equations using conic optimization, enabling genome-scale modeling without approximations.",
+      "llm_tldr_cn": "该论文提出了变分动力学方法，通过数学重新表述和锥优化技术，无需近似即可同时满足非线性反应动力学约束。该方法将代谢反应和动力学知识转化为矩阵-向量形式，并利用凸优化求解，为基因组规模建模提供了计算上可行的方案，有望弥合反应通量与浓度测量之间的鸿沟。",
+      "llm_tldr": "该论文提出了变分动力学方法，通过数学重新表述和锥优化技术，无需近似即可同时满足非线性反应动力学约束。该方法将代谢反应和动力学知识转化为矩阵-向量形式，并利用凸优化求解，为基因组规模建模提供了计算上可行的方案，有望弥合反应通量与浓度测量之间的鸿沟。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "chemical reaction prediction using artificial intelligence",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.25518v1",
+      "source": "arxiv",
+      "title": "AMPBench-MT: A Homology-Controlled Benchmark for Antimicrobial Peptide Potency, Spectrum, and Safety Prediction",
+      "abstract": "Computational AMP discovery is often evaluated through AMP/non-AMP recognition, yet follow-up decisions depend on assay-derived evidence such as target-species potency, hemolysis, toxicity, and selectivity. Existing AMP and peptide benchmarks cover binary recognition, multilabel annotation, assay regression, or broader peptide-model comparison, but they do not jointly place AMP recognition, species-conditioned potency, spectrum, safety-facing proxy endpoints, and cross-endpoint behavior within one sequence-homology-controlled protocol. To address this problem, we introduce AMPBench-MT, a provenance-preserving benchmark that standardizes canonical peptide records and organizes them into binary recognition, species-conditioned pMIC regression, and endpoint-specific potency and safety-facing readouts. Across 161 endpoint-specific model evaluations, high binary performance does not reliably indicate assay-endpoint behavior. Frozen protein-language-model embeddings form the leading pMIC error cluster, while graph and classical regressors remain close. Spectrum labels further reveal that PR-oriented metrics can be misleading under scarce observed negatives, whereas low-toxicity, HC50 hemolysis, and selectivity expose smaller but more assay-facing signals. AMPBench-MT shows that AMP evaluation should move beyond recognition leaderboards toward endpoint-aware evidence auditing. Our proposed benchmark is available at https://huggingface.co/datasets/ZihengZhou06/AMPBench-MT.",
+      "authors": [
+        "Ziheng Zhou",
+        "Huiyu Luo",
+        "Xiaohu Zhu",
+        "Nan Wang",
+        "Xuebiao Qin",
+        "Chaoyan Zhang",
+        "Jun Yan"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "q-bio.QM"
+      ],
+      "published": "2026-07-28T10:01:30+00:00",
+      "link": "https://arxiv.org/pdf/2607.25518v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "benchmark for antimicrobial peptide potency, spectrum, and safety prediction with homology control",
+      "llm_evidence_cn": "抗菌肽效力、谱系和安全性预测的同源控制基准",
+      "llm_evidence": "抗菌肽效力、谱系和安全性预测的同源控制基准",
+      "canonical_evidence": "抗菌肽效力、谱系和安全性预测的同源控制基准",
+      "llm_tldr_en": "Introduces AMPBench-MT, a homology-controlled benchmark for multi-task AMP prediction covering recognition, potency, and safety, with standardized protocol.",
+      "llm_tldr_cn": "针对计算抗菌肽（AMP）发现缺乏多任务联合基准的问题，提出AMPBench-MT基准。该基准在序列同源控制下，标准化了AMP识别、物种条件效力、安全性预测等多种端点。为分子属性预测和生成提供了一个更全面、更严格的评估协议。",
+      "llm_tldr": "针对计算抗菌肽（AMP）发现缺乏多任务联合基准的问题，提出AMPBench-MT基准。该基准在序列同源控制下，标准化了AMP识别、物种条件效力、安全性预测等多种端点。为分子属性预测和生成提供了一个更全面、更严格的评估协议。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "What benchmark datasets and evaluation metrics are commonly used for molecular property prediction and generation?",
+      "matched_requirement_id": "req-9",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.25652v1",
+      "source": "arxiv",
+      "title": "Transformer Atomic Cluster Expansion: TRACE",
+      "abstract": "Designing machine-learning interatomic potentials involves achieving the precise representation of complex many-body interactions alongside the efficiency required for scalable molecular dynamics. We introduce Transformer Atomic Cluster Expansion (TRACE), an energy-conserving architecture that combines atomic cluster expansion density correlations with local multihead cross-attention. The correlations form an O(3)-equivariant state for each center, which queries tensorial neighbor features that remain fixed functions of species and geometry. No learned state is passed between atoms. On a laptop MacBook-M1, we train and test TRACE for polymorphic cesium lead iodide, liquid water, and intramolecular methyl migration against experiments. For cesium lead iodide, TRACE reproduces the r$^2$SCAN+rVV10 ordering of four polymorphs and gives a classical edge-sharing hexagonal non-perovskite($δ$) to corner-sharing cubic perovskite($α$) Gibbs-free-energy crossing $\\simeq$580K near the experimental observations of $\\simeq$600K. By employing enhanced sampling to cross high energy barriers, the same TRACE potential successfully captures the $δ$-to-$α$ perovskite transformation without any reinforcement learning. A water potential trained on a reduced set of CCSD(T) configurations places the first oxygen--oxygen maximum at 2.85~Å, compared to the experimental value of 2.80~Å. For the gas-phase methyl migration in 2,2-dimethylisoindene, umbrella sampling yields an activation free energy of $27.92\\pm0.03$~kcal~mol$^{-1}$, in close agreement with the experimental measurement of $29.2\\pm1.1$~kcal~mol$^{-1}$. Across these diverse benchmarks, a single unified architecture successfully captures multi-species crystallization, liquid structures, phase diagrams, and chemical reactivity.",
+      "authors": [
+        "Paramvir Ahlawat"
+      ],
+      "primary_category": "cond-mat.mtrl-sci",
+      "categories": [
+        "cond-mat.mtrl-sci"
+      ],
+      "published": "2026-07-28T12:40:12+00:00",
+      "link": "https://arxiv.org/pdf/2607.25652v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "TRACE architecture for efficient ML interatomic potentials accelerating MD",
+      "llm_evidence_cn": "TRACE架构用于高效机器学习原子间势，加速分子动力学",
+      "llm_evidence": "TRACE架构用于高效机器学习原子间势，加速分子动力学",
+      "canonical_evidence": "TRACE架构用于高效机器学习原子间势，加速分子动力学",
+      "llm_tldr_en": "TRACE combines atomic cluster expansion with local multihead cross-attention to build O(3)-equivariant interatomic potentials, achieving efficient molecular dynamics on a laptop.",
+      "llm_tldr_cn": "为了解决机器学习原子间势能中精确表示多体相互作用与计算效率的平衡问题，本文提出了Transformer原子团簇扩展（TRACE）架构。该架构将原子团簇扩展密度相关性与局部多头交叉注意力相结合，形成O(3)等变表示，无需在原子间传递学习状态。在笔记本电脑上，TRACE成功训练并测试了多晶铯铅碘、液态水及分子内甲基迁移等体系，结果与实验一致。该方法为高效可扩展的分子动力学模拟提供了新途径。",
+      "llm_tldr": "为了解决机器学习原子间势能中精确表示多体相互作用与计算效率的平衡问题，本文提出了Transformer原子团簇扩展（TRACE）架构。该架构将原子团簇扩展密度相关性与局部多头交叉注意力相结合，形成O(3)等变表示，无需在原子间传递学习状态。在笔记本电脑上，TRACE成功训练并测试了多晶铯铅碘、液态水及分子内甲基迁移等体系，结果与实验一致。该方法为高效可扩展的分子动力学模拟提供了新途径。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2607.23219v1",
+      "source": "arxiv",
+      "title": "An Ontology for Machine Learning Interatomic Potentials",
+      "abstract": "Machine learning interatomic potentials (MLIPs) approximate quantum-mechanical energies and forces---conventionally computed by density functional theory (DFT) or wave-function methods---at a fraction of the cost. The field encompasses a growing ecosystem of algorithms, training datasets, hyperparameters, and target materials, yet the metadata needed to systematically compare, reproduce, and build upon MLIP studies remains scattered across papers, scripts, and ad-hoc file formats. We present the MLIPs ontology, an OWL 2 DL ontology that captures the concepts needed to describe MLIP methods, their hyperparameters, training datasets with DFT provenance, and published benchmarks. The ontology is organized into three modules---Method, Training Data, and Benchmark---and connects existing ontologies in materials science (MDO, CMSO/ASMO) and machine learning (ML-Schema), complementing dataset-side schemas such as Croissant. It declares 27 formal axioms enforcing data completeness and consistency, including property chains that link trained models to their methods and training data. We demonstrate the ontology through a running example based on Moment Tensor Potentials and evaluate it through competency-question execution on a 20-paper seeded knowledge graph, OWL reasoning, and comparison with existing ontologies.",
+      "authors": [
+        "Daniel Hernández",
+        "Jong Hyun Jung",
+        "Yuji Ikeda",
+        "Yongliang Ou",
+        "Pranav Kumar",
+        "Tom Schächtel",
+        "Wenchuan Liu",
+        "Xin Li",
+        "Xi Zhang",
+        "Xiang Xu",
+        "Lifang Zhu",
+        "Fritz Körmann",
+        "Steffen Staab",
+        "Blazej Grabowski"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.DB",
+        "cs.DL"
+      ],
+      "published": "2026-07-25T14:16:09+00:00",
+      "link": "https://arxiv.org/pdf/2607.23219v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "ontology for machine learning interatomic potentials, crucial for accelerating quantum chemistry and molecular dynamics",
+      "llm_evidence_cn": "机器学习原子间势的本体，对加速量子化学和分子动力学至关重要",
+      "llm_evidence": "机器学习原子间势的本体，对加速量子化学和分子动力学至关重要",
+      "canonical_evidence": "机器学习原子间势的本体，对加速量子化学和分子动力学至关重要",
+      "llm_tldr_en": "Presents an OWL 2 DL ontology for describing ML interatomic potentials, enabling systematic comparison and reproducibility of MLIP studies across datasets and methods.",
+      "llm_tldr_cn": "针对机器学习原子间势（MLIP）领域，现有方法、训练数据和基准的元数据分散，难以系统比较和复现。本工作提出了一个OWL 2 DL本体，包含方法、训练数据和基准三个模块，用于标准化描述MLIP超参数、DFT来源和基准结果。该本体有助于领域知识的组织与共享，推动ML加速量子化学和分子动力学的可复现发展。",
+      "llm_tldr": "针对机器学习原子间势（MLIP）领域，现有方法、训练数据和基准的元数据分散，难以系统比较和复现。本工作提出了一个OWL 2 DL本体，包含方法、训练数据和基准三个模块，用于标准化描述MLIP超参数、DFT来源和基准结果。该本体有助于领域知识的组织与共享，推动ML加速量子化学和分子动力学的可复现发展。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.23337v1",
+      "source": "arxiv",
+      "title": "Neural operator discovery from heterogeneous trajectories",
+      "abstract": "Neural operators provide data-driven mappings for modeling dynamical systems. Extending them to families of systems typically requires explicit conditioning variables such as physical parameters, geometries, or boundary conditions. In many real-world settings, these quantities are unobserved. Here, we formulate neural operator discovery (NOD) as the problem of learning both shared solution operators and system-specific variation directly from heterogeneous trajectories without access to labeled governing factors. We introduce a factorized latent-conditioning formulation that jointly learns a neural operator and a low-dimensional latent representation through factorized prediction, trajectory-decoupled sampling, and dimension selection. Across diverse systems, the learned latent representation captures the intrinsic dimensionality of system variation and organizes system instances in a smooth and approximately invertible latent structure aligned with the underlying governing factors. This organization enables generalization to previously unseen system instances, including zero-shot extrapolation across regimes and stable long-horizon prediction. These results establish an interpretable paradigm for operator learning in the absence of explicit factor supervision.",
+      "authors": [
+        "Zituo Chen",
+        "Qiaofeng Li",
+        "Jiaxin Hu",
+        "Sili Deng"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-07-25T19:20:25+00:00",
+      "link": "https://arxiv.org/pdf/2607.23337v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "neural operator discovery from heterogeneous trajectories for dynamical systems",
+      "llm_evidence_cn": "从异质轨迹中学习神经算子用于动力系统",
+      "llm_evidence": "从异质轨迹中学习神经算子用于动力系统",
+      "canonical_evidence": "从异质轨迹中学习神经算子用于动力系统",
+      "llm_tldr_en": "Neural operator discovery (NOD) learns shared solution operators and latent representations from heterogeneous trajectories without labeled parameters.",
+      "llm_tldr_cn": "该论文提出了神经算子发现（NOD）框架，能够从异质轨迹中同时学习共享解算子和系统特定的低维潜在表示，无需事先知道物理参数或边界条件。通过因子化潜变量条件化、轨迹解耦采样和维度选择，方法在多个动力系统上成功捕获了不同系统的行为模式，为复杂动力学建模提供了通用工具。",
+      "llm_tldr": "该论文提出了神经算子发现（NOD）框架，能够从异质轨迹中同时学习共享解算子和系统特定的低维潜在表示，无需事先知道物理参数或边界条件。通过因子化潜变量条件化、轨迹解耦采样和维度选择，方法在多个动力系统上成功捕获了不同系统的行为模式，为复杂动力学建模提供了通用工具。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.24848v1",
+      "source": "arxiv",
+      "title": "Beyond Predictive Accuracy: A Reliability-Aware Audit of Molecular Representations for Human Olfaction",
+      "abstract": "Pretrained molecular encoders are commonly evaluated through downstream prediction, but predictive accuracy alone does not establish that a learned representation captures reproducible scientific structure, adds information beyond strong conventional baselines, or transfers out of distribution. We present a reliability-aware audit of generic molecular representations for human olfaction across four distinct claims: global perceptual geometry, incremental predictive value beyond chemistry, cross-dataset replication, and mixture transfer to unseen components.   Using the Keller-Vosshall and Bierling single-molecule rating datasets and the Ma binary-mixture dataset, we compare MoLFormer and ChemBERTa against RDKit descriptors and Morgan fingerprints under identity-controlled and matched evaluations. Human three-attribute rating geometry, based on intensity, pleasantness, and familiarity, is reproducible across participant splits (median RSA 0.743 and 0.855), whereas model-human alignment is substantially weaker (RSA 0.019-0.158). Learned embeddings do not consistently outperform conventional representations in global alignment, and MoLFormer provides no clear incremental predictive value beyond a combined RDKit-Morgan baseline in either single-molecule dataset. Human geometry shows positive but incomplete agreement across 63 shared molecules (RSA 0.331; 95% bootstrap interval [0.204, 0.507]). Under one strict unseen-component mixture split, incremental effects are outcome- and representation-dependent, with all intervals crossing zero. These results establish empirical boundaries for the evaluated generic molecular encoders and motivate a broader evaluation principle: representation quality in scientific domains should be assessed separately for target reliability, structural alignment, incremental information, replication, and out-of-distribution transfer.",
+      "authors": [
+        "Kai Lun Huang",
+        "Wei Chieh Sun"
+      ],
+      "primary_category": "q-bio.QM",
+      "categories": [
+        "q-bio.QM",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-07-25T03:38:14+00:00",
+      "link": "https://arxiv.org/pdf/2607.24848v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Audit of pretrained molecular representations for robustness and transfer",
+      "llm_evidence_cn": "对预训练分子表示（MoLFormer、ChemBERTa）的可靠性审计",
+      "llm_evidence": "对预训练分子表示（MoLFormer、ChemBERTa）的可靠性审计",
+      "canonical_evidence": "对预训练分子表示（MoLFormer、ChemBERTa）的可靠性审计",
+      "llm_tldr_en": "This paper audits pretrained molecular encoders beyond predictive accuracy, testing perceptual geometry, incremental value, cross-dataset replication, and mixture transfer.",
+      "llm_tldr_cn": "预训练分子编码器通常仅用下游预测准确率评估，但本文提出可靠性审计，从全局感知几何、增量预测价值、跨数据集复现和混合物迁移四个维度评估MoLFormer、ChemBERTa等表示。使用多个嗅觉数据集发现，预测准确率不足以反映表示的科学结构可复制性和分布外迁移能力。该方法为预训练化学表示的评估提供了更严格的基准。",
+      "llm_tldr": "预训练分子编码器通常仅用下游预测准确率评估，但本文提出可靠性审计，从全局感知几何、增量预测价值、跨数据集复现和混合物迁移四个维度评估MoLFormer、ChemBERTa等表示。使用多个嗅觉数据集发现，预测准确率不足以反映表示的科学结构可复制性和分布外迁移能力。该方法为预训练化学表示的评估提供了更严格的基准。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "chemical foundation model pre-training and transfer learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.24274v1",
+      "source": "arxiv",
+      "title": "Physics-Guided Generative AI for Property-Targeted 3D Porous Media Design",
+      "abstract": "Inverse design of three-dimensional porous media is central to applications in filtration, catalysis, energy storage, fuel cells, thermal management, and biomedical scaffolds, but remains challenging because many distinct pore geometries can share similar porosity or permeability while small structural changes can strongly affect transport behaviour. This paper proposes a physics-guided generative AI framework for property-targeted porous media design, combining a property-aware variational autoencoder, a conditional latent diffusion model, and an independently trained differentiable structure-to-property surrogate. The framework learns a compact, physically informative latent design space, generates porous structures conditioned on target porosity and directional permeability, and refines generated samples using property-level feedback during denoising and decoding. Experiments on procedurally generated structures and real micro-CT porous-media datasets show improved target-property matching, directional permeability control, and property correlation compared with representative property-aware variational-autoencoder and latent-diffusion baselines. The results demonstrate a scalable route towards controllable inverse design of complex porous geometries and establish a foundation for simulation-informed generative AI tools in engineering and advanced materials discovery.",
+      "authors": [
+        "Peng Wang"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-07-27T11:17:52+00:00",
+      "link": "https://arxiv.org/pdf/2607.24274v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "physics-guided generative AI for property-targeted design of 3D porous media",
+      "llm_evidence_cn": "物理引导生成AI用于属性定向的3D多孔介质设计",
+      "llm_evidence": "物理引导生成AI用于属性定向的3D多孔介质设计",
+      "canonical_evidence": "物理引导生成AI用于属性定向的3D多孔介质设计",
+      "llm_tldr_en": "Proposes a physics-guided generative framework combining VAE, conditional latent diffusion, and property surrogate for property-targeted porous media inverse design.",
+      "llm_tldr_cn": "针对三维多孔介质逆设计问题，提出物理引导的生成AI框架，融合属性感知变分自编码器、条件潜在扩散模型和可微结构-属性代理模型。框架学习紧凑的物理信息潜在空间，可根据目标孔隙率等属性生成多孔结构。虽非小分子生成，但方法可直接迁移至分子生成与优化任务。",
+      "llm_tldr": "针对三维多孔介质逆设计问题，提出物理引导的生成AI框架，融合属性感知变分自编码器、条件潜在扩散模型和可微结构-属性代理模型。框架学习紧凑的物理信息潜在空间，可根据目标孔隙率等属性生成多孔结构。虽非小分子生成，但方法可直接迁移至分子生成与优化任务。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "molecular generation and optimization with machine learning",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.25322v1",
+      "source": "arxiv",
+      "title": "From Cellular Responses to Pharmacological Domains: Multimodal Zero-Shot Drug Representation Learning",
+      "abstract": "Multimodal drug discovery enables drug representation learning beyond chemical structure by incorporating cellular responses such as gene expression and cell morphology. However, direct fusion and instance-level contrastive alignment may mix mechanism-related signals with modality-specific noise and incorrectly separate structurally dissimilar but biologically related compounds. This limitation can obscure transferable mechanism patterns required for predicting the properties of unseen compounds. We introduce PMRD, a pharmacological response domain-guided framework for multimodal zero-shot drug property prediction. PMRD separates mechanism-consistent factors from modality-specific information and constructs a consensus response domain across three modalities. Mechanism candidate augmentation identifies locally stable factors, while retrieval-geometry attribution dynamically reweights the alignment and augmentation objectives according to whether their updates preserve inter-drug discriminability.This feedback suppresses training signals that conflict with mechanism-discriminative retrieval. PMRD further combines complementary representations through reliability-aware multiview retrieval. Experiments on public datasets show improved zero-shot property prediction and more biologically coherent drug neighborhoods. Hard-negative analysis further indicates fewer conflicts between structurally dissimilar but response-related compounds. These results support PMRD as an effective framework for mechanism-aware multimodal drug representation learning.\\footnote{The code will be released upon publication.}",
+      "authors": [
+        "Jintao Huang",
+        "Lu Leng",
+        "Ziyuan Yang"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-07-28T06:13:25+00:00",
+      "link": "https://arxiv.org/pdf/2607.25322v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "multimodal zero-shot drug representation learning",
+      "llm_evidence_cn": "多模态零样本药物表示学习",
+      "llm_evidence": "多模态零样本药物表示学习",
+      "canonical_evidence": "多模态零样本药物表示学习",
+      "llm_tldr_en": "PMRD is a multimodal zero-shot drug representation learning framework that separates mechanism-consistent factors from modality-specific noise, enabling transferable property prediction for unseen compounds.",
+      "llm_tldr_cn": "该论文提出PMRD，一种药理响应域引导的多模态零样本药物表示学习框架。针对直接多模态融合混杂机制信号的问题，PMRD将机制一致因子与模态特异信息分离，并构建共识表示。通过多模态对比学习，模型能够预测未见化合物的性质。在药物性质预测任务上，PMRD优于现有方法，展示了利用细胞响应数据改进零样本泛化的潜力。",
+      "llm_tldr": "该论文提出PMRD，一种药理响应域引导的多模态零样本药物表示学习框架。针对直接多模态融合混杂机制信号的问题，PMRD将机制一致因子与模态特异信息分离，并构建共识表示。通过多模态对比学习，模型能够预测未见化合物的性质。在药物性质预测任务上，PMRD优于现有方法，展示了利用细胞响应数据改进零样本泛化的潜力。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "chemical foundation model pre-training and transfer learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.25039v1",
+      "source": "arxiv",
+      "title": "Citrine Informatics: Chemical & Materials Development Platform",
+      "abstract": "Data-driven materials discovery promises to compress the historically decades-long path from invention to deployment, yet translating individual successes into sustained industrial discovery programs remains difficult. Three obstacles recur: experimental data are scarce, costly, and published in formats that resist reuse; conventional accuracy metrics overstate model performance under the extrapolative conditions that define discovery; and realistic design spaces are bounded by physics, manufacturability, supply, and cost. We present the Citrine Platform, developed over more than a decade as an integrated response to these obstacles, and organize it as four cooperating stages within a closed sequential learning loop. Stage 1 ingests and featurizes data through the Graphical Expression of Materials Data (GEMD) model, which treats process history, measurement uncertainty, and provenance as first-class features. Stage 2 builds machine learning models with well-calibrated uncertainty, including multivariate prediction intervals for correlated objectives, and validates them with extrapolative cross-validation and dynamic discovery metrics rather than random held-out splits. Stage 3 encodes compositional, physical, processing, and economic constraints directly into the design space, and Stage 4 applies the FUELS sequential learning framework with uncertainty-aware acquisition functions to navigate large constrained spaces under tight evaluation budgets. Published case studies spanning organic semiconductors, autonomous nanoparticle synthesis, and benchmark optimization tasks demonstrate two- to nine-fold reductions in experimental effort relative to random search, illustrating a stack in which data, modeling, and design-space layers continuously co-evolve.",
+      "authors": [
+        "Maxwell C. Venetos",
+        "Steven J. Brown",
+        "Kenneth Kroenlein",
+        "Steven K. Kauwe",
+        "James E. Saal",
+        "Marco Musto",
+        "Matthew D. Gerboth",
+        "Kyle D. Miller",
+        "Gregory J. Mulholland"
+      ],
+      "primary_category": "cond-mat.mtrl-sci",
+      "categories": [
+        "cond-mat.mtrl-sci"
+      ],
+      "published": "2026-07-27T19:57:27+00:00",
+      "link": "https://arxiv.org/pdf/2607.25039v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Integrated platform for chemical and materials development with ML",
+      "llm_evidence_cn": "集成机器学习的化学与材料开发综合平台",
+      "llm_evidence": "集成机器学习的化学与材料开发综合平台",
+      "canonical_evidence": "集成机器学习的化学与材料开发综合平台",
+      "llm_tldr_en": "Citrine Platform presents an integrated data-driven materials discovery platform with four cooperating stages in a closed sequential learning loop, addressing data scarcity, metric overestimation, and design space constraints.",
+      "llm_tldr_cn": "数据驱动的材料发现面临实验数据稀缺且复用困难、传统评估指标高估外推性能、设计空间受多重约束等障碍。本文介绍历经十余年开发的Citrine平台，以闭环顺序学习循环组织四个协同阶段：数据摄取与特征化、模型构建、设计与推荐、实验验证。平台集成了主动学习、贝叶斯优化和多约束优化等核心方法，已在多个工业材料项目中得到验证，为加速从发现到部署提供了系统级方案。",
+      "llm_tldr": "数据驱动的材料发现面临实验数据稀缺且复用困难、传统评估指标高估外推性能、设计空间受多重约束等障碍。本文介绍历经十余年开发的Citrine平台，以闭环顺序学习循环组织四个协同阶段：数据摄取与特征化、模型构建、设计与推荐、实验验证。平台集成了主动学习、贝叶斯优化和多约束优化等核心方法，已在多个工业材料项目中得到验证，为加速从发现到部署提供了系统级方案。",
+      "llm_tags": [
+        "query:aichem-map:composite"
+      ],
+      "matched_query_tag": "query:aichem-map:composite",
+      "matched_query_text": "Papers central to AI4Chem领域全景、通用方法与研究方向探索, especially work that connects or combines: chemical foundation model pre-training and transfer learning; molecular generation and optimization with machine learning; chemical reaction prediction using artificial intelligence; retrosynthesis and synthetic route planning with AI; large language models for chemistry applications; machine learning acceleration for quantum chemistry and molecular dynamics; What are the latest advances in retrosynthesis, synthesis planning, and AI agents for chemistry, and how are these systems evaluated?; What are the latest survey papers on AI for chemistry covering multiple subfields?; What benchmark datasets and evaluation metrics are commonly used for molecular property prediction and generation?; How is deep learning applied to reaction mechanism inference and catalysis design?.",
+      "matched_requirement_id": "req-composite-aichem-map",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.25156v1",
+      "source": "arxiv",
+      "title": "Accurate structural modeling of chemically diverse molecular interfaces with Vilya-2",
+      "abstract": "Structure-prediction networks built on co-evolutionary statistics have transformed protein-based drug discovery, yet their accuracy does not extend to peptide therapeutics--an increasingly important modality defined by non-canonical residues, macrocyclization, and complex topologies. We introduce Vilya-2, a diffusion transformer that extends the all-atom representation of Vilya-1 from modeling individual molecules to modeling their interactions with protein targets. This all-atom representation enables transfer learning between different molecular types, and delivers highly accurate structural modeling of peptides across sizes, classes, and compositions bound to therapeutically relevant targets. By generating diverse structural ensembles and ranking them with calibrated confidence, Vilya-2 recovers 59.1% of peptide interfaces to sub-2 Å backbone RMSD, far exceeding the performance of a representative co-folding model even when that model is given the bound receptor as a template. In addition, Vilya-2 is state-of-the-art at small-molecule docking, and generalizes to novel protein-small molecule complexes unlike those seen in training. It also generalizes to modeling molecular conformations of diverse macrocycles and disulfide-stapled miniproteins several-fold larger than any molecule seen in training. Finally, Vilya-2 can be used as a foundation model, and fine-tuned to enrich for active compounds in hit-to-lead campaigns. By unifying predictive accuracy with broad generalizability across chemical space, Vilya-2 is the structure-prediction oracle that de novo peptide design pipelines require--establishing the all-atom approach as a general foundation for the design and evaluation of de novo peptide therapeutics.",
+      "authors": [
+        "Vilya Research",
+        ":",
+        "Pascal Sturmfels",
+        "Naozumi Hiranuma",
+        "Milad Salem",
+        "Benjamin D. Sellers",
+        "Stephen Rettie",
+        "CJ San Felipe",
+        "Chase A. P. Wood",
+        "Jeffrey K. Holden",
+        "Adam P. Moyer",
+        "Patrick J. Salveson",
+        "Ivan Anishchanka"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-07-28T00:01:54+00:00",
+      "link": "https://arxiv.org/pdf/2607.25156v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Transfer learning across molecular types for structural modeling",
+      "llm_evidence_cn": "跨分子类型的迁移学习用于结构建模",
+      "llm_evidence": "跨分子类型的迁移学习用于结构建模",
+      "canonical_evidence": "跨分子类型的迁移学习用于结构建模",
+      "llm_tldr_en": "Vilya-2 extends all-atom diffusion transformer to model peptide-protein interactions, leveraging transfer learning across molecular types.",
+      "llm_tldr_cn": "蛋白质结构预测网络对非规范残基和环化的肽类精度不足。本文提出Vilya-2，一个扩散Transformer，将全原子表示从单个分子扩展到分子间相互作用。该表示支持不同分子类型间的迁移学习，能在治疗相关靶点上准确建模多种肽的结构。通过生成多样化构象集合，为肽药物发现提供了精确的结构模型。",
+      "llm_tldr": "蛋白质结构预测网络对非规范残基和环化的肽类精度不足。本文提出Vilya-2，一个扩散Transformer，将全原子表示从单个分子扩展到分子间相互作用。该表示支持不同分子类型间的迁移学习，能在治疗相关靶点上准确建模多种肽的结构。通过生成多样化构象集合，为肽药物发现提供了精确的结构模型。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "chemical foundation model pre-training and transfer learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.25597v1",
+      "source": "arxiv",
+      "title": "A Density-Matrix Framework for Electronic-Structure Analysis of Functional-Group and Salt Effects in Lithium-Metal Electrolytes",
+      "abstract": "The reactivity of lithium-metal electrolytes arises from the interplay of molecular functional groups, Li$^+$ solvation, and salt-anion participation. This interplay operates through the redistribution of electron density across donor, anion, and cation centers, which is most directly read out from the electronic structure resolved in space. Quantum-chemical calculations deliver such readouts faithfully, yet become computationally demanding across this multidimensional design space, and machine-learning electronic-structure models seldom cover chemically diverse solvation shells or electrolyte-relevant readouts. Here, we present a density-matrix-centered AI platform (EMolStudio) for electronic-structure prediction and analysis. Its workflow integrates molecular functionalization, explicit Li$^+$ first-shell assembly, density-matrix prediction with idempotency projection, and readouts of frontier orbitals, electrostatic potential, Li$^+$-donor bond order, and electron localization. We apply EMolStudio to 163,655 functionalized molecules and 22,500 explicit Li$^+$ first-shell clusters across four lithium salts. We find that 1) at the molecular scale, functionalization distinguishes CO$_2$Me, CN, F/CF$_3$, and sulfonyl groups by chemically distinct changes in frontier levels, electrostatic potential, and Li$^+$-donor contact, consistent with $π^*$-acceptor, inductive, and polarization contributions, with sublinear accumulation at higher degrees of functionalization; 2) in explicit solvation shells, anion identity reshapes frontier-orbital localization: LiTDI anchors the HOMO on the anion across the entire library, whereas LiDFOB pairs an anion-hosted HOMO with strongly functional-group-dependent LUMO hosting. EMolStudio thereby translates functional-group and salt choices into electronic-structure hypotheses relevant to lithium-bond formation, desolvation, and interphase reactions.",
+      "authors": [
+        "Mingkang Liu",
+        "Huize Yu",
+        "Yanbin Gao",
+        "Nan Yao",
+        "Xiang Chen",
+        "Lei Shen"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-07-28T11:28:03+00:00",
+      "link": "https://arxiv.org/pdf/2607.25597v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "AI platform for electronic-structure analysis of electrolytes, relevant to reaction mechanism and catalysis",
+      "llm_evidence_cn": "用于电解质电子结构分析的AI平台，与反应机理和催化设计相关",
+      "llm_evidence": "用于电解质电子结构分析的AI平台，与反应机理和催化设计相关",
+      "canonical_evidence": "用于电解质电子结构分析的AI平台，与反应机理和催化设计相关",
+      "llm_tldr_en": "Presents EMolStudio, a density-matrix-centered AI platform that analyzes electronic-structure features of lithium-metal electrolytes, revealing functional group and salt effects on reactivity.",
+      "llm_tldr_cn": "针对锂金属电解质反应性中官能团和盐效应的电子结构分析需求，该论文提出以密度矩阵为中心的AI平台EMolStudio。该平台结合量子化学计算和机器学习，从空间分辨电子密度中解析溶剂化效应。在多种电解质体系中验证了其揭示电子结构-反应性关系的能力，为催化设计提供了新工具。",
+      "llm_tldr": "针对锂金属电解质反应性中官能团和盐效应的电子结构分析需求，该论文提出以密度矩阵为中心的AI平台EMolStudio。该平台结合量子化学计算和机器学习，从空间分辨电子密度中解析溶剂化效应。在多种电解质体系中验证了其揭示电子结构-反应性关系的能力，为催化设计提供了新工具。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "How is deep learning applied to reaction mechanism inference and catalysis design?",
+      "matched_requirement_id": "req-10",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
