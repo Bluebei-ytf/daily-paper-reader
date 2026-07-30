@@ -1,0 +1,2404 @@
+Title: Accurate many-body descriptions of surface reactions by quantum computing with density functional embedding theory
+
+URL Source: https://arxiv.org/pdf/2607.27009v1
+
+Published Time: Thu, 30 Jul 2026 01:03:25 GMT
+
+Number of Pages: 40
+
+Markdown Content:
+Embedded quantum computing for many -body surface reaction 
+
+# Dedong Wan 1, Xiaopeng Li 1, Yi Fan 1, Jie Liu 2, Xiongzhi Zeng 1*, Zhenyu Li 1,2 *
+
+> 1
+
+# State Key Laboratory of Precision and Intelligent Chemistry, University  of  Science  and 
+
+# Technology  of  China,  Hefei  230026,  China  
+
+> 2
+
+# Hefei  National  Laboratory,  University  of  Science  and  Technology  of  China,  Hefei 
+
+# 230088,  China 
+
+> ∗
+
+To  whom  correspondence  should  be  addressed: 
+
+# xzzeng @ustc.edu.cn ; zyli@ustc.edu.cn; 
+
+# Abstract 
+
+Predictive simulations of catalytic interfaces require correlated electronic -structure treatments that  describe 
+
+localized chemical transformations while retaining the influence of the extended metallic environment.  We 
+
+introduce QC -DFET, a quantum -computing density -functional embedding framework that maps surface -
+
+reaction active spaces to compact, environment -aware qubit Hamiltonians. A reaction -consistent active -space 
+
+protocol preserves orbital continuity along react ion coordinates,  while quantum -selected c onfiguration 
+
+interaction based on measurements from the  Zuchongzhi  superconducting quantum processor  and strongly 
+
+contracted perturbation theory  capture  static and dynamic correlation. On Cu(111), QC -DFET treats active 
+
+spaces up to 28 qubits and is validated through a hierarchy of experimentally constrained surfa ce -chemistry 
+
+challenges. H2 dissociation/desorption tests balanced bond breaking and recombination barriers, CO 
+
+adsorption tests site selectivity and metal –adsorbate bonding, and formate hydrogenati on tests competing 
+
+hydrogenation branches with different kinetic and thermodynamic signatures. Across these cases, QC -DFET 
+
+reproduces bidirectional H 2 barriers, recovers the observed top -site preference and adsorption strength of CO, 
+
+and reconciles the experimentally benchmarked H 2COO* reverse barrier with the lower forward barrier to 
+
+HCOOH*. These results establish embedded quantum computing as a practical route to correlated surface -
+
+reaction energetics. 
+
+Surface reactions control the activity and selectivity of heterogeneous catalysts through elementary bond -
+
+breaking and bond -forming events at extended interfaces. 1-4 Predictive simulations of these events require 
+
+more than locating stationary points on a potential -energy surface: the computed energetics must balance 
+
+adsorbate bond rearrangement, metal -adsorbate charge redistribution and the electronic response of the 
+
+surrounding surface. This balance is particularly demanding on transition -metal catalysts,  where localized adsorbate frontier orbitals hybridize with delocalized metallic states. Errors of a few tenths of an electron -volt 
+
+can change the predicted adsorption site, reverse the ordering of competing reaction channels or obscure the 
+
+connection between atomistic mec hanisms and experimental observables .
+
+These competing requirements have made density functional theory (DFT) the workhorse of surface 
+
+chemistry, while also exposing the approximations that limit most practical surface calculations. Semilocal 
+
+and dispersion -corrected generalized -gradient approx imations make periodic slab simulations tractable at 
+
+routine cost; however, self -interaction, delocalization and density -driven errors can distort metal –adsorbate 
+
+charge redistribution and lead to unreliable reaction and adsorption energetics. 5–7 Such errors are not merely 
+
+technical: they are manifested in benchmark problems such as H 2 dissociation on Cu(111), CO adsorption on 
+
+close -packed transition -metal surfaces and formate hydrogenation on copper, where barrier heights, site 
+
+preferences and branching thermodynamics depend sensitively on electron correlation and surface charge 
+
+respon se. 4,8 –19  Double -hybrid density functionals, random -phase approximation, quantum Monte Carlo and 
+
+embedded correlated -wavefunction methods have improved selected case s, but their computational cost and 
+
+system dependence still limit routine application to complex catalytic interfaces. 13,14,20 –22 
+
+Wave -function -based electronic -structure methods can systematically improve the treatment of electron 
+
+correlation, but their direct application to extended surfaces is limited by the steep scaling with the number of 
+
+correlated electrons and orbitals .23 -25  Embedding approaches address this difficulty by treating a chemically 
+
+important region at high level while retaining the surrounding environment at lower cost. 26  In density -
+
+functional embedding theory (DFET), a cluster containing the reactive site is embed ded in an effective 
+
+potential derived from the full periodic system, allowing correlated calculations to include the effect of the 
+
+extended surface. 27 -30  DFET -based embedded correlated -wavefunction calculations have clarified surface -
+
+reaction problems including H 2 desorption from Cu(111), methane activation and electrochemical CO 2-
+
+reduction intermediates. 31 -32 These studies show that the essential many -body corrections in surface chemistry 
+
+are often local enough to be embedded, but the active -space solver r emains a central bottleneck .
+
+Quantum computing provides a complementary route to this bottleneck by representing many -electron 
+
+active -space wave functions in qubit Hilbert spaces. 33,3 4 Variational quantum eigensolvers, adaptive ansatz 
+
+construction and fermionic excitation circuits have enabled increasingly compact quantum simulations of 
+
+molecular electronic structure. 35-41 More recently, quantum -selected configuration interaction (QSCI) and 
+
+related quantum -centric diagonalization methods have shifted the near -term role of quantum hardw are from 
+
+full variational optimization to the sampling of important determinants, followed by classical diagonalization 
+
+in the selected subspace. 42-44 This strategy is attractive for chemistry because the quantum device is used for 
+
+a naturally probabilistic task -identifying important configurations -while the final active -space energy remains 
+
+variational within the selected determinant space .
+
+Applying this idea to catalytic surfaces requires more than a quantum active -space solver. The active -
+
+space Hamiltonian must be small enough for present quantum hardware, chemically complete enough to 
+
+describe bond rearrangement and physically embedded eno ugh to retain the  metallic  environment. Earlier 
+
+quantum -computing studies of surface reactions established local -embedding workflows and demonstrated 
+
+feasibility for surface models, but often remained at the proof -of -concept level or used simplified  cluste rs .45- 
+
+> 46
+
+In parallel, recent many -body embedding and screening approaches for  metal  surfaces have demonstrated 
+
+that high -level solvers can recover experimentally constrained adsorption and reaction energetics. 20 -22  These 
+
+advances define a sharper question for computational science: can quantum hardware be incorporated into an 
+
+embedding framework that treats realistic, experimentally benchmarked surface reactions rather than isolated molecular or cluster models ?
+
+Fig.  1 Workflow of the QC -DFET implementation. Classical -computing components are shown in blue, 
+
+quantum -hardware components are highlighted in pink beige, and the resulting QC -DFET outputs are marked 
+
+in green. 
+
+Here we answer this question by  introducing quantum -computing density -functional embedding theory, 
+
+QC -DFET, for correlated surface -reaction energetics. QC -DFET constructs DFET -derived active -space 
+
+Hamiltonians that retain the extended metallic environment while concentrating quantum reso urces on the 
+
+adsorbate -metal orbitals responsible for bond rearrangement, charge redistribution and site -specific bonding. 
+
+A surface -reaction active -space protocol,  many -body expansion -based complete active space for surface 
+
+reaction ( MBECAS -SR ), selects c ompact and orbital -consistent active spaces along reaction coordinates. 
+
+These Hamiltonians  are solved using hardware -sampled quantum -selected configuration interaction, and 
+
+residual dynamic correlation is recovered by strongly contracted NEVPT2 corrections to t he quantum -
+
+computing active -space wave functions.  We demonstrate the framework on a hierarchy of experimentally 
+
+constrained Cu(111) challenges that progressively test different requirements for predictive surface chemistry. 
+
+H2 dissociation/desorption  tests whether QC -DFET can provide balanced forward and reverse barriers for 
+
+coupled H –H bond cleavage and H –Cu bond formation. CO adsorption tests whether the method can recover 
+
+site selectivity and adsorption strength while providing an orbital -resolved p icture of Cu –CO bonding. 
+
+HCOO* hydrogenation further tests whether QC -DFET can distinguish competing hydrogenation branches 
+
+with different kinetic and thermodynamic signatures. Across this sequence, QC -DFET brings quantum -
+
+hardware sampling into environment -aware many -body simulations of catalytic surfaces and provides a 
+
+practical computational route for experimentally constrained surface -reaction energetics. Results 
+
+QC -DFET workflow for experimentally benchmarked surface reactions 
+
+QC -DFET converts an extended catalytic interface into an environment -aware active -space problem that 
+
+can be interrogated by quantum -computing solvers. The workflow begins from a periodic DFT description of 
+
+the surface and partitions the slab into a chemica lly active cluster and its environment. DFET then optimizes 
+
+an embedding potential so that the cluster retains the electronic response of the extended metallic surface. 
+
+Within this embedded cluster, MBECAS -SR selects a compact, reaction -consistent active s pace containing 
+
+the adsorbate and surface orbitals that control bond breaking, bond formation, charge redistribution and metal -
+
+adsorbate couplin g. The resulting active -space Hamiltonian is mapped onto qubits and solved using hardware -
+
+sampled QSCI, after which SC -NEVPT2 recovers residual dynamic correlation outside the active space. 
+
+This architecture separates the surface -reaction problem into three linked tasks: preserving the metallic 
+
+environment, choosing an active space that remains chemically continuous along a reaction coordinate, and 
+
+extracting quantitatively useful many -body e nergies from near -term quantum states. We therefore benchmark 
+
+QC -DFET through three Cu(111) challenges: a state -balanced bond -activation benchmark, a site -selective 
+
+adsorption puzzle, and a pathway -selective hydrogenation branch. H 2 dissociation/desorption tests whether 
+
+one embedded active -space description can treat reactant, transition -state and product electronic structures 
+
+with matched accuracy. CO adsorption tests whether the method can correct the site -preference error of semi -
+
+local DFT while resolving the orbital channels behind Cu -CO bonding. HCOO* hydrogenation tests whether 
+
+QC -DFET can distinguish competing C -H and O -H bond -forming branches whose kinetic and thermodynamic 
+
+signatures point in different directions. 
+
+H2 dissociation/desorption tests state -balanced reaction energetics. 
+
+We first examined H 2 dissociation and the reverse associative desorption of adsorbed H atoms on Cu(111), 
+
+a stringent benchmark for state -balanced surface -reaction energetics. Along this single reaction coordinate, 
+
+the electronic structure evolve s from  two Cu -bound H fragments  in the reactant, through a strongly coupled 
+
+transition state, to  molecular H -H bonding  in the product. Acc urate barriers therefore require matched errors 
+
+for the initial, transition and final states, not merely an accurate description  of one endpoint. The process is 
+
+experimentally constrained in both directions: the dissociative adsorption barrier is 0.77 eV, whereas the zero -
+
+point -energy -corrected associative desorption barrier is 0.59 eV. 8,9  These paired reference values provide a 
+
+direct test of whether one embedded active -space description remains comparably accurate across all three 
+
+states. Fig. 2  Benchmark validation of QC -DFET for H 2 dissociation/desorption on Cu(111).  (a) Calculated TS -
+
+IS and TS -FS barriers using PBE -D3BJ,  ENEVPT2 31 , FEMION 22 , XYG3:PBE -D3BJ  (inferred from Fig. 3d 
+
+of Ref. 14)  and QC -DFET.  IS, TS, and FS denote the initial, transition, and final states, respectively.  Dashed 
+
+lines indicate experimental barriers; shaded bands denote chemical accuracy (0.043 eV). (b) Mulliken charge 
+
+transfer from the Cu slab to H 2 along the IS -TS -FS reaction coordinate at the emb -DFT and emb -QC levels. 
+
+The inset shows top -view Mulliken atomic charge maps at the TS geometry for emb -DFT and emb -QC using 
+
+a common color scale .
+
+Figure 2a summarizes the calculated barriers. PBE -D3BJ underestimates both the TS -IS and TS -FS 
+
+barriers by 0.28 and 0.30 eV, respectively, indicating that its errors in the initial, transition and final states are 
+
+not balanced for this reaction coordinate.  The DFET -based ENEVPT2 treatment improves the reverse barrier 
+
+but still underestimates the forward barrier by 0.20 eV, suggesting that the active -space description is less 
+
+consistent between the transition state and the dissociated -H state. 31  In contrast,  QC -DFET with a
+
+CAS(12e,12o) embedded active -space Hamiltonian mapped to 24 qubits gives absolute errors of only 0.01 
+
+and 0.02 eV for the TS -IS and TS -FS barriers, respectively. This agreement shows that QC -DFET reduces 
+
+state -dependent error imbalance acro ss the reactant, transition state and product. 
+
+This state balance arises from the reaction -consistent construction of the active space. In the QC -DFET 
+
+active space, two surface -co upled adsorbate -centered orbital pairs are retained for the separated H atoms (Fig. 
+
+S4a), allowing the active -space manifold to evolve continuously from the  two Cu -bound H fragments  to  H-H
+
+bonding/antibonding description . This continuity is essential because the orbitals that dominate the initial, 
+
+transition and final states change character as the H -H bond breaks and H -Cu inte ractions form. By comparison, 
+
+the active orbitals reproduced from the previous DFET -based ENEVPT2 protocol contain only one adsorbate -
+
+centered pair at the transition state (Fig. S4b), even though two such pairs are needed in the dissociated 
+
+structure. This  mismatch provides a natural explanation for the residual forward -barrier error in that treatment. 
+
+Thus, the H 2 benchmark shows that the accuracy of QC -DFET depends not only on the correlated solver, but 
+
+also on maintaining a chemically continuous active s pace that gives matched -quality descriptions of all 
+
+stationary states along the reaction coordinate. 
+
+The correlated treatment  indeed  plays an important role in correctly treat the electronic structure . As an 
+
+example, we check the charge transfer among adsorbate and surface.  At the emb -DFT level, slab -to -adsorbate 
+
+charge transfer is strongly suppressed at the transition state, whereas emb -QC retains appreciable charge 
+
+redistribution from the Cu slab to the H adsorbate region (Fig. 2b). The atom -resolved charge maps further 
+
+sho w that emb -DFT localizes the surface response primarily on the nearest Cu atoms, while emb -QC distributes the charge response more broadly over the embedded cluster (Figs. 2b and S17). Relative to the 
+
+correlated description, the DFT -level embedded treatment therefore both underestimates net charge 
+
+redistribution and over -localizes the local surface  response in the strongly coupled transition -state region. This 
+
+provides an electronic -structure explanation for why QC -DFET gives more consistent descriptions of the 
+
+initial, transition and final states. 
+
+Fig.  3 Quantum -computing energy errors and NEVPT2 -assisted error reduction for H₂ 
+
+dissociation/desorption on Cu (111).  (a) State -resolved QC energy errors for IS, TS and FS obtained with 
+
+ADAPT -UCCSD, ADAPT -UCCGSD and QPU -QSCI . The  QPU -QSCI  results correspond to the recovered 
+
+QSCI  configuration space  in hardware  of step -10 ansatz . Cell colors indicate whether the corresponding 
+
+energy error is within chemical accuracy. (b) NEVPT2 correction reduces raw QC energy errors for all three 
+
+states to within chemical accura cy.  Blue  squares denote raw QC errors,  purple  circles denote QC+NEVPT2 
+
+errors, arrows indicate error reduction and the shaded region marks chemical accuracy. Percentages above 
+
+QC -error points give the corresponding wave  function overlaps  with FCI .
+
+Quantum computing is central to QC -DFET because it supplies the correlated active -space states from 
+
+which the embedded IS, TS and FS energies are constructed. We therefore first examined how the choice of 
+
+quantum -computing active -space solver affects the s tate -resolved description of the H 2 reaction coordinate. 
+
+Figure 3a compares active -space energy errors for the IS, TS and FS obtained from ADAPT -UCCSD, ADAPT -
+
+UCCGSD and hardware -sampled QSCI with configuration recovery. In noiseless simulations, ADAPT -
+
+UCCS D gives small but not uniformly chemically accurate errors across the three states, whereas the more 
+
+flexible ADAPT -UCCGSD pool reduces all three errors to below 0.01 eV. Thus, the active -space solver must 
+
+be sufficiently expressive to deliver matched -qual ity descriptions of the reactant, transition state and product. 
+
+Importantly, hardware -sampled QSCI reaches a comparable level of active -space accuracy for all three 
+
+geometries despite quantum -device noise, showing that determinant subspaces recovered from  measured 
+
+bitstrings are already sufficiently informative for reconstructing the relevant embedded active -space energies. 
+
+The remaining question is whether a quantum -computing state that is not fully converged can still lead 
+
+to reliable final QC -DFET energetics after dynamic -correlation recovery. As shown in Fig. 3b, intermediate 
+
+ADAPT -UCCGSD wave functions can have raw activ e-space QC energy errors above chemical accuracy, 
+
+reaching approximately 0.08 eV for the transition state and 0.23 -0.29 eV for the initial and final states. 
+
+Applying SC -NEVPT2 to these same approximate quantum -computing wave functions brings the 
+
+correspond ing total -energy errors for all three states within chemical accuracy. The overlaps of these 
+
+intermediate wave functions with FCI remain high but not fully converged, indicating that the perturbative 
+
+correction can tolerate imperfect active -space states on ce the dominant correlation pattern is captured. Thus, QC -DFET benefits from two complementary requirements: a sufficiently expressive quantum solver improves 
+
+the active -space state itself, and SC -NEVPT2 reduces the impact of residual state -dependent solver errors on 
+
+the final IS, TS and FS energetics. 
+
+QC -DFET resolves the CO adsorption -site puzzle on Cu(111) .
+
+We then applied QC -DFET to CO adsorption on Cu(111), a prototypical adsorption -site puzzle in which 
+
+commonly used GGA functionals over -stabilize high -coordination hollow sites relative to the experimentally 
+
+observed top site. 10,11  This problem is demanding because the site preference depends on a subtle balance 
+
+among CO  5σ donation, metal -to -CO  2π* back -donation, direct C-Cu bonding and surface charge 
+
+redistribution. 15  It therefore tests two aspects of QC -DFET: whether the method can recover the adsorption -
+
+energy ordering, and whether the correlated embedded description provides a chemically interpretable picture 
+
+of the bonding channels behind that ordering. 
+
+Fig.  4 Adsorption energetics and charge -transfer analysis for CO on Cu (111).  (a) Comparison of CO 
+
+adsorption energetics from PBE -D3BJ,  ECASPT2 12 , DMC 13 , FEMION 22 , XYG3:PBE -D3BJ 14  and  QC -DFET. 
+
+The upper panel shows the adsorption energy at the top site, while the lower panel shows the fcc -top energy 
+
+difference. The shaded region in the adsorption -energy panel denotes the experimental reference window 
+
+cent ered at  -0.55 eV with chemical -accuracy width. The solid zero line in the fcc -top panel separates 
+
+predic tions favoring top and fcc sites. (b) Site -dependent Mulliken charge transfer from the Cu slab to CO at 
+
+the emb -DFT and emb -QC levels. Positive values correspond to net electron donation from the metallic 
+
+substrate to CO .
+
+Figure 4a summarizes the adsorption energetics. PBE -D3BJ overestimates the CO adsorption strength 
+
+and incorrectly favors the fcc hollow site over the top site. Higher -level approaches, including DFET -based 
+
+ECASPT2, DMC, FEMION and XYG3, correct this qualit ative error and recover the top -site preference. 12 -14 
+
+QC -DFET, implemented with hardware -sampled QSCI for a CAS(14e,12o) active -space Hamiltonian mapped 
+
+to 24 qubits, also predicts the top site as the most stable adsorption configuration. The top -site adso rption 
+
+energy lies within the chemical -accuracy window of the experimental reference, and the fcc -top energy 
+
+separation is 0.30 eV, close to the DMC value and larger than the gaps predicted by several other high -level 
+
+methods. Across the four adsorption si tes, QC -DFET gives the stability order top > bridge > fcc > hcp, 
+
+matching the ordering predicted by XYG3 but with a stronger top -site preference (Fig. S14). 
+
+We also tested the sensitivity of the QC -DFET energetics to embedded -cluster size. Calculations with the 
+
+smaller Cu 12  cluster used in previous ECASPT2 work still give a top -site adsorption energy close to experiment and a substantial fcc -top separation (Tab. S1). However, the hcp site is affected by a finite -cluster 
+
+edge artifact because one selected slab orbital has pronounced Cu 3d edge character. 12  These results indicate 
+
+that the main top/fcc energetics are robust, whereas a complete description of the full multi -site energy 
+
+landscape requires embedded clusters large enough to avoid edge -localized orbital art ifacts. 
+
+The corrected adsorption energetics motivate a more detailed analysis of the CO -Cu electronic structure. 
+
+The site -dependent Mulliken charge transfer in Fig. 4b shows that both emb -DFT and emb -QC predict net 
+
+electron donation from Cu to CO for chemisorbed c onfigurations, but the correlated correction is strongly site 
+
+dependent. Rather than uniformly reducing charge transfer, emb -QC lowers the net slab -to -CO donation at the 
+
+top and fcc sites while giving comparable or larger transfer at the hcp and bridge sit es. Because this charge -
+
+transfer trend does not follow the QC -DFET stability order, the recovered top -site preference cannot be 
+
+explained by net charge transfer alone. A more local, orbital -resolved bonding descriptor is therefore needed. 
+
+Fig.  5. Orbital -resolved Mayer bond -order analysis of CO adsorption on Cu (111).  (a)  Qualitative 
+
+schematic of the orbital interactions underlying the Mayer bond -order channels, showing CO 5 σ donation 
+
+along the Cu –C axis and  π back -donation from Cu d states into the CO 2 π*  manifold. (b) Mayer b ond indices 
+
+of the internal C -O σ and  π components for the free -CO reference configuration, comparing emb -DFT and 
+
+emb -QC descriptions. (c) Top -site orbital -resolved Mayer bond indices from emb -DFT and emb -QC for 
+
+internal C -O σ/π components and C -Cu  σ/π  coupling channels. Arrows highlight the DFT -to -QC correction 
+
+for direct C -Cu coupling channels. (d) Site -resolved emb -QC C -Cu coupling on Cu(111), decomposed into 
+
+total,  σ and  π components. The top site exhibits the largest total C -Cu coupling, dominated by the  σ component, 
+
+followed by bridge, fcc and hcp sites, consistent with the QC -DFET adsorption -site stability trend To resolve these bonding channels, we performed orbital -resolved Mayer bond -order analysis based on 
+
+the Blyholder picture of CO -metal bonding (Fig. 5a). 15  The free -CO reference first establishes how the 
+
+correlated embedded treatment modifies the internal CO bond in the absence of C -Cu coupling: emb -QC gives 
+
+smaller internal C -O σ and  π Mayer indices than emb -DFT, with the larger correction in the  π componen t (Fig. 
+
+5b). For top -site adsorption, however, the internal C -O σ and  π components change only weakly  from emb -
+
+DFT to emb -QC, whereas the direct C -Cu coupling is substantially reduced, mainly through the  σ channel in 
+
+absolute magnitude (Fig. 5c). Thus, the dominant DFT -to -QC correction in the adsorbed state is not a 
+
+restructuring of the internal CO bond, b ut a correction to the localized metal -adsorbate coupling. 
+
+The site -resolved emb -QC Mayer indices then connect this bonding correction to the QC -DFET energy 
+
+landscape. The total C -Cu coupling is largest at the top site and decreases through bridge, fcc and hcp sites, 
+
+following the QC -DFET stability order. Decompos ition into  σ and  π components shows that this ordering is 
+
+dominated by localized C -Cu  σ coupling, whereas the  π contribution is smaller and does not compensate for 
+
+the weaker direct  σ interaction at bridge and hollow sites. The physical picture from Figs.  4 and 5 is therefore 
+
+that QC -DFET recovers the top -site preference not by maximizing net slab -to -CO charge transfer, but by 
+
+correcting the local orbital channels so that the strongest C -Cu  σ coupling coincides with the most stable 
+
+adsorption site. 
+
+Correlated reassessment of HCOO*  hydrogenation branching .
+
+Finally, we applied QC -DFET to the competing HCOO* + H* hydrogenation branches on Cu(111), a key 
+
+step in methanol -related CO 2 hydrogenation  (Fig. S19). 16  An experimentally inferred reverse barrier is 
+
+available for the H 2COO* pathway, providing a direct quantitative benchmark for theory. 17  However, GGA -
+
+level calculations substantially underestimate this barrier, 19  indicating that the reaction energetics are not 
+
+quantitatively captured at the semilocal DFT level. Calorimetric measurements have  also  revealed s ubstantial 
+
+GGA -level errors in formate binding on Cu(111) around 0.64 to 0.83 eV, further underscoring the need for a 
+
+higher -accuracy treatment of both adsorbate –surface bonding and reaction barriers. 18  We therefore used QC -
+
+DFET to reassess the competition between C -H bond formation leading to H 2COO* and O -H bond formation 
+
+leading to HCOOH* at a correlated level. 
+
+The two branches involve distinct coupled bond -forming and surface -reorganization processes (Fig. 6a). 
+
+In the H 2COO* -forming branch, HCOO* initially binds through both O atoms, while co -adsorbed H* occupies 
+
+a nearby hollow site. Along the reaction coordinate, H* leaves the surface hollow site and approaches the 
+
+carbon cent er of formate, forming a second C -H bond and producing a bridge -bound H 2COO* intermediate. 
+
+In the HCOOH* -forming branc h, the initially bidentate HCOO* first migrates laterally and reorient s, while 
+
+the co -adsorbed H* approaches one O atom of HCOO*.  As the O -H bond forms, the hydrogenated oxygen 
+
+weakens its Cu coordination and lifts away from the surface, converting bidentate formate into a more 
+
+molecular HCOOH* configuration. These pathways therefore test whether QC -DFET can describe both 
+
+internal ad sorbate bond formation and changing adsorbate -surface coupling. 
+
+For the H 2COO * channel, PBE -D3BJ gives zero -point -energy -corrected forward and reverse barriers of 
+
+1.45 and 0.46 eV, respectively, with the r everse barrier underestimated by 0.19 eV relative to experiment. QC -
+
+DFET, using hardware -sampled QSCI for a CAS(16e,14o) active -space Hamiltonian mapped to 28 qubits, 
+
+raises the reverse barrier to 0.62 eV, only 0.03 eV below experimen t (Fig. 6b, inset). T he QC -DFET forward 
+
+barrier of 1.7 2 eV also remains close to the high -level XYG3 value of 1.65 eV. 19  Thus, for the experimentally benchmarked H 2COO* branch, QC -DFET substantially reduces the residual GGA -level error and brings the 
+
+reaction energetics into close agreement with both experiment and a high -level double -hybrid reference. 
+
+For the competing HCOOH * channel, no direct experimental barrier benchmark is available. PBE -D3BJ 
+
+gives a forward barrier of 0.88 eV, consistent with the XYG3 and QC -DFET values of 0.86 and 0.80 eV, 
+
+respectively, suggesting that self -interaction effects are less pronounced for th is forward HCOO* migration 
+
+process. Although PBE -D3BJ reproduces the forward barrier reasonably well, its reverse barrier is only 0.38 
+
+eV, 0.20 eV below the QC -DFET value. Taken together, QC -DFET predicts a substantially lower  forward 
+
+barrier for the HCOOH *-forming pathway than for the H 2COO *-forming pathwa y, identifying HCOOH* 
+
+formation as kinetically favored on the ideal Cu(111) terrace, while the two channels exhibit comparable 
+
+reverse barriers, respectively, with the H 2COO* value additionally reproducing the available experimental 
+
+benchmark. 
+
+Fig. 6  QC -DFET energetics and charge -transfer analysis for competing HCOO* hydrogenation 
+
+pathways on Cu (111).  (a)  Representative IS, TS, and FS structures along the C –H-bond -forming pathway to 
+
+H₂COO* and the O –H-bond -forming pathway to HCOOH*.  (b)  Reaction energy profiles for the two 
+
+competing pathways computed using PBE -D3BJ, XYG3:PBE -D3BJ 19 , and QC -DFET. All energies are 
+
+referenced to the corresponding initial HCOO* + H*  co -adsorption state for each pathway. The inset shows 
+
+the reverse -barrier errors for the HCOO* + H* → H₂COO* pathway relative to the available experimental 
+
+benchmark. The shaded region indicates chemical accuracy. (c,d) Mulliken slab -to -adsorbate charge tr ansfer 
+
+along the IS -TS -FS reaction coordinate for the H 2COO* channel (c) and  HCOOH* channel (d), evaluated at 
+
+the emb -DFT and emb -QC levels. Positive values denote net electron donation from the slab to the adsorbate .The charge -redistribution analysis complements the barrier comparison by revealing distinct electronic 
+
+evolution along the two pathways. Along the H 2COO* branch, both emb -DFT and emb -QC predict increasing 
+
+slab -to -adsorbate electron donation from the IS through the TS to the FS (Fig. 6c), indicating progressively 
+
+enhanced adsorbate –surface electronic coupling as bridge -bound H 2COO* forms. Along the HCOOH* branch, 
+
+charge transfer decreases monotonically from the IS to the FS (Fig. 6d), consistent with the wea kening of Cu 
+
+coordination to the hydrogenated O atom and the conversion of bidentate formate into a more molecular 
+
+HCOOH* configuration. Frontier -orbital descriptors likewise show stronger adsorbate –slab coupling for 
+
+H2COO* than for HCOOH* (Fig. S20b,c), consistently distinguishing the enhanced surface coupling along 
+
+the H 2COO* pathway from the progressive electronic decoupling accompanying HCOOH* formation. 
+
+These results should not be interpreted as a complete mechanism for methanol synthesis on Cu catalysts. 
+
+The present calculations focus on the initial HCOO* + H* branching step on an ideal Cu(111) terrace, a 
+
+controlled model closely related to the low -tempe rature atomic -hydrogen experiment. Under realistic catalytic 
+
+conditions, defects, steps, oxide -derived motifs, Cu/ZnO interfaces, explicit solvent, applied potentials and 
+
+hydrogen -bonding networks can all alter the relative stability of intermediates and t he subsequent reaction 
+
+network. 47,48  The value of the present QC -DFET calculation is therefore specific and experimentally anchored: 
+
+it provides a many -body reassessment of a key elementary branching step and shows how formation kinetics 
+
+can favor different intermediates. 
+
+# Discussion 
+
+QC -DFET establishes an embedded quantum -computing strategy for correlated surface -reaction 
+
+energetics. The framework addresses three requirements that must be satisfied simultaneously before quantum 
+
+computing can become useful for realistic catalytic inter faces. First, the active -space Hamiltonian must retain 
+
+the effect of the extended surface environment; here this is achieved through a DFET -derived embedding 
+
+potential rather than by using an isolated cluster. Second, the active space must be compact enoug h for near -
+
+term quantum resources while remaining chemically complete along the reaction coordinate; MBECAS -SR 
+
+addresses this by selecting adsorbate and surface orbitals associated with bond rearrangement and adsorbate -
+
+metal coupling and by maintaining orb ital consistency between initial, transition and final states. Third, the 
+
+quantum -computing output must be converted into quantitatively reliable reaction or adsorption energies; in 
+
+QC -DFET, hardware -sampled QSCI provides a variational determinant subspace , while SC -NEVPT2 
+
+recovers residual dynamic correlation and reduces the sensitivity of final energies to imperfect quantum -
+
+computing wave functions. 
+
+The three Cu(111) applications test complementary aspects of this strategy. H 2 dissociation/desorption 
+
+provides a stringent bidirectional barrier benchmark, where QC -DFET reaches near -chemical accuracy for 
+
+both H 2 activation and associative desorption. CO adsorption tests the ability of the method to resolve a site -
+
+preference error that has challenged semi -local DFT for decades. QC -DFET recovers the experimentally 
+
+observed top -site preference and shows that the corrected energetics are associated with local ized C -Cu  σ
+
+bonding rather than net charge transfer alone. Formate hydrogenation then extends the framework from 
+
+benchmark adsorption and dissociation problems to a mechanistic branching question. QC -DFET 
+
+quantitatively reproduces the experimentally constrained rever se barrier for the H 2COO* branch,  while 
+
+showing that HCOOH* formation remains kinetically more accessible on the ideal Cu(111) terrace. The methodological significance of these results lies in the role assigned to the quantum processor. QC -
+
+DFET does not rely on the quantum hardware to perform a fully converged variational optimization of the 
+
+entire surface problem. Instead, the quantum dev ice samples physically important determinants from an 
+
+embedded active -space wave function, and the final energy is obtained by classical subspace diagonalization 
+
+and perturbative correlation correction. This quantum -hardware -in -the -loop design is well matc hed to the 
+
+present stage of quantum computing: it uses the quantum processor for a task that is probabilistic and 
+
+chemically informative, while preserving the variational structure and interpretability of the selected -CI 
+
+energy. In this sense, QC -DFET prov ides a route to quantum -computing -assisted surface chemistry that is 
+
+more immediately practical than workflows requiring deep, fully optimized circuits. 
+
+At the same time, the present study should be viewed as a step toward predictive quantum simulations of 
+
+catalytic interfaces, not as a demonstration of quantum advantage. The active spaces considered here, up to 
+
+28 qubits, remain within a regime where clas sical reference calculations and validation are still possible. This 
+
+validation is essential for establishing accuracy, but it also means that the present work demonstrates a scalable 
+
+computational architecture rather than a classical -to -quantum crossover.  The long -term value of the approach 
+
+will depend on whether larger embedded active spaces, more complex surfaces and more automated active -
+
+space selection can be treated with increasing quantum and classical efficiency. 
+
+Several limitations define clear directions for future work. The embedding potential is optimized at the 
+
+DFT level and kept fixed during the correlated calculations. A self -consistent correlated embedding cycle, in 
+
+which the quantum -computing density updat es the embedding potential, could improve the description of 
+
+charge redistribution between the active cluster and the environment. The current MBECAS -SR protocol is 
+
+chemically guided and should be further automated using orbital entanglement, response desc riptors or 
+
+energy -based selection criteria, especially for reaction networks containing many intermediates and transition 
+
+states. Dynamic correlation is presently introduced by a classical SC -NEVPT2 correction; incorporating 
+
+dynamic correlation more direct ly into quantum -computing workflows, or developing embedding -compatible 
+
+quantum/classical perturbative schemes, would make the methodology more internally consistent. 
+
+Extending QC -DFET beyond the ideal Cu(111) terrace will be equally important. Real catalytic interfaces 
+
+often involve low -coordinated sites, oxide -derived structures, metal -oxide boundaries, explicit solvent, 
+
+interfacial electric fields and proton -coupled  electron -transfer steps. These effects can alter both the active 
+
+orbitals and the reaction thermodynamics. The DFET foundation of QC -DFET is well suited to such 
+
+extensions because it separates the local many -body problem from the larger environment, but pr actical 
+
+applications will require more robust treatments of solvation, electrode potential and finite -temperature 
+
+surface dynamics. If these developments are combined with improved quantum hardware and more efficient 
+
+determinant -recovery protocols, QC -DFET  could evolve from a benchmarked proof of principle into a general 
+
+embedded quantum -computing platform for catalytic interface simulations. 
+
+Overall, the present results show that quantum computing can already play a chemically meaningful role 
+
+in surface -reaction modelling when embedded in an appropriate many -body framework. By combining 
+
+environment -aware DFET Hamiltonians, reaction -consistent  active spaces, hardware -sampled QSCI and 
+
+perturbative dynamic -correlation recovery, QC -DFET links near -term quantum computation to experimentally 
+
+constrained catalytic energetics. This establishes a practical route for using quantum hardware not as an 
+
+isol ated solver for small molecular models, but as a targeted many -body component within predictive 
+
+simulations of realistic surface chemistry .Methods 
+
+This section describes the QC -DFET implementation used to construct and solve  environment -embedded 
+
+active -space Hamiltonians for surface reactions. The workflow consists of four components: DFET 
+
+embedding -potential optimization, MBECAS -SR active -space construction, quantum -computing solution of 
+
+the embedded active -space Hamiltonian,  and perturbative dynamic -correlation correction for final energy 
+
+evaluation. Detailed computational settings, system -specific active -space selections, and quantum -hardware 
+
+and circuit details are provided in the Supplementary Information. 
+
+Density -functional embedding  Theory 
+
+The embedding potential is optimized using the Wu -Yang density -matching formulation. 49  The full DFT 
+
+density is partitioned into cluster and environment contributions, and the embedding potential is determined 
+
+by maximizing the Wu -Yang functional  𝑊 [𝑉 emb ]
+
+𝑊 [𝑉 emb ] = 𝐸 cl [𝜌 cl , 𝑉 emb ] + 𝐸 env [𝜌 env , 𝑉 emb ] − ∫ 𝜌 tot 𝑉 emb  𝑑 𝒓  (1)
+
+where  𝐸 cl  and  𝐸 env  denote the DFT energies of the cluster and environment in the presence of the 
+
+embedding potential  𝑉 emb , 𝜌 cl  and  𝜌 env  are  the corresponding subsystem densities , and  𝜌 tot  is the target 
+
+density obtained from the DFT calculation of the full surface system . The stationary condition with respect to 
+
+the embedding potential gives 
+
+𝜌 tot  = 𝜌 cl  + 𝜌 env  (2)
+
+which enforces density matching between the full system and the embedded subsystems.  For practical 
+
+embedded cluster calculations, the optimized embedding potential is represented in the Gaussian -type -orbital 
+
+(GTO)  basis. Its matrix elements are evaluated as 
+
+𝑉 𝑝𝑞  
+
+> emb
+
+= ⟨𝜒 𝑝 |𝑉 ̂emb |𝜒 𝑞 ⟩ (3)
+
+where  𝜒 𝑝  and  𝜒 𝑞  are GTO basis functions.  This embedding contribution is added to  the one -electron part 
+
+of the cluster Hamiltonian, yielding the embedded Hamiltonian 
+
+𝐻 ̂emb  = ∑ (ℎ𝑝𝑞  + 𝑉 𝑝𝑞 
+
+> emb
+
+)
+
+> 𝑝 ,𝑞
+
+𝑎 𝑝 
+
+> †
+
+𝑎 𝑞  + 1
+
+2 ∑ ⟨
+
+> 𝑝 ,𝑞 ,𝑟 ,𝑠
+
+𝑝𝑞 |𝑟𝑠 ⟩𝑎 𝑝 
+
+> †
+
+𝑎 𝑞 
+
+> †
+
+𝑎 𝑠 𝑎 𝑟  (4)
+
+The resulting Hamiltonian retains the cluster –environment interaction s through  𝑉 emb  while keeping 
+
+explicit two -electron interactions within the embedded cluster. It defines the embedded DFT reference and, 
+
+after active -space projection,  the many -body Hamiltonian solved by the quantum -computing solvers. In the 
+
+present work, following previous DFET studies of surface reactions, the embedding potential is optimized at 
+
+the DFT level and kept fixed during the correlated and quantum -computing c alculations. 31,32  This choice 
+
+isolates the solver -level many -body correction while retaining the cluste r-environment interaction encoded in 
+
+the DFT -derived embedding potential .
+
+Reaction -consistent active -space construction 
+
+The embedded Hamiltonian is reduced to a compact active -space problem using MBECAS -SR, a 
+
+chemically guided selection protocol for surface reactions. Chemically important molecular -orbital pairs are 
+
+first chosen as initial core orbitals according to bonding  patterns along the reaction coordinate, including bond 
+
+breaking, bond formation and adsorbate -surface coupling. Starting from these core orbitals, MBECAS -SR 
+
+identifies important substrate orbitals and missing adsorbate orbitals, with the final active spac e controlled by 
+
+a single tunable screening parameter. Orbital consistency along the potential -energy surface is maintained through a creeping strategy, in which the converged orbitals from one structure are propagated as the initial 
+
+guess for the subsequent structure . Further implementation details and system -specific active -space selections 
+
+are provided in Supplementary  Section 2 .
+
+After active -space construction, the embedded Hamiltonian is projected onto the selected active -orbital 
+
+manifold,  yielding the embedded active -space Hamiltonian 
+
+𝐻 ̂act  
+
+> emb
+
+= ∑ ℎ𝑝𝑞 
+
+> emb ,act
+> 𝑝 ,𝑞 ∈act
+
+𝑎 𝑝 
+
+> †
+
+𝑎 𝑞  + 1
+
+2 ∑ 𝑔 𝑝𝑞𝑟𝑠 
+
+> act
+> 𝑝 ,𝑞 ,𝑟 ,𝑠 ∈act
+
+𝑎 𝑝 
+
+> †
+
+𝑎 𝑞 
+
+> †
+
+𝑎 𝑠 𝑎 𝑟  (5)
+
+where  ℎ𝑝𝑞  
+
+> emb ,act
+
+and  𝑔 𝑝𝑞𝑟𝑠  
+
+> act
+
+denote the one - and two -electron integrals of  𝐻 ̂emb  projected into the selected 
+
+active orbital space  with the embedding contribution retained in the one -electron term through  𝑉 𝑝𝑞 
+
+> emb
+
+. This 
+
+active -space Hamiltonian defines the many -body problem solved by the quantum -computing solvers. 
+
+Quantum -computing active -space solvers 
+
+We  use  two quantum -computing workflows to solve the embedded active -space Hamiltonians:  noiseless 
+
+ADAPT -VQE simulations and hardware -sampled QSCI experiments. 37,4 3 In the ADAPT -VQE simulations, 
+
+the fermionic Hamiltonian is transformed into a qubit Hamiltonian using the Jordan -Wigner mapping 38 and 
+
+expressed as 
+
+𝐻 ̂ = ∑ 𝑐 𝑖 
+
+> 𝑖
+
+𝑃 ̂𝑖  (6)
+
+where each  𝑃 ̂𝑖  is a product of Pauli operators  {𝜎 ̂𝑥 , 𝜎 ̂𝑦 , 𝜎 ̂𝑧 , 𝐼 ̂ }. The energy is then minimized variationally  as 
+
+𝐸 (𝜽 ) = ⟨Ψ(𝜽 )|𝐻 ̂ |Ψ(𝜽 )⟩ = ∑ 𝑐 𝑖 
+
+> 𝑖
+
+⟨Ψ(𝜽 )|𝑃 ̂𝑖 |Ψ(𝜽 )⟩ (7)
+
+ADAPT -VQE iteratively selects excitation operators from a predefined operator pool according to  their 
+
+energy gradients and reoptimizes all variational parameters after each update. 37 We use two fermionic 
+
+excitation pools: unitary coupled -cluster singles and doubles (UCCSD) 39  and unitary coupled -cluster 
+
+generalized singles and doubles (UCCGSD). 40 The resulting adaptive ansatz provides compact, problem -
+
+adapted reference states for the embedded active -space Hamiltonians. 
+
+For the hardware -sampled QSCI workflow, low -depth circuits are constructed from early -stage operators 
+
+selected by ADAPT -UCCGSD. The single - and double -excitation operators selected up to ADAPT steps 5 and 
+
+10 are separately mapped to fermionic -excitation ci rcuits and used to prepare correlated trial states on quantum 
+
+hardware. The excitation circuits follow compact fermionic -excitation constructions that incorporate the 
+
+Jordan -Wigner parity structure without independently expanding each excitation into Pauli -string evolution 
+
+circuits. 41 Measurements of the hardware -prepared trial states in the computational basis provide determinant 
+
+samples for the subsequent QSCI procedure.  Detailed circuit -construction procedures and circuit -resource 
+
+analyses are provided in Supplementary  Section 4 .
+
+QSCI is implemented as a hybrid quantum –classical selected -CI procedure. 43,4 4 A correlated trial state |Ψ(𝜽 )⟩ prepared on quantum hardware is measured in the computational basis, yielding bitstrings  {𝒃 } with 
+
+empirical probabilities  𝑝 (𝒃 ) . Each bitstring is mapped to a Slater determinant  |𝐷 𝒃 ⟩ , and a selected 
+
+determinant subspace is constructed by retaining either the  top  𝑁 det  most frequently sampled determinants 
+
+or all determinants above a probability threshold  while enforcing the target alpha - and beta -electron numbers :
+
+𝒮  = {|𝐷 𝑖 ⟩: 𝑝 𝑖  ≥ 𝑝 cut } or  𝒮  = Top (𝑁 det ) (1)
+
+Given the selected determinant set  𝒮 , the Hamiltonian matrix is formed in the truncated determinant 
+
+subspace, 
+
+𝐻 𝑖𝑗  = ⟨𝐷 𝑖 |𝐻 ̂ |𝐷 𝑗 ⟩, |𝐷 𝑖 ⟩, |𝐷 𝑗 ⟩ ∈ 𝒮  (2)
+
+and the QSCI energy is obtained by classical subspace diagonalization: 
+
+𝐸 QSCI  = min 
+
+> 𝒄
+
+𝒄 †𝑯𝒄 
+
+𝒄 †𝒄  (3)
+
+As the threshold is tightened, or equivalently as K is increased, the selected CI space is systematically enlarged 
+
+and the variational energy approaches the full -CI limit within the chosen active space. To improve robustness 
+
+against hardware noise, a confi guration -recovery procedure is further applied to restore physically valid 
+
+electronic configurations from noisy measurement samples. 44
+
+Dynamic -correlation correction and total -energy evaluation 
+
+Dynamic correlation outside the active space is included perturbatively using strongly contracted N -
+
+electron valence state second -order perturbation theory (SC -NEVPT2). 50 The final embedded quantum energy 
+
+is evaluated  as: 
+
+𝐸 QC -DFET  = 𝐸 tot  
+
+> PW -DFT
+
++ (𝐸 cl  
+
+> emb -QC -NEVPT2
+
+− 𝐸 cl 
+
+> emb -DFT
+
+) (12 )
+
+Here,  emb -QC and emb -DFT  denote  embedded  quantum -computing  and  embedded  DFT  cluster calculations 
+
+in the presence of the embedding potential.  𝐸 tot  
+
+> PW -DFT
+
+is the plane -wave DFT total energy of the periodic slab, 
+
+with the D3 dispersion correction removed.  𝐸 cluster  
+
+> DFT
+
+was obtained from DFT calculations using the PBE 
+
+exchange –correlation functional  in the GTO basis . It should be noticed that the vibrational zero -point energy 
+
+(ZPE) contribution, intrinsic to low -temperature surface reaction energetics, should be considered; therefore, 
+
+ZPE corrections are included for the calculated electronic energies of all systems.  For adsorption processes, 
+
+an additional thermodynamic correction arising from the change in the number of gas -phase molecules, 
+
+namely the  Δ𝑛𝑅𝑇  term, is al so taken into account when converting electronic energies to adsorption 
+
+enthalpies. 
+
+# Acknowledgements 
+
+The authors thank Prof. Emily A. Carter, Prof. Junwei Lucas Bao, and Prof. Ting Tan, and are particularly 
+
+grateful to Prof. Qing Zhao and Dr. Wei Liu for their helpful discussions and suggestions discussions and 
+
+valuable guidance on DFET. This work is supp orted by the National Natural Science Foundation of China 
+
+(22393913, 22303090 , 22422304, 22073086 ), the Strategic Priority Research Program (XDB0450101) and 
+
+the robotic AI -Scientist platform of the Chinese Academy of Sciences, and the USTC Supercomputing C enter .
+
+# Refer ence: 1.  Nørskov, J. K., Abild -Pedersen, F., Studt, F. & Bligaard, T. Density functional theory in surface chemistry 
+
+and catalysis. Proceedings of the National Academy of Sciences 108, 937 –943 (2011). 
+
+2.  Seh, Z. W. et al. Combining theory and experiment in  electrocatalysis: insights into materials design. 
+
+Science 355, eaad4998 (2017). 
+
+3.  Birdja, Y. Y. et al. Advances and challenges in understanding the electrocatalytic conversion of carbon 
+
+dioxide to fuels. Nature Energy 4, 732 –745 (2019). 
+
+4.  Kroes, G. -J. & Meyer, J. Best -of -both -worlds computational approaches to difficult -to -model dissociation 
+
+reactions on metal surfaces. Chemical Science 16, 480 –506 (2025). 
+
+5.  Cohen, A. J., Mori -Sánchez, P. & Yang, W. Challenges for density functional theory. Chemical Reviews 
+
+112, 289 –320 (2012). 
+
+6.  Christensen, R., Hansen, H. A. & Vegge, T. Identifying systematic DFT errors in catalytic reactions. 
+
+Catalysis Science & Technology 5, 4946 –4949 (2015). 
+
+7.  Verma, P. & Truhlar, D. G. Status and challenges of density functional theory.  Trends in Chemistry 2, 302 –
+
+318 (2020). 
+
+8.  Cao, K., Füchsel, G., Kleyn, A. W. & Juurlink, L. B. F. Hydrogen adsorption and desorption from Cu (111) 
+
+and Cu (211). Physical Chemistry Chemical Physics 20, 22477 –22488 (2018). 
+
+9.  Díaz, C. et al. Chemically accurate simulation of a prototypical surface reaction: H₂ dissociation on Cu 
+
+(111). Science 326, 832 –834 (2009). 
+
+10.  Feibelman, P. J. et al. The CO/Pt (111) puzzle. The Journal of Physical Chemistry B 105, 4018 –4025 
+
+(2001). 
+
+11.  Patra, A., Peng, H., Sun, J. & Perdew, J. P. Rethinking CO adsorption on transition -metal surfaces: effect 
+
+of density -driven self -interaction errors. Physical Review B 100, 035442 (2019). 
+
+12.  Zhao, Q. & Carter, E. A. Revisiting competing paths in electrochemical CO₂ reduction on copper via 
+
+embedded correlated wavefunction theory. Journal of Chemical Theory and Computation 16, 6528 –6538 
+
+(2020) .
+
+13.  Hsing, C. -R., Chang, C. -M., Cheng, C. & Wei, C. -M. Quantum Monte Carlo studies of CO adsorption on 
+
+transition metal surfaces. The Journal of Physical Chemistry C 123, 15659 –15664 (2019) 
+
+14.  Chen, Z., Liu, Z. & Xu, X. Accurate descriptions of molecule -surface interactions in electrocatalytic CO₂ 
+
+reduction on the copper surfaces. Nature Communications 14, 936 (2023) 
+
+15.  Blyholder, G. Molecular orbital view of chemisorbed carbon monoxide. The Journal of Physical Chemistry 
+
+68, 2772 –2777 (1964). 
+
+16.  Grabow, L. C. & Mavrikakis, M. Mechanism of methanol synthesis on Cu through CO₂ and CO 
+
+hydrogenation.  ACS Catal.  1, 365 –384 (2011) .
+
+17.  Takeyasu, K. et al. Hydrogenation of formate species using atomic hydrogen on a Cu (111) model catalyst. 
+
+Journal of the American Chemical Society 144, 12158 –12166 (2022). 
+
+18.  Ruehl, G., Harman, S. E., Gluth, O. M., LaVoy, D. H. & Campbell, C. T. Energetics of adsorbed formate 
+
+and formic acid on Cu (111) by calorimetry. ACS Catalysis 12, 10950 –10960 (2022). 
+
+19.  Chen, Z., Liu, Z. & Xu, X. Clarifying the methanol synthesis mechanism via CO₂ hydrogenation on the 
+
+Cu (111) surface: insights from accurate doubly hybrid density functionals. ACS Catalysis 15, 5039 –5045 
+
+(2025). 
+
+20.  Shi, B. X. et al. Many -body methods for surface chemistry come of age: achieving consensus with 
+
+experiments. Journal of the American Chemical Society 145, 25372 –25381 (2023). 
+
+21.  Huang, Z. et al. Advancing surface chemistry with large -scale ab -initio quantum many -body simulations. 
+
+arXiv preprint arXiv:2412.18553 (2024). 
+
+22.  Cao, C. et al. Quantum many -body simulations of catalytic metal surfaces. arXiv preprint 
+
+arXiv:2508.13036 (2025). 
+
+23.  Bartlett, R. J. & Musiał, M. Coupled -cluster theory in quantum chemistry. Reviews of Modern Physics 79, 
+
+291 –352 (2007). 
+
+24.  Chan, G. K. -L. & Sharma, S. The density matrix renormalization group in quantum chemistry. Annual 
+
+Review of Physical Chemistry 62, 465 –481 (2011). 
+
+25.  Levine, D. S. et al. CASSCF with extremely large active spaces  using the adaptive sampling configuration 
+
+interaction method. Journal of Chemical Theory and Computation 16, 2340 –2354 (2020). 26.  Jones, L. O., Mosquera, M. A., Schatz, G. C. & Ratner, M. A. Embedding methods for quantum chemistry: 
+
+applications from materials to life sciences. Journal of the American Chemical Society 142, 3281 –3295 
+
+(2020). 
+
+27.  Govind, N., Wang, Y. A. & Carter, E. A. Electronic -structure calculations by first -principles density -based 
+
+embedding of explicitly correlated systems. The Journal of Chemical Physics 110, 7677 –7688 (1999). 
+
+28.  Klüner, T., Govind, N., Wang, Y. A. & Carter, E. A. Periodic density functional embedding theory for 
+
+complete active space self -consistent field and configuration interaction calculations: ground and excited 
+
+states. The Journal of Chemical Physics 116, 42 –54 (2002). 
+
+29.  Libisch, F., Huang, C. & Carter, E. A. Embedded correlated wavefunction schemes: theory and 
+
+applications. Accounts of Chemical Research 47, 2768 –2775 (2014). 
+
+30.  Yu, K., Libisch, F. & Carter, E. A. Implementation of density functional embedding theory within the 
+
+projector -augmented -wave method and applications to semiconductor defect states. The Journal of 
+
+Chemical Physics 143 (2015). 
+
+31.  Zhao, Q., Zhang, X., Martirez, J. M. P. & Carter, E. A. Benchmarking an embedded adaptive sampling 
+
+configuration interaction method for surface reactions: H₂ desorption from and CH₄ dissociation on Cu 
+
+(111). Journal of Chemical Theory and Computation 16, 7 078 –7088 (2020). 
+
+32.  Zhao, Q., Martirez, J. M. P. & Carter, E. A. Revisiting understanding of electrochemical CO₂ reduction on 
+
+Cu (111): competing proton -coupled electron transfer reaction mechanisms revealed by embedded 
+
+correlated wavefunction theory. Journal of the American  Chemical Society 143, 6152 –6164 (2021). 
+
+33.  Cao, Y. et al. Quantum chemistry in the age of quantum computing. Chemical Reviews 119, 10856 –10915 
+
+(2019). 
+
+34.  Liu, J., Fan, Y., Li, Z. & Yang, J. Quantum algorithms for electronic structures: basis sets and boundary 
+
+conditions. Chemical Society Reviews 51, 3263 –3279 (2022). 
+
+35.  Zeng, X., Fan, Y., Liu, J., Li, Z. & Yang, J. Quantum neural network inspired hardware adaptable ansatz 
+
+for efficient quantum simulation of chemical systems. Journal of Chemical Theory and Computation 19, 
+
+8587 –8597 (2023). 
+
+36.  Zeng, X. et al. Accurate chemical reaction modeling on a noisy intermediate -scale quantum computer with 
+
+an active space -based workflow. The Journal of Physical Chemistry Letters 16, 11709 –11716 (2025). 
+
+37.  Grimsley, H. R., Economou, S. E., Barnes, E. & Mayhall, N. J. An adaptive variational algorithm for exact 
+
+molecular simulations on a quantum computer. Nature Communications 10, 3007 (2019). 
+
+38.  Jordan, P. & Wigner, E. Über das Paulische Äquivalenzverbot. Zeitschrift für Physik 47, 631 –651 (1928). 
+
+39.  Romero, J. et al. Strategies for quantum computing molecular energies using the unitary coupled cluster 
+
+ansatz. Quantum Science and Technology 4, 014008 (2019). 
+
+40.  Lee, J., Huggins, W. J., Head -Gordon, M. & Whaley, K. B. Generalized unitary coupled cluster wave 
+
+functions for quantum computation. Journal of Chemical Theory and Computation 15, 311 –324 (2018). 
+
+41.  Yordanov, Y. S., Arvidsson -Shukur, D. R. M. & Barnes, C. H. W. Efficient quantum circuits for quantum 
+
+computational chemistry. Physical Review A 102, 062612 (2020). 
+
+42.  Zeng, X. et al. Transformer refined quantum sampling for strongly correlated electronic structure. arXiv 
+
+preprint arXiv:2605.24617 (2026). 
+
+43.  Kanno, K. et al. Quantum -selected configuration interaction: classical diagonalization of Hamiltonians in 
+
+subspaces selected by quantum computers. arXiv preprint arXiv:2302.11320 (2023). 
+
+44.  Robledo -Moreno, J. et al. Chemistry beyond the scale of exact diagonalization on a quantum -centric 
+
+supercomputer. Science Advances 11, eadu9991 (2025). 
+
+45.  Gujarati, T. P. et al. Quantum computation of reactions on surfaces using local embedding. npj Quantum 
+
+Information 9, 88 (2023). 
+
+46.  Barroca, M. A., Neumann Barros Ferreira, R. & Steiner, M. Exploring qubit -ADAPT -VQE for materials 
+
+discovery in direct air capture. APL Quantum 1 (2024). 
+
+47.  Kattel, S., Ramírez, P. J., Chen, J. G., Rodriguez, J. A. & Liu, P. Active sites for CO₂ hydrogenation to 
+
+methanol on Cu/ZnO catalysts. Science 355, 1296 –1299 (2017). 
+
+48.  Kordus, D. et al. Shape -dependent CO₂ hydrogenation to methanol over Cu₂O nanocubes supported on 
+
+ZnO. Journal of the American Chemical Society 145, 3016 –3030 (2023). 
+
+49.  Wu, Q. & Yang, W. A direct optimization method for calculating density functionals and exchange –correlation potentials from electron densities. The Journal of Chemical Physics 118, 2498 –2509 (2003). 
+
+50.  Angeli, C., Cimiraglia, R. & Malrieu, J. -P. N -electron valence state perturbation theory: a fast 
+
+implementation of the strongly contracted variant. Chemical Physics Letters 350, 297 –305 (2001). 
+
+# Supplementary Information  for  Embedded quantum computing for many -body 
+
+# surface reaction 
+
+# Dedong Wan 1, Xiaopeng Li 1, Yi Fan 1, Jie Liu 2, Xiongzhi Zeng 1*, Zhenyu Li 1,2 *
+
+> 1
+
+# State Key Laboratory of Precision and Intelligent Chemistry, University  of  Science  and 
+
+# Technology  of  China,  Hefei  230026,  China  
+
+> 2
+
+# Hefei National Laboratory, University of Science and Technology of China, Hefei 230088, 
+
+# China 
+
+> ∗
+
+To  whom  correspondence  should  be  addressed: 
+
+# xzzeng @ustc.edu.cn ; zyli@ustc.edu.cn; 
+
+# 1.  Computational details 
+
+1.1 Periodic DFT Calculations 
+
+Periodic Kohn –Sham DFT calculations were performed using the Vienna  Ab initio  Simulation Package 1,2 
+
+(VASP, version 6.4.2) with the all -electron frozen -core projector augmented -wave (PAW) 3 method and the 
+
+PBE exchange –correlation functional 4. Grimme’s D3 dispersion correction 5,6  with the Becke –Johnson 
+
+damping 7 function was included throughout. The 1 𝑠  electron of H, the 2 𝑠  and 2 𝑝  electrons of C and O, and 
+
+the 4  𝑠  and 3  𝑑  electrons of Cu were treated self -consistently. For H 2 dissociation/desorption and CO 
+
+absorption, the Cu (111) surface was modeled by a  √21  × √21  four -layer slab containing 84 Cu atoms. For 
+
+the competitive -reaction, a  4 × 4 four -layer slab containing 64 Cu atoms was used. A vacuum region of at 
+
+least 15  Å was included in the periodic cell. During structural optimization, the atoms in the top two layers 
+
+were relaxed, while those in the bottom two layers were fixed at their bulk positions. Geometry optimizations were continued until the maximum residual force on each atom was smaller than  0.03  eV/Å. A plane -wave 
+
+basis set with a kinetic -energy cutoff of 660 eV was employed. To sample the Brillouin zone,  Γ-centered 
+
+Monkhorst –Pack 8 14  × 14  × 14 , 4 × 4 × 1, and  4 × 4 × 1 𝑘 -point grids were used for the bulk unit cell 
+
+and the  4 × 4 and  √21  × √21  slab supercells, respectively. Electronic occupations were treated using the 
+
+Methfessel –Paxton method 9 with a smearing width of 0.09 eV to facilitate self -consistent -field convergence. 
+
+The minimum energy paths (MEPs), except for the HCOO * + H*  → H2COO * reaction, were optimized using 
+
+the climbing -image nudged elastic band (CI -NEB) 10  method with an artificial spring -force constant of 3 eV/Å 2
+
+along the reaction path. For the  HCOO * + H*  → H2COO * process, the transition state was located using the 
+
+dimer  method 11, 12 . Vibrational frequencies ( 𝜈 𝑗 ) were computed at the DFT -PBE -D3 level using the periodic 
+
+slab model for the MEP structures in order to verify the correctness of the transition states and to evaluate the 
+
+zero -point energy (ZPE) corrections. 
+
+1.2 DFET embedding potentials and embedded cluster calculations 
+
+For H 2 dissociation/desorption, we adopt the embedding potential reported by Zhao et al 13 . to enable direct 
+
+comparison with their results. For the main CO adsorption and competing surface -reaction calculations, a 
+
+consistent Cu 14  cluster was carved from a 5 × 5 four -layer Cu (111) slab containing 100 Cu atoms, while a 
+
+Cu 12  cluster carved from the same slab model was used for the cluster -size robustness analysis of CO 
+
+adsorption, as shown in  Fig. S1 . The corresponding embedding potential  𝑉 ̂emb  was obtained using a modified 
+
+version of VASP 6.4.2 14  and subsequently transformed from the real -space grid representation to an atomic 
+
+Gaussian -type -orbital (GTO) basis using the EmbeddingIntegralGenerator code 15 .
+
+Embedding potentials are optimized using the PBE exchange –correlation functional together with 
+
+Grimme’s D3 dispersion correction with Becke –Johnson damping (PBE -D3BJ). PySCF 2.7.0 16,17  was then 
+
+used to construct the embedded Hamiltonian and its active -space projection in the GTO basis. The molecular 
+
+geometries used in the embedded cluster calculations were generated by combining the embedded Cu clusters 
+
+with adsorbates fixed at their pe riodic PBE -D3BJ -optimized positions. For the basis sets, we used the all -
+
+electron aug -cc -pVDZ basis for C, H, and O 18 , together with a cc -pVDZ valence basis for Cu 19  and effective 
+
+core potentials (ECPs)  20  replacing the 10 core electrons. 
+
+The active space selected for H 2 dissociation/desorption on Cu (111) was CAS (12e,12o), including two 
+
+H-derived  𝜎 , 𝜎 ∗ orbital pairs associated with H –H bond formation/cleavage and H –Cu bonding/antibonding 
+
+interactions, together with four occupied and four unoccupied Cu 4s -derived orbitals on the Cu 12  cluster  (Fig. 
+
+S5 ). The active space selected for CO adsorption on Cu (111) was CAS (14e,12o), including occupied C –O
+
+𝜎 2𝑠  and  𝜎 2𝑠  
+
+> ∗
+
+orbitals formed by C 2s and O 2s electrons, one C –O 𝜎 , 𝜎 ∗ pair, two nearly pure C –O 𝜋 , 𝜋 ∗
+
+pairs, one additional C –O 𝜋 , 𝜋 ∗ pair strongly hybridized with Cu 4s -derived surface character, and one 
+
+occupied and one unoccupied Cu 4s -derived orbital on the Cu 14  cluster ( Fig. S6 ). For cluster -size robustness 
+
+analysis by Cu 12  cluster, additional pair of Cu 4s -derived orbital is included to  com plete CO -Cu interaction to 
+
+CAS (16e, 14o) ( Fig. S7 ). The active space selected for the HCOO * + H*  → H2COO * pathway was 
+
+CAS(16e,14o), including one occupied O –C–O 𝜋 /𝜋 ∗ orbital pair, two side C –O 𝜎 , 𝜎 ∗ orbital pair, two H –
+
+Cu  𝜎 , 𝜎 ∗ orbital pairs associated with the coadsorbed H ∗ and the C –H bond -forming channel, two pairs of 
+
+C–O 𝜋 , 𝜋 ∗ orbitals delocalized over the O –C–O fragment, and one Cu 4s -derived orbital pair on the Cu 14 
+
+cluster ( Fig. S8 ). Because this pathway involves substantial rearrangement of the adsorbate binding geometry, 
+
+the active orbitals evolve significantly along the reaction coordinate and can differ noticeably from the orbitals identified in the initial structure. The active space used for the HCOO * + H * → HCOOH * pathway was CAS 
+
+(12e,12o), including the C –H 𝜎 , 𝜎 ∗ orbitals, three C –O/O -centered  𝜋 , 𝜋 ∗ orbital pairs of the protonation -
+
+affected O –C–O framework, an O -centered  𝜎 -type lone -pair orbital and its corresponding virtual orbital, and 
+
+one occupied and one unoccupied Cu 4s -derived orbital on the Cu 14  cluster ( Fig. S9 ). 
+
+1.3  Quantum computing settings 
+
+Simulations include ADAPT -UCCSD and ADAPT -UCCGSD and circuit optimization are executed in our in -
+
+house Q 2Chemistry software 21 . The reduction in the  NEVPT2 total -energy error was evaluated using points 
+
+sampled at different QCW –FCI energy errors along the ADAPT -UCCGSD convergence trajectory ( Fig. S12 ). 
+
+The quantum hardware experiments were carried out on the Tianyan -176 -II machine at the China Telecom 
+
+“Tianyan” Quantum Computing Laboratory, corresponding to the Zuchongzhi 2.0 superconducting quantum 
+
+computer. The device provides 66 qubits and 110 tuna ble couplers. The average energy relaxation time was 
+
+T1 = 23.55  μs, and the average spin -echo coherence t ime was T2 CPMG  = 9.05  μs. The average readout error 
+
+was 2.32%, while the average single -qubit and two -qubit gate errors were 0.24% and 1.61%, respectively. 
+
+Configuration recovery was performed using the configuration -recovery module in Qiskit Addon SQD 22 . The 
+
+recovery procedure was carried out for at most five iterations, with the convergence threshold for the QSCI 
+
+energy set to (10 -6) Ha. 
+
+# 2.  MBECAS -SR active -space construction 
+
+For certain chemical problems, quantitatively reliable results can be  obtained by correlating only a limited 
+
+number of orbitals and electrons directly involved in the reaction process. Therefore, active -space construction 
+
+is essential and should be as automated and physics -based as possible. MBECAS was recently proposed by 
+
+us for molecular systems, where the highest occupied molecular orbital (HOMO) and the lowest unoccupied 
+
+molecular orbital (LUMO) are used as the minimal active space, followed by the evaluation of first - and 
+
+second -order increments ranked by their absolute  magnitudes 23 . Here, we adopt the basic idea of MBECAS 
+
+and extend it to surface reactions, leading to the MBECAS -SR scheme ( Fig. S2 ). 
+
+2.1 Implementation procedure of MBECAS -SR 
+
+1. Definition and verification of the initial core orbitals.  First, a mean -field calculation, such as HF or 
+
+DFT, is performed to identify the core bonding orbitals of the adsorbed molecule that are directly involved in 
+
+bond formation or cleavage. These orbitals can usually be recognized from chemically intuitive bo nding 
+
+patterns. CASCI(2e,2o) calculations are then carried out by scanning the virtual orbitals to locate the 
+
+corresponding antibonding partners. The selected bonding and antibonding orbitals defi ne the initial active -
+
+orbital set, denoted by 
+
+𝒜 0 = 𝒜 core -bonding  ∪ 𝒜 core -antibonding  (1)
+
+A CASSCF calculation with this initial active space is subsequently performed to verify that the 
+
+chemically intended core orbitals are retained after orbital optimization. 
+
+2. MBECAS -SR screening at the reference structure.  MBECAS -SR( 𝒜 0) analysis is performed for the 
+
+structure in which the adsorbed molecule is fully dissociated, referred to here as the IS. We choose the IS as the reference because it exhibits the strongest wavefunction complexity along the reaction pathway and 
+
+therefore requires the most complete orbital description ( Fig. S21 ). 
+
+Following the many -body -expanded correlation -energy formulation introduced in our previous 
+
+MBECAS work, the CASCI energy associated with the initial active space is used as the reference energy, 
+
+𝜖 ref  = 𝐸 CASCI (𝒜 0) (2)
+
+Let  𝛺  denote the expansion space containing the orbitals outside  𝒜 0 that are considered during 
+
+screening. For each orbital  𝑖  ∈ 𝛺  and each orbital pair  𝑖 , 𝑗  ∈ 𝛺 , additional CASCI calculations are performed 
+
+with the augmented active spaces, 
+
+𝜖 𝑖  = 𝐸 CASCI (𝒜 0 ∪ {𝑖 }), 𝜖 𝑖𝑗  = 𝐸 CASCI (𝒜 0 ∪ {𝑖 , 𝑗 }) (3)
+
+The first - and second -order correlation -energy increments are then defined as 
+
+𝛥 𝜖 𝑖  = 𝜖 𝑖  − 𝜖 ref  (4)
+
+𝛥 𝜖 𝑖𝑗  = (𝜖 𝑖𝑗  − 𝜖 ref ) − 𝛥 𝜖 𝑖  − 𝛥 𝜖 𝑗  (5)
+
+The corresponding many -body expansion may be written formally as 
+
+𝐸 FCI  = 𝜖 ref  + ∑ 𝛥 
+
+> 𝑖
+
+𝜖 𝑖  + ∑ 𝛥 
+
+> 𝑖 <𝑗
+
+𝜖 𝑖𝑗  + ⋯ (6)
+
+In the present MBECAS -SR implementation, the screening parameter  𝑟 𝜖  is applied directly to the 
+
+absolute first - and second -order correlation -energy increments. The two criteria can be expressed together as 
+
+𝑖  ∈ 𝒜 raw  ⇔ |𝛥 𝜖 𝑖 | > 𝑟 𝜖  or  ∃ 𝑗  ≠ 𝑖  such that  |𝛥 𝜖 𝑖𝑗 | > 𝑟 𝜖  (7)
+
+When the second condition is satisfied, both orbitals  𝑖  and  𝑗  are included in the raw candidate set. Here, 
+
+𝑟 𝜖  is an absolute correlation -energy -increment threshold and therefore has units of energy.  But  for 
+
+convenience, the threshold  𝑟 𝜖  is reported without units hereafter. For moderate initial core -orbital sets, values 
+
+of approximately  0.001  – 0.002  are generally sufficient to obtain a compact, high -quality active space, 
+
+although the appropriate threshold window remains system dependent. 
+
+Starting from the IS reference, this threshold is scanned from larger to smaller values to determine the 
+
+order in which orbitals enter the candidate space. This procedure identifies both important substrate orbitals 
+
+and missing adsorbate orbitals. Newly se lected occupied orbitals are retained, whereas the treatment of 
+
+additional virtual orbitals follows a conditional pairing branch rather than a global occupied -virtual equality 
+
+constraint: 
+
+(i).  When an added occupied orbital has an admissible virtual partner, the first corresponding virtual 
+
+orbital encountered during the threshold scan is retained together with the occupied orbital to form a bonding -
+
+antibonding pair. The occupied and virtual add itions are therefore balanced for this paired branch. 
+
+(ii).  If no suitable virtual partner appears within the scanned threshold range, the occupied orbital is 
+
+retained alone, and no additional virtual orbital is introduced for that occupied orbital. 
+
+Thus, virtual orbitals are not added merely to enforce equality between the total numbers of occupied and 
+
+virtual orbitals. A final CASSCF calculation is then performed to verify that the selected orbitals remain 
+
+properly represented after orbital optimiza tion. 
+
+3. Propagation along the potential -energy surface.  To ensure robust and reaction -consistent 
+
+convergence along the potential -energy surface (PES), a “creeping” strategy is employed. The converged 
+
+CASSCF orbitals from the preceding geometry are used as the initial guess for the next geometry. The 
+
+propagation  begins from the fully dissociated IS, so that the most complete orbital manifold identified at the 
+
+electronically most complex structure is carried consistently along the reaction coordinate  (Fig. S21 ).
+
+It should be noted that, in the present MBECAS -SR scheme, orbital optimization and active -space 
+
+solving are performed together within a CASSCF framework. The computational cost of orbital optimization itself is relatively modest compared with the active -space solver, as it is dominated by Fock -like operations 
+
+with formal quartic scaling in system size, and density fitting or Cholesky -decomposition techniques can 
+
+further reduce both the scaling and prefa ctors, making this step comparable in cost to mean -field procedures 24 .
+
+By contrast, the dominant cost arises from the active -space solver, which scales exponentially on classical 
+
+computers. This bottleneck can in principle be alleviated by replacing the cl assical solver with quantum -
+
+computing approaches such as VQE and QSCI. 
+
+At the same time, our orbital -selection strategy does require a certain amount of chemically motivated 
+
+prior knowledge to define the initial set of orbitals. We acknowledge that the present choice of initial orbitals 
+
+still relies heavily on chemical intuit ion. Further development of the MBECAS -SR strategy will therefore be 
+
+pursued in future work. In the present study, this protocol is used primarily as a practical guide for active -
+
+space construction. 
+
+2.2  Details of MBECAS -SR for different systems 
+
+For H 2 dissociation/desorption, MBECAS -SR starts from an H 1s -dominated bonding/antibonding core 
+
+pair and yields a CAS (12e,12o) active space within a narrow screening -threshold window of 0.0001 –0.0002. 
+
+For the desorption segment, direct MBECAS -SR selection give s active orbitals that are consistent with those 
+
+obtained by creeping with manually selected active orbitals 13  (Fig. S3 ), indicating that this relatively simple 
+
+part of the reaction coordinate can be described without an additional creeping procedure . This consistency 
+
+reflects the smooth evolution of the H 2-derived bonding/antibonding pair and the gradually changing H –Cu 
+
+coupling during associative desorption. In contrast, the dissociation segment is more demanding because the 
+
+active space must retain the surface -coupled orbital channels associated with two  separated H atoms while 
+
+following the cleavage of the H –H bond. Therefore, for the production QC -DFET calculations, the active 
+
+orbitals were propagated from the fully dissociated structure to mainta in these dissociated -H-centered 
+
+components along the bond -breaking coordinate. 
+
+For CO adsorption, the initial orbitals comprise three pairs of CO  𝜋 - and  𝜎 -bonding orbitals together 
+
+with their antibonding partners. Starting from this compact set, MBECAS -SR automatically recovers two 
+
+additional adsorbate  𝜎 -type orbitals centered on C and O, followed by the correlated Cu slab orbital pairs 
+
+needed for a balanced molecule –surface description, leading to a CAS (14e,12o) active space over the 
+
+threshold range 0.0008 –0.0013. Notably, the same active -orbital manifo ld is obtained whether the  top, fcc, 
+
+hcp, and abv structures are treated independently or generated by creeping from the top -site geometry, also 
+
+indicating a reaction -consistent active -space description for this relatively simple surface rearrangement. For 
+
+the cluster -size robustnes s analysis by Cu 12  cluster, MBECAS -SR gives a CAS (16e,14o) active space within 
+
+a similar threshold window of 0.0006 –0.0013. 
+
+For the H 2COO * channel, the initial core orbitals are chosen to reflect the essential bonding 
+
+rearrangements during hydrogenation and include one H  1s orbital, the  𝜋 - and  𝜎 -bonding orbitals delocalized 
+
+over both C –O bonds, and an additional localized  𝜋 - and  𝜎 -type pair associated with the C –O bond most 
+
+directly involved in C –H formation including 5 pairs of orbitals. Starting from this chemically motivated set, 
+
+MBECAS -SR first identifies the most strongly correlated Cu -slab orbital pair and then recovers the m issing 
+
+adsorbate orbitals needed for a balanced description of the reaction, yielding a CAS (16e,14o) active space 
+
+over the threshold range 0.0013 –0.0018. For the HCOOH* channel, the initial core orbitals were also 
+
+generated from five orbital pairs, includ ing the H 1s -derived orbital involved in O –H bond formation, the 
+
+reactive C –O σ/σ*  pair, and C –O π/π* -type pairs that evolve along the reaction coordinate. In this case, 
+
+MBECAS -SR selects the Cu slab orbital pairs first, while the missing adsorbate orbital s appear only at much 
+
+lower tolerance, indicating that the neglected adsorbate orbitals play a comparatively minor role. As a result, a compact CAS (12e,12o) active space is consistently obtained over the threshold range 0.0014 –0.0035. 
+
+Because these two cases involve a larger initial orbital set, the orbital -selection step becomes more expensive; 
+
+we therefore employ density fitting 25  together with automatically generated auxiliary basis sets 26 , which gives 
+
+essentially identical orbital -selection results while reducing the computational cost largely. 
+
+# 3.  Wavefunction analysis 
+
+3.1 Orbital -resolved Mayer bond -order analysis for CO –Cu bonding 
+
+To analyze how the correlated embedded quantum treatment modifies the CO –Cu bonding pattern, we 
+
+computed orbital -resolved Mayer -type bond -order descriptors from the one -particle density matrices obtained 
+
+at the emb -DFT and emb -QC levels. 
+
+For each electronic -structure level  𝑋  , where  𝑋  = emb -DFT  or  𝑋  = emb -QC  , we used the spin -
+
+summed AO density matrix  𝐷 𝑋  and the AO overlap matrix  𝑆 . The emb -QC density matrix was transformed 
+
+back to the AO representation for the Mayer analysis. Since the selected active space contains the CO -centered 
+
+and CO –Cu hybridized bonding and antibonding orbitals, including the  𝜋 /𝜋 ∗-type channels, the difference 
+
+between the emb -QC and emb -DFT density matrices reflects the correlation -induced redistribution within 
+
+these chemically relevant bonding channels. 
+
+The Mayer population matrix was defined as 
+
+𝑃 𝑋  = 𝐷 𝑋 𝑆  (8)
+
+For two AO subspaces  𝐴  and  𝐵  , represented by projector matrices  𝑊 𝐴  and  𝑊 𝐵  , respectively, the 
+
+generalized Mayer block index was evaluated as 
+
+𝑀 𝐴𝐵  
+
+> 𝑋
+
+= Tr (𝑊 𝐴 𝑃 𝑋 𝑊 𝐵 𝑃 𝑋 ) (9)
+
+When  𝑊 𝐴  and  𝑊 𝐵  are atom -centered AO projectors, Eq.  [9]  reduces to the conventional Mayer bond -
+
+order expression, 
+
+𝑀 𝐴𝐵  
+
+> 𝑋
+
+= ∑ ∑ (
+
+> 𝜈 ∈𝐵 𝜇 ∈𝐴
+
+𝐷 𝑋 𝑆 )𝜇𝜈 (𝐷 𝑋 𝑆 )𝜈𝜇  (10 )
+
+Here, we use the same expression with orbital -resolved AO subspace projectors to separate the  𝜎 - and 
+
+𝜋 -type components of the CO –Cu bonding pattern. The correlation -induced correction is defined as 
+
+Δ𝑀 𝐴𝐵  = 𝑀 𝐴𝐵  
+
+> emb -QC
+
+− 𝑀 𝐴𝐵  
+
+> emb -DFT
+
+(11 )
+
+A negative value of  Δ𝑀 𝐴𝐵  therefore indicates that the corresponding bonding descriptor is reduced at 
+
+the emb -QC level relative to emb -DFT. 
+
+The local coordinate system for CO was defined by the C –O bond axis. The unit vector along this axis 
+
+was constructed as 
+
+𝒆 CO  = 𝑹 O − 𝑹 C
+
+|𝑹 O − 𝑹 C| (12 )
+
+For the C and O atoms, the  𝑝 -type AO subspaces were decomposed into a component parallel to the C –
+
+O bond and a transverse component perpendicular to it. For each Cartesian  𝑝 -type AO shell, the local  𝜎 -type 
+
+projector was defined as 𝑊 𝑝 𝑧  = 𝒆 CO 𝒆 CO  
+
+> 𝑇
+
+(13 )
+
+and the local  𝜋 -type projector was defined as 
+
+𝑊 𝑝 𝑥𝑦  = 𝐼 3 − 𝒆 CO 𝒆 CO  
+
+> 𝑇
+
+(14 )
+
+These shell -level projectors were embedded into the full AO space to define the C - and O -centered  𝑝 𝑧 
+
+and  𝑝 𝑥𝑦  projector matrices. In practice, all relevant  𝑝  -type AO components on C and O were included, 
+
+because the active -space orbitals involved in CO –Cu bonding can contain contributions from multiple  𝑝 -type 
+
+AO functions in the Gaussian basis. 
+
+The four orbital -resolved Mayer channels used in the analysis were 
+
+𝑀 𝜎 (C−O) = 𝑀 (𝑊 C,𝑝 𝑧  , 𝑊 O,𝑝 𝑧  )
+
+𝑀 𝜎 (C−Cu ) = 𝑀 (𝑊 C,𝑝 𝑧  , 𝑊 Cu ),
+
+𝑀 𝜋 (C−O) = 𝑀  (𝑊 C,𝑝 𝑥𝑦  , 𝑊 O,𝑝 𝑥𝑦  )
+
+𝑀 𝜋 (C−Cu ) = 𝑀  (𝑊 C,𝑝 𝑥𝑦  , 𝑊 Cu ,3𝑑 )
+
+(15 )
+
+Here,  𝑊 Cu  denotes the AO projector onto all basis functions centered on the Cu atoms in the cluster, 
+
+whereas  𝑊 Cu ,3𝑑  denotes the projector onto the Cu  3𝑑  -type AO subspace. Thus, the C –Cu  𝜎  channel 
+
+includes all Cu AO contributions, while the  𝜋  back -donation channel is resolved specifically through the Cu 
+
+3𝑑  subspace, consistent with the conventional Blyholder -type interpretation of CO adsorption. 
+
+The resulting Mayer -type quantities are dimensionless bonding descriptors. They are used to compare 
+
+how selected CO –Cu bonding channels change from emb -DFT to emb -QC and should not be interpreted as a 
+
+direct decomposition of the adsorption energy. 
+
+To further support the validity of our analysis, it provides a consistent picture with recent RPA –PBE 
+
+Mayer bond -order analyses 27 , in which many -body correlation was found to leave the internal C –O σ bond 
+
+nearly unchanged, weaken the C –Cu  σ interaction, strengthen the internal C –O π component, and substantially 
+
+suppress the Cu –CO  π-back -donation component ( Fig. S16 ). 
+
+3.2 CI -based wavefunction complexity diagnostics 
+
+To quantify the  complexity of the embedded correlated wave function, we analyze the CI expansion of 
+
+the active -space state, 
+
+|Ψ⟩ = ∑ 𝑐 𝐼 
+
+> 𝐼
+
+|Φ𝐼 ⟩ (16 )
+
+where  |Φ𝐼 ⟩ denotes a many -electron configuration in the active space and  𝑐 𝐼  is the corresponding CI 
+
+coefficient. The normalized CI probability associated with each configuration is defined as 
+
+𝑝 𝐼  = |𝑐 𝐼 |2
+
+∑ |𝐽  𝑐 𝐽 |2 (17 )
+
+Based on this probability distribution, we use two diagnostics: the top CI weight and the CI Shannon 
+
+entropy. 
+
+The top CI weight is defined as the largest CI probability in the expansion, 
+
+𝑤 top  = max  
+
+> 𝐼
+
+𝑝 𝐼  (18 )A large  𝑤 top  indicates that the wave function can be described primarily by one dominant configuration, 
+
+whereas a smaller value indicates that the wave function is more broadly distributed over multiple 
+
+configurations. 
+
+The CI Shannon entropy is defined as 
+
+𝑆 CI  = − ∑ 𝑝 𝐼 
+
+> 𝐼
+
+ln 𝑝 𝐼  (19 )
+
+This quantity measures the information content of the CI probability distribution. A small  𝑆 CI 
+
+corresponds to a compact wave function that can be represented with relatively little configurational 
+
+information, while a larger  𝑆 CI  indicates that the wave function is distributed over more configurations and 
+
+therefore requires more information to describe. Together,  𝑤 top  and  𝑆 CI  provide complementary measures 
+
+of the compactness and complexity of the embedded correlated wave function along the reaction coordinate. 
+
+3.3 Frontier -orbital descriptor analysis 
+
+To quantify the evolution of the adsorbate –surface coupling in the embedded active space, we analyzed 
+
+the atomic -orbital composition of the emb -QC active orbitals. The orbital -composition analysis was performed 
+
+using the active orbitals from the emb -QC cal culation; when natural orbitals were available, the emb -QC 
+
+natural orbitals were used. 
+
+For each active orbital  𝑖  , the Mulliken -type AO gross contribution was first evaluated from the AO 
+
+coefficient vector  𝑪 𝑖  and the AO overlap matrix  𝑺  as 
+
+𝑔 𝜇𝑖  = |𝐶 𝜇𝑖 (𝑺 𝑪 𝑖 )𝜇 | (20 )
+
+where  𝜇  labels an atomic orbital. The absolute value was used to avoid cancellation between positive 
+
+and negative AO gross populations. The normalized contribution of AO  𝜇  to active orbital  𝑖  is then 
+
+𝑔 ̃𝜇𝑖  = 𝑔 𝜇𝑖 
+
+∑ 𝑔 𝜈𝑖 𝜈 
+
+(21 )
+
+Based on this normalized AO population, the adsorbate and Cu -slab contributions to active orbital  𝑖 
+
+were defined as 
+
+𝐴 𝑖  = ∑ 𝑔 ̃𝜇𝑖 
+
+> 𝜇 ∈ads
+
+, 𝑀 𝑖  = ∑ 𝑔 ̃𝜇𝑖 
+
+> 𝜇 ∈Cu
+
+(22 )
+
+where  𝐴 𝑖  measures the adsorbate character and  𝑀 𝑖  measures the Cu -slab character of the active orbital. 
+
+These two quantities are the basic descriptors used to monitor how the active orbitals evolve from adsorbate -
+
+centered to metal -coupled character along the reaction coordinate. 
+
+To focus on the chemically most relevant frontier -like active orbitals, each active orbital was assigned a 
+
+frontier weight. In the present analysis, the weight favors orbitals with strong adsorbate character and 
+
+significant local bonding character, 
+
+𝜔 𝑖  = 𝐴 𝑖 𝐿 𝑖 (𝜎 𝑖  + 𝛼 𝜋 𝑖 ) (23 )
+
+where  𝐿 𝑖  is the local adsorbate  𝑠 -like contribution,  𝜎 𝑖  and  𝜋 𝑖  are the corresponding adsorbate  𝜎 - and 
+
+𝜋 -like scores, and  𝛼  = 0.15  was used to include a small contribution from  𝜋 -like character. The weights 
+
+were normalized over all active orbitals, 𝜔 ‾ 𝑖  = 𝜔 𝑖 
+
+∑ 𝜔 𝑗 𝑗 
+
+(24 )
+
+If all  𝜔 𝑖  values were numerically negligible, equal weights were used instead. 
+
+The four active orbitals with the largest normalized frontier weights were selected as the frontier subset. 
+
+For any orbital descriptor  𝑋 𝑖  , such as the adsorbate contribution  𝐴 𝑖  or the Cu -slab contribution  𝑀 𝑖  , the 
+
+plotted value was computed as the weighted average over this top -4 frontier subset, 
+
+⟨𝑋 ⟩frontier  = ∑ 𝜔 ‾ 𝑖 𝑖 ∈top4  𝑋 𝑖 
+
+∑ 𝜔 ‾ 𝑖 𝑖 ∈top4 
+
+(25 )
+
+The quantities shown in  Fig. S20  are therefore  ⟨𝐴 ⟩frontier  and  ⟨𝑀 ⟩frontier  , corresponding to the 
+
+weighted adsorbate and Cu -slab contributions of the frontier active orbitals, respectively. 
+
+# 4.  Hardware circuit construction and optimization 
+
+4.1 Implementation details 
+
+Fig. S10a  shows the convergence of the ADAPT -GUCCSD energy error and the corresponding circuit 
+
+resources at representative ADAPT steps. The ADAPT -GUCCSD ansatz systematically lowers the energy 
+
+error during the iterative operator selection and eventually reaches the  chemical -accuracy regime. In particular, 
+
+the error decreases below the chemical -accuracy threshold of 0.043  eV after sufficient ADAPT iterations, 
+
+demonstrating that the selected GUCCSD operator pool is capable of preparing a highly accurate corre lated 
+
+state for the embedded active -space Hamiltonian. 
+
+However, the circuit cost increases rapidly as more ADAPT operators are included. Although the fully 
+
+converged ADAPT circuit gives the lowest error, its circuit depth reaches the order of  10 4 –10 5 , with 
+
+approximately  4 × 10 4 single -qubit gates and  3.7 × 10 4 two -qubit gates in the final step. Such a circuit is 
+
+far beyond the practical depth accessible in the present hardware experiments. Therefore, for the hardware 
+
+demonstrations, we selected the early step -5 and step -10 ADAPT circuits as shallow representati ve circuits. 
+
+These two circuits contain the leading ADAPT -selected excitation operators while maintaining experimentally 
+
+manageable depths. After circuit optimization, for the IS of H 2 dissociation/desorption on Cu (111), the step -
+
+5 circuit has a depth of  43 with 92 single -qubit gates and 72 two -qubit gates, whereas the step -10 circuit has 
+
+a depth of 162 with 188 single -qubit gates and 172 two -qubit gates ( Fig. S10b ). These shallow circuits were 
+
+then used to prepare correlated trial states for the QSCI calculations. 
+
+In our implementation, we use the selected excitation operators and optimized amplitudes from the 
+
+ADAPT -VQE output as the direct input for circuit construction. For a given ADAPT step, we read the 
+
+corresponding list of selected operators and append the ass ociated single - or double -fermionic -excitation 
+
+circuit modules sequentially, following the order in which the operators are selected by ADAPT -VQE. The 
+
+circuit construction follows the efficient fermionic -excitation strategy under the Jordan –Wigner mapping, 
+
+where a compact qubit -excitation core is supplemented by a Jordan –Wigner parity correction to recover the 
+
+required fermionic anticommutation sign. This avoids expanding each Pauli string independently with a full 
+
+CNOT -staircase construction and thereby re duces the two -qubit -gate overhead. 
+
+For a single excitation, we use the input format [k, i], corresponding to the generator 
+
+𝑎 𝑘 
+
+> †
+
+𝑎 𝑖  − 𝑎 𝑖 
+
+> †
+
+𝑎 𝑘  (26 )
+
+with the ordering condition  𝑖  < 𝑘  . When the two spin orbitals are adjacent, we directly apply the 
+
+corresponding two -qubit excitation module. When intermediate spin orbitals are present, we first encode the parity of the Jordan –Wigner string  {𝑖  + 1, … , 𝑘  − 1} onto an anchor qubit using a CNOT staircase. We then 
+
+apply controlled -phase operations to introduce the parity -dependent sign correction required by fermionic 
+
+anticommutation, and finally uncompute the parity encoding by reversing the CNOT staircase. In t his way, 
+
+the single -excitation module retains the compact qubit -excitation structure while explicitly including the 
+
+fermionic sign information from the Jordan –Wigner string. 
+
+For a double excitation, we use the input format [k, l, i, j], corresponding to the generator 
+
+𝑎 𝑘 
+
+> †
+
+𝑎 𝑙 
+
+> †
+
+𝑎 𝑖 𝑎 𝑗  − 𝑎 𝑖 
+
+> †
+
+𝑎 𝑗 
+
+> †
+
+𝑎 𝑘 𝑎 𝑙  (27 )
+
+The present circuit module is constructed for the canonical index ordering  𝑖  < 𝑗  < 𝑘  < 𝑙  . Since the 
+
+hardware demonstrations in this work use the early GUCCSD -based ADAPT -VQE circuits, specifically the 
+
+step -5 and step -10 circuits, the selected operators generally remain close to a simple occupied/virtual pair 
+
+structure. We therefore use a rest ricted canonicalization procedure: index swaps are allowed only within the 
+
+(𝑖 , 𝑗 ) pair or within the  (𝑘 , 𝑙 ) pair. According to fermionic antisymmetry, each such internal pair swap 
+
+changes the sign of the excitation generator; therefore, we multiply the excitation amplitude  𝜃  by  −1 when 
+
+an odd number of internal pair swaps is performed. If the excitation still does not satisfy  𝑖  < 𝑗  < 𝑘  < 𝑙  after 
+
+this pair -internal canonicalization, we do not apply a more general four -index reordering in the present 
+
+simplified circuit module. 
+
+The double -excitation circuit is assembled in three steps. First, we use a short sequence of CNOT 
+
+operations to establish the parity structure of the occupied and virtual orbital pairs. Second, we append the 
+
+central controlled -rotation block that realizes  the double -excitation core. Third, we encode the total parity of 
+
+the two intermediate Jordan –Wigner segments, 
+
+{𝑖  + 1, … , 𝑗  − 1} and  {𝑘  + 1, … , 𝑙  − 1} (28 )
+
+and apply controlled -phase operations to impose the corresponding fermionic sign correction. After the 
+
+parity  correction, all CNOT staircases used for parity encoding are reversed so that no auxiliary parity 
+
+information remains in the circuit. 
+
+After circuit construction, we perform gate -level optimization and resource analysis within the 
+
+Q2Chemistry workflow. The generated circuit is converted into a Q 2Chemistry -compatible circuit object, and 
+
+the built -in circuit optimization routine is applied to simplify the gate sequence. We record the circuit depth, 
+
+total number of gates, number of single -qubit gates, and number of two -qubit gates before and after 
+
+op timization. The circuit resources reported for the step -5 and step -10 hardware experiments cor respond to 
+
+the optimized circuits obtained after this Q 2Chemistry optimization. 
+
+4.2  Hardware results 
+
+For the  H2 dissociation/desorption  on Cu(111), we validated the quantum -experimental results obtained 
+
+with configuration recovery using both the step -5 and step -10 circuits. Both results achieve chemical accuracy, 
+
+while the step -10 circuit exhibits consistently better performance ( Fig. S11a ). Therefore, all subsequent 
+
+quantum experiments were performed using the corresponding step -10 circuits, with the detailed results 
+
+presented in  Figs. S11 and S13 .
+
+# 5.  Supplementary Figures Fig. S1  Embedded Cu cluster models and representative optimized embedding potentials.  First Cu 12 
+
+clusters were constructed from a  √21  × √21  × 4 Cu (111) slab and used for the H 2 dissociation/desorption 
+
+The second Cu 12  cluster for cluster size robustness analysis and the Cu 14  cluster used for the HCOO * + H *
+
+hydrogenation pathways to H 2COO * and HCOOH * were constructed from a  5 × 5 × 4 Cu (111) slab and 
+
+Representative optimized embedding potentials are shown as isosurfaces for each cluster model. 
+
+Fig . S2  Schematic illustration of the MBECAS -SR active -space construction scheme. Fig . S3 Active -orbital comparison for the TS and FS geometries of H 𝟐  dissociation/desorption on Cu 
+
+(111).  For each geometry, orbitals above the dashed line are selected by the present MBECAS -SR protocol, 
+
+whereas orbitals below the dashed line are the manually selected active orbitals from the previous DFET -based 
+
+ENEVPT2 study. Natural orbital occupations are  shown below the corresponding orbitals. All orbitals were 
+
+visualized using Multiwfn 28,29  with an isovalue of 0.04. 
+
+Fig. S4 Comparison of active orbitals for  H2 dissociation/desorption on Cu (111) obtained from different 
+
+active -space construction and orbital -propagation protocols.  (a) Active orbitals obtained in the present 
+
+work using MBECAS -SR combined with creeping initiated from the fully dissociated IS. (b) Active orbitals 
+
+reproduced following the previous DFET -based ENEVPT2 study 35 , where creeping was initiated from the IS 
+
+or TS. The rows correspond to the IS, TS, and FS geometries, and the arrows indicate the direction of orbital 
+
+propagation. For each geometry, the orbitals above the dashed line are virtual active orbitals, while t hose 
+
+below the dashed line are occupied active orbitals. To facilitate a direct comparison of orbital consistency 
+
+across geometries and propagation protocols, the orbital order has been rearranged. The highlighted boxes 
+
+mark the adsorbate -centered orbital  pairs discussed in the text. All orbitals are visualized with an isovalue of 
+
+0.04. Fig. S5  Selected natural orbitals for the H 2 dissociation/desorption on Cu (111).  The three panels 
+
+correspond to the IS, TS, and FS geometries, respectively. For each geometry, orbitals above the dashed line 
+
+are unoccupied/virtual active orbitals, whereas orbitals below the dashed line are occupied active orbitals. The 
+
+numbers below the  orbital plots denote the corresponding natural orbital occupations. The orbital isosurfaces 
+
+are plotted at an isovalue of 0.04. 
+
+Fig. S6  Selected active orbitals for CO adsorption on Cu (111).  The active space contains 14 electrons in 
+
+12 orbitals, CAS (14e,12o). Orbitals above the dashed line are unoccupied/virtual active orbitals, whereas 
+
+orbitals below the dashed line are occupied active orbitals. The numbers below the orbital plots denote th e
+
+corresponding natural orbital occupations. The orbital isosurfaces are plotted at an isovalue of 0.04. Fig. S7  Selected active orbitals for cluster size robustness analysis in CO absorption puzzle on Cu (111). 
+
+The active space contains 16 electrons in 14 orbitals, CAS (16e,14o). Orbitals above the dashed line are 
+
+unoccupied/virtual active orbitals, whereas orbitals below the dashed line are occupied active orbitals. The red 
+
+dotted box indicates the orbital with  edge artifacts. The numbers below the orbital plots denote the 
+
+corresponding natural orbital occupations. The orbital isosurfaces are plotted at an i sovalue of 0.04. 
+
+Fig. S8  Selected natural orbitals for the HCOO * + H * → H2COO * pathway on Cu (111).  The three 
+
+panels correspond to the IS, TS, and FS geometries, respectively. For each geometry, orbitals above the dashed 
+
+line are unoccupied/virtual active orbitals, whereas orbitals below the dashed line are occupied active orbitals. 
+
+The numbers below the  orbital plots denote the corresponding natural orbital occupations. The orbital 
+
+isosurfaces are plotted at an isovalue of 0.04. Fig. S9  Selected natural orbitals for the  HCOO* + H*  → HCOOH*  pa thway on Cu (111).  The three 
+
+panels correspond to the IS, TS, and FS geometries, respectively. For each geometry, orbitals above the dashed 
+
+line are unoccupied/virtual active orbitals, whereas orbitals below the dashed line are occupied active orbitals. 
+
+The numbers below th e orbital plots denote the corresponding natural orbital occupations. The orbital 
+
+isosurfaces are plotted at an isovalue of 0.04. 
+
+Fig. S10 ADAPT -UCCGSD error convergence and representative quantum circuit for the IS of H 2
+
+dissociation/desorption on Cu (111).  (a) ADAPT -VQE energy -error convergence as a function of iteration. 
+
+The  dashed horizontal line denotes the chemical -accuracy threshold of 0.043 eV. The labeled boxes indicate 
+
+representative ADAPT steps used for circuit construction, with the corresponding circuit depth and numbers 
+
+of one - and two -qubit gates. (b) Quantum circu it corresponding to the selected ADAPT -UCCGSD ansatz in 
+
+step -10 for the IS. Fig. S11 Hardware -sampled QC energy errors for H 2 dissociation/desorption and CO adsorption on Cu 
+
+(111).  (a) Energy errors for the IS, TS, and FS of H 2 dissociation/desorption obtained from the step -5 and 
+
+step -10 hardware -executed ADAPT circuits after configuration recovery and QSCI diagonalization. (b) 
+
+Energy errors for CO adsorption configurations on Cu (111), including the above -surface (abv), top, fc c, hcp, 
+
+and bridge configurations. For CO adsorption, the hardware data were obtained from the step -10 ha rdware -
+
+executed ADAPT circuits followed by configuration recovery and QSCI diagonalization, and the 
+
+corresponding QSCI and QSCI  + NEVPT2 energy errors are shown. The dashed horizontal lines denote the 
+
+chemical -accuracy threshold of 0.043 eV. 
+
+Fig. S12  Sampling of QCW quality and the corresponding NEVPT2 -assisted error reduction for H 2
+
+dissociation/desorption on Cu (111).  The sampled QCWs were taken from the ADAPT -UCCGSD 
+
+convergence trajectories for the IS, TS, and FS structures of H 2 dissociation/desorption on the Cu (111) surface. 
+
+For each sampled QCW, the wavefunction overlap with the FCI reference and the corresponding QCW and 
+
+QCW+NEVPT2 energy errors are shown, illustrating how the NEVPT2 correction reduces residual active -
+
+space e nergy error s as the QCW quality improves. Fig. S13  Hardware -sampled QC and QC -NEVPT2 energy errors for the competing HCOO* 
+
+hydrogenation pathways on Cu (111).  Energy errors are shown for the IS, TS, and FS of the HCOO* → 
+
+H2COO* pathway and the HCOO* → HCOOH* pathway on Cu (111). For each pathway, the hardware data 
+
+were obtained from the step -10 hardware -executed ADAPT circuits followed by configuration recovery and 
+
+QSCI diagonalization, and the corresponding QC and QC -NEVPT2  energy errors are shown. The dashed 
+
+horizontal lines denote the chemical -accuracy threshold of 0.043 eV. 
+
+Fig. S14  Site -resolved energetics of CO adsorption on Cu (111).  Energies are shown relative to the top 
+
+adsorption site for the bridge, fcc, hcp, and abv configurations. Colored bars denote QC -DFET, XYG3: PBE -
+
+D3BJ, ECASPT2, FEMION, DMC, and PBE -D3BJ results, as indicated in the legend. The dashed horizontal 
+
+line marks  the experimental benchmark for the abv –top energy difference. Positive values indicate 
+
+configurations higher in energy than the top site, whereas negative values indicate configurations lower in 
+
+energy than the top site. Fig. S15 Absolute orbital -resolved Mayer block indices for CO adsorption on Cu(111).  The generalized 
+
+Mayer block index M is decomposed into four orbital channels: the internal C –O σ component, the C –Cu  σ
+
+coupling, the internal C –O π component, and the C –Cu  π coupling. Results are shown for the abv, top, fcc, 
+
+hcp, and bridge configurations.  Blue bars denote emb -DFT results, and peach bars denote emb -QC results. 
+
+Fig. S16 Orbital -resolved Mayer bond -order correction for CO adsorption on Cu(111).  The differences 
+
+in generalized Mayer block indices are defined as  ΔM = M(emb -QC) − M(emb -DFT). Results are shown for 
+
+the abv, top, fcc, hcp, and bridge configurations. The four grouped channels correspond to the internal C –O σ
+
+component, the C –Cu  σ couplin g, the internal C –O π component, and the C –Cu  π coupling. Different bar 
+
+colors denote different adsorption configurations, as indicated in the legend. The vertical dashed l ine separates 
+
+the C –O internal channels from the CO –Cu coupling channels. Fig. S17 Top -view atom -resolved Mulliken charge maps for H₂ dissociation/desorption on Cu (111).  The 
+
+columns correspond to the IS, TS, and FS structures, and the rows compare the emb -QC and emb -DFT 
+
+descriptions. Filled circles denote surface Cu atoms, while the gray skeletal lines show the adsorbate geometry 
+
+projected onto the surface. The color scale  gives the Mulliken charge on each atom in units of e, with red and 
+
+blue indicating positive and negative atomic charges, respectively. 
+
+Fig. S18 Top -view atom -resolved Mulliken charge maps for CO adsorption on Cu (111).  The columns 
+
+show the abv, top, fcc, hcp, and bridge configurations, and the rows compare the emb -QC and emb -DFT 
+
+descriptions. Filled circles denote surface Cu atoms, while the gray skeletal lines show the projected CO 
+
+adsorption geometry. The color scale g ives the Mulliken charge on each atom in units of e, with red and blue 
+
+indicating positive and negative atomic charges, respectively. Fig. S19 . Schematic reaction network for CO 2 hydrogenation to methanol on Cu (111). The diagram 
+
+summarizes two competing formate -hydrogenation pathways starting from HCOO*: the HCOOH* -forming 
+
+pathway and the H 2COO* -forming pathway. The dashed box and star highlight the formate -hydrogenation 
+
+branching step examined in this work. Relative energies are shown only schematically. 
+
+Fig. S20  Evolution of frontier -orbital descriptors along the reaction coordinates for the three Cu (111) surface 
+
+processes studied in this work. (a) H 2 dissociation/desorption. (b) HCOO ∗ + H ∗ → H2COO ∗. (c) HCOO ∗ +
+
+H∗ → HCOOH ∗ . For each reaction, the adsorbate and Cu -slab contributions are evaluated as weighted 
+
+averages over the top four frontier active orbitals selected at each IS, TS, and FS geometry. The IS, TS, and 
+
+FS labels denote the initial, transition, and final structu res along each reaction pathway. Fig. S21  CI -based wavefunction -complexity diagnostics along the reaction coordinates for the three Cu 
+
+(111) surface processes studied in this work. (a) H 2 dissociation/desorption. (b)  HCOO * + H* → H2COO *. 
+
+(c)  HCOO * + H * → HCOOH *. For each reaction, the top -1 CI weight is shown on the left axis, and the CI 
+
+Shannon entropy,  𝑆 CI , is shown on the right axis. The IS, TS, and FS labels denote the initial, transition, and 
+
+final structures along each reaction pathway. A smaller top -1 CI weight and a larger  𝑆 CI  indicate a more 
+
+distributed CI expansion and stronger multiconfigurational character. 
+
+# 6.  Supplementary Tables 
+
+Table. S1  CO adsorption energetics on the Cu 12  cluster. Energies are reported relative to the top adsorption 
+
+site. 
+
+Adsorption site  Energy relative to top / eV 
+
+top  0.00 
+
+bridge  0. 51 
+
+fcc  0.46 
+
+hcp  0.73 
+
+abv  0.54 
+
+References: 
+
+1. Kresse, G. & Furthmüller, J. Efficiency of ab -initio total  energy calculations for metals and semiconductors 
+
+using a plane -wave basis set. Computational Materials Science 6, 15 –50 (1996). 
+
+2. Kresse, G. & Furthmüller, J. Efficient iterative schemes for ab initio total -energy calculations using a plane -
+
+wave basis set. Physical Review B 54, 11169 (1996). 
+
+3. Blöchl, P. E. Projector augmented -wave method. Physical Review B 50, 17953 (1994). 
+
+4. Perdew, J. P., Burke, K. & Ernzerhof, M. Generalized gradient approximation made simple. Physical 
+
+Review Letters 77, 3865 (1996). 
+
+5. Grimme, S., Antony, J., Ehrlich, S. & Krieg, H. A consistent and accurate ab initio parametrization of density 
+
+functional dispersion correction (DFT -D) for the 94 elements H –Pu. The Journal of Chemical Physics 132, 
+
+154104 (2010). 
+
+6. Grimme, S., Ehrlich, S. & Goerigk, L. Effect of the damping function in dispersion corrected density 
+
+functional theory. Journal of Computational Chemistry 32, 1456 –1465 (2011). 
+
+7. Becke, A. D. & Johnson, E. R. A density -functional model of the dispersion interaction. The Journal of Chemical Physics 123, 154101 (2005). 
+
+8. Monkhorst, H. J. & Pack, J. D. Special points for Brillouin -zone integrations. Physical Review B 13, 5188 
+
+(1976). 
+
+9. Methfessel, M. & Paxton, A. T. High -precision sampling for Brillouin -zone  integration in metals. Physical 
+
+Review B 40, 3616 (1989). 
+
+10. Henkelman, G., Uberuaga, B. P. & Jónsson, H. A climbing image nudged elastic band method for finding 
+
+saddle points and minimum energy paths. The Journal of Chemical Physics 113, 9901 –9904 (2000). 
+
+11. Henkelman, G. & Jónsson, H. A dimer method for finding saddle points on high dimensional potential 
+
+surfaces using only first derivatives. The Journal of Chemical Physics 111, 7010 –7022 (1999). 
+
+12. Heyden, A., Bell, A. T. & Keil, F. J. Efficient methods for finding transition states in chemical reactions: 
+
+comparison of improved dimer method and partitioned rational function optimization method. The Journal of 
+
+Chemical Physics 123, 224101 (2005). 
+
+13. Zhao, Q., Zhang, X., Martirez, J. M. P. & Carter, E. A. Benchmarking an embedded adaptive sampling 
+
+configuration interaction method for surface reactions: H₂ desorption from and CH₄ dissociation on Cu (111). 
+
+Journal of Chemical Theory and Computation 1 6, 7078 –7088 (2020). 
+
+14. Yu, K. & Carter, E. A. VASPEmbedding. GitHub,  https://github.com/EACcodes/VASPEmbedding .
+
+15. Krauter, C. M. & Carter, E. A. EmbeddingIntegralGenerator. GitHub, 
+
+https://github.com/EACcodes/EmbeddingIntegralGenerator .
+
+16. Sun, Q. et al. PySCF: the Python -based simulations of chemistry framework. Wiley Interdisciplinary 
+
+Reviews: Computational Molecular Science 8, e1340 (2018). 
+
+17. Sun, Q. et al. Recent developments in the PySCF program package. The Journal of Chemical Physics 153, 
+
+024109 (2020). 
+
+18. Dunning, T. H. Jr. Gaussian basis sets for use in correlated molecular calculations. I. The atoms boron 
+
+through neon and hydrogen. The Journal of Chemical Physics 90, 1007 –1023 (1989). 
+
+19. Peterson, K. A. & Puzzarini, C. Systematically convergent basis sets for transition metals. II. 
+
+Pseudopotential -based correlation consistent basis sets for the group 11 (Cu, Ag, Au) and 12 (Zn, Cd, Hg) 
+
+elements. Theoretical Chemistry Accounts 114, 283 –296 (2005). 
+
+20. Dolg, M., Wedig, U., Stoll, H. & Preuss, H. Energy -adjusted ab initio pseudopotentials for the first row 
+
+transition elements. The Journal of Chemical Physics 86, 866 –872 (1987). 
+
+21. Fan, Y. et al. Q² Chemistry: a quantum computation platform for quantum chemistry. arXiv preprint 
+
+arXiv:2208.10978 (2022). 
+
+22. Saki, A. A. et al. Qiskit addon: sample -based quantum diagonalization. GitHub, 
+
+https://github.com/Qiskit/qiskit -addon -sqd  (2024). 
+
+23. Zeng, X. et al. Accurate chemical reaction modeling on a noisy intermediate -scale quantum computer with 
+
+an active space -based workflow. The Journal of Physical Chemistry Letters 16, 11709 –11716 (2025). 
+
+24. Delcey, M. G., Pedersen, T. B., Aquilante, F. & Lindh, R. Analytical gradients of the state -average 
+
+complete active space self -consistent field method with density fitting. The Journal of Chemical Physics 143, 
+
+044110 (2015). 
+
+25. Aquilante, F. et al. Accurate ab initio density fitting for multiconfigurational self -consistent field methods. 
+
+The Journal of Chemical Physics 129, 024113 (2008). 
+
+26. Stoychev, G. L., Auer, A. A. & Neese, F. Automatic generation of auxiliary basis sets. Journal of Chemical 
+
+Theory and Computation 13, 554 –562 (2017). 
+
+27. Cao, C. et al. Quantum many -body simulations of catalytic metal surfaces. arXiv preprint 
+
+arXiv:2508.13036 (2025). 
+
+28. Lu, T. & Chen, F. Multiwfn: a multifunctional wavefunction analyzer. Journal of Computational Chemistry 
+
+33, 580 –592 (2012). 29. Lu, T. A comprehensive electron wavefunction analysis toolbox for chemists, Multiwfn. The Journal of 
+
+Chemical Physics 161, 082503 (2024).

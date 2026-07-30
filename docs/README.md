@@ -41,17 +41,17 @@
 <section class="dpr-home-dashboard-card dpr-home-report-card">
   <div class="dpr-home-dashboard-header">
     <div>
-      <span class="dpr-home-dashboard-kicker">2026-07-29</span>
+      <span class="dpr-home-dashboard-kicker">2026-07-30</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">共 13 篇</strong>
+    <strong class="dpr-home-dashboard-count">共 6 篇</strong>
   </div>
   <dl class="dpr-home-dashboard-stats">
     <div class="dpr-home-dashboard-stat"><dt>累计更新</dt><dd>1 次</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>5</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>8</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>3</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>3</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-07-29 22:34:00 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-07-30 23:45:33 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -62,7 +62,7 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>今日13篇论文重点精读E(3)-等变图神经网络框架（9.0分）与多组分盐类机器学习势（8.0分）。最值得看的方向：MANDALA的观测引导电子结构算符学习，以及ML势预测钠钾氯化物热物性与相行为。普通读者可速读可靠性感知分子嗅觉表征与零样本药物表示学习等方向。</p>
+<p>今日推荐精读两篇高分论文：分子优化新方法Q-Steer（9.0分）与蛋白质表示学习模型LC-SEPLM（8.0分）。值得优先关注前者如何通过动作价值引导提升分子策略优化效果。普通读者可进一步了解这两项工作在实际药物设计或蛋白结构预测中的应用潜力。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -71,12 +71,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">精读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">5 篇</strong>
+    <strong class="dpr-home-dashboard-count">3 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="MANDALA: An E(3)-Equivariant Graph Neural Network Framework for Learning Electronic-Structure Operators with Observable Guidance">MANDALA: An E(3)-Equivariant Graph Neural Network Framework for Learning Electronic-Structure Operators with Observable Guidance</span></li><li><span class="dpr-home-dashboard-paper-title" title="Machine-Learning Potentials for sodium-potassium chloride mixtures: Predicting thermophysical properties and phase behavior of multicomponent salts">Machine-Learning Potentials for sodium-potassium chloride mixtures: Predicting thermophysical properties and phase behavior of multicomponent salts</span></li><li><span class="dpr-home-dashboard-paper-title" title="Variational kinetics: elementary reaction kinetics via conic optimisation">Variational kinetics: elementary reaction kinetics via conic optimisation</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Q-Steer: Action-Value Guidance for Molecular Policy Optimization">Q-Steer: Action-Value Guidance for Molecular Policy Optimization</span></li><li><span class="dpr-home-dashboard-paper-title" title="LC-SEPLM: long-range contact-supervised adaptation for sequence-only protein representation learning">LC-SEPLM: long-range contact-supervised adaptation for sequence-only protein representation learning</span></li><li><span class="dpr-home-dashboard-paper-title" title="Using large language models to probe the limits of atom-centered structural descriptors">Using large language models to probe the limits of atom-centered structural descriptors</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>5</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>3</strong></span></div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-skim-card">
   <div class="dpr-home-dashboard-header">
@@ -84,12 +84,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">速读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">8 篇</strong>
+    <strong class="dpr-home-dashboard-count">3 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="An Ontology for Machine Learning Interatomic Potentials">An Ontology for Machine Learning Interatomic Potentials</span></li><li><span class="dpr-home-dashboard-paper-title" title="Beyond Predictive Accuracy: A Reliability-Aware Audit of Molecular Representations for Human Olfaction">Beyond Predictive Accuracy: A Reliability-Aware Audit of Molecular Representations for Human Olfaction</span></li><li><span class="dpr-home-dashboard-paper-title" title="From Cellular Responses to Pharmacological Domains: Multimodal Zero-Shot Drug Representation Learning">From Cellular Responses to Pharmacological Domains: Multimodal Zero-Shot Drug Representation Learning</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="A Physics-Informed Framework for PID Tuning of Chemical Processes Using Large Language Model Agents">A Physics-Informed Framework for PID Tuning of Chemical Processes Using Large Language Model Agents</span></li><li><span class="dpr-home-dashboard-paper-title" title="Embedded quantum computing for many-body surface reaction">Embedded quantum computing for many-body surface reaction</span></li><li><span class="dpr-home-dashboard-paper-title" title="Reconstructing local environments from concise atomistic representations">Reconstructing local environments from concise atomistic representations</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>8</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>3</strong></span></div>
 </section>
 </div>
 

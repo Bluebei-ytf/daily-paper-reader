@@ -1,0 +1,250 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-30T23:40:06.206691+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 3,
+    "deep_cap": 6,
+    "deep_selected": 3,
+    "quick_candidates": 3,
+    "quick_skim_target": 11,
+    "quick_selected": 3
+  },
+  "deep_dive": [
+    {
+      "id": "2607.26391v1",
+      "source": "arxiv",
+      "title": "Q-Steer: Action-Value Guidance for Molecular Policy Optimization",
+      "abstract": "Oracle-limited molecular optimization gives reward only after a complete molecule is generated, while each rollout requires many local next-token decisions. This delayed-feedback interface makes molecular policy optimization myopic: an optimizer can learn that a molecule was good without knowing which intermediate actions made it good. We introduce Q-Steer, a rollout-time action-value steering primitive for molecular language models. Q-Steer uses an offline-trained and frozen prefix-action value scorer, PAVS-Q, that estimates the downstream reward of taking a candidate next token under a partial SMILES prefix, then adds a normalized value bonus to sampling logits. The optimizer update rule and online oracle budget are unchanged; the claim is fixed-online-oracle performance, not equal total compute. On PMO23 with a fixed 10,000-call online budget, complete factorial studies across two molecular language-model backbones and four optimizers show that Q-Steer improves mean valid-unique score in all eight backbone-optimizer cells, with positive macro mean-score gains between +0.033 and +0.049 and 18-20 task wins per cell. Mechanism controls show that action identity matters: prefix-broadcast values are nearly neutral, while shuffled action values harm performance. These results support Q-Steer as a reusable rollout-time action-value wrapper that improves average molecular optimization reward across optimizer families and policy backbones without changing the online oracle budget.",
+      "authors": [
+        "Xinyu Wang",
+        "Jinbo Bi",
+        "Minghu Song"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "q-bio.BM"
+      ],
+      "published": "2026-07-29T01:53:14+00:00",
+      "link": "https://arxiv.org/pdf/2607.26391v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Action-value guidance for molecular policy optimization",
+      "llm_evidence_cn": "动作-价值引导用于分子策略优化",
+      "llm_evidence": "动作-价值引导用于分子策略优化",
+      "canonical_evidence": "动作-价值引导用于分子策略优化",
+      "llm_tldr_en": "Introduces Q-Steer, a rollout-time action-value steering method for molecular language models, improving optimization under delayed reward.",
+      "llm_tldr_cn": "针对分子生成中延迟奖励导致策略优化短视的问题，提出Q-Steer方法。利用离线训练的跨度动作价值评分器（PAVS-Q）在生成时为每一步提供价值奖励，引导分子语言模型采样。该方法不改变优化器更新规则，在固定在线预算下显著提升了分子优化效果。",
+      "llm_tldr": "针对分子生成中延迟奖励导致策略优化短视的问题，提出Q-Steer方法。利用离线训练的跨度动作价值评分器（PAVS-Q）在生成时为每一步提供价值奖励，引导分子语言模型采样。该方法不改变优化器更新规则，在固定在线预算下显著提升了分子优化效果。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "molecular generation and optimization with machine learning",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.22777v1",
+      "source": "arxiv",
+      "title": "LC-SEPLM: long-range contact-supervised adaptation for sequence-only protein representation learning",
+      "abstract": "Protein language models learn transferable sequence representations. However, because they primarily model contextual dependencies along amino-acid sequences, their training objectives do not explicitly constrain the model to learn three-dimensional residue contacts formed after folding . Here, we introduce LC-SEPLM (Long-range Contact-supervised ESM Protein Language Model), which adapts ESM2 with LoRA and long-range residue-pair contact supervision while retaining sequence-only downstream inference. Pair-specific queries use cross-attention over the complete sequence to extract global sequence context associated with long-range spatial contacts. To expose the model to diverse structural information, we trained LC-SEPLM on 500,000 AlphaFold Swiss-Prot proteins. In downstream evaluation, LC-SEPLM improved all eight protein-level tasks relative to ESM2. The largest gain occurred in remote-homology recognition, where macro-F1 increased from 0.6122 to 0.6769 (+0.0647, or 6.47 percentage points). On the official ESM-S EC benchmark, LC-SEPLM also outperformed ESM-S with a maximum absolute gain of 0.1771. These results support residue-pair contact supervision as a bounded route for introducing structural information into protein sequence representations while preserving sequence-only inference.",
+      "authors": [
+        "Chen Wang",
+        "Boming Kang",
+        "Qinghua Cui"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-07-24T08:35:06+00:00",
+      "link": "https://arxiv.org/pdf/2607.22777v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "protein language model adaptation with long-range contact supervision",
+      "llm_evidence_cn": "基于长程接触监督的蛋白质语言模型适应",
+      "llm_evidence": "基于长程接触监督的蛋白质语言模型适应",
+      "canonical_evidence": "基于长程接触监督的蛋白质语言模型适应",
+      "llm_tldr_en": "Introduces LC-SEPLM, which adapts ESM2 using LoRA and long-range contact supervision to improve protein representation learning while retaining sequence-only inference.",
+      "llm_tldr_cn": "蛋白质语言模型通过序列上下文学习表示，但训练目标未显式约束三维残基接触信息。本文提出LC-SEPLM，利用LoRA高效微调ESM2，并引入长程残基对接触监督信号。通过跨注意力机制提取全局序列上下文，模型在序列推理场景下隐式学习结构信息。在多个蛋白质任务上的实验表明，LC-SEPLM优于原始ESM2，尤其在涉及远程残基接触的下游任务中表现突出，展示了结构知识注入对序列表示学习的有效性。",
+      "llm_tldr": "蛋白质语言模型通过序列上下文学习表示，但训练目标未显式约束三维残基接触信息。本文提出LC-SEPLM，利用LoRA高效微调ESM2，并引入长程残基对接触监督信号。通过跨注意力机制提取全局序列上下文，模型在序列推理场景下隐式学习结构信息。在多个蛋白质任务上的实验表明，LC-SEPLM优于原始ESM2，尤其在涉及远程残基接触的下游任务中表现突出，展示了结构知识注入对序列表示学习的有效性。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "chemical foundation model pre-training and transfer learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.26984v1",
+      "source": "arxiv",
+      "title": "Using large language models to probe the limits of atom-centered structural descriptors",
+      "abstract": "Mapping an atomic structure to a compact set of geometric descriptors is an essential step in any machine-learning application to atomic-scale modeling. A powerful and widely-used approach can be understood as a discretization of the histogram of pair distances, triangles, etc., that results in a hierarchy of symmetry-invariant atom-centered descriptors. Unfortunately, the lower rungs on this hierarchy (two, three, four-neighbor clusters) were found to be incomplete, with symmetry-unrelated pairs of structures having exactly the same descriptors. However, all the ``descriptor degeneracies'' reported so far are resolved by considering larger clusters of neighbors to build the descriptors. We report examples of 3D structures that are indistinguishable even if one considers clusters of up to seven neighbors, and to arbitrary order when considering a practical level of discretization of the descriptors, discovered with the assistance of large language models. The key ingredients in their construction can be traced to results that have been known for decades in different communities; the model was able to find the references and recognize their significance for the problem at hand. We believe this experiment exposes an extremely fruitful usage pattern for AI in science: translating results between different communities and application domains, accelerating the process by which serendipitous discoveries in a field become paradigm-shifting breakthroughs in another.",
+      "authors": [
+        "Michelangelo Domina",
+        "Michele Ceriotti"
+      ],
+      "primary_category": "physics.chem-ph",
+      "categories": [
+        "physics.chem-ph",
+        "cs.LG"
+      ],
+      "published": "2026-07-29T14:40:59+00:00",
+      "link": "https://arxiv.org/pdf/2607.26984v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Uses LLMs to analyze atom-centered structural descriptors, applying LLM to chemistry representation",
+      "llm_evidence_cn": "利用大型语言模型分析原子中心结构描述符，将LLM应用于化学表示",
+      "llm_evidence": "利用大型语言模型分析原子中心结构描述符，将LLM应用于化学表示",
+      "canonical_evidence": "利用大型语言模型分析原子中心结构描述符，将LLM应用于化学表示",
+      "llm_tldr_en": "Employs large language models to systematically investigate degeneracies in atom-centered structural descriptors, uncovering new examples and confirming that larger clusters resolve the issue.",
+      "llm_tldr_cn": "原子中心结构描述符是原子尺度机器学习的关键，但低阶描述符存在简并问题。本文利用大型语言模型辅助分析，发现了以往未知的简并实例，并验证了扩大集群可以解决简并。该方法展示了LLM在化学理论分析中的潜力，为设计更完整的描述符提供了新思路。",
+      "llm_tldr": "原子中心结构描述符是原子尺度机器学习的关键，但低阶描述符存在简并问题。本文利用大型语言模型辅助分析，发现了以往未知的简并实例，并验证了扩大集群可以解决简并。该方法展示了LLM在化学理论分析中的潜力，为设计更完整的描述符提供了新思路。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "large language models for chemistry applications",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2607.26594v1",
+      "source": "arxiv",
+      "title": "A Physics-Informed Framework for PID Tuning of Chemical Processes Using Large Language Model Agents",
+      "abstract": "PID tuning for chemical processes commonly relies on identified process models, whereas plant engineers often retune loops iteratively by observing responses, diagnosing deficiencies, adjusting gains, and validating the result. This work formalizes this engineer-like workflow in a language-model-assisted PID tuning framework applicable to both large and small language models (LLMs/SLMs). Hosted LLMs receive closed-loop response features, control-engineering diagnoses, tuning preferences, and internal model control (IMC)-based demonstrations to generate and iteratively correct PID gains under common acceptance criteria. For local deployment, Qwen3-0.6B is adapted through supervised fine-tuning (SFT) with simulation-verified IMC targets and physics-informed group relative policy optimization (PI-GRPO) with non-compensable stability and performance rewards. On 100 first-order plus dead time (FOPDT) and 100 second-order plus dead time (SOPDT) test cases, hosted LLMs (DeepSeek-V4-Flash and Qwen3.7-Plus) achieve final success rates of 75-89% and 77-79%, respectively. As for Qwen3-0.6B, supervised fine-tuning raises first-recommendation success to 86.5%, and PI-GRPO further increases it to 94.0%, primarily improving first-attempt reliability and stability margins.",
+      "authors": [
+        "Zhoupeng Shou",
+        "Xiaodong Hong",
+        "Congjing Ren",
+        "Jingdai Wang",
+        "Yongrong Yang",
+        "Zuwei Liao"
+      ],
+      "primary_category": "eess.SY",
+      "categories": [
+        "eess.SY",
+        "cs.AI"
+      ],
+      "published": "2026-07-29T08:14:31+00:00",
+      "link": "https://arxiv.org/pdf/2607.26594v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "LLM agents for PID tuning in chemical processes",
+      "llm_evidence_cn": "基于大语言模型智能体的化工过程PID整定",
+      "llm_evidence": "基于大语言模型智能体的化工过程PID整定",
+      "canonical_evidence": "基于大语言模型智能体的化工过程PID整定",
+      "llm_tldr_en": "Formalizes PID tuning as an LLM agent workflow, using LLMs to generate and iteratively correct PID gains based on closed-loop response features and IMC-based demonstrations.",
+      "llm_tldr_cn": "化工过程PID整定常依赖工程师经验，自动化程度低。本文提出一种物理启发的框架，利用大/小语言模型作为智能体，接收闭环响应特征、诊断信息和IMC示例，迭代生成并校正PID参数。在仿真验证下，该方法适配Qwen3-0.6B等模型，通过监督微调提升本地部署性能。实验表明该框架能有效逼近工程师级整定效果，为化工过程控制引入语言模型智能体提供了新思路。",
+      "llm_tldr": "化工过程PID整定常依赖工程师经验，自动化程度低。本文提出一种物理启发的框架，利用大/小语言模型作为智能体，接收闭环响应特征、诊断信息和IMC示例，迭代生成并校正PID参数。在仿真验证下，该方法适配Qwen3-0.6B等模型，通过监督微调提升本地部署性能。实验表明该框架能有效逼近工程师级整定效果，为化工过程控制引入语言模型智能体提供了新思路。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "large language models for chemistry applications",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.20338v1",
+      "source": "arxiv",
+      "title": "Reconstructing local environments from concise atomistic representations",
+      "abstract": "Symmetry-based representations of local atomic structure, such as the power spectrum or bispectrum, are routinely used to characterize the structural diversity of datasets and as input features for atomistic machine learning. Although these descriptors systematically incorporate increasingly complex geometric correlations, it remains unclear if a given feature can be mapped back to a discrete point cloud, whether such a reconstruction is unique, and how changes in the descriptor are reflected in the underlying atomic geometry. The choice and discretization of the radial and angular bases, as well as the high dimensionality of the resulting feature vectors -- which may contain hundreds or thousands of components -- make this interpretation even more challenging. In this work, we investigate the inverse problem of recovering atomic structures from invariant descriptors. We show that accurate reconstructions can be obtained from remarkably compact descriptors of different correlation orders, each comprising only a few tens of features. Even representations that are formally incomplete or locally ill-conditioned can be inverted to accurate geometric reconstructions of atomic environments across molecular and material datasets. Our reconstruction framework provides a general algorithmic means of identifying approximate degeneracies of invariant descriptors and recovering distinct atomic environments that cannot be distinguished by a given representation. Finally, by reconstructing atomic configurations from descriptors, we examine how perturbations in invariant descriptors of different correlation orders translate into structural distortions.",
+      "authors": [
+        "Jigyasa Nigam",
+        "Tuong Phung",
+        "Ameya Daigavane",
+        "Aria Mansouri Tehrani",
+        "Tess Smidt"
+      ],
+      "primary_category": "physics.comp-ph",
+      "categories": [
+        "physics.comp-ph",
+        "physics.chem-ph"
+      ],
+      "published": "2026-07-22T16:24:36+00:00",
+      "link": "https://arxiv.org/pdf/2607.20338v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Reconstructing atomic structure from descriptors aids ML interpretability",
+      "llm_evidence_cn": "从描述符重建原子结构有助于机器学习可解释性",
+      "llm_evidence": "从描述符重建原子结构有助于机器学习可解释性",
+      "canonical_evidence": "从描述符重建原子结构有助于机器学习可解释性",
+      "llm_tldr_en": "Analyzes whether symmetry-based atomic descriptors can be inverted to reconstruct local atomic environments, providing insights for atomistic ML.",
+      "llm_tldr_cn": "针对原子机器学习中对称性描述符（如功率谱、双谱）的可解释性问题，研究了从高维特征向量重建离散点云的唯一性和映射关系。揭示了径向和角度基函数离散化对重建的影响，为理解原子表示的信息内容提供了理论基础。",
+      "llm_tldr": "针对原子机器学习中对称性描述符（如功率谱、双谱）的可解释性问题，研究了从高维特征向量重建离散点云的唯一性和映射关系。揭示了径向和角度基函数离散化对重建的影响，为理解原子表示的信息内容提供了理论基础。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.27009v1",
+      "source": "arxiv",
+      "title": "Embedded quantum computing for many-body surface reaction",
+      "abstract": "Predictive simulations of catalytic interfaces require correlated electronic-structure treatments that describe localized chemical transformations while retaining the influence of the extended metallic environment. We introduce QC-DFET, a quantum-computing density-functional embedding framework that maps surface-reaction active spaces to compact, environment-aware qubit Hamiltonians. A reaction-consistent active-space protocol preserves orbital continuity along reaction coordinates, while quantum-selected configuration interaction based on measurements from the Zuchongzhi superconducting quantum processor and strongly contracted perturbation theory capture static and dynamic correlation. On Cu(111), QC-DFET treats active spaces up to 28 qubits and is validated through a hierarchy of experimentally constrained surface-chemistry challenges. H2 dissociation/desorption tests balanced bond breaking and recombination barriers, CO adsorption tests site selectivity and metal-adsorbate bonding, and formate hydrogenation tests competing hydrogenation branches with different kinetic and thermodynamic signatures. Across these cases, QC-DFET reproduces bidirectional H2 barriers, recovers the observed top-site preference and adsorption strength of CO, and reconciles the experimentally benchmarked H2COO* reverse barrier with the lower forward barrier to HCOOH*. These results establish embedded quantum computing as a practical route to correlated surface-reaction energetics.",
+      "authors": [
+        "Dedong Wan",
+        "Xiaopeng Li",
+        "Yi Fan",
+        "Jie Liu",
+        "Xiongzhi Zeng",
+        "Zhenyu Li"
+      ],
+      "primary_category": "quant-ph",
+      "categories": [
+        "quant-ph",
+        "physics.chem-ph"
+      ],
+      "published": "2026-07-29T15:05:48+00:00",
+      "link": "https://arxiv.org/pdf/2607.27009v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "deep learning for reaction mechanism inference and catalysis design",
+      "llm_evidence_cn": "深度学习用于反应机制推断与催化设计",
+      "llm_evidence": "深度学习用于反应机制推断与催化设计",
+      "canonical_evidence": "深度学习用于反应机制推断与催化设计",
+      "llm_tldr_en": "Introduces QC-DFET, embedding quantum computing with DFT for surface reaction active spaces up to 28 qubits.",
+      "llm_tldr_cn": "催化界面模拟需处理电子关联，但传统方法难以平衡精度与效率。本文提出QC-DFET框架，将量子计算与密度泛函嵌入结合，为表面反应活性空间构建环境感知量子比特哈密顿量。在铜(111)面上验证了28量子比特的活性空间处理能力，为催化反应机制研究提供了新工具。",
+      "llm_tldr": "催化界面模拟需处理电子关联，但传统方法难以平衡精度与效率。本文提出QC-DFET框架，将量子计算与密度泛函嵌入结合，为表面反应活性空间构建环境感知量子比特哈密顿量。在铜(111)面上验证了28量子比特的活性空间处理能力，为催化反应机制研究提供了新工具。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "How is deep learning applied to reaction mechanism inference and catalysis design?",
+      "matched_requirement_id": "req-10",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}
