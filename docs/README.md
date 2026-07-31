@@ -41,17 +41,17 @@
 <section class="dpr-home-dashboard-card dpr-home-report-card">
   <div class="dpr-home-dashboard-header">
     <div>
-      <span class="dpr-home-dashboard-kicker">2026-07-30</span>
+      <span class="dpr-home-dashboard-kicker">2026-07-31</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">共 6 篇</strong>
+    <strong class="dpr-home-dashboard-count">共 13 篇</strong>
   </div>
   <dl class="dpr-home-dashboard-stats">
     <div class="dpr-home-dashboard-stat"><dt>累计更新</dt><dd>1 次</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>3</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>3</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>6</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>7</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-07-30 23:45:33 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-07-31 23:07:23 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -62,7 +62,9 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>今日推荐精读两篇高分论文：分子优化新方法Q-Steer（9.0分）与蛋白质表示学习模型LC-SEPLM（8.0分）。值得优先关注前者如何通过动作价值引导提升分子策略优化效果。普通读者可进一步了解这两项工作在实际药物设计或蛋白结构预测中的应用潜力。</p>
+<p>今日共读13篇论文，6篇精读、7篇速读。</p>
+<p>最值得关注机器学习驱动的光催化剂发现与物理信息化学性质预测，两篇均获9.0高分。</p>
+<p>建议优先精读这两篇，再浏览速读中的Fe-O机器学习势和分子优化前沿方法。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -71,12 +73,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">精读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">3 篇</strong>
+    <strong class="dpr-home-dashboard-count">6 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Q-Steer: Action-Value Guidance for Molecular Policy Optimization">Q-Steer: Action-Value Guidance for Molecular Policy Optimization</span></li><li><span class="dpr-home-dashboard-paper-title" title="LC-SEPLM: long-range contact-supervised adaptation for sequence-only protein representation learning">LC-SEPLM: long-range contact-supervised adaptation for sequence-only protein representation learning</span></li><li><span class="dpr-home-dashboard-paper-title" title="Using large language models to probe the limits of atom-centered structural descriptors">Using large language models to probe the limits of atom-centered structural descriptors</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="MatCreatioNN: Machine learning-guided computational discovery of photocatalysts for environmental applications">MatCreatioNN: Machine learning-guided computational discovery of photocatalysts for environmental applications</span></li><li><span class="dpr-home-dashboard-paper-title" title="Chem World: A Large-Scale Benchmark and Physics-Informed Framework for Trustworthy Chemical Property Prediction">Chem World: A Large-Scale Benchmark and Physics-Informed Framework for Trustworthy Chemical Property Prediction</span></li><li><span class="dpr-home-dashboard-paper-title" title="Fast and Accurate Foundation Models for Equivariant Machine-Learned Interatomic Potentials">Fast and Accurate Foundation Models for Equivariant Machine-Learned Interatomic Potentials</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>3</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>6</strong></span></div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-skim-card">
   <div class="dpr-home-dashboard-header">
@@ -84,12 +86,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">速读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">3 篇</strong>
+    <strong class="dpr-home-dashboard-count">7 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="A Physics-Informed Framework for PID Tuning of Chemical Processes Using Large Language Model Agents">A Physics-Informed Framework for PID Tuning of Chemical Processes Using Large Language Model Agents</span></li><li><span class="dpr-home-dashboard-paper-title" title="Embedded quantum computing for many-body surface reaction">Embedded quantum computing for many-body surface reaction</span></li><li><span class="dpr-home-dashboard-paper-title" title="Reconstructing local environments from concise atomistic representations">Reconstructing local environments from concise atomistic representations</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="PASS: Perturbation augmented space group structure sampling for transferable Fe-O machine learning interatomic potential">PASS: Perturbation augmented space group structure sampling for transferable Fe-O machine learning interatomic potential</span></li><li><span class="dpr-home-dashboard-paper-title" title="Oracle-Budgeted Molecular Optimization with Short-Term Graph Memory">Oracle-Budgeted Molecular Optimization with Short-Term Graph Memory</span></li><li><span class="dpr-home-dashboard-paper-title" title="Semi-Supervised Learning for Molecular Graphs via Ensemble Consensus">Semi-Supervised Learning for Molecular Graphs via Ensemble Consensus</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>3</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>7</strong></span></div>
 </section>
 </div>
 

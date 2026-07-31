@@ -1,0 +1,1647 @@
+Title: Lewis-labeled graphs: curly arrows and fishhooks as executable electron transfers
+
+URL Source: https://arxiv.org/pdf/2607.26088v1
+
+Published Time: Thu, 30 Jul 2026 00:03:29 GMT
+
+Number of Pages: 32
+
+Markdown Content:
+Curly arrows and fishhooks as executable electron transfers 
+
+# Lewis-labeled graphs: curly arrows and fishhooks as executable electron transfers 
+
+Tieu-Long Phan 
+
+Corresponding author: tieu@bioinf.uni-leipzig.de 
+
+Bioinformatics Group, Department of Computer Science, Interdisciplinary Center for Bioinformatics, and School for Embedded and Composite Artificial Intelligence (SECAI), Leipzig University, D-04107 Leipzig, Germany Department of Mathematics and Computer Science, University of Southern Denmark, DK-5230 Odense M, Denmark 
+
+Abstract 
+
+The curly-arrow formalism is the lingua franca of organic reaction mechanisms, but it is not executable. Molecular graphs used in rule-based modeling encode atomic connectivity while omitting lone pairs, radical electrons, and distinct σ and π components. Topological matching therefore cannot determine whether a reactive center holds the electrons a step consumes, while matching on derived formal charge can reject centers that do hold them. We introduce the Lewis-labeled graph (LLG), whose atom labels carry lone-pair and radical populations and whose bond labels separate σ- and π-bond occupancies. Bond order, formal charge, and valence electron inventory are derived from these fields. Chemical transformations become resource-constrained double-pushout rules, and curly arrows and coupled fishhooks become locus-sorted electron transfers committed atomically from a common pre-state. For a specified event group, we prove that its execution, application of its induced rule, and the corresponding integral occupancy update are equivalent. Every admissible event conserves valence electrons and net formal charge, and bond-centered fishhook coupling follows from integrality rather than drawing convention. Bidirectional replay recovers all 39,732 mapped reference endpoints, while LLG admits 96 fewer forward and 818 fewer inverse unique outcomes than conventional atom–bond rules. Ten radical records require manual annotation corrections. After review, transition construction succeeds for 101,313 of 101,314 records. The remaining case requires an endpoint atom-map correction rather than an arrow edit. Strict replay accepts all 160 reviewed steps and rejects all 1,120 controlled corruptions. These results establish a common executable state space for molecular graphs, reaction rules, and electron-flow annotations, prior to questions of kinetic or thermodynamic feasibility. 
+
+Keywords: chemical graph, cheminformatics, electron flow, curly arrow, double-pushout rewriting, graph rewriting, reaction mechanism 
+
+# 1 Introduction 
+
+A curly arrow [ 1] instructs a redistribution of electrons, yet it is inert on graphs that only understand bonds. When molecular representations strip away the valence inventories of the Lewis electron-pair model [ 2, 3], such as lone pairs, unpaired radicals, and π systems, rewrite rules [ 4– 6] cannot verify electron availability before they fire. Algorithms then match too permissively or too selectively, and lose atomicity. They might protonate a saturated NH 4+ cation, reject an amide anion carrying exactly the pair a substitution needs because 
+
+1arXiv:2607.26088v1 [physics.chem-ph] 27 Jul 2026 Curly arrows and fishhooks as executable electron transfers 
+
+formal charge is an accounting convention rather than an observed resource [7], or execute coupled homolytic fishhooks as two independent half actions [ 8]. Section 2 formalizes these matching failures and the need to record local electron capacity. Chemical transformations are recorded at three semantic levels, as mapped reactant and product pairs [ 9 ], as graph rewrite rules [ 6, 10 ], and as electron-flow annotations [ 11 , 12 ]. Representations that make electrons explicit close that gap [13]. The most complete is the half-edge graph of Holzschuh et al. [14] , whose electron-anonymous quotient, the electron-feature graph, carries lone-pair and radical counts on atoms and a bond multiplicity on bonds, and admits double-pushout rules acting on those electron resources. What that work establishes is existence , that every balanced mapped reaction admits some sequence of electron pushes and that feature-level rules are quotients of half-edge rules. The operational converse remains open, and it is what a curator or a mechanism generator [ 15 – 17 ] needs. Given a supplied and grouped annotation, decide whether it executes from a given state and reaches the declared endpoint. Existence of an explanation is not conformance of a candidate. Two details bear on it. A bond multiplicity does not distinguish a σ pair from a 
+
+π pair, so the reacting pair of a multiple bond is not canonically selectable. Pushes applied one at a time supply no synchronized group assessed against one common pre-state, which is what makes coupled fishhooks obligate rather than conventional. The Lewis-labeled graph (LLG) supplies the state that decision requires. Vertex labels carry lone-pair and radical populations, edge labels decouple σ from π bond occupancy, and bond order, formal charge, and valence-electron inventory are derived from these four fields rather than stored. The same fields serve at once as molecular state, as the matchable resources of a rule, and as the coordinates of electron flow, which aligns the three levels. A mapped reaction fixes two states and their correspondence, a rule declares a local resource delta, and a mechanism factors that delta into synchronized admissible events. The construction places these fields inside standard double-pushout rewriting [ 4, 5] and extends the attributed-graph architecture of SynKit [18]. Section 3 makes open-shell species first-class states on the ordinary atom–bond skeleton, so standard graph [ 19 ] and cheminformatics [ 20 ] libraries still apply. Section 4 turns the electron fields into matchable resources, so availability becomes an inequality. Partial atom maps used in the experiments are expanded by the method of Ref. [ 21 ]. Sections 5 and 5.3 show the three levels to be one decision on one coordinate set, and coupled fishhooks to be obligate by integrality rather than by convention. Section 6 validates the representation by bidirectional rule replay, the transition semantics by controlled corruption, and the grammar by a corpus audit. Ten radical annotations require manual correction, and one further record requires an endpoint atom-map correction that is not applied. 
+
+# 2 Notation and preliminaries 
+
+2.1 Molecular graphs, rules, and imaginary transition states 
+
+Our notation and foundational definitions follow prior work [ 21 –23 ]. Unless stated otherwise, all graphs are finite, undirected, and simple. A molecular graph has vertices for atoms 
+
+> 2Curly arrows and fishhooks as executable electron transfers
+
+and edges for chemical bonds, with attributes on both carrying chemical information. A 
+
+homomorphism φ : G → H is a vertex map with {u, v } ∈ E(G) ⇒ { φu, φv } ∈ E(H), that is, one preserving adjacency. A monomorphism is an injective homomorphism, equivalently an isomorphism of G onto a subgraph of H that need not be induced, so exhibiting one is an instance of subgraph isomorphism [ 24 , 25 ]. An isomorphism is a bijective homomorphism that also reflects adjacency, equivalently one whose inverse is again a homomorphism. These notions concern the underlying unlabeled graphs. Label compatibility is imposed on top of them and is defined separately for each label family below. Chemical reactions act locally and are naturally formalized by a double-pushout (DPO) rewriting rule [ 4– 6], p = ( L l
+
+←− K r
+
+−→ R), where the left-hand side L is the reactant-side pattern, the right-hand side R is the product-side pattern, and the interface K records the substructure that persists. A rule is applied to a host graph G by choosing a match 
+
+m : L → G and constructing the two pushout squares 
+
+L K R
+
+G D H,    
+
+> m
+> lr
+> m′m′′
+> gh
+
+yielding the derivation G (p,m )
+
+=⇒ H. For atom-preserving chemical rules, vertices are neither deleted nor created. The transformation is carried by bond edits and label changes, and the span induces the local atom-to-atom correspondence [4–6]. A mapped reaction can equivalently be condensed into a single graph. Given an atom-balanced reaction G → H with an atom-to-atom map (AAM) α : V (G) → V (H), the 
+
+imaginary transition state (ITS) [ 22 , 26 ], later reintroduced as the condensed graph of reaction [27 ], is the graph Υ( G, H, α ) on V (G) whose edge set is the union of the reactant and product bonds transported along α, and whose edge {u, v } carries the ordered pair (bG(u, v ), b H (αu, αv )) of its reactant- and product-side bond states (with an absent bond read as the null state). The reaction center is the subgraph on the edges whose two components differ together with the vertices whose label fields change. The ITS and the rule span are two views of one object. By Proposition 4 of Ref [ 23 ], every subgraph Γ ⊆ Υ( G, H, α ) containing the reaction center determines a unique atom-preserving DPO rule p = ( L l
+
+←− K r
+
+−→ R) with Υ( L, R, r ◦ l−1) ∼= Γ, and a match m making G (p,m )
+
+=⇒ H
+
+well defined. Its reactant side gives L, its product side R, and the agreeing sides the interface 
+
+K, so Γ fixes the preserved context the rule carries. Section 3 refines the bond and vertex labels of this span. The AAM α builds the span but is not a vertex attribute, correspondence within the rule being carried by l and r.
+
+2.2 Limitations of omitting electron representation 
+
+Structural matching on element-and-bond patterns fails in complementary ways. 
+
+> 3Curly arrows and fishhooks as executable electron transfers
+
+Over-permissive matches. Consider a protonation rule whose reacting nitrogen must donate a lone pair. If its left-hand side records only a nitrogen vertex, the pattern also embeds at the nitrogen of ammonium, which has no lone pair to donate in the two-center Lewis model (Figure 1A1). What the representation omits is the resource, not the expressiveness of DPO rewriting. An expanded electron-locus graph encodes the precondition with an explicit lone-pair object [ 13 ] (A2) but enlarges the subgraph-isomorphism input [ 24 , 25 ]. The compact alternative keeps the atom–bond skeleton and requires ℓN ≥ 1 (A3). Compactness here means graph-object count, not a runtime claim. A natural repair is instead to constrain the pattern by formal charge, ammonia being neutral and ammonium cationic. It excludes the unwanted match, but only by trading one failure for its opposite. 
+
+> A1
+
+N
+
+> L
+
+N
+
+H HH H
+
+> +
+> G
+> ✓
+> A2
+
+N
+
+> ˜L
+
+N
+
+H HH H
+
+> +
+> ˜G
+> ×
+> A3
+
+N  
+
+> ℓN≥1
+
+N
+
+H HH H 
+
+> +
+> ℓN=0
+> ×
+> B1
+
+N
+
+> q=0
+
+H N
+
+> −
+
+H
+
+> q=−1
+> ×
+> B2
+
+N
+
+> ˜L
+
+H N H
+
+> ˜G
+> ✓
+> B3
+
+N  
+
+> ℓN≥1
+
+H N H 
+
+> ℓN=2
+> ✓
+
+Figure 1: Two failure modes of purely structural patterns, each in three representations: 
+
+structural graph (col. 1), electron-locus multigraph with lone pairs as self-loops (col. 2), and 
+
+compact label fields (col. 3, LLG). Row A (over-permissive): a topology-only donor pattern matches saturated ammonium, which the lone-pair locus and ℓN ≥ 1 both reject. 
+
+Row B (over-selective): strict formal-charge matching rejects an anionic amide, which both resource conditions admit. Green ✓/red × mark match/no-match. 
+
+Over-selective matches. That repair treats a derived bookkeeping value as a rigid, equality-checked label. Formal charge is the prime example, an accounting convention derived from a Lewis assignment rather than an observed resource [ 7 , 8]. A nucleophilic-substitution rule written with neutral nitrogen now fails to match an anionic amide such as H2N– , though the anion carries exactly the pair the step needs (Figure 1, row B). Charge-annotated interfaces [ 10 ] mitigate but do not resolve this, since the condition is resource availability, not equality of a derived value. Relaxing that equality to an inequality on charge rescues this example but not the general one, because Equation (6) sums lone pairs, radicals, bonds, and hydrogens into one number and cannot isolate the pair a step consumes. Requiring ℓN ≥ 1 names that pair directly and settles all three centers, admitting ammonia and the amide anion while rejecting ammonium. 
+
+2.3 Related frameworks 
+
+Existing frameworks resolve these gaps only partly. MØD [ 6 , 10 ] implements DPO rewriting over graphs labeled with opaque strings or first-order terms (the category Graph L). Because 
+
+> 4Curly arrows and fishhooks as executable electron transfers
+
+its rule morphisms match labels by equality, a resource inequality such as ℓN ≥ 1 is not expressible in the label algebra: variation in oxidation state, radical character, or charge must be enumerated as disjoint label values or pushed outside the span into constraint code, and in neither case can the rewriting layer add, subtract, or conserve the electron resource. This concerns where the bookkeeping lives, not whether MØD can express the chemistry. 
+
+CGRtools [28 , 29 ] condenses a reaction into one graph with dynamic bond attributes and atom-level radical marks, but these are state attributes, not matchable resources under localized conservation laws. RDKit [ 20 ] matches SMARTS templates applying local heuristic edits, without span-based pushout semantics, serving perception rather than rule identity. SynKit 1.0 [ 18 ] supported mapped graphs and ITS representations but modeled no nonbonding electrons or radical resources. Mechanism-generation systems address a complementary task. ELECTRO learns two-electron paths from mapped endpoints [ 15 ], MechFinder applies expert-coded templates [ 16 ], and 
+
+FlowER models electron redistribution by flow matching [ 17 ], each enforcing conservation internally. The present work is not a generator but a deterministic and auditable acceptance relation, so such a system can sit upstream of it without changing its semantics. The closest formal comparison is the half-edge graph (HEG) and electron-feature graph (EFG) of Holzschuh et al. [14] . Their HEG is a tuple H = ( H, V, E, ψ ) with half-edges 
+
+H, atoms V , a partition E of a subset of H into bond pairs and lone-pair loops, and an ownership map ψ : V → 2H , on which they prove that any balanced mapped reaction is explained by a sequence of single- and two-electron half-edge moves. Dropping electron identity gives the EFG, the category of ACSets over a schema with sorts Atom , Pair , LP ,
+
+Rad , reached by a coarsening functor C : HEG nf → EFG . In labeled form the EFG already carries lone-pair and radical counts on atoms and a bond multiplicity on bonds, and they show it to be an exact static quotient of half-edge graphs. They further give double-pushout rules as spans of these ACSets, so electron resources are themselves deleted, preserved, and created by the rule, and prove these to be quotients of electron-anonymous half-edge rules. Neither an explicit electron representation nor rewriting over one is therefore what separates the present work, and three other things do. Their results are existence and quotient statements, and neither settles whether a supplied and grouped annotation can execute from a given state and reach a declared endpoint. A single bond multiplicity leaves the reacting pair of a multiple bond non-canonical, whereas separating σ from π makes πe a determinate transition locus. Their pushes also carry no event group whose availability is read from one common pre-state, which is what forces coupled fishhooks to commit together. The two encodings also place the bookkeeping differently. Matching one LP object embeds into any atom carrying at least one, so an ACSet rule obtains resource inequality for free at the cost of object count, while the scalar encoding keeps the atom–bond skeleton compact and expresses the same condition as a residual variable with an application condition (Section 4). Neither dominates, and their categorical relation is deferred to Section 5.4. 
+
+> 5
+
+Curly arrows and fishhooks as executable electron transfers 
+
+# 3 Lewis-labeled graphs 
+
+3.1 Definition and policy-valid states 
+
+Definition 1. A Lewis-labeled graph (LLG) is an attributed undirected molecular graph 
+
+G = ( V, E, a, b ), where each atom v has label a(v) = ( el v, ℓ v, r v) ∈ Symbol × N20 (element, lone pairs, and radical electrons) and each edge e = {u, v } has label b(e) = ( se, p e) ∈ N20
+
+giving its σ- and π-bond orders. The neutral-atom valence-electron count zv is a cached function of el v, not an independent variable. The total Kekul´ e bond order is 
+
+oe = se + pe. (1) For clear endpoints we write suv , p uv , o uv . Thus ammonia has ℓN = 1, a methyl radical has 
+
+rC = 1, and an ordinary double bond has ( se, p e) = (1 , 1). All hydrogens are explicit vertices here. An implementation may instead store an optional implicit-hydrogen count as auxiliary state. By modeling electron resources as scalar label fields rather than pseudo-atoms or electron vertices, the underlying graph handed to standard graph algorithms remains the compact atom–bond graph of Section 2.1. Conventional two-center bonds carry se = 1 and pe ∈{0, 1, 2}, representing single, double, and triple bonds respectively, and Figure 2 shows an example with its derived quantities. These same four fields are the electron loci of the LLG, the sites between which the arrow-pushing calculus of Section 5 transfers electrons.  
+
+> A
+
+Formaldehyde encoding    
+
+> oxygen vertex
+> a(v) = ( el , ℓ, r )
+> a(O) = (O ,2,0)
+
+# C O
+
+H
+
+H             
+
+> σ
+> π
+> C–O edge
+> b(e) = ( s, p )
+> b({C,O}) = ( 1,1)
+> decode
+> bond order
+> oCO =s+p
+> = 1 + 1 = 2
+> nonbonding electrons
+> nO= 2 ℓ+r
+> = 2(2) + 0 = 4
+> formal charge
+> qO=zO−nO−
+
+∑ oe     
+
+> = 6 −4−2 = 0
+> B
+
+Methyl radical 
+
+# C
+
+H H
+
+H      
+
+> carbon vertex
+> a(C) = (C ,0,1
+> r
+> )
+> nC= 2 ℓ+r=2(0) + 1 = 1 one unpaired electron
+
+Figure 2: (A) Stored vertex and edge fields for formaldehyde, with three quantities decoded from them. (B) Radical occupancy represented as a vertex field. 
+
+Definition 2. The electron loci of an LLG G are Loc( G) = {lp( v), ρ v : v ∈ V } ∪ { σ{u,v }, π {u,v } : {u, v } ∈ (V
+
+> 2
+
+)}, (2) 
+
+6Curly arrows and fishhooks as executable electron transfers 
+
+namely the lone-pair and radical loci lp (v), ρ v on each vertex and the σ- and π-bond loci 
+
+σ{u,v }, π {u,v } on each unordered pair (abbreviated σuv , π uv ). Their occupancy reads off the four label fields, 
+
+cG(lp( v)) = ℓv, cG(ρv) = rv, cG(σuv ) = suv , cG(πuv ) = puv ,
+
+with cG(σuv ) = cG(πuv ) = 0 when {u, v } /∈ E(G). Each locus carries a sort in {lp , ρ, σ, π },and these four sorts are exactly the four resource coordinates J = {ℓ, r, s, p } used for rewriting in Section 4. Apart from lp , each sort symbol is the Greek counterpart of its occupancy letter, so that ρ, σ, and π carry r, s, and p respectively. The locus view therefore adds no state: it records only that the rewriting coordinates and the electron-flow coordinates are one and the same. 
+
+Definition 3. An LLG G is Π -valid when all ℓv, r v, s e, p e are nonnegative integers and satisfy the local constraints selected by Π. A main-group policy may require se ≤ 1, 
+
+pe > 0 ⇒ se = 1, and 2ℓv + rv + 2 ∑
+
+> e∼v
+
+(se + pe) ≤ κΠ(v).
+
+Here κΠ(v) ∈ N0 ∪ {∞} is the policy-selected upper bound on the valence-shell electron population at v. For example, a duet/octet policy assigns 2 to hydrogen and 8 to an octet-limited main-group atom, while κΠ(v) = ∞ disables this bound. A closed-shell policy also imposes rv = 0, while open-shell, hypervalent, and transition-metal policies may relax the corresponding bounds. All formal results are parameterized by Π. The corpus experiments instantiate it as Πexec : ℓv, r v, s e, p e ∈ N0, se ∈ { 0, 1}, pe > 0 = ⇒ se = 1 , κΠ ≡ ∞ . (3) Two relaxations are deliberate and independent: dropping the octet bound admits hypervalent main-group structures, which appear throughout the input corpora, and permitting rv > 0admits the open-shell states the radical corpus requires. Element-specific capacities and transition-metal bonding remain outside the empirical claim. Being this permissive, Π exec 
+
+rejects only non-integral or negative occupancies and malformed σ/π combinations, so the substantive acceptance conditions tested in Section 6 are integrality, common-prestate availability, and endpoint consistency rather than the policy itself. We report the permissive case so that no rejection is attributable to a contestable valence convention. 
+
+3.2 Derived quantities and conservation 
+
+Definition 4. For an LLG G and v ∈ V (G), the nonbonding electron count , the degree , and the derived formal charge are 
+
+nv = 2 ℓv + rv, (4) deg( v) = nv + ∑
+
+> e∼v
+
+oe, (5) 
+
+qv = zv − deg( v), (6) 
+
+> 7Curly arrows and fishhooks as executable electron transfers
+
+where e ∼ v denotes incidence. The degree collects the electrons v owns, all of its nonbonding electrons together with one per unit of bond order, as in the standard Lewis convention [ 7]. It is the incident half-edge count of Ref. [ 14 ], so qv = ch (v) there and the two models yield identical charges, the LLG computing them from scalar counts rather than by partitioning half-edges. Boundary formal charges are redundant: derived directly from label fields, they serve as consistency checks rather than independent variables. Define the represented electron inventory and neutral valence pool by 
+
+Ie(G) = ∑ 
+
+> v∈V(G)
+
+deg( v), (7) Val( G) = ∑ 
+
+> v∈V(G)
+
+zv. (8) Since each edge is incident with two vertices, expanding Equation (5) gives Ie(G) = ∑ 
+
+> v
+
+nv +2 ∑ 
+
+> e
+
+oe.
+
+Lemma 1. For any LLG G, let Q(G) = ∑  
+
+> v∈V(G)
+
+qv. Then 
+
+Q(G) = Val( G) − Ie(G). (9) 
+
+Proof. Summing Equation (6) over V (G) gives Q(G) = ∑ 
+
+> v
+
+zv − ∑ 
+
+> v
+
+deg (v) = Val (G) −
+
+Ie(G). 
+
+Proposition 2. Let G → H be atom balanced: there exists an element-preserving bijection 
+
+α : V (G) → V (H). Then 
+
+Q(H) − Q(G) = −(Ie(H) − Ie(G)), (10) 
+
+so the represented electron inventory is conserved if and only if total formal charge is conserved. Proof. The element-preserving bijection gives Val (G) = Val (H). Subtracting the two instances of Lemma 1 proves the claim. This conservation condition is intentionally weaker than chemical feasibility: it captures only algebraic stoichiometry and formal redox balance [ 30 , 31 ], providing a baseline invariant check while kinetic and thermodynamic constraints remain outside the transition semantics. 
+
+# 4 Resource-constrained DPO rewriting of LLGs 
+
+The construction separates permission, availability, and validity: undefined interface at-tributes specify which coordinates a rule may change, residual terms test whether a host has the required resources and instantiate the rule at a chosen occurrence, ordinary DPO gluing constructs the successor, and the application predicate with policy Π decides admission. 
+
+> 8Curly arrows and fishhooks as executable electron transfers
+
+4.1 Resource terms and partial attributes 
+
+We use ordinary DPO rewriting with symbolic resource labels and explicit application condi-tions [ 32 , 33 ], every instantiated attributed match remaining exact. Let J = {ℓ, r, s, p } index the four resource coordinates, equivalently the four locus sorts {lp , ρ, σ, π } of Definition 2, and let 
+
+A = (Aj , +j , 0j 
+
+> )
+> j∈J
+
+, Aj = N0,
+
+be the J-sorted commutative-monoid algebra. Sorting prevents substitution between unlike resources, and addition separates what a rule consumes or produces from the residual retained from the host. For a finite sorted variable set X, let TA(X) be the corresponding term algebra generated by X, constants in A, and sort-respecting addition. Every sort-preserving valuation θ : X → A extends uniquely to the evaluation homomorphism ̂ θ : TA(X) → A.Let Σ be the many-sorted attribute signature of Definition 1, with fixed carriers for the non-resource sorts and resource carriers supplied by an algebra B. Write PAttr Σ(B) for the category of finite graphs with partial Σ-attributes. Its morphisms preserve incidence and every attribute defined at the domain [ 34 ]. Host graphs lie in the totally labeled subcategory LLG =Π of Π-valid LLGs with exact morphisms. Rule schemata instead use 
+
+B = TA(X) and partial interfaces. We restrict rule legs and matches to injective relabeling morphisms. Natural pushout complements along this class exist uniquely in the setting used below [34–36]. 
+
+4.2 Rule schemata and partial relabeling interfaces 
+
+Definition 5. Let L and R be totally labeled graphs over TA(X). A graph K in a span 
+
+L l
+
+←− K r
+
+−→ R is a partial relabeling interface when it contains exactly the persistent vertices and edges and, for every persistent object q and resource coordinate j,
+
+cjK (q)↓ =⇒ cjL(l(q)) = cjK (q) = cjR(r(q)) . (11) A defined coordinate is therefore preserved by both rule legs. The value cjK (q) = ⊥ removes that equality constraint. It permits relabeling but does not supply the new value. 
+
+Definition 6. A resource-constrained LLG rule schema is a span of monomorphisms 
+
+p = (L l
+
+←− K r
+
+−→ R) in PAttr Σ
+
+> (
+
+TA(X)), (12) together with a finite sorted variable set X and an application predicate Φ p(G, m, θ ). Here 
+
+L, R are total and K is a partial relabeling interface. Every changed coordinate x on a persistent carrier has the residual form 
+
+cL(x) = ux + d− 
+
+> x
+
+, cR(x) = ux + d+ 
+
+> x
+
+, ux ∈ X, d− 
+
+> x
+
+, d + 
+
+> x
+
+∈ N0, (13) where ux is fresh for x. It denotes the resource left after the rule consumes d− 
+
+> x
+
+, before the rule contributes d+ 
+
+> x
+
+. Whenever d−
+
+> x
+
+̸ = d+ 
+
+> x
+
+the two labels differ, so Equation (11) forces 
+
+cK (x) = ⊥: a changed coordinate is necessarily undefined in the interface. Created and deleted edges are represented by R \ K and L \ K, respectively. Element identity is defined in K, while charge and total bond order remain derived. All rules considered below are atom-preserving, so V (K) = V (L) = V (R). 
+
+> 9Curly arrows and fishhooks as executable electron transfers
+
+Example 1. For neopentoxyl-radical β-scission, (CH 3)3C−CH 2−O• −−→ (CH 3)3C• + CH 2−−O,
+
+the interface leaves the changing radical and π coordinates undefined and deletes the c1−c2
+
+edge structurally (Figure 3). Its deltas balance, 1( −1) + 2(+1) + 2( −1) + 1(+1) = 0, so the rule conserves Ie and hence, by Proposition 2, total charge. Definition 6 does not force that balance in general. Section 5 obtains it for every rule induced by an event group and factors the same delta into three fishhooks. O C C  
+
+> oc1c2
+> L
+
+O C C    
+
+> ⊥⊥⊥
+> oc1c2
+> K
+
+O C C  
+
+> oc1c2
+> R
+
+O C C 
+
+> H
+> H
+> oc2
+> G
+
+O C
+
+> H
+> H
+
+C 
+
+> oc2
+> D
+
+O C 
+
+> H
+> H
+> +
+
+C 
+
+> oc2
+> H
+
+l r
+
+g h
+
+m m′ m′′ 
+
+Figure 3: Resource-constrained DPO derivation for the neopentoxyl-radical β-scission of Example 1. Top: the rule span L l
+
+←− K r
+
+−→ R, whose partial interface leaves ⊥-marked coordinates free and deletes the dashed c1−c2 edge. Bottom: match m maps the rule into the shaded region of host G, producing H via pushout complement D.
+
+4.3 Admissible matches and rule instantiation 
+
+A structural match first tests resource availability and then fixes the residuals. These are distinct operations because ⊥ belongs to the rule interface, while a residual’s value depends on the selected host occurrence. Let |Q| denote Q without its resource labels but with incidence and non-resource labels retained. 
+
+Definition 7. Let p be a resource-constrained LLG rule schema and let G be a Π-valid LLG. A structural match is a monomorphism μ : |L| ↪→ | G|. It is resource-admissible when, for every defined resource label, ̂
+
+θ
+
+> (
+
+cjL(q)
+
+> )
+
+= cjG(μ(q)) for all q, j with cjL(q)↓ (14) has a sort-preserving solution θ : X → A. For a fresh residual label ux + d− 
+
+> x
+
+, this is equivalent to 
+
+cG(μ(x)) ≥ d− 
+
+> x
+
+. (15) 
+
+> 10 Curly arrows and fishhooks as executable electron transfers
+
+Ground labels still match exactly. If a schema deliberately reuses a variable, all corresponding equations must assign it the same value. Equation (15) is an application condition on μ, not a weakened attributed-graph morphism. 
+
+Definition 8. For the fresh-residual form of Equation (13) , a resource-admissible match induces the unique instantiation 
+
+θμ(ux) = cG(μ(x)) − d− 
+
+> x
+
+. (16) For Q ∈ { L, K, R }, write Qθ μ for pointwise evaluation of all defined resource labels. This gives the concrete span pθ μ = ( Lθ μ ← Kθ μ → Rθ μ) and lifts μ to the exact match 
+
+m : Lθ μ ↪→ G. Incidence, non-resource labels, and ⊥ are unchanged. 
+
+Lemma 3. For a sort-preserving valuation θ : X → A, pointwise evaluation Q 7 → Qθ is a functor PAttr Σ(TA(X)) → PAttr Σ(A) that fixes the underlying graph, every non-resource label, and every undefined coordinate. It sends the rule schema p = ( L l
+
+←− K r
+
+−→ R) to a span 
+
+pθ = ( Lθ lθ 
+
+←− Kθ rθ 
+
+−→ Rθ ) of monomorphisms in PAttr Σ(A) whose interface Kθ is again a partial relabeling interface. Proof. ̂ θ is a sorted algebra homomorphism, so it preserves label equalities, identities, and composition. Evaluation fixes graph maps and therefore preserves monomorphisms. Applying it to Equation (11) preserves every interface equality, while ⊥ remains undefined. 
+
+Example 2. For nitrogen protonation, the reacting lone-pair count changes from uℓ + 1 to uℓ,while the N–H bond is created structurally. At H 2N−, where ℓN = 2, Equation (16) gives 
+
+θμ(uℓ) = 1. The rule forms neutral NH 3 and leaves one lone pair. At ammonia, the same schema gives uℓ = 0. Thus one schema covers both hosts (Figure 4). 
+
+4.4 Direct derivations and well-definedness 
+
+Write θ = θμ. The instantiated rule and host now lie in PAttr Σ(A). A direct derivation is the two-square construction 
+
+Lθ Kθ Rθ 
+
+G D H.    
+
+> m
+> lθ rθ
+> kn
+> gh
+
+(17) The left square is a pushout complement that removes Lθ \ Kθ . The right square is a pushout that adds Rθ \ Kθ .
+
+Definition 9. An instantiated exact match ( θμ, m ) is DPO-applicable when the identification and dangling conditions hold. In addition, after deleting the matched image of Lθ μ \Kθ μ, the host must contain none of the simple edges represented by Rθ μ \ Kθ μ. This no-created-edge condition prevents the second pushout from identifying a new edge with an existing one. 
+
+> 11 Curly arrows and fishhooks as executable electron transfers
+
+A
+
+N H⊕   
+
+> ℓN=uℓ+ 1
+
+N
+
+⊥
+
+H  
+
+> ℓN=⊥
+
+N H  
+
+> ℓN=uℓ
+
+l r
+
+B N ⊖
+
+H H
+
+H⊕    
+
+> ℓN= 2 ,q=−1
+
+C N
+
+HH
+
+H⊕    
+
+> ℓN= 2 ≥d−
+> ℓ= 1
+> θμ(uℓ) = 1
+
+D
+
+N H⊕ 
+
+> ℓN= 2
+
+N
+
+⊥
+
+H  
+
+> ℓN=⊥
+
+N H 
+
+> ℓN= 1
+
+lθ rθ 
+
+Figure 4: Rule instantiation in double-pushout form (Example 2). (A) Schema, where 
+
+⊥ permits relabeling. (B) Host. (C) The match gives θμ(uℓ) = 1. (D) Concrete span. Application also requires Φ p and a Π-valid successor. Whenever the two squares exist, they define a direct derivation. It is admissible when Φp(G, m, θ μ) holds and the complete successor satisfies H |= Π. Let ¯m denote the induced map from persistent rule carriers into H. Each changed coordinate satisfies 
+
+cH ( ¯ m(x)) = cG(m(x)) − d− 
+
+> x
+
++ d+ 
+
+> x
+
+. (18) The policy is checked on H, not only on Rθ μ, because preserved context can affect the validity of a rewritten atom. 
+
+Proposition 4. Let p be a resource-constrained LLG rule schema with V (K) = V (L) = 
+
+V (R), and let a resource-admissible structural match μ induce (θμ, m ). If this exact match is DPO-applicable, then both squares in diagram (17) exist and are unique up to isomorphism. Equation (18) gives each changed coordinate, every defined interface coordinate is preserved, and all coordinates outside the rule image agree with G. Hence the match and its induced valuation determine H uniquely up to isomorphism. Proof. Since V (K) = V (L), the left square deletes only the edges of Lθ \Kθ . Hence dangling is vacuous, while injectivity of m gives identification. For injective lθ and m, the natural pushout complement exists uniquely [ 34 ]. It is the host with the matched deleted edges removed and the changed interface coordinates left undefined. Lemma 3 preserves every defined interface label. The no-created-edge condition then makes the second gluing a pushout in finite simple graphs. A changed coordinate is undefined throughout Kθ and D, so 
+
+> 12 Curly arrows and fishhooks as executable electron transfers
+
+the left square does not transport its value. The instantiation fixes θ(ux) = cG(m(x)) − d− 
+
+> x
+
+,so Rθ carries θ(ux) + d+ 
+
+> x
+
+, which the second pushout writes into H. This proves Equation (18) .Both squares preserve the remaining context. 
+
+# 5 Electron-flow transitions on LLGs 
+
+5.1 Locus-sorted moves and event groups 
+
+Arrow pushing becomes a multiset of transfers between the four locus sorts lp , ρ, σ, π , checked against one pre-state and committed as a single net edit. A two-electron move may form a singleton group, whereas fishhooks on pair-valued loci must be coupled (Figure 5A–C). 
+
+A
+
+N C⊕ induces N C⊕ N
+
+> ⊥
+
+C
+
+> ⊥
+
+N
+
+⊕ C   
+
+> lr
+> LKR
+
+B
+
+X Y × ∆σxy = − 12 /∈ Z
+
+> no valid rule
+
+C
+
+X Y induces X Y X Y 
+
+> ⊥⊥
+
+X Y   
+
+> lr
+> LKR
+
+D
+
+z x y
+
+> cG(x) = 1
+
+✓ commits 
+
+E
+
+z x y
+
+> cG(x) = 0
+
+× rejected 
+
+Figure 5: Integrality and availability gates for event groups. (A) A two-electron move is integral and induces a rule. (B) One fishhook is half-integral and does not. (C) Coupled fishhooks induce an integral rule. (D–E) Equal net deltas can differ in admissibility because gross demand is evaluated on the common pre-state. Use the zero extension cG(σuv ) = cG(πuv ) = 0 on non-edges, quotas w(lp ) = w(σ) = w(π) = 2 and w(ρ) = 1, sort t(x) with w(x) = w(t(x)), and display aliases ·(v), σ (u, v ), π (u, v ). Supports are supp ( lp (v)) = supp (ρv) = {v} and supp (σuv ) = supp (πuv ) = {u, v }. The locality predicate Ψ t(x)→t(y)(x, y | G) requires intersecting supports. The move lp (u) → lp (v)instead requires {u, v } ∈ E(G), and named radical macros obey Table S2. For an integral delta ∆ with cG + ∆ ≥ 0, write G ⊕ ∆ for the graph with occupancy cG + ∆, 
+
+> 13 Curly arrows and fishhooks as executable electron transfers
+
+refreshed derived labels, and zero-order edges removed. 
+
+Definition 10. An electron move is μ = ( x k
+
+−→ y), where x̸ = y are loci and k ∈ { 1, 2} is the number of transferred electrons. Its occupancy delta is ∆μ(z) = 
+
+> 
+
+−k/w (x) if z = x, 
+
++k/w (y) if z = y, 
+
+0 otherwise. (19) For a finite multiset M , define its net delta together with its gross outflow and inflow at each locus by ∆M = ∑
+
+> μ∈M
+
+∆μ, out M (x) = ∑ 
+
+> μ=( xk
+
+−→y)∈M
+
+kw(x) , in M (x) = ∑ 
+
+> μ=( yk
+
+−→x)∈M
+
+kw(x) , (20) so that ∆ M = in M − out M . These are group quantities, distinct from the rule-level amounts 
+
+d± 
+
+> x
+
+of Equation (13) , which record a net change. Such a finite multiset is an event group , and it is admissible in G when (1) every move satisfies Ψ t(x)→t(y)(x, y | G), (2) out M (x) ≤ cG(x)for all loci x, (3) ∆ M ∈ ZLoc( G), and (4) G ⊕ ∆M satisfies Π. Condition (2) implies cG + ∆ M ≥ 0, well-defining the atomically committed state G′ =
+
+G ⊕ ∆M . Because availability is evaluated strictly against the pre-state, resources produced elsewhere in M cannot fund consumption. 
+
+Group boundary and endpoint conformance. The supplied annotation fixes the group boundary, which the transition relation neither splits nor merges. Conditions (1)–(4) attach to it: every move reads G, and Π is checked once on GM = G ⊕ ∆M , never on an ordering of internal moves. A singleton polar group may therefore produce a valid intermediate that a larger group would bypass. For a declared mapped endpoint H⋆, call M endpoint-conformant when it is admissible and 
+
+G ⊕ ∆M ∼= H⋆ under the supplied atom correspondence. (21) Policy validity is necessary for execution and does not imply conformance, since it guards the state representation rather than mechanistic plausibility. Under Π exec the gap is substantive: 
+
+κΠ = ∞ admits a hypervalent singleton successor even when that state is an artificial intermediate, while non-integral or negative occupancies and a π component without its σ
+
+component are still rejected. For a sequence ( M1, . . . , M n), Equation (21) applies to each declared intermediate or only to the terminal product, according to the record schema. 
+
+Proposition 5. Let M be a finite event group in a Π-valid LLG G with integral ∆M . On its move supports, form the rule pM whose changed coordinate x carries d− 
+
+> x
+
+= max (−∆M (x), 0) 
+
+and d+ 
+
+> x
+
+= max (∆ M (x), 0) in the sense of Equation (13) . Edge deletion and creation follow zero-order normalization in G ⊕ ∆M . Its application predicate is 
+
+ΦpM ⇐⇒  
+
+> ∧
+> μ=( x→y)∈M
+
+Ψt(x)→t(y)(x, y | G)
+
+> 
+
+∧ [out M (x) ≤ cG(x) for every locus x]
+
+∧ [the declared macro incidence pattern holds ] .
+
+(22) 
+
+> 14 Curly arrows and fishhooks as executable electron transfers
+
+The resulting pM is the induced rule . Its direct derivation G (pM ,m )
+
+=⇒ H is admissible exactly when M satisfies the other three conditions of Definition 10. Then H ∼= G ⊕ ∆M and 
+
+cH = cG + ∆ M .
+
+Integrality is required to form pM : a half-integral ∆ M yields no d± 
+
+> x
+
+∈ N0 (Figure 5B). 
+
+Proof. ∆M = d+ 
+
+> x
+
+− d− 
+
+> x
+
+, so Equation (18) gives cH = cG + ∆ M , and normalization fixes the edge set. Φ pM is precisely locality, macro incidence, and common-prestate availability, gross demand included because a net delta can hide simultaneous consumption and replenishment, while the final DPO check supplies condition 4. DPO-applicability adds nothing, since pM
+
+creates an edge only where both host bond occupancies vanish and Proposition 4 covers the rest. For G (p,m )
+
+=⇒ H, let δp,m (x) = cH (x) − cG(x), extended by zero outside the rule support. An event group M realizes the derivation when ∆ M = δp,m .
+
+Proposition 6. If an admissible event group M realizes a derivation G (p,m )
+
+=⇒ H, then its induced derivation produces H′ ∼= H. The rule pM depends only on the multiset M , produces one successor when all conditions hold, and none otherwise. Proof. Both successors have occupancy cG + ∆ M = cG + δp,m and the same normalized incidence, hence all derived fields agree. Proposition 4 gives uniqueness, while out M , in M , ∆M ,and Φ pM are permutation-invariant. 
+
+Theorem 7 (Three-level coherence) . Let G be a Π-valid LLG and M a finite multiset of electron moves with ∆M ∈ ZLoc( G). The following are equivalent. (i) M is an admissible event group in G (Definition 10). (ii) The induced rule pM admits an admissible direct derivation G (pM ,m )
+
+=⇒ H (Definition 9). (iii) G ⊕ ∆M is defined and Π-valid, every move of M is local, and out M (x) ≤ cG(x) at every locus. When these hold, H ∼= G ⊕ ∆M is unique up to isomorphism, order-independent, has 
+
+cH = cG + ∆ M , and conserves Ie and Q. If any clause of (iii) fails, no successor is produced. Proof. (i) ⇔(iii) is Definition 10 with integrality supplied by hypothesis. (i) ⇔(ii) and the identification H ∼= G⊕∆M are Proposition 5. Uniqueness up to isomorphism is Proposition 4. Order independence and the all-or-nothing outcome are Proposition 6. The two conservation identities are Lemma 8. 
+
+Remark 1. The three levels are the same decision: a mapped reaction supplies δp,m , a rule 
+
+d± 
+
+> x
+
+, and an annotation M , all on the four coordinates of Definition 1. Any disagreement is therefore an occupancy mismatch at a named locus, grounding the diagnostic codes of Section 6. 
+
+> 15 Curly arrows and fishhooks as executable electron transfers
+
+In field terms the commit reads ℓ′ 
+
+> v
+
+= ℓv + ∆ M (lp (v)) and likewise for rv, se, and pe, so the successor fields are integral exactly when ∆ M is and nonnegative under condition (2). Figure 5D–E shows why integrality and common-prestate availability are separate checks. Table S3 gives the serialized fields. 
+
+5.2 Conservation and atomicity 
+
+Lemma 8. For any event group M ,
+
+> ∑
+> x∈Loc( G)
+
+w(x)∆ M (x) = 0 .
+
+Consequently, any admissible commit conserves the represented electron inventory, Ie(G′) = 
+
+Ie(G), and preserves total formal charge by Proposition 2. Proof. Each move contributes 
+
+w(x)
+
+> (
+
+− kw(x)
+
+> )
+
++ w(y)
+
+> (
+
++ kw(y)
+
+> )
+
+= −k + k = 0 .
+
+Summing over M gives Ie(G′) − Ie(G) = ∑ 
+
+> x
+
+w(x)∆ M (x) = 0. Atom preservation gives charge conservation by Proposition 2. 
+
+Remark 2. A single homolytic fishhook gives ∆( σuv ) = − 12 and is rejected. The coupled pair 
+
+σ(u, v ) 1e−
+
+−−→ ·(u), σ(u, v ) 1e−
+
+−−→ ·(v)gives ∆( σuv ) = −1 and ∆( ρu) = ∆( ρv) = 1, so it is integral. 
+
+Example 3. The β-scission of Example 1 is 
+
+·(o) 1e−
+
+−−→ π(o, c 1), σ(c1, c 2) 1e−
+
+−−→ π(o, c 1), σ(c1, c 2) 1e−
+
+−−→ ·(c2).
+
+Its nonzero delta is ∆( ρo, π o,c 1 , σ c1,c 2 , ρ c2 ) = ( −1, 1, −1, 1). The full group is admissible, whereas every nonempty proper subset is half-integral. 
+
+Remark 3. Proposition 5 turns each admissible event group Mi into a rule Gi−1
+
+> pMi
+
+=⇒ Gi, so a mechanism ( M1, . . . , M n) is the sequence G0
+
+> pM1
+
+=⇒ G1 =⇒ · · · pMn 
+
+=⇒ Gn. Its net change is  
+
+> ∑
+> i
+
+∆Mi , with Ie conserved at each step. This is weaker than DPO rule composition, which also preserves matches, dependencies, structural edits, and conditions [10]. For SN 2 (Figure S1), one group containing bond formation and chloride expulsion commits without an internal intermediate, whereas two singleton groups make the pentavalent state an explicit successor of the first. An octet-bounded Π rejects it and the permissive Π exec of Equation (3) may admit it, so atomicity does not choose the group boundary and endpoint conformance, not policy validity, separates that successor from the declared product. Building the grouped composite as a rule needs the concurrency theorem of Section 7. 
+
+> 16 Curly arrows and fishhooks as executable electron transfers
+
+5.3 A locus-sorted grammar for event groups 
+
+Admissibility gives algebraic consistency. The grammar organizes two-electron moves into polar classes and fishhook groups into radical macros. 
+
+Polar curly-arrow classes. A polar class is the ordered source–target sort pair ( ti, t j ) ∈{lp , σ, π }2 of one two-electron arrow. The bond-free diagonal lp → lp is excluded: moving a whole pair between adjacent atoms changes both charges by two units without editing a bond and has no elementary realization. Its one-electron surface shape reappears only in the alpha-resonance macro below. The remaining eight bond-coupled pairs (Table S1, Figure 6) exhaust the polar classes and recast the PMechDB taxonomy [ 12 ]. They classify arrows, not event groups. Their k = 2 deltas are integral, but locality, gross availability, and group-successor validity remain independent.    
+
+> C1 lp →π
+
+N C⊕   
+
+> mesomeric donation
+> C2 lp →σ
+
+B⊖
+
+H A    
+
+> SN2 / proton transfer
+> C3 π→lp
+
+C O    
+
+> ⊕⊖
+> carbonyl ionization
+> C4 π→π
+
+C C C⊕   
+
+> allylic resonance
+> C5 π→σ
+
+C C Br 
+
+Br    
+
+> electrophilic addition
+> C6 σ→lp
+
+C Br     
+
+> ⊕⊖
+> ionization / E1
+> C7 σ→π
+
+H
+
+C C LG    
+
+> β-elimination (E2)
+> C8 σ→σ
+
+H
+
+C C⊕
+
+> 1,2-shift
+
+Figure 6: The eight bond-coupled polar transitions of Table S1, each the single fundamental source →target move on its prototype, labeled by arrow pattern ti → tj and a representative step. Blue curly arrows are two-electron moves, filled dots lone pairs, and ⊕/⊖ the exposed charges. Heteroatoms use CDK element colors, with placeholders for a Brønsted base (B), acid (A), and leaving group (LG). The gallery is complete: every polar class has a bond endpoint. 
+
+Radical fishhook macros. Figure 7 and Table S2 define six bond-centered fishhook groups and one alpha-resonance relocation covering the seven RMechDB classes [ 11 ]. They are a template library, not a decomposition of every admissible group. Each bond-centered macro couples at least two fishhooks into an integral delta. Homolysis/recombination and radical addition/ β-scission are inverse pairs. The other three macros are self-inverse, enabling reverse replay without duplicate templates. Hydrogen transfer uses an explicit mapped H vertex. Alpha resonance (M7) is the one macro that is a declared shorthand rather than a move multiset. Its compact source annotation sends one electron from a lone-pair donor d to a radical acceptor a, but literal lp (d) → lp (a) would be half-integral. The executable meaning is the three-move group 
+
+Md⇝a = { lp( d) 1
+
+−→ ρd, lp( d) 1
+
+−→ lp( a), ρa 1
+
+−→ lp( a) }, (23) 
+
+> 17
+
+Curly arrows and fishhooks as executable electron transfers 
+
+whose net delta is integral, ∆Md⇝a = −1lp( d) + 1ρd − 1ρa + 1lp( a). (24) The two departures from lp (d) sum to −1 and the two arrivals at lp (a) to +1, with weighted sum −2 + 1 − 1 + 2 = 0. The pre-state must have ℓd, r a ≥ 1 and {d, a } ∈ E(G), and execution commits this expansion rather than the surface arrow. M7 therefore reuses the excluded lp → lp shape only as one-electron notation, so the “eight plus seven” templates do not double-count a move class.  
+
+> M1 homolysis
+
+# X Y      
+
+> σ(X, Y )→·(X),·(Y)
+> M2 recombination
+
+# X Y      
+
+> ·(X),·(Y)→σ(X, Y )
+> M3 radical addition
+
+# R C C       
+
+> ·→σ, π →σ, π →·
+> M4 β-scission
+
+# C C X       
+
+> ·→π, σ →π, σ →·
+> M5 radical resonance
+
+# C C C       
+
+> ·→π, π →π, π →·
+> M6 H abstraction
+
+# R H C       
+
+> ·→σ, σ →σ, σ →·
+> M7 alpha resonance
+
+# O C    
+
+> lp (O),·(C)⇝
+> ·(O),lp (C)
+
+Figure 7: The seven radical macros of Table S2 (M1–M7), as minimal arrow-pushing schematics with their locus-sorted move multisets. M1–M6 are bond-centered coupled groups, each needing at least two fishhooks that commit as one integral group (Remark 2). M7 is the explicitly expanded alpha-resonance relocation, a shorthand with integral four-coordinate delta Equation (24) that does not edit the bond. Vermilion single-barbed fishhooks are 1 e− moves, vermilion dots radicals. R is a radical partner and X, Y, C bond atoms. Representative steps: M1 peroxide O–O homolysis, M2 radical–radical coupling, M3 alkene propagation, M4 alkoxyl β-scission, M5 allyl resonance, M6 hydrogen-atom transfer, M7 alpha resonance. Class names follow the RMechDB taxonomy [ 11 ]. The drawings and executable semantics are ours, and the involution pairing is the table’s last column. 
+
+5.4 Formal relation to half-edge and electron-feature graphs 
+
+HEGs retain electron identity, EFGs retain anonymous feature objects, and LLGs store feature-fiber cardinalities while distinguishing σ from π [14 ]. Refining Pair into Pair σ, Pair π
+
+and restricting to fiber-bijective morphisms gives a span EFG F
+
+←− EFG fib ,Π
+
+> σ/π K
+
+−→ LLG =Π in which F forgets bond kind and K forgets feature identity. Because they discard incomparable information, neither target refines the other and the σ/π split must precede condensation. This makes precise the two differences stated in Section 2.3, the determinate πe transition locus and the executable rather than existential reading of an annotation. Section S4 gives the correspondence table, functor details, and a worked condensation. 
+
+18 Curly arrows and fishhooks as executable electron transfers 
+
+# A 
+
+> CO
+> H
+> H
+
+# B 
+
+> CO
+> H
+> H
+> Pair
+> Pair
+> Pair
+> Pair
+> LP
+> LP
+
+# C   
+
+> CO
+> H
+> H
+> se=1
+> pe=1
+> ℓO=2
+> qO=0
+> oe=se+pe=2
+
+# D      
+
+> CO
+> π(C ,O) →lp(O)
+> ∆pC,O=−1,∆ℓO=+1
+
+# (1) 
+
+> forget identity
+
+# (2) condense split σ/π
+
+# (3) 
+
+> execute
+
+Figure 8: From explicit electrons to an executable LLG state, on formaldehyde, following the numbered transitions clockwise from (A). (A) The HEG retains individual electrons. Dashed lines are the ownership map ψ. (B) Coarsening drops electron identity but keeps anonymous Pair /LP objects, so the two carbonyl pairs become indistinguishable. (C) The span of Equation (S1) condenses feature fibers to scalar node and edge labels, separating 
+
+σ- and π-components. (D) A locus-sorted event consumes the carbonyl π and creates an oxygen lone pair. The delta ∆ M is validated before committing cG′ = cG + ∆ M .
+
+# 6 Experiments and results 
+
+6.1 Graph rewriting experiments 
+
+6.1.1 Data and protocol 
+
+These experiments use 39,732 balanced reactions from Ref. [ 21 ]. Each has paired partial and reference-complete AAMs, which support rule replay and independent ITS comparison. The expansion benchmark includes only balanced reactions with valid atom maps [ 22 ]. The 5,426 RMechDB records [ 11 ] additionally test radical rule replay and map-expansion coverage. – Rule replay. Extract one rule from each fully mapped reference and enumerate its forward and inverse applications. Success requires exact recovery of the standardized 
+
+> 19
+
+Curly arrows and fishhooks as executable electron transfers 
+
+reference endpoint. We compare unique ITS outcomes. – Partial-AAM expansion. Expand each partial map with the method of Ref. [ 21 ]. On the general corpus, success requires the induced ITS to be isomorphic to the independent reference ITS. RMechDB lacks independent full maps, so its result measures completion coverage, not mapping accuracy. 
+
+6.1.2 Rule replay 
+
+Replay is paired: each rule is applied exhaustively, without per-direction timeout, to its own originating reactant and product, so the two representations differ only in label algebra. Both recover the standardized reference endpoint on all 39,732 records in both directions (Figure 9A) and differ only in the admitted outcome set, where LLG removes 96 forward (0.10%) and 818 inverse (0.69%) unique ITS outcomes, an exclusion rate about sevenfold higher inverse, on baselines of 2.42 and 2.99 outcomes per record. Since the rule sets are identical outside the resource coordinates, every exclusion is necessarily a resource-availability or Π-validity refusal rather than a structural one. Whether each is chemically correct is undetermined, as the excluded outcomes carry no independent validity labels.  
+
+> A
+
+Unique ITS under single-rule replay               
+
+> Direction LLG AtomBond ∆ count % removed
+> Forward 95,916 96,012 −96 −0.10%
+> Inverse 118,028 118,846 −818 −0.69%
+> Reference recovery 39,732/39,732 for both
+> B
+
+Generation time per input (ms)              
+
+> 1.8 2.0 2.2 2.4 2.6
+> SynKit
+> RB1
+> RB2
+> GM
+> 1.834 ±0.041
+> 2.111 ±0.031
+> 2.119 ±0.040
+> 2.499 ±0.042
+> C
+
+Valid radical completion    
+
+> 70% 80% 90% 100%
+> 98.4%
+> 98.2%
+> 98.2%
+> 71.3%
+
+Figure 9: (A) Unique ITS counts from single-rule forward and inverse replay. Columns compare LLG , AtomBond , and their difference. Both recover all 39,732 references. (B) Mean AAM-expansion generation time per attempted input in each of five runs. Boxes span the 25th–75th percentiles, center lines show medians, and whiskers show the full observed range. Small points show all five run-level means, large points show their across-run means, and labels report mean ± sample s.d. All methods recover every reference ITS. (C) Fraction of 5,426 RMechDB inputs yielding valid total AAMs. The dashed line marks 100%, and SynKit 
+
+yields 5,340 (98.4%). Radical replay has no legacy baseline, since atom–bond labels cannot encode side-specific 
+
+20 Curly arrows and fishhooks as executable electron transfers 
+
+radical and lone-pair states. Under the same stereo-independent normalization it recovers all 5,426 references in both directions. 
+
+6.1.3 Partial atom-map expansion 
+
+All four methods recover the independent ITS for all 39,732 general records (Figure 9B). Across five runs, mean generation times are 1 .834 ± 0.041 ms per input for SynKit , 2 .499 ±
+
+0.042 for GM , 2 .111 ± 0.031 for RB1 , and 2 .119 ± 0.040 for RB2 (mean ± sample s.d.). Because the external methods run in a reconstructed historical environment, these timings are descriptive rather than a controlled speedup. On the radical corpus, the minimal SynKit expansion returns 5,341 outputs, of which 5,340 are valid total AAMs (98.4%) (Figure 9C). Coverage is 71.3% for GM and 98.2% for both 
+
+RB1 and RB2 . These are coverage rates, not mapping accuracies, because no independent full AAM exists. Radical runtime is omitted because only SynKit transports the required radical attribute. The separate conversion used for transition construction returns a total AAM for all 5,426 inputs, which is likewise a coverage result outside the minimal-expansion comparison. 
+
+6.2 Arrow-pushing experiments 
+
+6.2.1 Data and protocol 
+
+These experiments use 95,888 polar PMechDB records [ 12 ] and the 5,426 radical RMechDB 
+
+records. The controlled set contains 80 reviewed records from each corpus. Both tasks evaluate supplied electron-flow annotations as synchronized event groups rather than by reaction-class or macro labels. – Controlled conformance. Replay the 160 reviewed records and seven deterministic variants of each, giving 1,120 generated negative tests. Every reviewed record must execute and reach its declared endpoint. Every generated variant must be rejected with its prescribed diagnostic. – Transition construction. Expand the AAM and resolve each published arrow endpoint to an LLG locus. Success requires an admissible event group satisfying endpoint conformance, G ⊕ ∆M ∼= H⋆.
+
+6.2.2 Controlled conformance 
+
+The reviewed set contains 160 base cases, with 80 polar and 80 radical elementary steps. Strict replay accepts all 160 and reaches every declared product. For each base case, seven deterministic operators generate one negative variant apiece by altering electron count, fishhook pairing, locus existence or locality, source availability, update order, endpoint state, or the declared product. The checker rejects all synthetic tests (160 × 7 = 1 ,120) generated variants with their prescribed diagnostics (see Figure 10). 
+
+> 21
+
+Curly arrows and fishhooks as executable electron transfers  
+
+> A
+
+Polar: 2e− ✓
+
+N
+
+> 1
+
+H H
+
+H
+
++ H+
+
+> 4
+
+−→ NH +4       
+
+> lp(1) 2e−
+> −−−→σ1,4
+> ∆ℓ1=−1,∆s1,4= +1
+> B
+
+Polar: 1e− ×
+
+N
+
+> 1
+
+H H
+
+H
+
++ H+
+
+> 4
+
+↛          
+
+> lp(1) 1e−
+> −−−→σ1,4
+> ∆ℓ1=−12,∆s1,4= + 12
+> C
+
+Radical: paired ✓
+
+R O
+
+> 1
+
+O
+
+> 2
+
+R −→ R–O +O–R          
+
+> σ1,21e−
+> −−−→ρ1,σ1,21e−
+> −−−→ρ2
+> ∆s1,2=−1,∆r1= ∆ r2= +1
+> D
+
+Radical: unpaired ×
+
+R O
+
+> 1
+
+O
+
+> 2
+
+R ↛        
+
+> σ1,21e−
+> −−−→ρ1
+> ∆s1,2=−12,∆r1= +1
+> E
+
+Polar · ID 49,985 ✓
+
+CH 
+
+C
+
+NH 
+
+C
+
+NH 
+
+C
+
+O−
+
+OO 
+
+> 10
+> 11
+> 82
+> 73
+> 82
+> 61
+> 12
+> 74 62
+> F
+
+Radical · ID 4,852 ×
+
+C
+
+> 21
+> R
+> R
+
+H
+
+> 20
+
++·OH 
+
+> 10
+
+# −→ C·
+
+> 21
+> R
+> R
+
++ H
+
+> 20
+
+OH         
+
+> 10
+> (20 ,21) ⇀2=⇒(20 ,21) ⇀21
+
+Figure 10: Conformance controls (A–D) and construction-audit source defects (E–F). In A–D, columns compare base cases and generated variants, while rows distinguish polar and radical events. (A–B) Two-electron protonation is integral. Changing it to 1 e− is not. 
+
+(C–D) Paired homolysis fishhooks are integral. Deleting one is not. (E) Polar ID 49,985 duplicates map 82 on symmetry-equivalent nitrogens, resolved by preprocessing without endpoint edits. (F) Radical ID 4,852 targets absent map 2 and requires manual reassignment to map 21. Panels E–F reproduce source annotations. Table S5 gives the full review. 
+
+6.2.3 Transition construction 
+
+Construction proceeds in two stages: partial-AAM expansion, then resolution of each published arrow endpoint to an LLG locus and assembly into event groups, scored by the criterion of Section 6.2.1. Expansion here uses the guarded conversion of Section 6.1.3, not the minimal path benchmarked there, and succeeds on all 101,314 records. In 3,274 polar records the annotation reuses one positive map on two symmetry-equivalent atoms, an assignment that is unambiguous precisely because the positions are equivalent (Figure 10E). Preprocessing removes the duplicate label and lets expansion assign a fresh identifier, leaving both endpoint structures unchanged, after which all 95,888 construct. In the radical corpus, direct resolution fails for 11 records. Ten require manual annotation 
+
+22 Curly arrows and fishhooks as executable electron transfers 
+
+corrections: six map-locus edits, two endpoint-orbit alignments, one fishhook replaced by a paired arrow, and one mixed paired/fishhook group (Table S5). Applying them raises construction to 5,425/5,426 radical and 101,313/101,314 total records. ID 2,207 instead requires an atom-map correction. Its fishhooks break (12 , 13), form (9 , 13), and leave the radical at map 12, whereas the endpoint maps H15 to the new O9–H bond. Transferring H15 would break O14–H15 and leave the radical at map 14. Thus no arrow edit can satisfy the current endpoint; H13 must map to O9 and O14–H15 remain intact. This proposed map correction is not applied. Figure S2 contrasts it with the arrow correction for ID 2,300. 
+
+# 7 Conclusion, limitations, and outlook 
+
+The Lewis-labeled graph supplies the state space missing between molecular graphs, rewrite rules, and arrow-pushing annotations. Its four resource fields ( ℓv, r v, s e, p e) determine bond order, formal charge, and represented electron inventory. Rule matching tests the resources a transformation consumes, and an electron-flow annotation becomes a factorization of the endpoint change into admissible deltas on those same fields. Theorem 7 makes the continuity precise: the three levels are one decision on one set of coordinates, not three procedures that happen to agree. The construction tests resource availability without demanding equality of derived formal charge, makes open-shell state explicit without expanding the atom–bond skeleton, and derives the atomic coupling of bond-centered fishhooks from integrality rather than from drawing convention. The experiments bound these consequences. Electron-aware rules retain complete bidirec-tional reference recovery while admitting slightly fewer unique ITS outcomes in paired replay. Partial-map expansion recovers every independent reference ITS. Ten radical annotations require manual correction, after which 101,313/101,314 records yield endpoint-consistent transitions, while the remaining record requires an unapplied endpoint-map correction. All 160 reviewed steps are accepted, and all 1,120 generated variants rejected under their declared diagnostics. This is representational and operational consistency, not chemical precision: the excluded outcomes carry no validity labels, paired replay is not an N -rule by 
+
+M -molecule screen, and the negative variants are synthetic. The boundary is substantive. LLG is a localized two-center Lewis model, so multicen-ter bonding, delocalized spin coupling, excited states, fractional occupation, and general organometallic electron counting require new state fields. Imported lone-pair counts remain conditional on the perception policy, aromatic systems need an explicit Kekul´ e policy, and the eight polar classes with seven radical macros form a template library covering the source taxonomies rather than a proved decomposition. No result here shows that every admissible integral event group factors through them, and supplying such a closure theorem, or a counterexample bounding it, is open. A field-by-field ablation is likewise unavailable, since removing a coordinate changes the state schema rather than a parameter. Conformance checking decides only whether an annotation is local, resource-admissible, integral, policy-consistent, and endpoint-reaching. It settles neither kinetics, thermodynamic preference, solvent response, stereoselectivity, nor the preferred mechanism, and stereochemistry lies 
+
+> 23 Curly arrows and fishhooks as executable electron transfers
+
+outside the replay benchmark by construction. Formally, the next steps are to characterize resource-constrained LLG rewriting as an attributed rewriting category, to state when the condensation functor K preserves and reflects admissible derivations, and, building on the additive composition of Remark 3, to prove a concurrency theorem under which sequential mechanisms compose into single resource-constrained rules and factor back into admissible steps. Empirically, they are a paired comparison with expanded electron-feature graphs under identical search conditions, then validation on an independently reviewed, frozen corpus. Only then should the conformance checker serve as the acceptance layer for mechanism enumeration or ranking, its certificates and trajectory graphs marking the boundary between generation and conformance checking. 
+
+# 8 Declarations 
+
+8.1 Availability of data and materials 
+
+The SynKit source code is available under the MIT License at https://github.com/ TieuLongPhan/SynKit . Documentation is available at https://tieulongphan.github.io/ SynKit/ . Archived releases are available at https://doi.org/10.5281/zenodo.15269901 .Every result reported here was produced with version 1.6.0 . The reaction corpora remain under the licenses of their providers and are not redistributed here, so PMechDB [12 ] and 
+
+RMechDB [11] must be obtained from the original sources. 
+
+8.2 Conflict of interest 
+
+The author declares no conflict of interest. 
+
+8.3 Funding 
+
+This work was supported by the European Union’s Horizon Europe research and innovation programme under Marie Sklodowska–Curie grant agreement No. 101072930 (TACsy, Training Alliance for Computational Systems Chemistry). Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union. Neither the European Union nor the granting authority can be held responsible for them 
+
+8.4 Author contributions 
+
+T.-L.P.: Conceptualization, Methodology, Software, Validation, Formal analysis, Investi-gation, Data curation, Visualization, Writing (original draft), and Writing (review and editing). 
+
+> 24 Curly arrows and fishhooks as executable electron transfers
+
+8.5 Acknowledgements 
+
+Not applicable. 
+
+# References 
+
+[1] William O. Kermack and Robert Robinson. An explanation of the property of induced polarity of atoms and an interpretation of the theory of partial valencies on an electronic basis. Journal of the Chemical Society, Transactions , 121:427–440, 1922. doi: 10.1039/ CT9222100427. [2] Gilbert N. Lewis. The atom and the molecule. Journal of the American Chemical Society , 38(4):762–785, 1916. doi: 10.1021/ja02261a002. [3] Irving Langmuir. The arrangement of electrons in atoms and molecules. Journal of the American Chemical Society , 41(6):868–934, 1919. doi: 10.1021/ja02227a002. [4] Andrea Corradini, Ugo Montanari, Francesca Rossi, Hartmut Ehrig, Reiko Heckel, and Michael L¨ owe. Algebraic approaches to graph transformation—part i: Basic concepts and double pushout approach. In Handbook of Graph Grammars and Computing by Graph Transformation , pages 163–245. World Scientific, 1997. doi: 10.1142/9789812384720 0003. [5] Hartmut Ehrig, Karsten Ehrig, Ulrike Golas, and Gabriele Taentzer. Fundamentals of Algebraic Graph Transformation . Springer, Berlin, 2006. doi: 10.1007/3-540-31188-2. [6] Jakob L. Andersen, Christoph Flamm, Daniel Merkle, and Peter F. Stadler. A software package for chemically inspired graph transformation. In Rachid Echahed and Mark Minas, editors, Graph Transformation , volume 9761 of Lecture Notes in Computer Science , pages 73–88, Cham, 2016. Springer. doi: 10.1007/978-3-319-40530-8 5. [7] Gerard Parkin. Valence, oxidation number, and formal charge: Three related but fundamentally different concepts. Journal of Chemical Education , 83(5):791–799, 2006. doi: 10.1021/ed083p791. [8] Robert V. Hoffman. Organic Chemistry: An Intermediate Text . John Wiley & Sons, Inc., Hoboken, NJ, second edition, 2004. ISBN 9780471648727. doi: 10.1002/0471648736. [9] Philippe Schwaller, Benjamin Hoover, Jean-Louis Reymond, Hendrik Strobelt, and Teodoro Laino. Extraction of organic chemistry grammar from unsupervised learning of chemical reactions. Science Advances , 7(15):eabe4166, 2021. doi: 10.1126/sciadv. abe4166. [10] Jakob L. Andersen, Christoph Flamm, Daniel Merkle, and Peter F. Stadler. Rule compo-sition in graph transformation models of chemical reactions. MATCH Communications in Mathematical and in Computer Chemistry , 80(3):661–704, 2018. URL https://match. pmf.kg.ac.rs/electronic_versions/Match80/n3/match80n3_661-704.pdf .[11] M. Tavakoli, Y. T. T. Chiu, P. Baldi, A. M. Carlton, and D. Van Vranken. Rmechdb: A public database of elementary radical reaction steps. Journal of Chemical Information and Modeling , 63:1114–1123, 2023. doi: 10.1021/acs.jcim.2c01359. [12] Mohammadamin Tavakoli, Ryan J. Miller, Mirana Claire Angel, Michael A. Pfeiffer, Eugene S. Gutman, Aaron D. Mood, David Van Vranken, and Pierre Baldi. Pmechdb: 
+
+> 25 Curly arrows and fishhooks as executable electron transfers
+
+A public database of elementary polar reaction steps. Journal of Chemical Information and Modeling , 64:1975–1983, 2024. doi: 10.1021/acs.jcim.3c01810. [13] Gil Benk¨ o, Christoph Flamm, and Peter F Stadler. A graph-based toy model of chemistry. Journal of Chemical Information and Computer Sciences , 43(4):1085–1093, 2003. doi: 10.1021/ci0200570. [14] Rebecca Holzschuh, Christoph Flamm, Daniel Merkle, and Peter F. Stadler. Half-edge graphs, lewis formulas, and electron pushing. ChemRxiv preprint, version 1, July 2026. Posted 13 July 2026, CC BY 4.0, not peer reviewed. [15] John Bradshaw, Matt J. Kusner, Brooks Paige, Marwin H. S. Segler, and Jos´ e Miguel Hern´ andez-Lobato. A generative model for electron paths. In International Confer-ence on Learning Representations , 2019. URL https://openreview.net/forum?id= r1x4BnCqKX .[16] Shuan Chen, Ramil Babazade, and Yousung Jung. Automatic generation of mechanistic pathways of organic reactions with dual templates. In NeurIPS 2023 Workshop on AI for Accelerated Materials Design , 2023. URL https://openreview.net/forum?id= ZoTcKpyL3p .[17] Joonyoung F. Joung, Mun Hong Fong, Nicholas Casetti, Jordan P. Liles, Ne S. Das-sanayake, and Connor W. Coley. Electron flow matching for generative reaction mechanism prediction. Nature , 645:115–123, 2025. doi: 10.1038/s41586-025-09426-9. [18] Tieu-Long Phan, Marcos E. Gonz´ alez Laffitte, Klaus Weinbauer, Yingjie Pan, Daniel Merkle, Jakob L. Andersen, Rolf Fagerberg, Christoph Flamm, and Peter F. Stadler. Synkit: a graph-based python framework for rule-based reaction modeling and analysis. 
+
+Journal of Chemical Information and Modeling , 2025. doi: 10.1021/acs.jcim.5c02123. [19] Aric A. Hagberg, Daniel A. Schult, and Pieter J. Swart. Exploring network structure, dynamics, and function using networkx. In Ga¨ el Varoquaux, Travis Vaught, and Jarrod Millman, editors, Proceedings of the 7th Python in Science Conference , pages 11–15, 2008. doi: 10.25080/tcwv9851. [20] Greg Landrum and RDKit contributors. Rdkit: Open-source cheminformatics. https: //www.rdkit.org , 2025. [21] Marcos E. Gonz´ alez Laffitte, Tieu-Long Phan, and Peter F. Stadler. Extension of partial atom-to-atom maps: uniqueness and algorithms. Algorithms for Molecular Biology ,21(1):10, 2026. doi: 10.1186/s13015-026-00300-5. URL https://doi.org/10.1186/ s13015-026-00300-5 .[22] Marcos E. Gonz´ alez Laffitte, Klaus Weinbauer, Tieu-Long Phan, Nora Beier, Nico Domschke, Christoph Flamm, Thomas Gatter, Daniel Merkle, and Peter F. Stadler. Partial imaginary transition state (its) graphs: a formal framework for research and analysis of atom-to-atom maps of unbalanced chemical reactions and their completions. 
+
+Symmetry , 16(9):1217, 2024. doi: 10.3390/sym16091217. [23] Tieu-Long Phan, Klaus Weinbauer, Marcos E. Gonz´ alez Laffitte, Yingjie Pan, Daniel Merkle, Jakob L. Andersen, Rolf Fagerberg, Christoph Flamm, and Peter F. Stadler. Syntemp: efficient extraction of graph-based reaction rules from large-scale reaction databases. Journal of Chemical Information and Modeling , 2025. doi: 10.1021/acs.jcim. 4c01795. 
+
+> 26 Curly arrows and fishhooks as executable electron transfers
+
+[24] Julian R. Ullmann. An algorithm for subgraph isomorphism. Journal of the ACM , 23 (1):31–42, 1976. doi: 10.1145/321921.321925. [25] Michael R. Garey and David S. Johnson. Computers and Intractability: A Guide to the Theory of NP-Completeness . W. H. Freeman, San Francisco, 1979. ISBN 978-0716710455. [26] Shinsaku Fujita. Description of organic reactions based on imaginary transition struc-tures. 1. introduction of new concepts. Journal of Chemical Information and Computer Sciences , 26(4):205–212, 1986. doi: 10.1021/ci00052a009. [27] Fran¸ cois Hoonakker, Nicolas Lachiche, Alexandre Varnek, and Alain Wagner. Condensed graph of reaction: considering a chemical reaction as one single pseudo molecule. 
+
+International Journal of Artificial Intelligence Tools , 20(2):253–270, 2011. doi: 10.1142/ S0218213011000140. [28] Ramil I. Nugmanov, Rail N. Mukhametgaleev, Tagir Akhmetshin, Timur R. Gimadiev, Valentina A. Afonina, Timur I. Madzhidov, and Alexandre Varnek. CGRtools: Python library for molecule, reaction, and condensed graph of reaction processing. Journal of Chemical Information and Modeling , 59(6):2516–2521, 2019. doi: 10.1021/acs.jcim. 9b00102. [29] Rustem Nugmanov, Nadezhda Dyubankova, Alexander Gedich, and J¨ org K. Wegner. Bidirectional graphormer for reactivity understanding: neural network trained to reaction atom-to-atom mapping task. Journal of Chemical Information and Modeling ,62(14):3307–3315, 2022. doi: 10.1021/acs.jcim.2c00344. [30] James Dugundji and Ivar Ugi. An algebraic model of constitutional chemistry as a basis for chemical computer programs. Topics in Current Chemistry , 39:19–64, 1973. doi: 10.1007/BFb0051317. [31] Todd P Silverstein. Oxidation and reduction: too many definitions? Journal of Chemical Education , 88(3):279–281, 2011. doi: 10.1021/ed100777q. URL https: //pubs.acs.org/doi/10.1021/ed100777q .[32] Fernando Orejas. Symbolic graphs for attributed graph constraints. Journal of Symbolic Computation , 46(3):294–315, 2011. doi: 10.1016/j.jsc.2010.09.009. [33] Annegret Habel and Karl-Heinz Pennemann. Correctness of high-level transformation systems relative to nested conditions. Mathematical Structures in Computer Science ,19(2):245–296, 2009. doi: 10.1017/S0960129508007202. [34] Annegret Habel and Detlef Plump. Relabelling in graph transformation. In Graph Transformation (ICGT 2002) , volume 2505 of Lecture Notes in Computer Science , pages 135–147. Springer, 2002. doi: 10.1007/3-540-45832-8 12. [35] Stephen Lack and Pawel Soboci´ nski. Adhesive categories. In Foundations of Software Science and Computation Structures (FOSSACS 2004) , volume 2987 of Lecture Notes in Computer Science , pages 273–288. Springer, 2004. doi: 10.1007/978-3-540-24727-2 20. [36] Hartmut Ehrig, Ulrike Golas, Annegret Habel, Leen Lambers, and Fernando Orejas. M-adhesive transformation systems with nested application conditions. Part 1: parallelism, concurrency and amalgamation. Mathematical Structures in Computer Science , 24(4): e240406, 2014. doi: 10.1017/S0960129512000357. 
+
+> 27
+
+Curly arrows and fishhooks as executable electron transfers 
+
+# Supporting Information S1 Locus-sorted event-group grammar 
+
+Tables S1–S2 list each locus pattern, its mechanistic reading, and its inverse. Polar rows classify individual two-electron moves. A complete group may contain several rows and remains subject to common-prestate availability and Π exec .Table S1: Eight polar two-electron locus transitions. The classes are the ordered pairs over 
+
+{lp , σ, π } with at least one bond endpoint, each classifying a single curly arrow rather than a complete step. The diagonal lp → lp is excluded because a two-electron pair relocation that edits no bond has no elementary chemical realization. 
+
+Arrow pattern Typical context Inverse lp → π nucleophilic addition π → lp lp → σ SN 2 or proton transfer σ → lp 
+
+π → lp ionization or retro-addition lp → ππ → π conjugated or pericyclic shift self 
+
+π → σ electrophilic addition σ → πσ → lp heterolysis or E1 lp → σσ → π elimination or retro-cycloaddition π → σσ → σ 1,2-migration or hydride transfer self 
+
+Table S2: Seven radical event macros. 
+
+Macro Fishhook group Incidence Inverse Homolysis σ → · (×2) both broken-bond atoms recombination Recombination · → σ (×2) both new-bond atoms homolysis Radical addition · → σ, π → σ, π → · old π and new σ share a centre beta scission Beta scission · → π, σ → π, σ → · old σ and new π share a centre radical addition Radical resonance 
+
+· → π, π → π, π → · migrating π shares a centre self H abstraction · → σ, σ → σ, σ → · old and new bonds share the mapped H self Alpha resonance (LP/radical relocation) annotated lp d → lp a,expanded to lp d →
+
+·d, lp d → lp a, ·a → lp a
+
+adjacent d̸ = a, ℓd, r a ≥ 1. The expansion, not the surface arrow, carries the integral four-field delta of Equation (24) self        
+
+> Conjugated H abstraction expands the simple group with σ→πand ·→π. Reversing the four moves gives the inverse.
+
+# S2 Electron-flow event schema 
+
+Positive atom maps are support keys, not coordinates of a(v). The locus alphabet is 
+
+{lp , σ, π, ·}. σ and π remain distinct whenever they enable different moves. 
+
+28 Curly arrows and fishhooks as executable electron transfers 
+
+Table S3: Electron-flow record schema. Object Carries Acceptance condition Electron locus Kind and support in V ∪ E Vertex for lone pair/radical and edge for σ/π 
+
+Curly arrow Source and target loci Two electrons with valid local inci-dence Fishhook Source and target loci One electron in an integral group after shorthand expansion Event group Move multiset Complete macro from one pre-state with an integral atomic delta Transition record Groups and endpoint All groups admissible and final state equal to endpoint 
+
+# S3 Composite rules and mechanism sequences 
+
+Remark 3 treats a mechanism as a derivation sequence and notes that additive composition is weaker than DPO rule composition. Figure S1 draws the SN 2 case for comparison. 
+
+> A
+
+## H3N CH 3 Cl l H3N
+
+> ⊥
+
+## CH 3 Cl ⊥ r H3N+ CH 3 Cl   
+
+> ⊖
+> L1K1R1
+> B
+
+## H3N+ CH 3 Cl  
+
+> ⊖
+> l
+
+## H3N+ CH 3 Cl   
+
+> ⊥r
+
+## H3N+ CH 3 Cl −  
+
+> L2K2R2
+> C
+
+## H3N CH 3 Cl l H3N
+
+> ⊥
+
+## CH 3 Cl ⊥ ⊥ r H3N+ CH 3 Cl −  
+
+> LKR
+
+Figure S1: Composition of the SN 2 step in NH 3 + CH 3Cl −−→ CH 3NH 3+ + Cl −. (A) p1
+
+forms the N–C bond, giving the non-Π-valid shared object R1 = L2. (B) p2 expels chloride. 
+
+(C) Their composite keeps this intermediate internal and maps valid reactants directly to valid products. 
+
+# S4 Relation to half-edge and electron-feature graphs 
+
+Figure 8 compares LLGs with the HEG and EFG constructions of Ref. [ 14 ]. HEGs re-tain electron identity. EFGs retain anonymous feature objects. LLGs store feature-fiber 
+
+> 29 Curly arrows and fishhooks as executable electron transfers
+
+cardinalities and distinguish σ from π. Table S4 gives the correspondence. Table S4: Correspondence between electron-feature and LLG quantities. Fiber cardinality is denoted by vertical bars, and the σ/π refinement is made before condensation.                                      
+
+> Chemical quantity HEG/EFG realization LLG realization Neutral valence electrons at vatom attribute val( a(v)) zv
+> Lone pairs at vfiber LP (v)ℓv=|LP (v)|
+> Radical electrons at vfiber Rad (v)rv=|Rad (v)|
+> Shared pairs on {u, v }fiber Pair (u, v ), refined by kind suv =|Pair σ(u, v )|,puv =|Pair π(u, v )|
+> Total bond order shared-pair multiplicity ouv =suv +puv
+> Formal charge at vch( v), derived from incidence qvfrom Equation (6)
+
+S4.1 Categorical relation 
+
+Let EFG fib ,Π 
+
+> σ/π
+
+refine Pair into Pair σ and Pair π, retain objects whose condensed labels satisfy Π, and restrict morphisms to maps bijective on each feature fiber. Fiber cardinality then defines a condensation functor K, while F merges the two pair sorts: 
+
+EFG F
+
+←−−−− EFG fib ,Π
+
+> σ/π K
+
+−−−−−→ LLG =Π. (S1) 
+
+F forgets bond kind, while K forgets feature identity. A span alone would not show that neither target is a quotient of the other. That follows because the two functors discard incomparable information. K retains the σ/π distinction F discards, so K cannot factor through F . In contrast, F retains the feature identity, that is which Pair reacted, which K
+
+discards, so F cannot factor through K. Neither is a refinement of the other, and the σ/π 
+
+refinement must precede condensation. Functoriality on this restricted class is routine, both maps fixing the atom set and acting on fibers. We claim nothing for morphisms outside it. 
+
+S4.2 Determinate bond loci 
+
+An unrefined EFG multiple bond contains interchangeable Pair objects, so selecting one reacting pair is non-canonical. An LLG stores ( se, p e), making πe a determinate transition locus. 
+
+S4.3 Executable transition semantics 
+
+Ref. [ 14 ] proves existence of electron-move explanations for balanced mapped reactions, and gives double-pushout rules over electron-feature ACSets that it proves to be quotients of electron-anonymous half-edge rules. Both are statements about what rules and explanations exist. Our transition relation instead tests whether a specified group is executable from a given state. It checks availability, integrality, Π, and the declared endpoint. 
+
+> 30
+
+Curly arrows and fishhooks as executable electron transfers 
+
+Condensation loses electron and feature identity but leaves an atom–bond graph with scalar attributes. This is a representational claim about graph-object count, not a runtime or memory claim. 
+
+# S5 Audit of radical transition annotations 
+
+Direct resolution fails for the 11 radical records listed in Table S5. Ten become endpoint-conformant only after manual annotation corrections. ID 2,207 is different: its fishhooks are coherent with transfer of H13, but the mapped endpoint assigns H15 to the new O9–H bond. It therefore requires a hydrogen-map correction rather than an arrow edit, and that correction is not applied. Figure S2 expands ID 2,207 and the nonstandard mixed-group correction for ID 2,300. In the latter, two fishhooks form the radical component and two paired moves complete the bond rearrangement.  
+
+> A
+
+ID 2,207 · published arrows  
+
+> R
+
+O H C O H      
+
+> R
+> 913 12 14 15
+> Arrow-implied endpoint: O 9−H13 , radical at 12 Mapped endpoint: O 9−H15 , radical at 12 ̸=
+> B
+
+ID 2,207 · proposed atom map  
+
+> R
+
+O H C O H      
+
+> R
+> 913 12 14 15
+> Arrow-implied endpoint: O 9−H13 , radical at 12 Corrected map: O 9−H13 , radical at 12 ✓
+> C
+
+ID 2,300 · published annotation 
+
+CH 2
+
+O
+
+H
+
+O
+
+O    
+
+> 1
+> 2
+> 3
+> 4
+> 5
+> Arrow-implied endpoint: C 1=O 2and H 3−O4−O5
+> Mapped endpoint: H 3−O2−O4+ C 1=O 5̸=
+> D
+
+ID 2,300 · reviewed annotation 
+
+CH 2
+
+O
+
+H
+
+O
+
+O   
+
+> 1
+> 2
+> 3
+> 4
+> 5
+> Arrow-implied endpoint: radical C 1=O 5component Mapped endpoint: radical C 1=O 5component ✓
+
+Figure S2: Local radical-arrow review. Red single-barbed arrows are fishhooks. Dashed lines are destination bonds. (A) ID 2,207 conflicts with its current mapped endpoint. (B) 
+
+The same arrows match the proposed H13 hydrogen-map correction, which is not applied. 
+
+(C,D) ID 2,300 before and after annotation review. Paired moves are listed in Table S5. 
+
+31 Curly arrows and fishhooks as executable electron transfers 
+
+Table S5: Published and reviewed radical transition annotations by record ID. Parentheses denote bond loci. ⇀ is a one-electron fishhook and −→ a paired move. Boldface marks the changed arrow in both columns. † denotes unchanged arrows after endpoint-orbit alignment. For 2 ,207 ∗, the arrows are unchanged. The proposed endpoint atom-map correction assigns H13 to O9 and retains O14–H15. It is not applied. ID Published annotation Reviewed annotation 279 2 ⇀ (2 , 14) (14 , 15) ⇀ 15 
+
+(14 , 15) ⇀ 15 
+
+(14 , 15) ⇀ (2 , 14) 2 ⇀ (2 , 14) (14 , 15) ⇀ (2 , 14) 
+
+(14 , 15) ⇀ 15 
+
+404 5 ⇀ (5 , 21) 
+
+(21 , 22) ⇀ (5 , 22) (21 , 22) ⇀ 21 
+
+5 ⇀ (5 , 22) 
+
+(21 , 22) ⇀ (5 , 22) (21 , 22) ⇀ 21 540 1 ⇀ (1 , 2) 1 −→ (1 , 2) 
+
+1,310 † 13 ⇀ (6 , 13) 
+
+(5 , 6) ⇀ (6 , 13) (5 , 6) ⇀ 5
+
+13 ⇀ (6 , 13) 
+
+(5 , 6) ⇀ (6 , 13) (5 , 6) ⇀ 51,317 † 19 ⇀ (1 , 19) 
+
+(1 , 2) ⇀ (1 , 19) (1 , 2) ⇀ 2
+
+19 ⇀ (1 , 19) 
+
+(1 , 2) ⇀ (1 , 19) (1 , 2) ⇀ 22,046 21 ⇀ 10 10 ⇀ 21 
+
+2,207 ∗ 9 ⇀ (9 , 13) (12 , 13) ⇀ (9 , 13) (12 , 13) ⇀ 12 9 ⇀ (9 , 13) (12 , 13) ⇀ (9 , 13) (12 , 13) ⇀ 12 
+
+2,300 1 ⇀ (1 , 2) (2 , 3) ⇀ (3 , 4) 4 ⇀ (3 , 4) (2 , 3) ⇀ (1 , 2) 1 ⇀ (1 , 5) 5 ⇀ (1 , 5) (1 , 2) −→ (2 , 4) (4 , 5) −→ (1 , 5) 
+
+2,516 4 ⇀ (4 , 8) 
+
+9 ⇀ (4 , 8) 
+
+4 ⇀ (4 , 8) 
+
+8 ⇀ (4 , 8) 
+
+3,970 (20 , 21) ⇀ 20 
+
+(20 , 21) ⇀ 2
+
+(20 , 21) ⇀ 20 
+
+(20 , 21) ⇀ 21 
+
+4,852 10 ⇀ (10 , 20) (20 , 21) ⇀ (10 , 20) 
+
+(20 , 21) ⇀ 2
+
+10 ⇀ (10 , 20) (20 , 21) ⇀ (10 , 20) 
+
+(20 , 21) ⇀ 21 
+
+32

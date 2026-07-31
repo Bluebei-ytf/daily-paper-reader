@@ -1,0 +1,684 @@
+Title: Persistent Manifold Learning of Protein Properties
+
+URL Source: https://arxiv.org/pdf/2607.25115v1
+
+Published Time: Wed, 29 Jul 2026 00:23:53 GMT
+
+Number of Pages: 25
+
+Markdown Content:
+Persistent Manifold Learning of Protein Properties 
+
+Xingjian Xu ∗ , Zhe Su † , Guo-Wei Wei ‡ , and Chunmei Wang §
+
+Abstract. Predicting how tightly two biomolecules bind remains a major challenge, in part because different interaction classes present dissimilar interfaces, from compact metal-coordinated pockets to broad, featureless protein surfaces. We introduce persistent manifold learning (PML), a novel computational framework that describes a binding interface as a family of multiscale manifolds. Boundary-Induced Graph Laplacian, a discrete realization of de Rham–Hodge theory, then extracts topological invariants together with nonharmonic spectral information, capturing the geometry of an interface as well as its topology. These manifold embeddings are combined with protein and molecular language model representations and paired with gradient boosting decision trees. Our PML outperforms state-of-the-art methods on metalloprotein–ligand and protein–protein benchmarks. 
+
+Relevance to Life Sciences. This work addresses a central problem in molecular biology and drug discovery: how to determine, from molecular structure alone, how tightly a molecule will bind to its target. Binding affinity governs therapeutic potency and selectivity, yet measuring it experimentally is slow and costly, making computational prediction essential for prioritizing candidates from large libraries. We apply our framework to two target classes ordinarily handled by separate methods: metalloenzymes, whose metal-coordinated active sites have long been exploited by drugs, and protein–protein interfaces, which regulate signaling and immune response yet resist conventional small molecules. Our results indicate that much of what determines binding strength is encoded in the shape of the interface itself, and that a single geometric description serves both classes without hand-tailored features. This suggests manifold-based representations may extend to other systems in which structure and sequence jointly determine function. 
+
+Mathematical Content. The core of our approach involves de Rham–Hodge theory on compact Riemannian manifolds with boundary, a foundational tool in differential geometry rarely applied to molecular data. Binding interfaces are modeled as sublevel sets of Gaussian density fields, producing a filtration of manifolds whose topological transitions occur at the critical values of the level set function, as governed by Morse theory. The topology of each manifold is recovered from the kernels of Hodge Laplacians under normal and tangential boundary conditions, whose dimensions are Betti numbers by the Hodge and Friedrichs theorems, while their nonzero spectra reflect geometry. Discretization proceeds through discrete exterior calculus on Cartesian grids, yielding Boundary-Induced Graph Laplacians whose spectral analysis reduces to the singular values of the discrete differentials. Extending this across the filtration leads to persistent Hodge Laplacians on evolving manifolds, combining differential geometry, algebraic topology, and spectral theory into a multiscale representation of molecular shape. 
+
+Key words. Persistent manifold learning; de Rham-Hodge theory; Hodge Laplacian; discrete exterior cal-culus; Betti numbers; protein-protein interactions; metalloprotein–ligand binding, binding affinity prediction. 
+
+MSC codes. 92E10, 55N31  
+
+> ∗
+
+Department of Mathematics, University of Florida, Gainesville, FL 32611, USA ( xingjianxu@ufl.edu ).  
+
+> †
+
+Department of Mathematics and Statistics, Auburn University, Auburn, AL 36849, USA (zhs0011@auburn.edu ).  
+
+> ‡
+
+Department of Mathematics, University of Georgia, Athens, GA 30602, USA. Department of Biochemistry and Molecular Biology, University of Georgia, Athens, GA 30602, USA (guowei.wei@uga.edu ).  
+
+> §
+
+Department of Mathematics, University of Florida, Gainesville, FL 32611, USA (corresponding author: 
+
+chunmei.wang@ufl.edu ). 
+
+1arXiv:2607.25115v1 [q-bio.BM] 27 Jul 2026 2 X. XU, Z. SU, G. WEI, C. WANG 
+
+1. Introduction. Proteins are the basic building blocks of living things, forming the structural and functional core of every cell in the human body. The understanding of pro-tein properties is the essential task of biophysics and molecular biology. A major class of protein properties is protein interactions, which are central to nearly all biological processes, and their dysregulation is closely associated with the onset and progression of many dis-eases. Understanding how proteins recognize and bind their molecular partners has therefore become an important problem in modern drug discovery [11, 33, 37, 59]. Among the many forms such interactions can take, metalloprotein–ligand interactions (MPLIs), in which small-molecule ligands bind to proteins containing metal ions or metal-coordination environments, and protein–protein interactions (PPIs), in which two proteins interact directly, represent two biologically important classes. MPLIs are a specialized but important subclass of protein-ligand interactions (PLIs), where binding is influenced not only by conventional noncovalent contacts but also by metal coordination, local geometry, charge distribution, and the sur-rounding protein environment [1, 11, 59]. These metal-centered binding sites provide struc-turally organized regions for ligand recognition, but they also introduce additional complexity due to coordination preferences, heterogeneous chemical environments, molecular flexibility, solvent effects, and conformational dynamics. In contrast, PPIs often involve broader and flatter interfaces that lack compact ligand-binding pockets. These surface-mediated contacts regulate essential cellular processes such as signaling, immune response, and transcriptional control [33, 45], while the absence of well-defined pockets makes them difficult to modulate using the small-molecule ligands commonly designed for conventional PLIs. Despite these structural and mechanistic differences, MPLIs and PPIs are ultimately gov-erned by a common thermodynamic descriptor: binding affinity (BA), which reflects complex stability, target engagement, therapeutic potency, and binding selectivity [11, 20]. Since the experimental determination of BA can be costly and time-consuming, computational predic-tion has emerged as an efficient strategy for screening large molecular spaces and prioritizing promising candidates [26]. Such predictions, in turn, rely on informative features that encode how molecular partners interact, enabling complexes to be compared, ranked, and optimized in drug discovery and biological design [14, 50]. As a free-energy quantity associated with complex formation, BA is strongly shaped by the three-dimensional organization of the bind-ing region, including contact patterns, physicochemical interactions, spatial complementar-ity, and local packing. In PPIs, this organization is primarily determined by the extended protein-protein interface itself, whereas in MPLIs, it is further shaped by metal-coordination geometry at the binding site. Therefore, a central challenge in BA prediction is to construct molecular representations that preserve binding-relevant structural information across both metal-centered ligand-binding sites and protein-protein interfaces. For this purpose, existing BA prediction methods often use graph-based descriptors, which model molecular components as nodes and their interactions as edges [15, 24, 28, 36, 39]. These descriptors are effective for encoding local contacts and pairwise interaction patterns, but they may not fully describe higher-order structural organization. Since such descriptors serve as the input to downstream machine learning models, the structural information they retain sets an upper bound on predictive accuracy, making descriptor design as consequen-tial as the choice of learning algorithm. Algebraic topology, or persistent homology, offers a complementary perspective by characterizing this higher-order organization directly, and its combination with machine learning has become an established paradigm for molecular PERSISTENT MANIFOLD LEARNING 3
+
+property prediction [49]. In particular, persistent homology captures the appearance and dis-appearance of connected components, loops, and cavities across a filtration, and the resulting topological invariants have been paired with deep networks and tree-based models for BA prediction [2, 3, 4, 32, 56]. However, this approach is insensitive to non-topological changes. Persistent spectral graph (PSG), also known as persistent Laplacian, was introduced by Wang et al. to overcome this challenge in 2020 [52]. This new method further enriches topological analysis by incorporating spectral information associated with these non-topological changes [30, 34]. It has been coupled with machine learning for biomolecular modeling [5, 34, 35, 58]. Persistent path Laplacian was proposed to deal with directed networks [51]. Persistent sheaf Laplacian was introduced to extract localized topological information [55]. However, these approaches are for point cloud data and cannot be directly applied to data on manifolds. The reader is referred to [46] for a review of topological data analysis and related developments. The above-mentioned limitation calls for new mathematical modeling. Evolutionary de Rham–Hodge theory provides a natural mathematical foundation for this viewpoint. It con-structs multiscale manifolds for topological analysis and defines Hodge Laplacian operators on these evolving domains [6]. Building on this framework, persistent de Rham–Hodge Lapla-cians were also developed in the Eulerian representation. This approach overcomes the dif-ficulty of the remeshing error due to the Lagrangian representation for manifold topological learning and is applied to image analysis [31] and protein–ligand binding affinity predic-tion [47], providing a principled route toward persistent manifold learning (PML), where topology, geometry, and spectral information are integrated for BA prediction. Building on this foundation, the objective of this work is to extend and demonstrate the utility of PML for BA prediction across two representative systems: metalloprotein–ligand complexes and protein–protein complexes. In the PML framework, molecular structures are first transformed into multiscale manifold representations using Gaussian density functions; persistent Hodge Laplacian descriptors are then computed on level-set domains generated with different isovalues, allowing the resulting features to jointly encode topological persis-tence and geometric variation. These approaches are subsequently combined with machine learning models to predict binding affinities. We evaluate the proposed approach on two benchmark datasets: the metalloprotein–ligand binding dataset [25] and the wild-type PDB subset from SKEMPI v2 for protein–protein binding [23]. Across both benchmarks, the pro-posed PML model achieves state-of-the-art performance, demonstrating its effectiveness and generality for BA prediction in structurally distinct binding systems. The remainder of this article is structured as follows. Section 3 introduces the PML framework for BA prediction. Section 4 presents results on Metalloprotein-ligand and protein-protein BA prediction. Section 2 lays out the mathematical foundations of PML, centered on de Rham-Hodge theory and persistent de Rham-Hodge Laplacians. Section 6 concludes with a summary of findings and future directions. 
+
+2. Modeling. This section presents the mathematical foundations underlying the PML framework introduced in Section 3. We first review the de Rham-Hodge theory, which pro-vides a unified description of the topological and geometric properties of a manifold through the spectra of Hodge Laplacians. We then present the discretization of the theory on regular Cartesian grids, and introduce the Boundary-Induced Graph Laplacian used to generate the manifold embedding features in Section 3.4. Finally, we describe its extension to the persis-tent setting by introducing persistent Hodge Laplacians that track the evolution of topological 4 X. XU, Z. SU, G. WEI, C. WANG 
+
+and geometric structures across a filtration of manifolds, together with their discretization for practical computation. 
+
+2.1. De Rham–Hodge Theory. De Rham–Hodge theory connects the topology of a man-ifold to the analysis of differential forms defined on it, and provides the mathematical foun-dation for the manifold embedding features used in this work. This subsection reviews the elements needed later: the differential and its cohomology, which are determined by topol-ogy alone, and the Hodge Laplacian, whose kernel recovers that topology while its nonzero spectrum reflects geometry. Throughout, let M be an m-dimensional smooth, orientable, compact Riemannian man-ifold with boundary ∂M , and let Ω k(M ) denote the space of differential k-forms on M .Differential forms are the objects that can be integrated over k-dimensional submanifolds, and this integrability is what ultimately makes them amenable to discretization. The differential d : Ω k(M ) → Ωk+1 (M ), also called the exterior derivative, is the unique 
+
+R-linear map that satisfies the Leibniz rule with respect to the wedge product and the nilpo-tent property 
+
+dd = 0 .(2.1) It is characterized by Stokes’ theorem: for any oriented ( k + 1)-submanifold S ⊂ M with boundary ∂S ,
+
+Z
+
+> S
+
+dω =
+
+Z
+
+> ∂S
+
+ω, (2.2) which states that differentiating a form and integrating over a domain is the same as inte-grating the form over the boundary of that domain. Equation (2.2) is more than a classical identity here: it is the property that transfers d to the discrete setting, where it becomes the signed incidence matrix between cells (Section 2.2). The nilpotency (2.1) gives d its topological content. A form ω ∈ Ωk(M ) is closed if dω = 0 and exact if ω = dζ for some ζ ∈ Ωk−1(M ); since dd = 0, every exact form is closed, but the converse may fail, and the extent of this failure measures the holes of M . Making this precise, d assembles the spaces Ω k(M ) into the de Rham complex 0 −→ Ω0(M ) d
+
+−→ Ω1(M ) d
+
+−→ · · · d
+
+−→ Ωm(M ) −→ 0,(2.3) whose k-th cohomology is the de Rham cohomology group 
+
+HkdR (M ) = ker  d : Ω k(M ) → Ωk+1 (M )
+
+im ( d : Ω k−1(M ) → Ωk(M )) .(2.4) By the de Rham theorem, HkdR (M ) is naturally isomorphic to the singular cohomology of M
+
+with real coefficients. It is therefore a topological invariant: it depends only on the topology of M , and not on its metric. So far no metric has been used, and d alone yields no notion of adjointness and hence no Laplacian. Both require a way to measure forms, which the Riemannian metric supplies. Let g be a metric on M with pointwise inner product ⟨· , ·⟩ g and volume form μg. The Hodge star ⋆ : Ω k(M ) → Ωm−k(M ) is the isomorphism defined by 
+
+ω ∧ ⋆η = ⟨ω, η ⟩g μg,(2.5) PERSISTENT MANIFOLD LEARNING 5
+
+which pairs each k-form with a complementary ( m−k)-form so that their wedge product is a top-degree form, and hence integrable. Integrating (2.5) gives the Hodge L2-inner product on Ω k(M ), (ω, η ) = 
+
+Z
+
+> M
+
+ω ∧ ⋆η. (2.6) With an inner product available, d admits a formal adjoint. The codifferential δ : Ω k(M ) →
+
+Ωk−1(M ) is defined by 
+
+δ = ( −1) m(k−1)+1 ⋆ d⋆, (2.7) and inherits the nilpotency δδ = 0 from (2.1). Whereas d raises the degree of a form, δ lowers it; composing the two in both orders yields a degree-preserving operator on Ω k(M ), which is the central object of this subsection. 
+
+Definition 2.1 (Hodge Laplacian). The Hodge Laplacian on Ωk(M ) is the operator 
+
+∆ = dδ + δd : Ω k(M ) → Ωk(M ).(2.8) 
+
+A form ω ∈ Ωk(M ) is called harmonic if ∆ω = 0 , and the space of harmonic k-forms is denoted by Hk
+
+> ∆
+
+(M ). A form is called coclosed if δω = 0 , and the space Hk(M ) = ker d ∩ ker δ
+
+of closed and coclosed k-forms is called the space of harmonic fields. Remark 2.2 (Vector calculus in R3). Both d and δ generalize the classical operators of vector calculus. In R3, 0-forms and 3-forms are identified with scalar fields, while 1-forms and 2-forms are identified with vector fields. Under these identifications, d acts as the gradient ∇
+
+on 0-forms, the curl ∇× on 1-forms, and the divergence ∇· on 2-forms, while δ corresponds to 
+
+−∇· , ∇× , and −∇ when applied to 1-, 2-, and 3-forms, respectively. The nilpotent properties 
+
+dd = 0 and δδ = 0 then recover the familiar identities ∇ × ∇ f = 0 and ∇ · (∇ × v) = 0. When M is boundaryless, i.e., ∂M = ∅, the operators d and δ are L2-adjoint with respect to (2.6), so that ( dω, η ) = ( ω, δη ). Consequently, whenever ∆ ω = 0, 0 = (∆ ω, ω ) = ( dω, dω ) + ( δω, δω ),(2.9) so that harmonic forms are simultaneously closed and coclosed, and hence Hk
+
+> ∆
+
+(M ) = Hk(M )in this case. The harmonic space then carries exactly the topological content of M .
+
+Theorem 2.3 (Hodge theorem [22]). Let M be a closed, orientable Riemannian manifold. Then the space of harmonic k-forms is finite-dimensional and isomorphic to the k-th de Rham cohomology group, 
+
+Hk
+
+> ∆
+
+(M ) ∼= HkdR (M ),(2.10) 
+
+so that dim Hk
+
+> ∆
+
+(M ) = βk, the k-th Betti number of M .Proof. See [22]; a modern treatment is given in [44]. The Betti number βk counts the k-dimensional holes of M : β0 is the number of connected components, β1 is the number of tunnels or loops, and β2 is the number of enclosed cavities. Theorem 2.3 therefore identifies the kernel of the Hodge Laplacian with the topology of M ,which is the property exploited throughout this work. In the presence of a boundary, the adjointness of d and δ fails, and (2.9) no longer holds. Boundary conditions must therefore be imposed to ensure that the operators are well-posed. 6 X. XU, Z. SU, G. WEI, C. WANG 
+
+Definition 2.4 (Normal and tangential boundary conditions). The spaces of normal and tangential k-forms on M are defined, respectively, by 
+
+Ωkn(M ) = {ω ∈ Ωk(M ) | ω|∂M = δω |∂M = 0 },(2.11) Ωkt (M ) = {ω ∈ Ωk(M ) | ⋆ ω |∂M = ⋆dω |∂M = 0 },(2.12) 
+
+which are Hodge dual to each other. The corresponding spaces of normal and tangential harmonic fields are Hkn(M ) = Hk(M ) ∩ Ωkn(M ) and Hkt (M ) = Hk(M ) ∩ Ωkt (M ). We write 
+
+∆n and ∆t for the Hodge Laplacian restricted to Ωkn(M ) and Ωkt (M ), respectively. Remark 2.5. Unlike the boundaryless case, the space of harmonic fields Hk(M ) is in general infinite-dimensional and is only a subset of ker ∆. It therefore admits no direct cor-respondence with the cohomology of M . Imposing the boundary conditions of Definition 2.4 restores this correspondence, as stated next. 
+
+Theorem 2.6 (Friedrichs [19]). Let HkdR (M, ∂M ) and HkdR (M ) denote the relative and absolute de Rham cohomology groups of M . Then 
+
+Hkn(M ) = ker ∆ kn ∼= HkdR (M, ∂M ) and Hkt (M ) = ker ∆ kt ∼= HkdR (M ).(2.13) 
+
+In particular, both spaces are finite-dimensional, with 
+
+dim Hkn(M ) = βm−k and dim Hkt (M ) = βk.(2.14) 
+
+Proof. See [19] and [44, Chapter 2]. Theorem 2.6 is the foundation of the present framework: it allows the topology of the underlying manifold to be recovered from the kernels of the boundary-constrained Hodge Laplacians, while their nonzero spectra provide additional insight into the geometric structure of M . For the compact domains M ⊂ R3 considered in this work, the case of interest is the following. 
+
+Corollary 2.7. Let M ⊂ R3 be a compact domain, so that m = 3 . Then the Hodge Lapla-cian on 3-forms under the normal boundary condition satisfies 
+
+dim ker ∆ 3 
+
+> n
+
+= β3−3 = β0,(2.15) 
+
+that is, the number of zero eigenvalues of ∆3 
+
+> n
+
+equals the number of connected components of 
+
+M .Proof. Immediate from (2.14) with m = 3 and k = 3. The discrete counterpart of ∆ 3
+
+> n
+
+, denoted L3,n , is the operator used to construct the manifold embedding features of Section 3; its discretization is presented next. 
+
+2.2. Discretization and construction of Laplacians. The discretization of the de Rham– Hodge framework can be realized using discrete exterior calculus (DEC) [10]. This approach ensures consistency with the continuous theory and enables correct computation of the man-ifold cohomology. In addition, DEC provides straightforward treatment of the boundary conditions, and reduces the computation to matrix algebra with symmetric Hodge Laplacian matrices, thereby allowing for efficient numerical implementation. The DEC-based discretiza-tion framework has been developed in two different ways: the Eulerian formulation [47, 48], PERSISTENT MANIFOLD LEARNING 7
+
+in which the underlying manifold M is represented as a sublevel set of a level-set function on the Cartesian grid, and the Lagrangian formulation [6], which discretizes M as a simplicial mesh. The Eulerian representation fixes all vertices, edges, faces, and cells to the grid, which substantially simplifies the resulting data structures and algorithms. It also eliminates the need to explicitly tessellate the domain into simplicial meshes, and a filtration of the manifold can be constructed simply by adjusting the isovalues. Due to these advantages, we adopt the Eulerian formulation developed in [47]. Let Im be an m-dimensional Cartesian grid that contains the manifold M , where each k-cell is oriented according to its alignment with the coordinate axes. Below, we first present the construction of the discrete differential operators on the entire grid and then restrict them to M . Due to the Hodge duality between the normal and tangential boundary conditions, here we consider only the normal boundary conditions. On the Cartesian grid Im, a differential k-form ω can be discretized by integrating it over each oriented k-cell σi, i.e., W i = R 
+
+> σi
+
+ω. This is precisely the discrete counterpart of Stokes’ theorem (2.2): the discrete exterior derivative DIk is given by the signed incidence matrix between ( k + 1)-cells and k-cells, which is identified with the transpose of the cell boundary operator ∂Tk+1 . Since ∂∂ = 0 for the boundary of a boundary, this immediately gives DIk+1 DIk = 0, mirroring the continuous identity dd = 0 [10]. The discrete Hodge star establishes a correspondence between k-forms on the primal grid and ( m−k)-forms on the dual grid (formed by translating grid points to cell centers), via 1
+
+|σk|
+
+Z
+
+> σk
+
+ω ≈ 1
+
+| ⋆ σ k|
+
+Z
+
+> ⋆σ k
+
+⋆ω, (2.16) which yields a diagonal matrix SIk with diagonal entries equal to the ratio of dual ( m−k)-cell to primal k-cell volumes, given by ℓm−2k for a grid of edge length ℓ. The discrete codifferential is assembled from DIk and SIk as δIk = ( SIk−1)−1(DIk−1)T SIk , and the discrete Hodge Laplacian, obtained as the counterpart of ⋆∆ to preserve symmetry, is given by 
+
+LIk = ( DIk)T SIk+1 DIk + SIk DIk−1(SIk−1)−1(DIk−1)T SIk .(2.17) For the discrete operators on M , note that the manifold boundary ∂M generally intersects grid cells rather than aligning with them. The normal boundary condition is enforced by restricting the operators to the normal support of cells, where a k-cell belongs to the support if at least one of its vertices lies inside or on ∂M . Denote by Pk,n the corresponding projection matrix onto the normal support. The differential and Hodge star operators for M are then given by 
+
+Dk,n = Pk+1 ,n DIkP Tk,n , Sk,n = Pk,n SIk,n P Tk,n ,(2.18) where SIk,n is obtained by adjusting the cell volumes in SIk according to the normal boundary conditions following [47]. Using these discrete operators, one can assemble the discrete Hodge Laplacian under the normal boundary conditions as follows: 
+
+Lk,n = DTk,n Sk+1 ,n Dk,n + Sk,n Dk−1,n S−1
+
+> k−1,n
+
+DTk−1,n Sk,n ,(2.19) whose null space, as in the continuous theory of Theorem 2.6, is fully determined by the manifold topology, with dimension given by the Betti number βm−k. Beyond the kernel, 8 X. XU, Z. SU, G. WEI, C. WANG 
+
+the nonzero eigenvalues of the Laplacian further encode the geometric structure of M . For instance, the smallest nonzero eigenvalue (the Fiedler value) reflects the manifold’s connec-tivity [17], while eigenvalue multiplicities can reveal underlying symmetries. In the Eulerian setting, the discrete Hodge star is nearly a rescaled identity matrix, since 
+
+ℓm−2k is constant on the interior of the grid and departs from this value only in the cells meeting the boundary. The Hodge Laplacian (2.19) can therefore be well approximated by replacing the Hodge star with the identity matrix, which leads to the following operator. 
+
+Definition 2.8 (Boundary-Induced Graph Laplacian [41]). Let Dk,n be the discrete differen-tial on the normal support of M . The Boundary-Induced Graph (BIG) Laplacian on discrete 
+
+k-forms under the normal boundary condition is 
+
+LBk,n = DTk,n Dk,n + Dk−1,n DTk−1,n ,(2.20) 
+
+that is, the discrete Hodge Laplacian (2.19) with every Hodge star matrix replaced by the identity. 
+
+The spectra of the BIG Laplacians have been shown to converge to those of the cor-responding Hodge Laplacians up to a scaling factor [41]. Therefore, they can similarly be used to capture the topological and geometric information of M through their spectra as the Hodge Laplacians, while being computationally cheaper, since their construction does not require Hodge star matrices. The spectral analysis of the Hodge and BIG Laplacians can be treated uniformly by writing a generic Laplacian Lk = DTk Sk+1 Dk + SkDk−1S−1
+
+> k−1
+
+DTk−1Sk, which reduces to the Hodge or BIG Laplacian depending on whether Sk is the true Hodge star or the identity matrix. The spectrum of Lk can be obtained by considering the generalized eigenvalue problem LkW = λS kW , which can also be reformulated as the ordinary eigenvalue problem ¯Lk ¯W = λ ¯W through the change of variables ¯Dk = S1/2
+
+> k+1
+
+DkS−1/2 
+
+> k
+
+, ¯Lk = S−1/2 
+
+> k
+
+LkS−1/2 
+
+> k
+
+, ¯W = S1/2 
+
+> k
+
+W. (2.21) Here the transformed Laplacian is of the form ¯Lk = ¯DTk ¯Dk + ¯Dk−1 ¯DTk−1.(2.22) Let ¯Dk = Uk+1 ΣkV Tk be the singular value decomposition of ¯Dk. As shown in [47], the spectrum of ¯Lk is given by the union of the squared nonzero singular values of ¯Dk and ¯Dk−1,together with the zero eigenvalue whose multiplicity is the ( m−k)-th Betti number. Moreover, the space of discrete k-forms is spanned by the harmonic forms together with the columns of 
+
+Uk and Vk associated with the nonzero singular values. For compact domains in R3, there are four Laplacians Lk,n , k = 0 , 1, 2, 3, of different degrees under the normal boundary conditions. The spectral analysis of these Laplacians can therefore be reduced to the analysis of the singular value spectra of the three discrete differentials ¯D0, ¯D1, and ¯D2.
+
+Remark 2.9. Among these four operators, the present work uses only LB
+
+> 3,n
+
+, the BIG Lapla-cian on discrete 3-forms under the normal boundary condition, which we denote simply by 
+
+L3,n . By Corollary 2.7, the number of its zero eigenvalues equals the 0-th Betti number β0,so that its spectrum supplies β0 together with a sequence of nonzero eigenvalues reflecting the geometry of M . Higher-order Laplacians could provide additional descriptors, but are not pursued here for reasons of computational efficiency. PERSISTENT MANIFOLD LEARNING 9
+
+2.3. Persistent Hodge Laplacian. This section presents the construction of the persis-tent Hodge Laplacian on a filtration of manifolds obtained by varying a single filtration pa-rameter, which was first introduced in [6], with the discretization framework for the Eulerian formulation presented later in [47]. Compared with the Hodge Laplacian at a single scale, the persistent Hodge Laplacian captures how the manifold topology and geometry change across multiple scales, and therefore provides substantially more information than that of any single manifold. In practice, a filtration of manifolds can be constructed directly through a level set func-tion. To be specific, let f : N → [a, b ] be a function defined on the ambient space N with compact sublevel sets under consideration. We assume f is a Morse function, as the set of Morse functions is dense in the space of smooth functions on a compact manifold. We then choose evenly distributed isovalues a ≤ c0 < c 1 < · · · < c s ≤ b and perturb them slightly, if necessary, so that none of these isovalues are critical values of f . This is always possible, as the critical values are isolated and finite for compact manifolds. Each sublevel set Mi = {x ∈ N | f (x) ≤ ci}, i = 0 , . . . , s , is therefore a smooth manifold with boundary 
+
+∂M i = {x ∈ N | f (x) = ci}. These manifolds form a filtration linked by the inclusion maps 
+
+M0 ,→ M1 ,→ M2 ,→ · · · ,→ Ms−1 ,→ Ms.(2.23) In addition, we assume that Mi,i +1 = Mi+1 \Mi = {x ∈ N | f (x) ∈ [ci, c i+1 ]} contains at most one critical point for each i = 0 , . . . , s , which can always be realized by refining the sequence of isovalues. In the case that Mi,i +1 contains no critical points, the manifold Mi+1 retracts to Mi along the gradient flow of f , and thus they are homotopy equivalent, meaning that no topological changes occur between ci and ci+1 . If Mi,i +1 contains one critical point, then the topological change happens precisely at the critical value of f . Depending on the type of the critical point (i.e., local minimum, saddle point, or local maximum), the topology changes in different ways [47]. Now let Mi ,→ Mi+1 be a consecutive pair of manifolds in the filtration. A filtration-induced extension from Ω kn(Mi) to Ω kn(Mi+1 ) that extends each normal k-form on Mi to a normal k-form on Mi+1 can be realized by solving a biharmonic equation ∆ 2ζ = ∆(∆ ζ) = 0 on Mi,i +1 with both Dirichlet and Neumann boundary conditions to ensure that dζ joins smoothly with ω through ∂M i. The extended form ¯ ω on Mi+1 can then be defined so that ¯ω = ω on Mi and ¯ ω = dζ on Mi,i +1 . Note that dζ satisfies the normal boundary condition on ∂M i+1 , so that ¯ ω is normal, i.e., ¯ ω ∈ Ωkn(Mi+1 ). Denote by Iki,i +1 : Ω kn(Mi) → Ωkn(Mi+1 )this extension. The following commutative diagram then follows from the uniqueness of the solution to the boundary value problem (2.24) Ω0
+
+> n
+
+(M0) Ω1
+
+> n
+
+(M0) Ω2
+
+> n
+
+(M0) Ω3
+
+> n
+
+(M0)Ω0
+
+> n
+
+(M1) Ω1
+
+> n
+
+(M1) Ω2
+
+> n
+
+(M1) Ω3
+
+> n
+
+(M1)Ω0
+
+> n
+
+(M2) Ω1
+
+> n
+
+(M2) Ω2
+
+> n
+
+(M2) Ω3
+
+> n
+
+(M2)
+
+· · · · · · · · · · · ·     
+
+> d
+> I00,1
+> d
+> I10,1
+> d
+> I20,1I30,1
+> d
+> I01,2
+> d
+> I11,2
+> d
+> I21,2I31,2
+> d
+> I02,3
+> d
+> I12,3
+> d
+> I22,3I32,310 X. XU, Z. SU, G. WEI, C. WANG
+
+where each row represents the de Rham complex for each manifold in the filtration, and each column represents the extensions induced by the filtration. For a pair of manifolds Mi ,→ Mj with i ≤ j, we consider the following commutative diagram (2.25) Ωkn(Mi) Ωk+1  
+
+> n
+
+(Mi)Ωk−1 
+
+> n
+
+(Mj ) Ωkn(Mj )
+
+> dk−1
+> j
+> Ri,j
+> δkj
+> dki
+> δki,j
+> Ii,j
+> δk+1
+> idk−1
+> i,j
+
+.
+
+Here Ii,j = Ij−1,j ◦ · · · ◦ I i,i +1 denotes the extension map from Ω kn(Mi) to Ω kn(Mj ); di and 
+
+δi (resp. dj and δj ) denote the differential and codifferential on Ω k(Mi) (resp. Ωk(Mj )); 
+
+Ri,j is the projection from Ω kn(Mj ) onto the space spanned by the extensions followed by the restriction to Mi; and 
+
+δki,j = δkj ◦ I i,j , dk−1 
+
+> i,j
+
+= Ri,j ◦ dk−1 
+
+> j
+
+.(2.26) These two operators are adjoint with respect to the Hodge inner product (2.6), which allows the following operator to be defined consistently with the single-scale case. 
+
+Definition 2.10 (Persistent Hodge Laplacian). Let Mi ,→ Mj be a pair of manifolds in the filtration (2.23) with i ≤ j, and let dk−1 
+
+> i,j
+
+and δki,j be the operators defined in (2.26) . The k-th persistent Hodge Laplacian ∆ ki,j : Ω kn(Mi) → Ωkn(Mi) under the normal boundary condition is 
+
+∆ki,j = dk−1 
+
+> i,j
+
+δki,j + δk+1  
+
+> i
+
+dki .(2.27) 
+
+Its kernel Hki,j = ker ∆ ki,j is called the space of persistent normal harmonic fields .Remark 2.11. The persistent Hodge Laplacian generalizes the operator of Section 2.1 rather than replacing it. When i = j, the extension Ii,i is the identity, so that dk−1 
+
+> i,i
+
+= dk−1
+
+> i
+
+and δki,i = δki , and (2.27) reduces exactly to the Hodge Laplacian ∆ kn on Mi under the normal boundary condition. The single-scale theory is thus recovered as the special case in which no evolution of the manifold is considered. 
+
+Theorem 2.12 ([6]). The space of persistent normal harmonic fields admits the identifi-cation 
+
+Hki,j = ker δki,j ∩ ker dki ,(2.28) 
+
+and is isomorphic to the k-th persistent de Rham cohomology group of the pair Mi ,→ Mj . In particular, Hki,j is finite-dimensional, with dimension given by the (m−k)-th persistent Betti number. Proof. See [6]; the corresponding discrete statement in the Eulerian representation is established in [47]. PERSISTENT MANIFOLD LEARNING 11 
+
+Remark 2.13. Theorem 2.12 extends the correspondence of Theorem 2.6 to the multiscale setting: the kernel of ∆ ki,j records the topological features of Mi that persist into Mj , while its nonzero spectrum reflects the accompanying geometric variation. The manifold embedding features of Section 3 are obtained from the special case i = j of Remark 2.11, evaluated at each isovalue of the filtration (2.23) and assembled across scales. Features drawn from the genuinely persistent case i < j are not pursued in this work, but constitute a natural extension of the present framework. 
+
+2.4. Discretization of the persistent Hodge Laplacian. Let f : Rm → [a, b ] be a levelset function with compact sublevel sets under consideration. By varying the isovalues of f , a nested sequence of sub-cell complexes under the normal boundary conditions can be obtained 
+
+∅ = K0 ⊂ K1 ⊂ · · · ⊂ Ks−1 ⊂ Ks = K. (2.29) In the discrete setting, a discrete k-form on Ki can be easily extended to Ki+1 by solving the discrete Laplace equation with certain boundary conditions on the closure Ki,i +1 =Cl( Ki+1 \Ki). Denote by Ii,i +1 : Ck(Ki) → Ck(Ki+1 ) this extension. Then the extension mapping from Ck(Ki) to Ck(Kj ) is given by Ii,j = Ij−1,j ◦ · · · ◦ Ii,i +1 . Alternatively, this extension Ii,j can be constructed directly by solving the Laplace equation on the closure 
+
+Ki,j = Cl( Kj \Ki), and we adopt this approach in the discretization below for simplicity. Through this extension, the space of discrete forms on Ki can be identified with a subspace of the space of discrete forms on Kj . The discrete counterparts of the commutative diagram (2.24) and (2.25) can then be obtained. Denote by Dki and ¯δki the discrete differential and codifferential operator on Ki, respec-tively. Let Iki,j and Rki,j be the discrete operators on discrete k-forms corresponding to the extension mapping Ii,j and the projection Ri,j , and let Dk−1 
+
+> i,j
+
+= Rki,j Dk−1 
+
+> j
+
+and ¯δki,j = ¯δkj Iki,j the discrete operators corresponding to dk−1 
+
+> i,j
+
+and δki,j in the previous section. As aforementioned, given a discrete k-form W on Ki, the discrete extension Ii,j can be constructed as follows: let ˜Lk−1 
+
+> Ki,j
+
+be the Laplace operator acting on ( k−1)-forms on Ki,j \∂K i and let δk∂K i denote the boundary codifferential operator that uses values of W on ∂K i to evaluate the neighboring (k−1)-cells in Ki,j \∂K i. Then solving the linear system ˜Lk−1
+
+> Ki,j
+
+˜ζ = −Sk−1 
+
+> Ki,j
+
+δk∂K i W gives rise to the required d˜ζ on Ki,j \∂K i. Together with W on Ki, this defines an extension in Ck(Kj ). It follows that the extension operator is given by: 
+
+Iki,j = Id kKi
+
+−Dk−1 
+
+> Ki,j
+
+( ˜Lk−1 
+
+> Ki,j
+
+)−1Sk−1 
+
+> Ki,j
+
+δk∂K i
+
+!
+
+,
+
+where Id kKi is the identity matrix on Ki up to a rescaling on the boundary. By definition, ¯δki,j = ¯δkj Iki,j and ¯δkj = ( Sk−1 
+
+> j
+
+)−1(Dk−1 
+
+> j
+
+)T Skj . The operator Dk−1 
+
+> i,j
+
+is then of the form 
+
+Dk−1 
+
+> i,j
+
+= ( Ski )−1(Iki,j )T Skj Dk−1 
+
+> j
+
+,(2.30) following from its adjointness with ¯δki,j . The projection Rki,j = ( Ski )−1(Iki,j )T Skj can be viewed as the L2-projection onto the subspace of forms on Kj formed by all extensions from Ki,represented as forms on Ki.12 X. XU, Z. SU, G. WEI, C. WANG 
+
+The discrete k-th persistent Hodge Laplacian on k-forms on Ki can then be assembled as 
+
+Lki,j = Dk−1 
+
+> i,j
+
+¯δki,j + ¯δk+1  
+
+> i
+
+Dki ,(2.31) and the discrete k-th persistent BIG Laplacian is 
+
+LB,k i,j = Dk−1 
+
+> i,j
+
+(Dk−1 
+
+> i,j
+
+)T + ( Dki )T Dki .(2.32) The discrete persistent BIG Laplacian LB,k i,j has the same algebraic structure as the discrete persistent Hodge Laplacian Lki,j but avoids the Hodge star matrices, which simplifies the computations. 
+
+3. Persistent Manifold Learning Framework. This section presents the proposed frame-work for BA prediction in metalloprotein-ligand and protein-protein complexes, organized as in Figure 1. Starting from a PDB structure in the SKEMPI v2 [23] or metalloprotein-ligand [25] dataset, element-specific atomic point clouds are extracted (panel a) and converted into a family of manifolds, generated as level sets of an atomic density function and discretized on a Cartesian grid into cell complexes (panel b). BIG Laplacians are then assembled on these complexes, and their spectra-harmonic (Betti numbers) and nonharmonic-provide the manifold embedding features that encode the topology and geometry of the binding interface across the filtration (panel c). In parallel, sequence-level embeddings from ESM-2 [29, 42] for proteins and ChemBERTa [8] for ligands supply complementary information (panel d). The two descriptor sets are concatenated and used to train a gradient boosting decision tree for BA prediction (panel e). a). Data Preparation b). Manifold Operator Generation Point cloud data (OH pairs as an example) Geometry generated by isovalues Operator computed by Discrete grid cell Given Complex 4TMN       
+
+> Mesh build
+> Pearson coefficient
+> ⋯⋯⋯ ⋯
+> c). Hodge Laplacian d). Protein Language Model e). Machine Learning Decision Tree Amino acid sequence Topological Encoder Latent Space feature Harmonic spectra Nonharmonic spectra Eigenvalues Betti Number AGLVKTRMSE
+
+Figure 1. Overview of the proposed PML framework for metalloprotein-ligand and protein-protein BA prediction. The workflow includes manifold generation from protein structures in the SKEMPI v2 and metalloprotein–ligand datasets, geometry-based algebraic topology feature extraction using multiscale Hodge Laplacian descriptors, and machine learning model training and testing for BA prediction. PERSISTENT MANIFOLD LEARNING 13 
+
+3.1. Data Source and Pre-processing. We evaluate the proposed framework on two benchmark datasets, one for each interaction type. For PPI binding affinity (BA) prediction, we adopt the wild-type subset of SKEMPI v2 [23], referred to as SKEMPI-WT. Wild-type complexes, rather than their mutant counterparts, are chosen because mutations typically induce only minor local geometric perturbations, making wild-type structures a more suitable and fundamental testbed for evaluating geometry-based topological representations. Since PDB structures in this dataset frequently contain missing atoms or residues, we first repair each structure using Profix from the Jackal package [57]. After this preprocessing step, the resulting SKEMPI-WT dataset comprises 343 protein-protein complexes. For metalloprotein-ligand BA prediction, we adopt the metalloprotein-ligand dataset from [25], which provides protein-ligand complexes with experimentally measured binding affinities across a range of metal-ion-containing binding environments. In contrast to the PPI structures, these complexes are structurally complete and require no repair prior to use. We follow the original training-test partition from [53], comprising 1,845 training complexes and 618 test complexes, for a total of 2,463 complexes. Model selection and hyperparameter tuning are carried out via 10-fold cross-validation on the training set, and final performance is reported on the independent test set. 
+
+3.2. Element-Specific Manifold Construction. Each complex, whether a protein-protein complex or a metalloprotein-ligand complex, is represented by a set of point cloud data. To convert this discrete representation into the continuous manifolds required for our frame-work, we adopt the flexibility-rigidity index (FRI) [38] as a discrete-to-continuum mapping. Following the element-specific approach of [3], we group atoms by element type and consider pairwise interactions between atom types on the two sides of the interface separately, rather than treating all atoms uniformly. For metalloprotein-ligand complexes, the protein side consists of Hydrogen (H), Carbon (C), Nitrogen (N), Oxygen (O), and Sulfur (S), while the ligand side additionally includes Phosphorus (P), Fluorine (F), Chlorine (Cl), Bromine (Br), and Iodine (I), reflecting the broader chemical diversity of small-molecule ligands; this yields 50 possible atom-type pairs. Since most proteins contain negligible Hydrogen content in the crystal structures used here, we exclude H from the protein side, reducing the number of atom pairs used in practice to 40, formed between protein atom types {C, N, O, S} and ligand atom types {H, C, N, O, S, P, F, Cl , Br , I}. In contrast, both sides of a protein-protein interface are ordinary protein chains, lacking the heteroatoms characteristic of small-molecule ligands; we therefore restrict both sides to C, N, and O, again excluding Sulfur and Hydrogen for the same reasons as above, yielding 9 atom-type pairs between {C, N, O, S} and {C, N, O, S}. For each complex, we restrict our attention to atoms within a cutoff distance of 12 ˚A from the interface and use the resulting atom pairs to construct manifolds for each atom-pair type. For a given atom-pair type, let {xαi }si=1 denote the positions of the s atoms of that type within the cutoff distance, where α indicates which side of the interface the atom belongs to. We then define a level-set function on R3 as the negative sum of Gaussian densities centered at these atomic positions: 
+
+ρ(x, τ ) = −
+
+> s
+
+X
+
+> i=1
+
+exp −
+
+ || x − xα 
+
+> i
+
+|| 
+
+τ r αi
+
+2!
+
+,(3.1) where || x − xα 
+
+> i
+
+|| is the Euclidean distance from x to the i-th atom xα 
+
+> i
+
+; rαi is its van der Waals 14 X. XU, Z. SU, G. WEI, C. WANG 
+
+radius, and τ is a scale parameter. For a given isovalue c, the sublevel set 
+
+M = {x | ρ(x, τ ) ≤ c}(3.2) defines a compact manifold in R3, with boundary given by the isosurface ∂M = {x | ρ(x, τ ) = 
+
+c}. Choosing a sequence of increasing isovalues c1 < c 2 < · · · < c s yields a nested filtration of manifolds, 
+
+M1 ⊂ M2 ⊂ · · · ⊂ Ms,(3.3) where Mi is the sublevel-set manifold associated with isovalue ci. In our PML experiments, we use s = 9 evenly spaced isovalues in the interval [ −0.5, −0.001] to generate this filtration for each atom pair; this range is chosen because isovalues above −0.001 produce almost no change in the topology of the resulting manifolds for most atom pairs, while isovalues below 
+
+−0.5 require finer grids to resolve the corresponding isosurfaces, substantially increasing computational costs. Figure 2 illustrates this filtration at three representative isovalues for the O-H atom pair in the complex 4TMN as an example. We note that Eq. (3.1) is one particular choice of FRI density function, which has been shown to convert discrete point-cloud data into continuous embeddings in a numerically stable manner, and has previously been used to construct protein boundary surfaces [6] and interactive manifolds [38]; other reasonable choices of FRI density functions could equally be used to generate the filtration.  
+
+> Figure 2. Homotopic evolution of the Gaussian isosurface manifold generated from protein oxygen atoms and ligand hydrogen atoms in the 4TMN protein–ligand complex. The manifold is constructed from a Gaussian density field over OH atom pairs and evolves as the isovalue decreases
+
+3.3. Grid Construction and Cell Complex. To compute the manifolds described in Sec-tion 3.2 numerically, we embed each atom pair in a regular Cartesian grid. For a given atom pair, a bounding box is first constructed by taking the minimum and maximum coordinates over all atoms of that type within the cutoff distance along each axis, and then expanded by 25% of its range on each side of every axis, so that the resulting manifold does not touch the boundary of the grid. This bounding box is then discretized into a uniform N × N × N
+
+lattice of grid vertices ( N = 100 in our experiments), with equally spaced coordinates along each axis. We evaluate the level-set function ρ(x, τ ) from Eq. (2.1) at every grid vertex, producing a discretized approximation of the density field used to construct the manifolds in the filtration. This vertex lattice induces a structured cell complex consisting of N 3 vertices, 3( N −1) N 2
+
+edges, 3( N − 1) 2N faces, and ( N − 1) 3 volumetric cells, providing the combinatorial structure PERSISTENT MANIFOLD LEARNING 15 
+
+required by the discrete exterior calculus framework introduced in Section 2. For a given isovalue ci, we include a grid cell in the truncated complex representing Mi if at least one of its vertices lies in the corresponding sublevel set defined in Section 3.2; cells with no such vertex are discarded. This yields, for each isovalue in the filtration, a truncated cell complex conforming to the corresponding manifold Mi, which provides the discrete geometric structure needed to compute the manifold embedding features introduced as follows. 
+
+3.4. Features Generation. Manifold embedding features characterize a binding inter-face by representing the atoms involved as samples from an underlying manifold, and then extracting spectral and topological information from BIG Laplacians defined on that mani-fold, denoted L3,n and defined in detail in Section 2.2. This representation applies broadly to different types of binding interfaces, including metalloprotein-ligand binding sites and protein-protein interfaces, though the specific construction of the manifold depends on the system under study. For metalloprotein-ligand complexes, we derive these manifolds for all complexes from atomic density fields defined around each pair of interacting atom types and focus on the 0-th order BIG Laplacian, whose zero eigenvalues give the 0-th Betti number 
+
+β0 and whose nonzero eigenvalues capture the underlying geometric structure of the binding interface; higher-order Laplacians could add further features, but we restrict to L3,n here for computational efficiency. For each atom pair, we use a fixed Cartesian grid that remains the same across all complexes, which keeps spectra comparable while avoiding the high computational cost of a single grid that is large and fine enough to cover all complexes. On each manifold, we compute L3,n under the normal boundary condition and extract β0 together with the first 2 non-zero eigenvalues as the manifold embedding feature, respectively, giving 6 features per manifold in total. Across 9 isovalues and 40 atom-pair types, this yields 3 × 9 × 40 manifold embedding features per protein-ligand complex. All manifold constructions and Laplacian computations are performed on the High Performance Computing Center, using B200 GPU nodes to accelerate the large-scale grid and eigenvalue computations required across all atom pairs and complexes. This feature set is sufficient to validate the proposed framework for predicting binding affinities, as shown in Section 4. 
+
+3.5. Protein Language Models. Beyond geometry and topology, sequence-derived infor-mation offers an additional, complementary view of a binding complex. To capture this, em-beddings from pretrained protein and molecular language models are incorporated alongside the manifold embedding features. Two such models are used in this work: ESM-2 [29, 42], a transformer pretrained on protein sequences, and ChemBERTa [8], a transformer pretrained on molecular SMILES strings. Which of the two is applied depends on whether a given partner in the complex is a protein or a small-molecule ligand. In the PPI setting, both partners are proteins, so both are encoded with ESM-2, a 650-million-parameter, 33-layer model trained on roughly 250 million sequences under a masked-token objective. Each protein chain is passed through the model independently, and its residue-level embeddings from the final layer are averaged over all residues to ob-tain a single 1280-dimensional vector. Concatenating the vectors for the two partners gives a 2560-dimensional sequence embedding for each PPI complex. The MPLI setting instead pairs a protein with a small-molecule ligand, so a second model is needed to handle the lig-and side. The protein component is embedded with the same ESM-2 model described above, again yielding a 1280-dimensional vector. The ligand, represented as a SMILES string, is 16 X. XU, Z. SU, G. WEI, C. WANG 
+
+embedded separately using ChemBERTa-77M-MLM, a RoBERTa-style model pretrained on 77 million SMILES strings via masked language modeling; its final hidden states are averaged across tokens to produce a 384-dimensional vector. The protein and ligand embeddings are concatenated into a single 1664-dimensional sequence embedding for each MPLI complex. Since ESM-2 has a fixed maximum input length, protein sequences longer than this limit are split into subsequences, each embedded separately before the resulting per-residue embed-dings are pooled together so that sequence embeddings remain available even for long protein chains. 
+
+3.6. Machine Learning Platform. Binding affinity prediction is carried out using the Gradient Boosting Decision Tree (GBDT) algorithm, implemented via the Python library. GBDT is a widely used ensemble method known for its resistance to overfitting, stable per-formance across a range of hyperparameter choices, and straightforward implementation. Rather than relying on a single predictor, the method builds a sequence of shallow decision trees, each one trained to correct the errors left by the trees before it; while any individual tree is a weak predictor on its own, aggregating many such trees yields a much stronger overall model. The manifold embedding features and protein language model embeddings introduced in Section 2 serve as the input to this GBDT model for BA regression. Table 1 summarizes the hyperparameter configuration used throughout. Because GBDT training in-volves stochastic subsampling, results can vary across runs; to obtain a stable estimate of performance, each model is retrained from 10 different random seeds (42, 1234, 5678, 91011, 121314, 151617, 181920, 212223, 242526, and 272829), and the final reported metrics are averaged across these 10 independent runs. 
+
+> Table 1
+> Hyperparameters used to build the gradient boosting regression models.
+
+Number of Estimators Max depth Minimum sample split 10000 5 5Loss function Subsample Max features Squared error 0.5 Square root 
+
+4. Results. To quantitatively evaluate the performance of our binding affinity predic-tion models, we employ Pearson’s correlation coefficient (PCC), and root mean squared error (RMSE). PCC measures the strength and direction of the linear relationship between pre-dicted and experimental binding affinities, making it well suited for assessing how well a model preserves the relative ranking of binding affinities across complexes; RMSE, in con-trast, penalizes large errors more heavily due to the squared term. Reporting both types of metrics together thus provides a more complete assessment of model performance than either alone, capturing correlation and absolute accuracy simultaneously. PCC is defined as PCC( y, yp) = 
+
+Pni=1 (yi − ¯y)( ypi − ¯yp)
+
+pP ni=1 (yi − ¯y)2pP ni=1 (ypi − ¯yp)2 ,(4.1) where yi and ypi denote the experimental and predicted binding affinity values for the i-th sample, respectively, and ¯ y and ¯ yp are their corresponding mean values. RMSE are computed PERSISTENT MANIFOLD LEARNING 17 
+
+as RMSE = 
+
+vuut 1
+
+n
+
+> n
+
+X
+
+> i=1
+
+(yi − ypi )2,(4.2) where n is the total number of samples. We employ these metrics to assess the performance of our machine learning models on both datasets. To ensure an unbiased evaluation, PCC and RMSE are computed via 10-fold cross-validation rather than on a single train-test split, so that the reported performance reflects the model’s ability to generalize across different subsets of the data rather than its fit to one particular partition. 
+
+4.1. Performance of Metallprotein-ligand binding affinity predictions. 4.1.1. Comparison with Existing Methods. We first evaluate the proposed PML frame-work on the metalloprotein-ligand dataset from [25] and compare its performance against four previously published models: RosENet [21], NNScore2.0 [13], MetalProGNet [25], and JPH-GBT [54], the current state of the art for this task. Since PML is trained independently across 10 random seeds, we report both the average performance across all 10 runs and the performance of the single best-performing run, allowing direct comparison with prior work while also characterizing the stability of the model across different initializations. As shown in Figure 3(a) and Table 2, PML outperforms all baseline methods in terms of the PCC. Averaged over the 10 runs, PML achieves PCC = 0 .753 ± 0.002, with RMSE of 1.183 ±0.003 kcal/mol. In its best-performing run (seed 121314), PML achieves PCC = 0 .756, RMSE = 1 .176 kcal/mol, surpassing the previously reported PCC of 0 .745 from CAML [16], the prior state of the art, and establishing a new state of the art for metalloprotein-ligand BA prediction. Figure 3(b) shows the correlation between experimental and predicted BA for this best-performing run: the majority of points cluster closely around the diagonal, but predictions become noticeably more scattered and tend to underestimate the true affinity for the strongest-binding complexes (experimental BA below roughly −10 kcal/mol), a common pattern in binding affinity prediction that likely reflects the relative scarcity of high-affinity complexes in the training data.      
+
+> Table 2
+> Comparison of PML with previously published machine learning models on the metalloprotein-ligand bind-ing affinity dataset [25]. Baseline results for RosENet, NNScore2.0, and MetalProGNet are taken from [25], results for JPH-GBT are taken from [54], and results for CAML(ES) are taken from [16]. PML (average) reports the mean ±standard deviation over 10 independent runs with different random seeds, while PML (best run) reports the single best-performing run. RMSE values are computed on the raw pK dlabels used as binding affinities.
+
+Model PCC RMSE (kcal/mol) RosENet [21] 0.615 ± 0.017 1.436 ± 0.011 NNScore2.0 [13] 0.629 ± 0.002 1.391 ± 0.004 MetalProGNet [25] 0.703 ± 0.010 1.285 ± 0.020 JPH-GBT [54] 0.742 ± 0.001 1.205 ± 0.001 CAML [16] 0.745 ± 0.001 1.202 ± 0.002 PML (average over 10 runs) 0.753 ± 0.002 1.183 ± 0.003 PML (best run) 0.756 1.176 18 X. XU, Z. SU, G. WEI, C. WANG 00246810 12 14 16 18 20      
+
+> 20PCC: 0.756 RMSE:1.176 Predicted BA(kcal/mol) Pearson Correlation Coefficient Experimental BA(kcal/mol)
+> 246810 12 14 16 18
+> PML Performance at seed 121314 (b) (a) Performance Comparisons for Metalloprotein-ligand BA prediction MetalProGNet NNScore2.0 RosENet JPH-GBT CAML 0.75 0.70 0.707 0.629 0.615 0.742 0.745 0.753 0.65 0.60 PML
+> Figure 3. (a) Performance comparison of PML with previously published models for metalloprotein-ligand binding affinity prediction, evaluated using the Pearson correlation coefficient. (b) Correlation between experimental and predicted binding affinities from PML’s best-performing run (seed 121314), with PCC 0.756
+> kcal/mol and RMSE 1.176 kcal/mol.
+
+4.1.2. Cross-Validation Performance. To assess the sensitivity of PML on the training data, we further perform 10-fold cross-validation on the metalloprotein-ligand training set, again averaging over 10 independent random seeds to account for variability introduced by the stochastic subsampling in GBDT. Across all folds and seeds, PML achieves an average PCC of 0 .759 ± 0.003, with an RMSE of 1 .202 ± 0.007 kcal/mol. The best-performing run achieves a PCC of 0 .761 with an RMSE of 1 .198 kcal/mol, consistent with the held-out test set performance reported in the previous section and indicating that PML generalizes stably across different partitions of the training data. To evaluate the contribution of the manifold embedding and protein language model fea-tures independent of the choice of the downstream regressor, we additionally train a support vector machine (SVM) as a basic model in [43] on the same PML feature set and compare its performance against GBDT. As shown in Figure 4, GBDT substantially outperforms SVM on the same input features, achieving a PCC of 0 .761 and RMSE of 1 .198 kcal/mol, compared to a PCC of 0 .689 and RMSE of 1 .340 kcal/mol for SVM. This performance gap suggests that the relationship between the PML feature set and binding affinity is highly nonlinear, and that GBDT’s ability to model complex, nonlinear feature interactions through an ensemble of decision trees is better suited to this task than the SVM’s linear or kernel-based decision boundary. These results support the use of GBDT as the primary regressor throughout this work. 
+
+4.2. Performance of Protein-Protein Binding Affinity Predictions. We next evaluate the proposed PML framework on the SKEMPI-WT dataset compare its performance against PLNet [58], a persistent-Laplacian-based neural network representing the current state of the art for protein-protein binding affinity prediction. To assess the contribution of the manifold embedding and protein language model features independently of the downstream regressor, we additionally evaluate a support vector machine trained on the same PML feature set, denoted PML-SVM, which mimics the modeling approach used in PPI-Affinity [43], a widely PERSISTENT MANIFOLD LEARNING 19 (a) (b) PML feature with SVM at seed 181920 PCC:0.689 RMSE:1.340 PCC:0.761 RMSE:1.198 PML feature with GBDT at seed 181920 Predicted BA(kcal/mol) Predicted BA(kcal/mol) Experimental BA(kcal/mol) Experimental BA(kcal/mol) 020 246810 12 14 16 18 020 246810 12 14 16 18   
+
+> 0246810 12 14 16 18 20
+> 0246810 12 14 16 18 20
+> Figure 4. Comparison between SVM and GBDT regressors trained on the same PML feature set, for the metalloprotein-ligand binding affinity dataset (seed 181920). (a) Predicted versus experimental binding affinities using an SVM regressor. (b) Predicted versus experimental binding affinities using a GBDT regressor. Both panels show representative results from a single run.
+
+used SVM-based baseline for protein-protein BA prediction. As with the metalloprotein-ligand task, PML with GBDT is trained across 10 independent random seeds, and we report both the average performance and the single best-performing run. Table 3 summarizes the performance of PML, PML-SVM, and PLNet on the SKEMPI-WT dataset. PML with GBDT consistently achieves the best performance, both on average across the 10 random seeds and in its best-performing run (seed 212223). Comparing PML against PML-SVM, which uses the same manifold embedding and protein language model features but a SVM as the downstream regressor, isolates the effect of the regressor while holding the feature set fixed: GBDT clearly outperforms SVM on identical input features, echoing the trend observed for the metalloprotein-ligand task and further supporting its suit-ability for modeling the nonlinear relationship between these features and binding affinity. More notably, PML also outperforms PLNet, a method built directly on persistent Lapla-cian and persistent homology descriptors of the binding interface. This suggests that the manifold embedding features introduced in this work, which combine geometric and topolog-ical information through the BIG Laplacian together with sequence-level protein language model embeddings, capture binding-relevant information beyond what persistent Laplacian and persistent homology features alone can provide, particularly for the flatter, less pocket-like interfaces characteristic of protein-protein complexes. 
+
+5. Discussion. We propose PML as a binding affinity prediction framework that unifies de Rham–Hodge theory, level-set filtrations, and machine learning. PML outperforms existing methods on both metalloprotein-ligand and protein-protein benchmarks, despite the two interface types being governed by very different physics. Below we examine why a single manifold-based representation transfers across both settings, and why the spectral features are deliberately truncated. 20 X. XU, Z. SU, G. WEI, C. WANG Table 3 
+
+Comparison of PML with PLNet and with PML-SVM, an SVM-based ablation trained on the same PML feature set, on the SKEMPI-WT protein-protein binding affinity dataset. PML (average) and PML-SVM (average) report the mean ± standard deviation over 10 independent runs with different random seeds; PML (best run) and PML-SVM (best run) report the single best-performing run (seed 212223) for each model. 
+
+Model PCC RMSE (kcal/mol) PLNet [58] 0.681 ± 0.012 1.533 ± 0.021 PML-SVM (average over 10 runs) 0.692 ± 0.009 2.127 ± 0.025 PML-SVM (best run) 0.705 2.093 PML (average over 10 runs) 0.713 ± 0.016 2.051 ± 0.046 PML (best run) 0.731 1.996 Pearson Correlation Coefficient    
+
+> (a) Performance Comparisons for Protein-protein BA prediction Experimental BA(kcal/mol) PLNet PML-SVM 0.75 0.70 0.681 0.694 0.712 0.65 0.60 PML
+> PML Performance at seed 212223 (b) PCC:0.731 RMSE:1.995 2244668810 10 12 12 14 14 16 16 18 18 20 20 22 22 Predicted BA (kcal/mol)
+
+Figure 5. (a) Performance comparison of PML with PLNet and PML-SVM for protein-protein binding affinity prediction, evaluated using the Pearson correlation coefficient. (b) Correlation between experimental and predicted binding affinities from PML’s best-performing run (seed 212223), with PCC = 0 .731 and RMSE 
+
+= 1 .996 kcal/mol. 
+
+5.1. Element-specific manifolds and the metal coordination shell. The element-specific decomposition is what makes a metal site legible to the manifold. Metal binding in proteins is mediated almost exclusively by nitrogen from histidine, sulfur from cysteine, and oxygen from aspartate and glutamate, held in tetrahedral or octahedral shells whose geometry is further tuned by second-shell residues [12, 40]. These donors are exactly the protein-side element types {N, O, S} retained in our scheme, and since a separate manifold is built for every atom-type pair, they are isolated rather than blurred into the surrounding bulk. The ion itself never enters the construction: it acts as a geometric constraint, organizing its donors into a rigid shell at short characteristic distances, and it is that organization the density field records. The 12 ˚A cutoff retains the second shell as well, so these pairs also carry the environment dictating the site’s size, polarity, and selectivity. The filtration reads that geometry out. Atoms held rigidly within a coordination shell overlap strongly and merge into a single connected component at the most negative isovalues, whereas loosely packed regions merge only much later. The isovalue at which β0 drops is therefore a readout of local packing tightness, and tracking β0 across the nine isovalues yields PERSISTENT MANIFOLD LEARNING 21 
+
+a multiscale signature of the binding site’s organization that no single manifold contains. 
+
+5.2. What the manifold captures at protein-protein interfaces. Protein-protein in-terfaces present the opposite geometry: broad and flat rather than pocket-like, burying 1600 ± 400 ˚ A2 of surface upon complexation [18]. Affinity is dominated by shape comple-mentarity and interfacial packing [27], concentrated in hot spots that are deeply buried and densely packed [9], and correlates with the amount of surface buried [7]. These are geometric quantities, and the filtration measures them: since each manifold spans atom pairs from both sides of the interface, the isovalue at which the two partners’ density lobes merge reports how closely their surfaces approach, while the manifold volume reflects interfacial burial. The same descriptor that traces a coordination shell in a metalloprotein thus traces packing complementarity across a protein-protein interface, which is why one framework serves both. Two differences are worth noting. Only {C, N, O} is relevant here, so the manifold embed-ding contributes 6 × 9 × 9 = 486 features against 2160 for metalloprotein-ligand complexes, giving the ESM-2 embeddings proportionally greater weight. And SKEMPI-WT provides only 343 complexes, placing a premium on descriptor quality; that PML exceeds PLNet here, and that an SVM on the same features does too, indicates that the advantage lies in the representation rather than the regressor. 
+
+5.3. Spectral truncation: why few nonzero eigenvalues. Only β0 and the first two nonzero eigenvalues of L3,n are retained per manifold. Extending to ten degrades performance on both benchmarks for two reasons. Numerically, the discrete spectrum approximates its continuum counterpart only up to a resolution-dependent cutoff: low modes vary across many grid cells and are resolved accurately, whereas high modes oscillate on a scale approaching the grid spacing ℓ and are contaminated by discretization error. Since the convergence of the BIG Laplacian spectrum [41] is not uniform, the highest modes describe the discretization as much as the manifold. Physically, higher eigenvalues correspond to finer surface detail, which the input data least reliably supports, being sensitive to coordinate uncertainty, the scale parameter τ , and the single conformation of a static structure. The leading modes instead describe global shape and connectivity [17], which are robust to these perturbations. Spectral truncation is therefore a regularization matched to the resolution of the data, not a limitation to be lifted. 
+
+6. Conclusion. As a foundational tool in differential geometry and algebraic topology, de Rham-Hodge theory studies differential forms, cohomology, and the harmonic structure of manifolds. Only recently has this framework been connected to data science, largely through evolutionary de Rham-Hodge theory [6] and its Eulerian, persistent extensions [47]. This work builds on that direction by proposing Persistent Manifold Learning (PML), which represents a binding interface as a family of manifolds obtained through a level-set filtration of atomic density fields, and applies Boundary-Induced Graph (BIG) Laplacians to capture both the topology and the local geometric organization of the interface across scales. We pair these manifold embedding features with protein and molecular language model embeddings, which supply complementary sequence-level information, and combine both with GBDT, well suited to this setting for its accuracy and efficiency on relatively small, structured biomolecular datasets. We validate PML on two structurally distinct benchmarks: a metalloprotein-ligand bind-ing dataset and the wild-type subset of SKEMPI v2. Because the two interaction types 22 X. XU, Z. SU, G. WEI, C. WANG 
+
+differ in chemical composition and interface geometry, we introduce an element-specific atom-pairing scheme tailored to each, allowing a single framework to accommodate both compact, metal-coordinated pockets and broad, flat protein-protein interfaces. Compared against state-of-the-art methods in the literature, PML achieves the best reported performance on both benchmarks. Binding affinity prediction serves here as a case study; the framework extends in principle to other biomolecular problems in which structural and sequence information jointly determine a quantitative outcome. We believe that manifold-based, de Rham-Hodge-theoretic learning represents a promising emerging direction in machine learning for molecular and biological data. 
+
+Further Reading. The mathematical foundations of this work lie in de Rham-Hodge theory and its discretization. The following references are intended as entry points for readers approaching the article from the life sciences side. For background on differential forms, de Rham cohomology, and Hodge theory, see the fol-lowing: 
+
+• R. Bott and L. W. Tu, Differential Forms in Algebraic Topology , Graduate Texts in Mathematics 82, Springer, 1982. A geometric introduction to differential forms and de Rham cohomology, requiring little prior topology. 
+
+• G. Schwarz, Hodge Decomposition—A Method for Solving Boundary Value Problems ,Lecture Notes in Mathematics 1607, Springer, 1995. The standard reference for Hodge theory on manifolds with boundary , covering the normal and tangential boundary conditions and the harmonic field decompositions used in Section 2.1. For details on discretization and the Laplacian-based descriptors used here, see the following: 
+
+• E. Ribando-Gros, R. Wang, J. Chen, Y. Tong, and G.-W. Wei, Combinatorial and Hodge Laplacians: Similarities and differences , SIAM Rev., (2024). Introduces the Boundary-Induced Graph Laplacian used in this article. 
+
+• J. Chen, R. Zhao, Y. Tong, and G.-W. Wei, Evolutionary de Rham–Hodge method ,Discrete Contin. Dyn. Syst. B, 26 (2021), pp. 3785–3821. Extends de Rham–Hodge theory to families of evolving manifolds, the multiscale setting adopted here. 
+
+• Z. Su, Y. Tong, and G.-W. Wei, Persistent de Rham–Hodge Laplacians in Eulerian representation for manifold topological learning , AIMS Math., 9 (2024), pp. 27438– 27470. The Eulerian, grid-based formulation on which our implementation is built. 
+
+Declarations. Authorship and Contributorship. X.X. implemented the framework, performed all com-putations, and wrote the original draft. Z. S. contributed to the design of the method, assisted with the implementation, and revised the manuscript. G.-W. W and C. W. conceived and supervised the project, secured funding, and revised the manuscript. All authors read and approved the final manuscript. 
+
+Conflicts of interest. The authors declare no conflicts of interest. 
+
+Data & Code Availability. The code needed to reproduce this paper’s results is available from the authors upon reasonable request. For detailed information on the metalloprotein-ligand complex dataset, please refer to [53]. The SKEMPI v2 dataset is available at https: //life.bsc.es/pid/skempi2/. PERSISTENT MANIFOLD LEARNING 23 
+
+Ethics. This study did not involve human participants, animals, or sensitive data requir-ing ethical approval or consent to participate. Artificial Intelligence was used for English editing. 
+
+Acknowledgments. C. W. was partially supported by the National Science Foundation under award DMS-2206332. G.-W. W. was supported in part by NIH grant R35GM148196 and Georgia Research Alliance. 
+
+REFERENCES 
+
+[1] Jack L. Bennett, Giang T. H. Nguyen, and William A. Donald. Protein–Small Molecule interactions in native mass spectrometry. Chemical Reviews , 122(8):7327–7385, 2022. [2] Zixuan Cang, Lin Mu, and Guo-Wei Wei. Representability of algebraic topology for biomolecules in machine learning based scoring and virtual screening. PLOS Computational Biology , 14(1):e1005929, 2018. [3] Zixuan Cang and Guo-Wei Wei. Topologynet: Topology based deep convolutional and multi-task neural networks for biomolecular property predictions. PLOS Computational Biology , 13(7):e1005690, 2017. [4] Zixuan Cang and Guo-Wei Wei. Integration of element specific persistent homology and machine learn-ing for protein–ligand binding affinity prediction. International Journal for Numerical Methods in Biomedical Engineering , 34(2):e2914, 2018. [5] Jiahui Chen, Yuchi Qiu, Rui Wang, and Guo-Wei Wei. Persistent laplacian projected omicron ba.4 and ba.5 to become new dominating variants. Computers in Biology and Medicine , 151:106262, 2022. [6] Jiahui Chen, Rundong Zhao, Yiying Tong, and Guo-Wei Wei. Evolutionary de Rham–Hodge method. 
+
+Discrete and Continuous Dynamical Systems - Series B , 26(7):3785–3821, 2021. [7] Jing Chen, Nicholas Sawyer, and Lynne Regan. Protein–protein interactions: General trends in the relationship between binding affinity and interfacial buried surface area. Protein Science , 22(4):510– 515, 2013. [8] Seyone Chithrananda, Gabriel Grand, and Bharath Ramsundar. ChemBERTa: Large-scale self-supervised pretraining for molecular property prediction. arXiv preprint arXiv:2010.09885 , 2020. [9] Lei Deng, Jihong Guan, Xiaoming Wei, Yuan Yi, Qiwen Zhang, and Shuigeng Zhou. DBAC: A simple prediction method for protein binding hot spots based on burial levels and deeply buried atomic contacts. BMC Systems Biology , 5(Suppl 1):S5, 2011. [10] Mathieu Desbrun, Eva Kanso, and Yiying Tong. Discrete differential forms for computational modeling. In ACM SIGGRAPH 2006 Courses , pages 39–54. ACM, 2006. [11] Xiaoyong Du, Youhua Li, Yao-Liang Xia, Shi-Meng Ai, Jie Liang, Peng Sang, Xing-Lai Ji, and Shihua Liu. Insights into Protein–Ligand interactions: Mechanisms, models, and methods. International Journal of Molecular Sciences , 17(2):144, 2016. [12] Todor Dudev, Yen-lin Lin, Milena Dudev, and Carmay Lim. First–second shell interactions in metal binding sites in proteins: A PDB survey and DFT/CDM calculations. Journal of the American Chemical Society , 125(10):3168–3180, 2003. [13] Jacob D. Durrant and J. Andrew McCammon. NNScore 2.0: A neural-network receptor–ligand scoring function. Journal of Chemical Information and Modeling , 51(11):2897–2903, 2011. [14] Ariel Erijman, Elad Rosenthal, and Julia M. Shifman. How structure defines affinity in Protein–Protein interactions. PLOS ONE , 9(10):e110085, 2014. [15] Evan N. Feinberg, Debnil Sur, Zhenqin Wu, Brooke E. Husic, Huanghao Mai, Yang Li, Saisai Sun, Jianyi Yang, Bharath Ramsundar, and Vijay S. Pande. Potentialnet for molecular property prediction. ACS Central Science , 4(11):1520–1530, 2018. [16] Hongsong Feng, Faisal Suwayyid, Mushal Zia, JunJie Wee, Yuta Hozumi, Chun-Long Chen, and Guo-Wei Wei. CAML: Commutative algebra machine learning—a case study on protein–ligand binding affinity prediction. Journal of Chemical Information and Modeling , 2025. [17] Miroslav Fiedler. Algebraic connectivity of graphs. Czechoslovak Mathematical Journal , 23(2):298–305, 1973. [18] Sarel J. Fleishman and David Baker. Hotspot-centric de novo design of protein binders. Journal of Molecular Biology , 413(5):1047–1062, 2011. [19] K. O. Friedrichs. Differential forms on Riemannian manifolds. Communications on Pure and Applied 24 X. XU, Z. SU, G. WEI, C. WANG 
+
+Mathematics , 8(4):551–590, 1955. [20] Michael K. Gilson, James A. Given, Bruce L. Bush, and J. Andrew McCammon. The statistical-thermodynamic basis for computation of binding affinities: A critical review. Biophysical Journal ,72(3):1047–1069, 1997. [21] Hussein Hassan-Harrirou, Ce Zhang, and Thomas Lemmin. RosENet: Improving binding affinity pre-diction by leveraging molecular mechanics energies with an ensemble of 3D convolutional neural networks. Journal of Chemical Information and Modeling , 60(6):2791–2802, 2020. [22] William V. D. Hodge. The Theory and Applications of Harmonic Integrals . Cambridge University Press, 1941. [23] Justina Jankauskait˙ e, Brian Jim´ enez-Garc´ ıa, Justas Dapkunas, Juan Fern´ andez-Recio, and Iain H. Moal. SKEMPI 2.0: An updated benchmark of changes in protein–protein binding energy, kinetics and thermodynamics upon mutation. Bioinformatics , 35(3):462–469, 2019. [24] Dejun Jiang, Chang-Yu Hsieh, Zhenxing Wu, Yu Kang, Jike Wang, Ercheng Wang, Ben Liao, Chao Shen, Lei Xu, Jian Wu, Dejun Cao, and Tingjun Hou. Interactiongraphnet: A novel and efficient deep graph representation learning framework for accurate protein–ligand interaction predictions. 
+
+Journal of Medicinal Chemistry , 2021. [25] Dejun Jiang, Zixuan Ye, Chang-Yu Hsieh, Ziyi Yang, Xiaohui Zhang, Yu Kang, Haitao Du, Zhenxing Wu, Jike Wang, and Yi Zeng. Metalprognet: A structure-based deep graph model for metalloprotein– ligand interaction predictions. Chemical Science , 14(8):2054–2069, 2023. [26] Douglas B. Kitchen, H´ el` ene Decornez, John R. Furr, and J¨ urgen Bajorath. Docking and scoring in virtual screening for drug discovery: Methods and applications. Nature Reviews Drug Discovery ,3(11):935–949, 2004. [27] Tanja Kortemme and David Baker. A simple physical model for binding energy hot spots in protein– protein complexes. Proceedings of the National Academy of Sciences , 99(22):14116–14121, 2002. [28] Shuya Li, Fangping Wan, Hantao Shu, Tao Jiang, Dan Zhao, and Jianyang Zeng. Monn: A multi-objective neural network for predicting compound–protein interactions and affinities. Cell Systems ,10(4):308–322.e11, 2020. [29] Zeming Lin, Halil Akin, Roshan Rao, Brian Hie, Zhongkai Zhu, Wenting Lu, Allan dos Santos Costa, Maryam Fazel-Zarandi, Tom Sercu, Salvatore Candido, et al. Evolutionary-scale prediction of atomic-level protein structure with a language model. Science , 379(6637):1123–1130, 2023. [30] Jian Liu, Jingyan Li, and Jie Wu. The algebraic stability for persistent laplacians. Homology, Homotopy and Applications , 26(2):297–323, 2024. [31] Xiang Liu, Zhe Su, Yongyi Shi, Yiying Tong, Ge Wang, and Guo-Wei Wei. Manifold topological deep learning for biomedical data. Nature Communications , 17:4710, 2026. [32] Y. Long et al. Interpretable binding affinity prediction with persistent homology. PLOS Computational Biology , 21(6):e1013216, 2025. [33] Haiying Lu, Qiaodan Zhou, Jun He, Zhongliang Jiang, Cheng Peng, Rongsheng Tong, and Jianyou Shi. Recent advances in the development of Protein–Protein Interaction modulators: Mechanisms and clinical trials. Signal Transduction and Targeted Therapy , 5:213, 2020. [34] Facundo M´ emoli, Zhengchao Wan, and Yusu Wang. Persistent laplacians: Properties, algorithms and implications. SIAM Journal on Mathematics of Data Science , 4(2):858–884, 2022. [35] Zhenyu Meng and Kelin Xia. Persistent spectral-based machine learning (PerSpect ML) for protein– ligand binding affinity prediction. Science Advances , 7(19):eabc5329, 2021. [36] Marc A. Moesser, Dominik K. Klein, Fergus Boyles, Charlotte M. Deane, Alice Baxter, and Garrett M. Morris. Protein–ligand interaction graphs: Learning from ligand-shaped 3d interaction graphs to improve binding affinity prediction. bioRxiv , 2022. [37] Hossam Nada, Yongseok Choi, Sungdo Kim, Kwon Su Jeong, Nicholas A. Meanwell, and Kyeong Lee. New insights into Protein–Protein Interaction modulators in drug discovery and therapeutic advance. 
+
+Signal Transduction and Targeted Therapy , 9:341, 2024. [38] Duc Duy Nguyen and Guo-Wei Wei. DG-GL: Differential geometry-based geometric learning of molecular datasets. International Journal for Numerical Methods in Biomedical Engineering , 35(3):e3179, 2019. [39] Thin Nguyen, Hang Le, Thomas P. Quinn, Tri Nguyen, Truyen Le, and Svetha Venkatesh. Graphdta: Predicting drug–target binding affinity with graph neural networks. Bioinformatics , 37(8):1140–1147, 2021. [40] Eugene A. Permyakov. Metal binding proteins. Encyclopedia , 1(1):261–292, 2021. [41] Emily Ribando-Gros, Rui Wang, Jiahui Chen, Yiying Tong, and Guo-Wei Wei. Combinatorial and Hodge PERSISTENT MANIFOLD LEARNING 25 
+
+Laplacians: Similarities and differences. SIAM Review , 2024. [42] Alexander Rives, Joshua Meier, Tom Sercu, Siddharth Goyal, Zeming Lin, Jason Liu, Demi Guo, Myle Ott, C. Lawrence Zitnick, Jerry Ma, and Rob Fergus. Biological structure and function emerge from scaling unsupervised learning to 250 million protein sequences. Proceedings of the National Academy of Sciences , 118(15):e2016239118, 2021. [43] Ruben S´ anchez-Garc´ ıa, Carlos Oscar S. Sorzano, Jos´ e Mar´ ıa Carazo, and Joan Segura. PPI-Affinity: A web tool for the prediction and optimization of protein–peptide and protein–protein binding affinity. 
+
+Journal of Proteome Research , 21(8):1829–1841, 2022. [44] G¨ unter Schwarz. Hodge Decomposition: A Method for Solving Boundary Value Problems , volume 1607 of Lecture Notes in Mathematics . Springer, Berlin, 1995. [45] Duncan E. Scott, Andrew R. Bayly, Chris Abell, and John Skidmore. Small molecules, big targets: Drug discovery faces the Protein–Protein interaction challenge. Nature Reviews Drug Discovery ,15(8):533–550, 2016. [46] Zhe Su, Xiang Liu, Layal Bou Hamdan, Vasileios Maroulas, Jie Wu, Gunnar Carlsson, and Guo-Wei Wei. Topological data analysis and topological deep learning beyond persistent homology: a review. 
+
+Artificial Intelligence Review , 59:58, 2025. [47] Zhe Su, Yiying Tong, and Guo-Wei Wei. Persistent de Rham–Hodge laplacians in Eulerian representation for manifold topological learning. AIMS Mathematics , 9(10):27438–27470, 2024. [48] Zhe Su, Yiying Tong, and Guo-Wei Wei. Topology-preserving hodge decomposition in the eulerian representation. Beijing Journal of Pure and Applied Mathematics , 2(2):619–657, 2025. [49] Jacob Townsend, Cassie Putman Micucci, John H Hymel, Vasileios Maroulas, and Konstantinos D Vogiatzis. Representation of molecular structures with persistent homology for machine learning applications in chemistry. Nature communications , 11(1):3230, 2020. [50] Anna Vangone and Alexandre M. J. J. Bonvin. Contacts-based prediction of binding affinity in Protein– Protein complexes. eLife , 4:e07454, 2015. [51] Rui Wang et al. Persistent path laplacian. Foundations of Data Science , 5(1):26–55, 2023. [52] Rui Wang, Duc Duy Nguyen, and Guo-Wei Wei. Persistent spectral graph. International Journal for Numerical Methods in Biomedical Engineering , 36(9):e3376, 2020. [53] Yaxing Wang, Xiang Liu, Yipeng Zhang, Xiangjun Wang, and Kelin Xia. Join persistent homology (jph)-based machine learning for metalloprotein–ligand binding affinity prediction. Journal of Chemical Information and Modeling , 65(6):2785–2793, 2025. [54] Yaxing Wang, Xiang Liu, Yipeng Zhang, Xiangjun Wang, and Kelin Xia. Join persistent homology (JPH)-based machine learning for metalloprotein–ligand binding affinity prediction. Journal of Chemical Information and Modeling , 2025. [55] Xiaoqi Wei and Guo-Wei Wei. Persistent sheaf laplacians. Foundations of data science (Springfield, Mo.) , 7(2):446, 2025. [56] Kelin Xia and Guo-Wei Wei. Persistent homology analysis of protein structure, flexibility, and folding. 
+
+International Journal for Numerical Methods in Biomedical Engineering , 30(8):814–844, 2014. [57] Zhexin Xiang and Barry Honig. Extending the accuracy limits of prediction for side-chain conformations. 
+
+Journal of Molecular Biology , 311(2):421–430, 2001. [58] Xingjian Xu, Chunmei Wang, Guo-Wei Wei, and Jiahui Chen. PLNet: Persistent laplacian neural network for protein–protein binding free energy prediction. Protein Science , 34(12):e70377, 2025. [59] Lingling Zhao, Hao L. Ciallella, Lauren M. Aleksunes, and Hao Zhu. A brief review of Protein–Ligand interaction prediction. Computational and Structural Biotechnology Journal , 20:2831–2838, 2022.
