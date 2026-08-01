@@ -1,0 +1,427 @@
+Title: AskChem: Claim-Centered Infrastructure for Chemistry Literature Synthesis
+
+URL Source: https://arxiv.org/pdf/2607.28618v1
+
+Published Time: Fri, 31 Jul 2026 01:28:47 GMT
+
+Number of Pages: 10
+
+Markdown Content:
+# AskChem: Claim-Centered Infrastructure for Chemistry Literature Synthesis 
+
+Bing Yan 
+
+New York University 
+
+bing.yan@nyu.edu 
+
+Gregory Wolfe 
+
+Matterstack, Inc. 
+
+gwolfe@matterstack.ai 
+
+Stefano Martiniani 
+
+New York University 
+
+stefano.martiniani@nyu.edu 
+
+Kyunghyun Cho 
+
+New York University 
+
+kyunghyun.cho@nyu.edu 
+
+Abstract 
+
+Chemistry literature synthesis often requires assembling specific findings scattered across many publications, yet existing literature-search systems primarily return ranked doc-ument lists. As a result, scientists and AI agents need to locate relevant information, ver-ify their provenance, and assemble cross-paper answers manually. We present AskChem , a claim-centered infrastructure for cross-paper chemistry search. AskChem changes the unit of retrieval from the paper to the provenance-carrying claim: each paper is converted into atomic, typed claims, each grounded by a source DOI and a verbatim quote or an explicit evidence locator. Over this shared claim store, AskChem exposes complementary structures for search and synthesis: a stabilized faceted taxonomy for hierarchical retrieval and brows-ing, an evidence graph linking claims through relations, and an exploratory living taxonomy that situates indexed papers under scientific principles. AskChem currently indexes 2.4M claims from 147K papers and provides a web interface, as well as REST, SDK, and MCP access for AI agents. On AskChem-Bench, grounding a GPT-5.5 reader in AskChem yields 100% resolvable DOIs, compared with 88.3% without retrieval, and the highest citation den-sity among five tested systems. AskChem is live at https://askchem.org .
+
+1 Introduction 
+
+Chemists often ask questions whose answers must be assembled from specific findings across many papers, rather than retrieved from a single paper. For example, when a chemist asks “ What electro-catalysts have been reported for CO 2 reduction to CO, and at what Faradaic efficiency? ”, the an-swer is distributed across many papers as individual claims about catalysts, reaction conditions, mea-surements, and mechanisms. Existing literature-search interfaces primarily return ranked lists of 
+
+Figure 1: The AskChem interface returns provenance-carrying claims. 
+
+documents, leaving the scientist to open papers, lo-cate relevant evidence, verify reported values, and assemble the answer by hand. This document-centered interface is increasingly misaligned with how scientists and AI agents use the literature. LLM agents now survey papers and plan experiments (Boiko et al., 2023), but inherit the limitations of their retrieval tools: document retrieval does not directly expose evidence at the claim level, the domain’s organization, or the rela-tionships between documents needed for synthesis. When asked to answer from parametric memory instead, an LLM may fabricate plausible-looking citations (Agrawal et al., 2024). 
+
+AskChem addresses this mismatch by making the provenance-carrying scientific claim, rather than the paper, the central object for search, brows-ing, and agent access (Figure 1). A claim is an atomic, typed assertion extracted from a paper, grounded by a source DOI and a verbatim quote or an explicit evidence locator. As the Segment Anything Model decomposed images into reusable 1arXiv:2607.28618v1 [cs.CL] 30 Jul 2026 arXiv ChemRxiv journals Semantic          
+
+> Scholar
+> Chemistry literature · 147K papers · 1925-2026
+> Live pipeline: extract classify index embed sync
+> Claim store
+> 2.4M grounded claims
+> Stabilized faceted
+> taxonomy
+> what is it about?
+> Evidence graph
+> how are findings
+> related?
+> Living Taxonomy
+> what principle
+> governs it?
+> Web UI REST SDK MCP
+> Chemists
+> search browse
+> subscription reading lists
+> AI agents
+> grounded answers
+> self-service keys
+
+Figure 2: AskChem replaces papers with provenance-carrying claims as the retrieval unit, then exposes com-plementary structure over the shared claim store: a sta-bilized faceted taxonomy for search and browse, an evidence graph for cross-paper relations, and an ex-ploratory living taxonomy organized by principles. 
+
+regions (Kirillov et al., 2023), we use LLMs to segment papers into claims. By indexing claims directly, AskChem lets users retrieve specific find-ings, inspect their evidence, and assemble cross-paper answers without first reading and filtering whole documents. AskChem then exposes three complementary structures over the shared claim store: 
+
+Faceted taxonomy: finding claims by what they concern. AskChem organizes claims along stabi-lized, corpus-induced facets such as reaction type, substance class, application, technique, mechanism topic, claim type, data, and time. These facets are not the scientific structure itself, but operational views that support hierarchical retrieval, browsing, grouping, and temporal exploration. 
+
+Evidence graph: connecting claims across pa-pers. AskChem links claims through typed rela-tions such as supports , contradicts , extends ,and derives_from . This graph helps users move from an individual finding to related evidence, fol-low how results are extended across papers, and surface potential conflicts. 
+
+Living Taxonomy: situating claims in scientific context. As an exploratory extension, AskChem places paper-grounded leaves beneath principles, theories, models, mechanisms, and phenomena. This principle-centered hierarchy provides an evolving overview of the indexed corpus, comple-menting the operational facets used for search. 
+
+Contributions. We present AskChem, a live claim-centered infrastructure for chemistry liter-ature synthesis. Our contributions are fourfold: 1. a provenance-carrying claim representation de-ployed over 2.4M claims from 147K papers; 2. complementary structures over the shared claim store, including a stabilized faceted taxonomy for retrieval and browsing, an evidence graph for claim-level navigation, and an exploratory principle-centered Living Taxonomy; 3. human- and agent-facing interfaces through a web UI, REST API, SDK, and MCP server; 4. AskChem-Bench, a cross-paper chemistry search evaluation suite for measuring citation groundedness and relevance. 
+
+2 Claim-Centered Representation 
+
+Figure 2 shows the AskChem platform. The cen-tral object is a Claim : an atomic, typed scientific assertion extracted from a paper and grounded by a source DOI and a verbatim quote. A claim also includes structured fields, such as reactants, con-ditions, measurements, or materials, together with an extraction confidence score. This representation makes the individual finding, rather than the full paper, the object that can be searched, grouped, linked, and verified. AskChem stores several structures under the same claim identity. A Source records paper-level metadata, including DOI, venue, year, cita-tion count, and authors disambiguated via Ope-nAlex (Priem et al., 2022). A TreeNode places a claim in one or more faceted taxonomy paths, while an Edge records a typed relation between two claims. Keeping these structures anchored to shared claim identifiers lets search, hierarchi-cal browsing, and graph traversal return the same provenance-bearing objects rather than discon-nected summaries. The current live index contains 2.4M claims 
+
+from 147K papers spanning 1925–2026, with 
+
+307K populated taxonomy nodes (Figure 3). The data are stored in SQLite with FTS5 full-text search and a vector index, and are served through a 22.4M 
+
+> grounded claims
+
+147K 
+
+> source papers
+
+1925 2026 
+
+> year coverage
+
+99.9% 
+
+> DOI-verified (CrossRef)
+
+66%     
+
+> full-paper claims
+> 0200K 400K 600K 800K
+> Scope 49K
+> Surprises 51K
+> Experiments 51K
+> Limitation 56K
+> Reaction 122K
+> Computation 222K
+> Mechanism 222K
+> Comparison 233K
+> Method 331K
+> Property 964K
+
+Claim-type distribution        
+
+> 1990 1995 2000 2005 2010 2015 2020 2025
+> 0
+> 5K
+> 10K
+> 15K
+
+Papers by year (1990 2026)     
+
+> 05K 10K 15K 20K
+> Environmental 2K
+> Catalysis 2K
+> Medicinal 2K
+> Electrochemistry 2K
+> Analytical 3K
+> Biochemistry 3K
+> Other 4K
+> Physical 10K
+> Computational 19K
+> Materials 23K
+
+Subfield coverage     
+
+> Claims (2.4M)
+> 66% 34%
+> 1.6M 833K
+> Papers (147K)
+> 30% 70%
+> 44K 102K
+
+Extraction depth  
+
+> full paper (Gemini 3.1 Pro) abstract only (GPT-5-mini)
+
+AskChem data quality at a glance Figure 3: Corpus-scale coverage and automatic quality checks for the deployed index. These statistics characterize provenance and extraction depth; they do not replace expert judgments of claim semantics or taxonomy placement. 
+
+FastAPI application used by the web interface and agent-facing APIs. Figure 1 and Appendix B show example claims in the interface and index record. 
+
+3 Claim Extraction and Evidence Graph 
+
+Extracting provenance-carrying claims. 
+
+AskChem populates the claim store with two complementary extraction pipelines (Figure 3). A high-throughput extractor processes abstracts at scale, while a deeper extractor reads full-text PDFs, capturing claim types that are often absent from abstracts, such as hypotheses, limitations, and surprising findings. Each extraction call returns structured JSON that is validated against the claim schema, including required provenance fields, numeric ranges, and chemistry-specific fields. These checks establish traceability rather than full semantic correctness. In the index, 100% of the 2.4M claims are source-grounded, carrying a claim type, a source DOI, and a verbatim quote. 
+
+Linking claims with an evidence graph. Cross-paper search often requires more than retrieving isolated findings: users also need to know how findings support, extend, derive from, or con-tradict one another. AskChem therefore adds a relation-extraction layer over the claim store. The extractor emits typed, directed edges between claims, including cites_as_evidence , supports ,
+
+extends , contradicts , and derives_from , with confidence scores and provenance. The current graph contains 171,342 typed edges. A domain-expert author manually verified a strat-ified sample of 148 edges. After excluding 2 un-decidable cases, 143 of 146 decidable edges had the correct relation type, giving an edge-type pre-cision of 97.9% . The graph is used as a relational layer over retrieval rather than as a replacement for search: /api/claims/{id}/neighborhood re-turns inbound and outbound evidence links for a claim, and the web interface induces a graph over top search hits so users can move from a finding to claims that support, extend, or contradict it. 
+
+4 Stabilized Faceted Taxonomy 
+
+Inducing stable search facets. AskChem uses a faceted taxonomy to organize claims by what they concern. Rather than imposing a fully predefined chemistry ontology, AskChem induces category paths while digesting papers and extracting claims. These paths reveal recurring terminology across reactions, substances, applications, techniques, and mechanisms. We then stabilize the induced paths through canonical top-level routing, synonym nor-30 50 100 150 200                               
+
+> adsorption
+> 35
+> photocatalysis
+> 49
+> reduction
+> 104
+> electrocatalysis
+> 186
+> Reaction type
+> 0100 200
+> organic compounds
+> 32
+> nanomaterials
+> 86
+> inorganic compounds
+> 86
+> solvents and gases
+> 217
+> Substance class
+> 0100 200 300
+> synthetic chemistry
+> 27
+> catalysis
+> 88
+> energy
+> 98
+> environmental
+> 280
+> Application
+> 050 100 150 200
+> computational modeling
+> 33
+> kinetics
+> 50
+> synthesis
+> 88
+> electrochemistry
+> 192
+> Technique
+> 050 100 150 200
+> catalytic cycles
+> 46
+> adsorption and surface
+> 75
+> bond formation and breaking
+> 86
+> electron transfer
+> 191
+> Mechanism
+> 02468
+> electrochemical
+> 3
+> physical
+> 8
+> environmental
+> 8
+> chemical
+> 8
+> Data
+> 010 20 30 40
+> method
+> 14
+> properties
+> 26
+> property
+> 28
+> reaction
+> 41
+> Claim type
+> 01000 2000
+> pre-2000
+> 6
+> 2000s
+> 23
+> 2010s
+> 883
+> 2020s
+> 2267
+> Time
+> 0510 15 20
+> Shunli Li
+> 13
+> E. Sargent
+> 17
+> Jun Li
+> 19
+> P. Yang
+> 19
+> Calle Vallejo
+> Marcandalli
+> Park
+> Diaz-Morales
+> Kortlever
+> McCrum Wezendonk Schouten
+> Goyal
+> Mul
+> Pérez-Gallent
+> Chen
+> Koper
+> Author Network
+
+How CO 2 reduction claims decompose across AskChem's ten views    
+
+> uses assumption of contradicts cites as evidence extends
+
+Figure 4: The same “CO 2 reduction” claims across 10 views: reaction, substance, application, technique, mechanism, data, claim type, and time panels expose faceted structure; author view has a coauthor relationship graph that exposes collaborations; network view displays the evidence graph. 
+
+Figure 5: The principle-centered living taxonomy answers what governs a contribution. Unlike the stabilized faceted taxonomy used for search, it organizes indexed papers under principles, theories, models, and mechanisms. 
+
+malization, and fuzzy clustering of near-duplicate subcategories. The result is a corpus-derived but persistent set of L1/L2/L3 paths suitable for pro-duction retrieval and browsing. 
+
+Operational views over claims. The taxon-omy defines multiple operational views over the same claim store. Each claim can be as-signed a 2–5 segment path in populated views, such as coupling/cross_coupling/suzuki un-der by_reaction_type . Five content views capture what a claim is about: reaction type, substance class, application, technique, and mechanism topic. Additional views organize claim type, extracted measurements (data), time, and source authors. These facets are not treated as independent datasets; they are different navigational lenses over the same provenance-carrying claims. Figure 4 illustrates how one topic decomposes differently across these views. The last view is the evidence graph (Net-work) discussed in Section 3. 
+
+Retrieval and browsing. The stabilized taxon-omy is used as an operational index, not only as a visualization. Hybrid /search combines FTS5 claim-text retrieval, paper-level recall, taxonomy-node recall, and dense-vector recall using recipro-cal rank fusion (Cormack et al., 2009). Returned claims retain their associated view paths, allowing UI and API clients to group results, expand related 4categories, or move from a retrieved claim into its hierarchy. Browse endpoints expose the same tax-onomy nodes with claim counts and temporal over-lays. In this design, lexical and semantic retrieval find candidate evidence, while faceted structure broadens, groups, and contextualizes that evidence under stable chemistry concepts. 
+
+5 Exploratory Living Taxonomy 
+
+Principle-centered organization. The stabilized faceted taxonomy asks what a claim is about; the 
+
+living taxonomy asks which broader scientific idea governs a paper’s contribution. It organizes paper-grounded leaves under principles, theories, models, mechanisms, and phenomena (Figure 5). The cur-rent tree contains 4,931 nodes and covers 1.1M claims across 361K paper placements, with an ab-stention mechanism that proposes new branches when no existing node is suitable. We treat it as an exploratory overview of the indexed corpus rather than a fully validated scientific ontology. The con-struction details appear in Appendix B. 
+
+6 Cross-Paper Search and Demonstration 
+
+One query across three structures. A re-searcher asks “what electrocatalysts reduce CO 2
+
+to CO, and at what Faradaic efficiency?” Hybrid search returns claim-level results with structured conditions, verbatim evidence, taxonomy paths, and source DOIs. The user can open a path to browse its hierarchy, group hits into an evidence graph, or situate a paper in the living taxonomy. Hu-man and agent interfaces retrieve the same claim identities through the web UI, REST, SDK, or MCP (Anthropic, 2024); secondary workflows and end-point examples appear in Appendix B. 
+
+7 Evaluation 
+
+We evaluate AskChem along four questions aligned with the system design: whether extracted claims remain traceable to source evidence ( RQ1 ); whether claim-level structure is reliable enough to support navigation ( RQ2 ); whether claim-centered retrieval improves cross-paper chemistry answers (RQ3 ); and whether the deployed system operates at corpus scale ( RQ4 ). 
+
+RQ1: Are claims source-grounded? Figure 3 summarizes provenance checks for the deployed corpus. In the current index, 100% of claims are source-grounded (claim type, source DOI, and a verbatim quote). These checks establish traceabil-ity and help detect unsupported generated text, but they do not prove that every extracted claim seman-tically interprets its source correctly. 
+
+RQ2: Are claim-level structures reliable and useful? The evidence graph is evaluated by the domain-expert audit reported in Section 3, which estimates 97.9% edge-type precision. The stabi-lized faceted taxonomy is used operationally in production: it contributes one of the retrieval sig-nals in hybrid search and drives browsing, group-ing, and temporal overlays in the UI. However, we do not yet isolate the retrieval gain from taxonomy-based recall or report expert validation of taxonomy placement. The living taxonomy is likewise treated as exploratory rather than as a fully validated sci-entific ontology. 
+
+RQ3: Does claim-centered retrieval improve cross-paper synthesis? AskChem-Bench con-tains 30 cross-paper chemistry questions spanning condition aggregation, temporal tracking, and con-tradiction surfacing. We compare five settings: a GPT-5.5 reader without retrieval, the same reader grounded through AskChem, Paperclip (Generative Expert Labs, 2026), Edison Scientific’s PaperQA-family agent (Skarlinski et al., 2024), and Google NotebookLM Deep Research (Agrawal and Wang, 2025). Appendix A presents the full questions, retrieval budgets, metrics, DOI verification proce-dure, and judge calibration. Table 1 reports the results. Grounding the reader in AskChem yields 100% resolvable DOIs, com-pared with 88.3% without retrieval, and achieves the highest citation density among the five settings at 18.1 verified DOIs per answer. AskChem also obtains the best mean relevance score and the high-est coverage of recent high-impact work. Figure 6 shows a representative case in which the reader alone fabricates citations, while the AskChem-grounded reader cites only resolvable DOIs. The comparison also highlights AskChem’s limitations. Edison Scientific, a closed agentic deep-research system, produces substantially more citation-linked quantitative detail and a slightly higher on-topic rate. AskChem has a different pro-file: it is claim-level, open-data, fast enough for in-teractive browsing, and directly usable as an agent tool, while still eliminating DOI hallucination on this benchmark. 5Metric LLM only +AskChem +Paperclip Edison Scientific NotebookLM                                  
+
+> DOI existence (%) 88.3 100 100 99.1 93.7 Citation density (/ans.) 9.6 18.1 7.5 10.7 7.9 Grounded specificity 8.1 5.9 0.5 29.2 0.1 Recent high-impact (%) 0.6 18.5 6.1 11.3 12.1 Paper relevance (0–3) 1.66 2.15 1.72 2.07 1.84 On-topic ≥2(%) 65.8 86.6 57.8 89.7 78.9
+
+Table 1: AskChem-Bench: 30 cross-paper chemistry questions (condition aggregation, temporal tracking, contradic-tion surfacing), GPT-5.5 reader; all five systems cover the full 30. DOIs are verified via CrossRef. Bold marks the best value in each row; Paperclip ties AskChem only on DOI existence.             
+
+> GPT-5.5 alone — fabricates citations
+> “Au nanoneedles: ∼95% FE for CO, ∼22 mA cm −2CO partial current. . . ” [10.1021/jacs.7b00392 ]
+> 6 of 14 cited DOIs do not resolve on CrossRef; the specific values cannot be verified.
+> GPT-5.5 + AskChem — grounded in retrieved claims
+> “Atomically dispersed Fe 3+ sites: overpotential 360 mV,
+> jCO = 20 mA cm −2”(10.1126/science.aaw7515 )
+> All 22 cited DOIs verify; reported values are verbatim from source abstracts.
+
+Figure 6: Same question (AskChem-Bench ca04, “electrocatalysts for CO 2 reduction to CO/formate” ), answering alone, GPT-5.5 fabricates 6 of 14 DOIs; when grounded in AskChem’s retrieved claims, all 22 citations resolve. 
+
+RQ4: Does AskChem operate at corpus scale? 
+
+The deployed service jointly queries 2.4M claims, 307K taxonomy nodes, and 171K evidence edges through the same REST schema used by the web interface, SDK, and MCP server. 
+
+8 Comparison with Existing Systems 
+
+Databases and search. Reaxys (Lawson et al., 2014) and SciFinder (Ridley, 2009) provide pro-prietary curated reaction/substance data; PubChem (Kim et al., 2023) and ChEMBL (Gaulton et al., 2012) openly structure molecules and bioactivi-ties. Semantic Scholar (Ammar et al., 2018) and Google Scholar (Martín-Martín et al., 2018) con-tain rich metadata but primarily return ranked pa-pers. AskChem instead exposes faceted structure over provenance-carrying narrative claims. 
+
+Scientific NLP and assistants. Claim extrac-tion and graph construction build on scientific information and relation extraction (Luan et al., 2018); the hierarchies relate to taxonomy induc-tion (Snow et al., 2006; Zeng et al., 2024), and retrieval combines RAG, sentence embeddings, and rank fusion (Lewis et al., 2020; Reimers and Gurevych, 2019; Cormack et al., 2009). Unlike the answer-generating assistants benchmarked in Sec-tion 7, AskChem exposes a persistent claim store as reusable human- and agent-facing infrastructure. 
+
+9 Conclusion 
+
+AskChem demonstrates a claim-centered alterna-tive to document-only chemistry literature search. By making provenance-carrying claims the cen-tral unit, AskChem supports search results that can be verified against source quotes and DOIs, or-ganized through stabilized facets, and connected through evidence relations across papers. The de-ployed system operates at corpus scale and exposes the same claim objects to both human users and AI agents. On cross-paper chemistry questions, AskChem improves citation groundedness, suggest-ing that claim-centered infrastructure is a practical foundation for chemistry literature synthesis. 
+
+10 License and Availability 
+
+AskChem is live at https://askchem.org and a screencast demo is at https://youtu.be/ SOjueOlPS-8 . The MIT-licensed source code is at https://github.com/bingyan4science/ askchem , and the CC-BY index snapshot is re-leased at https://huggingface.co/datasets/ bing-yan/askchem . OpenAPI documentation, benchmark artifacts, and SDK/MCP access are listed in Appendix B. 
+
+Limitations 
+
+The corpus covers only a fraction of chemistry, and abstract extraction is shallower than full-text extrac-tion. LLM-generated claims, relations, and taxon-omy placements can be wrong; AskChem-Bench measures groundedness on 30 questions rather than full factual accuracy or user utility. String-based taxonomy normalization can merge distinct cate-gories or retain near-duplicates, and its retrieval gain has not been isolated. 6Ethics and Broader Impact 
+
+AskChem uses LLM-based extraction, and its claims may contain errors. Each claim therefore includes provenance: a source DOI and a verba-tim quote, so users can verify it against the origi-nal paper. The interface also supports community flagging. AskChem is intended to assist literature search and synthesis, not to replace reading primary sources for critical decisions. By grounding AI-assisted chemistry workflows in verifiable citations, it aims to reduce citation fabrication and make gen-erated answers easier to audit. The system indexes papers using public metadata, abstracts, and open-access full text where available. The public index exposes claim text, source metadata, and prove-nance, but does not redistribute paywalled full text. 
+
+Acknowledgements 
+
+We thank NYU HPC for their generous support and help in computational simulations and experiments. We are grateful to the NYU Google Cloud Plat-form (GCP) for Research Grant Program, which provided the primary computational support for LLM-based extraction and processing in AskChem. This work was supported by the Institute of Infor-mation & Communications Technology Planning & Evaluation (IITP) with a grant funded by the Min-istry of Science and ICT (MSIT) of the Republic of Korea in connection with the Global AI Fron-tier Lab International Collaborative Research. This work was partly supported in part by the NYUAD Center for Interdisciplinary Data Science & AI (CIDSAI), funded by Tamkeen under the NYUAD Research Institute Award CG016. 
+
+References 
+
+Anuja Agrawal and Shan Wang. 2025. Notebooklm adds deep research and support for more source types. 
+
+https://blog.google/innovation-and-ai/ models-and-research/google-labs/ notebooklm-deep-research-file-types/ .Published 2025-11-13; accessed 2026-07-10. Ayush Agrawal, Mirac Suzgun, Lester Mackey, and Adam Kalai. 2024. Do language models know when they’re hallucinating references? In Findings of the Association for Computational Linguistics: EACL 2024 , pages 912–928. Waleed Ammar, Dirk Groeneveld, Chandra Bhagavat-ula, Iz Beltagy, Miles Crawford, Doug Downey, Ja-son Dunkelberger, Ahmed Elgohary, Sergey Feld-man, Vu Ha, et al. 2018. Construction of the lit-erature graph in semantic scholar. arXiv preprint arXiv:1805.02262 .Anthropic. 2024. Model context protocol. https: //modelcontextprotocol.io . Accessed 2026-07-01. Daniil A Boiko, Robert MacKnight, Ben Kline, and Gabe Gomes. 2023. Autonomous chemical research with large language models. Nature , 624(7992):570– 578. Gordon V. Cormack, Charles L. A. Clarke, and Stefan Buettcher. 2009. Reciprocal rank fusion outperforms Condorcet and individual rank learning methods. In 
+
+Proceedings of the 32nd International ACM SIGIR Conference on Research and Development in Infor-mation Retrieval , pages 758–759. Anna Gaulton, Louisa J Bellis, A Patricia Bento, Jon Chambers, Mark Davies, Anne Hersey, Yvonne Light, Shaun McGlinchey, David Michalovich, Bis-san Al-Lazikani, and John P Overington. 2012. ChEMBL: a large-scale bioactivity database for drug discovery. Nucleic Acids Research , 40(D1):D1100– D1107. Generative Expert Labs. 2026. Paperclip: The command-line interface for scientific literature. 
+
+https://gxl.ai/blog/paperclip/ . Published 2026-04-07; accessed 2026-07-10. Sunghwan Kim, Jie Chen, Tiejun Cheng, Asta Gindu-lyte, Jia He, Siqian He, Qingliang Li, Benjamin A Shoemaker, Paul A Thiessen, Bo Yu, et al. 2023. PubChem 2023 update. Nucleic Acids Research ,51(D1):D1373–D1380. Alexander Kirillov, Eric Mintun, Nikhila Ravi, Hanzi Mao, Chloe Rolland, Laura Gustafson, Tete Xiao, Spencer Whitehead, Alexander C Berg, Wan-Yen Lo, et al. 2023. Segment anything. In Proceedings of the IEEE/CVF International Conference on Computer Vision , pages 4015–4026. Alexander J. Lawson, Jürgen Swienty-Busch, Thibault Géoui, and David J. Evans. 2014. The making of Reaxys—towards unobstructed access to relevant chemistry information. In The Future of the History of Chemical Information , volume 1164 of ACS Sym-posium Series , pages 127–148. American Chemical Society. Patrick Lewis, Ethan Perez, Aleksandra Piktus, Fabio Petroni, Vladimir Karpukhin, Naman Goyal, Hein-rich Küttler, Mike Lewis, Wen-tau Yih, Tim Rock-täschel, Sebastian Riedel, and Douwe Kiela. 2020. Retrieval-augmented generation for knowledge-intensive NLP tasks. In Advances in Neural Infor-mation Processing Systems (NeurIPS) , volume 33, pages 9459–9474. Yi Luan, Luheng He, Mari Ostendorf, and Hannaneh Hajishirzi. 2018. Multi-task identification of entities, relations, and coreference for scientific knowledge 
+
+7graph construction. In Proceedings of the 2018 Con-ference on Empirical Methods in Natural Language Processing (EMNLP) , pages 3219–3232. Alberto Martín-Martín, Enrique Orduña-Malea, Mike Thelwall, and Emilio Delgado López-Cózar. 2018. Google scholar, web of science, and scopus: A sys-tematic comparison of citations in 252 subject cate-gories. Journal of Informetrics , 12(4):1160–1177. Jason Priem, Heather Piwowar, and Richard Orr. 2022. OpenAlex: A fully-open index of scholarly works, authors, venues, institutions, and concepts. Preprint ,arXiv:2205.01833. Nils Reimers and Iryna Gurevych. 2019. Sentence-BERT: Sentence embeddings using siamese BERT-networks. In Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natu-ral Language Processing (EMNLP-IJCNLP) , pages 3982–3992. Damon D. Ridley. 2009. Information Retrieval: SciFinder , second edition. John Wiley & Sons. Michael D. Skarlinski, Sam Cox, Jon M. Laurent, James D. Braza, Michaela Hinks, Michael J. Ham-merling, Manvitha Ponnapati, Samuel G. Rodriques, and Andrew D. White. 2024. Language agents achieve superhuman synthesis of scientific knowl-edge. arXiv preprint arXiv:2409.13740 .Rion Snow, Daniel Jurafsky, and Andrew Y. Ng. 2006. Semantic taxonomy induction from heterogenous ev-idence. In Proceedings of the 21st International Con-ference on Computational Linguistics and 44th An-nual Meeting of the ACL , pages 801–808. Qingkai Zeng, Yuyang Bai, Zhaoxuan Tan, Shangbin Feng, Zhenwen Liang, Zhihan Zhang, and Meng Jiang. 2024. Chain-of-layer: Iteratively prompting large language models for taxonomy induction from limited examples. In Proceedings of the 33rd ACM International Conference on Information and Knowl-edge Management (CIKM) , pages 3093–3102. 
+
+8A Benchmark and Evaluation Details 
+
+Question bank. AskChem-Bench v1.1 contains ten questions in each of three cross-paper tasks. Ta-ble 2 abbreviates the topics; the public benchmark endpoint releases their full wording. 
+
+Protocol. GPT-5.5 answers all 30 questions in five settings. AskChem rewrites each question into 3–4 keyword subqueries, fans them out to hybrid search, and diversifies the merged evidence to at most 40 claims before grounded synthesis. Paper-clip uses the same rewriter and synthesizer over its paper retrieval; Edison Scientific uses its PaperQA-family agent, and NotebookLM uses Deep Re-search. AskChem is judged against the claims it exposes, whereas paper-level systems are judged against cited titles and abstracts. Every extracted DOI is checked through CrossRef. The Gemini 3.1 Pro relevance judge was calibrated on 100 domain-expert labels (93% agreement; κ = 0 .914 ). 
+
+Metrics.         
+
+> Metric Definition
+> DOI existence Fraction resolving in CrossRef. Citation density Distinct verified DOIs per answer. Grounded specificity Quantitative tokens sharing a sentence with a citation marker. Recent impact Cited papers from the last five years with ≥50 citations. Relevance Judge score: 3 direct, 2 on-topic, 1 loose, 0 irrelevant.
+
+Reproducibility. https://askchem.org/api/ benchmark provides the full questions, methodol-ogy, aggregate and task-level results, and recorded index snapshots. Prompt templates and the rerun script accompany the source release; the indexed data is at https://huggingface.co/datasets/ bing-yan/askchem .
+
+B Representation and Structural Construction 
+
+Claim record. A real claim from the index (claim_id 7c92fcacd8cb64d4 ), abbreviated only for width:       
+
+> {"claim_type":"reaction", "source_doi":"10.1002/anie.201914977", "reaction_type":"electrocatalytic CO2 reduction (to CO)", "reactants":[{"name":"CO2","role": "substrate"},{"name":"Ni SA-N2-C", "role":"catalyst"}], "products":[{"name":"CO"}], "outcomes":{"selectivity": "CO Faradaic efficiency 98%", "other":"turnover frequency 1622 h-1"}, "verbatim_quote":"the Ni SA-N2-C catalyst, with the lowest N coordination number, achieves very high CO Faradaic efficiency (98%) and turnover frequency (1622 h-1),", "view_paths":{"by_reaction_type": ["electrocatalysis","co2_reduction"], . . . }}
+
+Structured full-paper claims that lack a con-tiguous quote instead carry an evidence_locator 
+
+(location_in_paper plus structured evidence), so every claim is grounded by a quote or a locator. 
+
+Evidence edge. A real typed edge from 
+
+claim_edges links claims across papers:   
+
+> {"edge_type":"supports", "to_doi":"10.1021/acs.joc.9b01692", "confidence":"high", "evidence":"The observed selective coupling at the chloride position using SIPr directly provides evidence for the overarching claim of high ligand-controlled selectivity."}
+
+Extractor details. The abstract extractor uses 
+
+GPT-5-mini over paper titles and abstracts; the deep full-text extractor uses Gemini 3.1 Pro with native-PDF input via Vertex AI batch. A small legacy slice of the index predates this pipeline (GPT-4o / GPT-4o-mini). All calls use JSON-object-constrained decoding (response_format={"type":"json_object"} )at the provider-default temperature, with automatic retry on invalid JSON or schema-invalid output. Prompts and schemas are released with the source code. 
+
+Stabilized faceted taxonomy. Category paths were induced while digesting papers and ex-tracted claims, then consolidated through canon-ical L1 routing, synonym normalization, and fuzzy clustering into persistent L1/L2/L3 cat-egories. Five content views cover reaction, substance, application, technique, and mecha-nism topic; claim-type, measurement, and time views add complementary facets. A path such as coupling/cross_coupling/suzuki is both a browse location and a taxonomy-recall signal in hybrid search. 
+
+Evidence graph. A second pass emits di-rected supports , contradicts , extends ,
+
+derives_from , and cites_as_evidence edges with confidence and provenance. The expert audit 9CA: conditions TC: evolution CS: conflicts                       
+
+> C–N coupling Perovskite degradation Ag nanoparticle safety Suzuki–Miyaura MOF aqueous stability DFT functional accuracy Asym. hydrogenation Li-ion SEI formation MOF practical stability CO 2reduction Protein corona Solvent effects Water splitting TiO 2photocatalysis Interface passivation ROMP CO 2RR mechanisms PLA biodegradability Alcohol oxidation Drug delivery N-doped graphene Heck coupling Graphene defects Cu for CO 2RR Biocatalysis Nanoparticle toxicity Solid electrolyte safety Metal adsorption Electrolyte stability Nanoparticle size effects
+
+Table 2: AskChem-Bench topics (30 questions total). 
+
+sampled 148 edges across relation types: 146 were decidable and 143 had the correct type (97.9% precision); two were excluded as undecidable. 
+
+Living Taxonomy. This exploratory hierarchy is intentionally explanatory rather than faceted. A 4,931-node tree of principles, theories, mod-els, mechanisms, and phenomena anchors paper-grounded leaves, of which 663 are open proposed 
+
+branches. An LLM reads each paper’s claims and names the host that best governs its contribution; if none fits, it abstains through a proposed branch.             
+
+> Living Taxonomy view Paper placements Claims Substance class 111,714 490,137 Technique 119,361 292,154 Mechanism 98,665 217,388 Reaction type 30,806 62,294
+> Total 360,546 1,061,973
+
+Table 3: Coverage of the exploratory Living Taxonomy. A paper may appear in multiple views, so placements are not unique-paper counts. 
+
+Placement evidence. Nitrite reduction is placed under electrocatalytic redox and diene cross-metathesis under olefin metathesis, whereas nearest-neighbor placement can force-fit low-margin cases. These examples motivate the de-sign but are not a full evaluation; expert placement validation remains future work. 
+
+Validation gates. Extraction responses must parse against the claim schema and contain re-quired provenance fields; numeric and chemical fields are checked when present. Faceted paths are routed to canonical top-level categories before lower-level normalization. Evidence edges retain extractor confidence and provenance, while Living Taxonomy placements can abstain rather than force an unsupported host. 
+
+End-to-end API path. The same objects used by the web demo are available over REST: 
+
+> GET /api/search?q=CO2+reduction GET /api/claims/{claim_id} GET /api/claims/{claim_id}/neighborhood GET /api/sources/{doi}
+
+Search returns claim IDs and taxonomy paths; claim and neighborhood lookup expose provenance and evidence edges; source lookup returns all in-dexed claims from the paper. The same API sup-ports reading lists, author networks, saved searches, and subscriptions; SDK and MCP wrappers ex-pose it to agents. Complete schemas are at https: //askchem.org/api/docs , benchmark artifacts at https://askchem.org/api/benchmark , and the screencast demo is at https://youtu.be/ SOjueOlPS-8 .10

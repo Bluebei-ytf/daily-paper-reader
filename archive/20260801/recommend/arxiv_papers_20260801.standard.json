@@ -1,0 +1,214 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-08-01T22:07:01.334063+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 2,
+    "deep_cap": 6,
+    "deep_selected": 2,
+    "quick_candidates": 3,
+    "quick_skim_target": 11,
+    "quick_selected": 3
+  },
+  "deep_dive": [
+    {
+      "id": "2607.26113v1",
+      "source": "arxiv",
+      "title": "NISPO: Open-source IUPAC name generation tool",
+      "abstract": "Systematic International Union of Pure and Applied Chemistry (IUPAC) names are standard for communicating molecular structures in chemical literature, patents, and databases. We introduce NISPO, an open-source RDKit-based Python package for IUPAC name generation. NISPO was developed by an agentic self-improvement loop using OpenAI's Codex with the GPT-5.5 model. A generated name was considered correct if the open-source OPSIN tool parsed it back to the input structure. Guided by this objective, the agent implemented and refined NISPO against 2.68 million molecules from SureChEMBL, resulting in the tool achieving 98.1% round-trip accuracy on a held-out set of 103 million PubChem molecules. NISPO is freely available at https://github.com/oxpig/nispo.",
+      "authors": [
+        "Nicholas T. Runcie",
+        "Fergus Imrie",
+        "Charlotte M. Deane"
+      ],
+      "primary_category": "cs.SE",
+      "categories": [
+        "cs.SE"
+      ],
+      "published": "2026-07-28T15:33:54+00:00",
+      "link": "https://arxiv.org/pdf/2607.26113v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Open-source IUPAC name generation tool built via LLM agent self-improvement loop; applies LLMs to chemistry tooling",
+      "llm_evidence_cn": "使用大语言模型智能体自改进循环开发的IUPAC命名生成工具，属于语言模型在化学工具中的应用",
+      "llm_evidence": "使用大语言模型智能体自改进循环开发的IUPAC命名生成工具，属于语言模型在化学工具中的应用",
+      "canonical_evidence": "使用大语言模型智能体自改进循环开发的IUPAC命名生成工具，属于语言模型在化学工具中的应用",
+      "llm_tldr_en": "NISPO is an open-source RDKit-based IUPAC name generator developed via an agentic self-improvement loop with GPT-5.5, achieving 98.1% round-trip accuracy on 103M PubChem molecules.",
+      "llm_tldr_cn": "IUPAC名称是化学文献与数据库中交流分子结构的标准，现有开源工具在规模与准确性上仍有不足。本文介绍NISPO，一个基于RDKit的开源IUPAC命名生成包，由OpenAI Codex与GPT-5.5通过智能体自改进循环开发，以OPSIN回解析为正确性标准，在SureChEMBL 268万分子上迭代优化，并在PubChem 1.03亿分子测试集上达到98.1%的往返准确率。该工具展示了LLM智能体在化学信息学工具开发中的潜力，为化学命名、检索与数据标准化提供了开源支撑。",
+      "llm_tldr": "IUPAC名称是化学文献与数据库中交流分子结构的标准，现有开源工具在规模与准确性上仍有不足。本文介绍NISPO，一个基于RDKit的开源IUPAC命名生成包，由OpenAI Codex与GPT-5.5通过智能体自改进循环开发，以OPSIN回解析为正确性标准，在SureChEMBL 268万分子上迭代优化，并在PubChem 1.03亿分子测试集上达到98.1%的往返准确率。该工具展示了LLM智能体在化学信息学工具开发中的潜力，为化学命名、检索与数据标准化提供了开源支撑。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "large language models for chemistry applications",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.27431v1",
+      "source": "arxiv",
+      "title": "SE(3)-MeanFlow: Few-Step Protein Backbone Generation on Lie Groups",
+      "abstract": "Generative modeling of protein backbones promises the de novo design of proteins with prescribed structural and functional properties. Existing diffusion and flow-matching models produce high-quality backbones on SE(3)^N, but inference requires numerically integrating an ODE over hundreds of network evaluations, each involving a Lie group exponential map - a bottleneck for high-throughput design campaigns. We introduce SE(3)-MeanFlow, a few-step generative framework that extends MeanFlow from Euclidean space to the Lie group geometry of protein frames. Working natively in the Lie algebra so(3) and in R^3, we derive closed-form average-velocity identities for rotations and translations, giving simulation-free training targets. We further introduce an SE(3) alpha-Flow objective that removes the Jacobian-vector product from the rotation branch and serves as a warm-up stage, after which training switches to a small-t stabilized MeanFlow loss that is used for the remainder of pretraining and for rectification-based post-training. In protein backbone generation, SE(3)-MeanFlow matches or exceeds flow-matching baselines that use several times more sampling steps, and its advantage widens in the few-step regime, where rectification lets it lead at every matched budget - at a modest cost in diversity.",
+      "authors": [
+        "Yikun Bai",
+        "Binghang Lu",
+        "Yikai Liu",
+        "Elaheh Akbari",
+        "Soheil Kolouri",
+        "Linxuan Wang",
+        "Ping He",
+        "Shuchan Wang",
+        "Ruqi Zhang",
+        "Guang Lin"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-07-29T19:58:00+00:00",
+      "link": "https://arxiv.org/pdf/2607.27431v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "few-step generative model for protein backbone structure; relevant to molecular generation",
+      "llm_evidence_cn": "蛋白质骨架生成属分子结构生成，该方法提出少步生成框架",
+      "llm_evidence": "蛋白质骨架生成属分子结构生成，该方法提出少步生成框架",
+      "canonical_evidence": "蛋白质骨架生成属分子结构生成，该方法提出少步生成框架",
+      "llm_tldr_en": "SE(3)-MeanFlow is a few-step generative framework that extends MeanFlow to Lie group geometry for protein backbones, using closed-form average-velocity identities to avoid expensive ODE solving.",
+      "llm_tldr_cn": "蛋白质骨架生成对从头蛋白设计非常关键，但扩散与流匹配模型推理需数百次ODE积分。SE(3)-MeanFlow将MeanFlow扩展到SE(3)李群几何，直接在so(3)李代数与R3上推导闭式平均速度恒等式，获得无模拟训练目标并实现少步生成。该方法大幅减少网络评估次数，同时保持生成质量，为高通量蛋白质骨架生成提供了高效生成范式。",
+      "llm_tldr": "蛋白质骨架生成对从头蛋白设计非常关键，但扩散与流匹配模型推理需数百次ODE积分。SE(3)-MeanFlow将MeanFlow扩展到SE(3)李群几何，直接在so(3)李代数与R3上推导闭式平均速度恒等式，获得无模拟训练目标并实现少步生成。该方法大幅减少网络评估次数，同时保持生成质量，为高通量蛋白质骨架生成提供了高效生成范式。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "molecular generation and optimization with machine learning",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2607.26164v1",
+      "source": "arxiv",
+      "title": "Data Fusion and Contrastive Alignment for Unconstrained IR Molecular Structure Elucidation",
+      "abstract": "Automated molecular structure elucidation from infrared (IR) spectroscopy data has seen significant advancements in recent years, but its broad applicability is limited by a reliance on pre-determined chemical formulas provided as auxiliary model inputs. This limits model predictions to isomer identification rather than full molecular structure prediction. Although transformer models have been shown to identify molecular isomers with high accuracy, their reliability for unconstrained structure elucidation is comparatively low and poorly understood. In this work, we propose and evaluate key modifications to the traditional encoder-decoder transformer. To better address the vast chemical space of the unconstrained problem, we implement a novel Mixture-of-Experts (MoE) decoder module that utilizes non-additive aggregation via linear-order statistics and the Choquet integral. We further modify the transformer to utilize these non-additive operators when aggregating spectral representations as well. Together with an auxiliary contrastive alignment loss term, these enhancements improve Top-K prediction accuracy by over 10 percentage points compared to baseline IR-only models. Through sub-structure fragment analysis of molecular predictions, we further confirm that infrared spectra encode the vast majority of relevant chemical information, implying that the higher performance of isomer-ranking models is largely due to underrepresented or overlapping absorption bands for molecules in the explored chemical space. Ultimately, by demonstrating the efficacy of automated molecular structure elucidation from measured IR spectra, this work serves to significantly broaden the utility of AI in analytical chemistry.",
+      "authors": [
+        "Ethan J. Mick",
+        "Campbell A. Sweet",
+        "Matthias J. Young",
+        "Derek T. Anderson"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-07-28T18:15:46+00:00",
+      "link": "https://arxiv.org/pdf/2607.26164v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Unconstrained molecular structure generation from IR spectra via transformer",
+      "llm_evidence_cn": "基于Transformer的红外光谱无约束分子结构生成",
+      "llm_evidence": "基于Transformer的红外光谱无约束分子结构生成",
+      "canonical_evidence": "基于Transformer的红外光谱无约束分子结构生成",
+      "llm_tldr_en": "Modifies encoder-decoder transformers for unconstrained IR molecular structure elucidation using data fusion and contrastive alignment, improving reliability without formula priors.",
+      "llm_tldr_cn": "现有红外光谱解析模型通常依赖预先给定的化学式，只能进行异构体识别，无法预测完整结构。针对无约束问题，本文改进了编码器-解码器Transformer，引入数据融合和对比对齐机制，使模型能够直接利用光谱信息生成分子结构。实验表明，改进后的Transformer在无约束结构解析中的可靠性得到提升，扩展了光谱解析的应用范围。该方法展示了大规模化学空间建模的潜力。",
+      "llm_tldr": "现有红外光谱解析模型通常依赖预先给定的化学式，只能进行异构体识别，无法预测完整结构。针对无约束问题，本文改进了编码器-解码器Transformer，引入数据融合和对比对齐机制，使模型能够直接利用光谱信息生成分子结构。实验表明，改进后的Transformer在无约束结构解析中的可靠性得到提升，扩展了光谱解析的应用范围。该方法展示了大规模化学空间建模的潜力。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "molecular generation and optimization with machine learning",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.26296v1",
+      "source": "arxiv",
+      "title": "Thermodynamics-Informed Machine Learning for Energy Materials Discovery",
+      "abstract": "Machine learning (ML) is transforming materials discovery by enabling rapid prediction of properties that previously required computationally expensive first-principles calculations. Yet most current ML models remain fundamentally limited to zero-temperature descriptions, learning static lattice energies while neglecting the thermodynamic effects that govern materials behaviour at finite temperature. Because phase stability, functional response, and performance are governed by free-energy landscapes rather than static energies alone, this limitation represents a major barrier to predictive materials design under realistic operating conditions. In this Perspective, we argue that developing thermodynamics-informed ML constitutes one of the most important and least explored frontiers in materials discovery. We examine the fundamental shortcomings of energy-based models, highlighting the essential roles of entropy and anharmonicity in determining free energies and materials functionality. We review emerging strategies, including machine-learned interatomic potentials and hybrid ML-statistical mechanics frameworks, while identifying key challenges related to data availability, transferability, and thermodynamic consistency. Building on these advances, we outline a roadmap for thermodynamics-informed ML centred on direct free-energy learning, entropy-aware representations, and adaptive sampling across temperature. We highlight the transformative opportunities this paradigm offers for energy materials and argue that the next generation of ML models must move beyond static energy predictions towards a thermodynamic description of materials behaviour under realistic operating conditions.",
+      "authors": [
+        "Pol Benítez",
+        "Cibrán López",
+        "Claudio Cazorla"
+      ],
+      "primary_category": "cond-mat.mtrl-sci",
+      "categories": [
+        "cond-mat.mtrl-sci"
+      ],
+      "published": "2026-07-28T21:37:03+00:00",
+      "link": "https://arxiv.org/pdf/2607.26296v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Perspective arguing for thermodynamics-informed ML for materials discovery, directly relevant to ML acceleration for quantum chemistry and molecular dynamics.",
+      "llm_evidence_cn": "提出将热力学效应纳入机器学习以改进材料发现，与机器学习加速量子化学与分子动力学直接相关。",
+      "llm_evidence": "提出将热力学效应纳入机器学习以改进材料发现，与机器学习加速量子化学与分子动力学直接相关。",
+      "canonical_evidence": "提出将热力学效应纳入机器学习以改进材料发现，与机器学习加速量子化学与分子动力学直接相关。",
+      "llm_tldr_en": "This Perspective argues that current ML models are limited to zero-temperature static energies and advocates thermodynamics-informed ML that learns free-energy landscapes for realistic materials design.",
+      "llm_tldr_cn": "现有机器学习材料模型大多只学习零温静态晶格能量，忽略决定材料实际行为的有限温度热力学效应，成为材料发现的主要瓶颈。该观点文章系统论述了发展热力学信息驱动的机器学习的重要性，主张从自由能景观而非静态能量出发进行建模。文中讨论了在机器学习中引入温度、熵、振动等热力学量的路径，为能源材料在真实工况下的预测设计指明了方向。",
+      "llm_tldr": "现有机器学习材料模型大多只学习零温静态晶格能量，忽略决定材料实际行为的有限温度热力学效应，成为材料发现的主要瓶颈。该观点文章系统论述了发展热力学信息驱动的机器学习的重要性，主张从自由能景观而非静态能量出发进行建模。文中讨论了在机器学习中引入温度、熵、振动等热力学量的路径，为能源材料在真实工况下的预测设计指明了方向。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.28618v1",
+      "source": "arxiv",
+      "title": "AskChem: Claim-Centered Infrastructure for Chemistry Literature Synthesis",
+      "abstract": "Chemistry literature synthesis often requires assembling specific findings scattered across many publications, yet existing literature-search systems primarily return ranked document lists. As a result, scientists and AI agents need to locate relevant information, verify their provenance, and assemble cross-paper answers manually. We present AskChem, a claim-centered infrastructure for cross-paper chemistry search. AskChem changes the unit of retrieval from the paper to the provenance-carrying claim: each paper is converted into atomic, typed claims, each grounded by a source DOI and a verbatim quote or an explicit evidence locator. Over this shared claim store, AskChem exposes complementary structures for search and synthesis: a stabilized faceted taxonomy for hierarchical retrieval and browsing, an evidence graph linking claims through relations, and an exploratory living taxonomy that situates indexed papers under scientific principles. AskChem currently indexes 2.4M claims from 147K papers and provides a web interface, as well as REST, SDK, and MCP access for AI agents. On AskChem-Bench, grounding a GPT-5.5 reader in AskChem yields 100% resolvable DOIs, compared with 88.3% without retrieval, and the highest citation density among five tested systems. AskChem is live at https://askchem.org.",
+      "authors": [
+        "Bing Yan",
+        "Gregory Wolfe",
+        "Stefano Martiniani",
+        "Kyunghyun Cho"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI",
+        "cs.IR",
+        "cs.LG"
+      ],
+      "published": "2026-07-30T17:59:11+00:00",
+      "link": "https://arxiv.org/pdf/2607.28618v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "builds claim-centered literature search infrastructure to support chemistry AI agents and cross-paper synthesis",
+      "llm_evidence_cn": "构建以声明为中心的文献检索基础设施，支持化学AI智能体与跨论文综合",
+      "llm_evidence": "构建以声明为中心的文献检索基础设施，支持化学AI智能体与跨论文综合",
+      "canonical_evidence": "构建以声明为中心的文献检索基础设施，支持化学AI智能体与跨论文综合",
+      "llm_tldr_en": "AskChem converts papers into atomic, provenance-carrying claims and offers faceted retrieval and synthesis structures, enabling scientists and AI agents to efficiently assemble cross-paper chemistry answers.",
+      "llm_tldr_cn": "化学文献综述常需从多篇论文中汇总特定发现，现有系统仅返回文档列表。AskChem将检索单元从论文变为带来源的原子化声明，每条声明都有DOI和原文引用。在此基础上提供稳定的分面检索与合成结构，便于科学家和AI智能体自动定位、验证并组装跨论文答案。该基础设施为化学AI智能体的文献检索与综合提供了重要支持。",
+      "llm_tldr": "化学文献综述常需从多篇论文中汇总特定发现，现有系统仅返回文档列表。AskChem将检索单元从论文变为带来源的原子化声明，每条声明都有DOI和原文引用。在此基础上提供稳定的分面检索与合成结构，便于科学家和AI智能体自动定位、验证并组装跨论文答案。该基础设施为化学AI智能体的文献检索与综合提供了重要支持。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "What are the latest advances in retrosynthesis, synthesis planning, and AI agents for chemistry, and how are these systems evaluated?",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

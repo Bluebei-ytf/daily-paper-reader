@@ -1,0 +1,905 @@
+Title: Data Fusion and Contrastive Alignment for Unconstrained IR Molecular Structure Elucidation
+
+URL Source: https://arxiv.org/pdf/2607.26164v1
+
+Published Time: Thu, 30 Jul 2026 00:04:34 GMT
+
+Number of Pages: 26
+
+Markdown Content:
+# DATA FUSION AND CONTRASTIVE ALIGNMENT FOR 
+
+# UNCONSTRAINED IR M OLECULAR STRUCTURE ELUCIDATION 
+
+A P REPRINT 
+
+Ethan J. Mick 
+
+Electrical Engineering and Computer Science University of Missouri Columbia, MO 65211 
+
+ejmcmk@missouri.edu 
+
+Campbell A. Sweet 
+
+Chemical and Biomedical Engineering University of Missouri Columbia, MO 65211 
+
+campbellasweet@missouri.edu 
+
+Matthias J. Young 
+
+Chemical and Biomedical Engineering University of Missouri Columbia, MO 65211 
+
+matthias.young@missouri.edu 
+
+Derek T. Anderson 
+
+Electrical Engineering and Computer Science University of Missouri Columbia, MO 65211 
+
+andersondt@missouri.edu 
+
+# ABSTRACT 
+
+Automated molecular structure elucidation from infrared (IR) spectroscopy data has seen significant advancements in recent years, but its broad applicability is limited by a reliance on pre-determined chemical formulas provided as auxiliary model inputs. This limits model predictions to isomer identification rather than full molecular structure prediction. Although transformer models have been shown to identify molecular isomers with high accuracy, their reliability for unconstrained structure elucidation is comparatively low and poorly understood. In this work, we propose and evaluate key modifications to the traditional encoder-decoder transformer. To better address the vast chemical space of the unconstrained problem, we implement a novel Mixture-of-Experts (MoE) decoder module that utilizes non-additive aggregation via linear-order statistics and the Choquet integral. We further modify the transformer to utilize these non-additive operators when aggregating spectral representations as well. Together with an auxiliary contrastive alignment loss term, these enhancements improve Top-K prediction accuracy by over 10 percentage points compared to baseline IR-only models. Through sub-structure fragment analysis of molecular predictions, we further confirm that infrared spectra encode the vast majority of relevant chemical information, implying that the higher performance of isomer-ranking models is largely due to underrepresented or overlapping absorption bands for molecules in the explored chemical space. Ultimately, by demonstrating the efficacy of automated molecular structure elucidation from measured IR spectra, this work serves to significantly broaden the utility of AI in analytical chemistry. 
+
+# 1 Introduction 
+
+The determination of molecular structure from spectroscopic measurement is among the foundational problems of analytical chemistry. In practice, full structure elucidation is rarely accomplished by a single technique; it proceeds instead as a sequential, multi-instrument workflow in which orthogonal analytical methods contribute complementary layers of structural evidence. High-resolution mass spectrometry (MS) establishes molecular formula and an exact mass; nuclear magnetic resonance (NMR) spectroscopy resolves atomic connectivity, stereochemistry, and chemical environment; and infrared (IR) spectroscopy probes the vibrational modes of chemical bonds, with each functional group absorbing in a characteristic frequency range and leaving a diagnostic signature across the mid-IR region (4000-400 cm −1)1,2 . Among the available analytical techniques, IR is distinguished by its accessibility — instruments are inexpensive, sample preparation is minimal, measurements are non-destructive, and acquisition is rapid. These arXiv:2607.26164v1 [cs.LG] 28 Jul 2026 arXiv Template A P REPRINT 
+
+properties make it uniquely suited to resource-limited laboratories, high-throughput screening pipelines, and field deployment contexts. It is therefore a technique of particular interest to push toward its informational limits. However, the structural information latent in an IR spectrum is only partially accessible by conventional means. The absorption band region (4000–1500 cm −1) yields comparatively straightforward assignments: carbonyl stretches near 1700 cm −1, broad hydroxyl stretches above 3000 cm −1, and sharp amine signals are legible to a trained analyst and tractable to rule-based systems 3,4 . The fingerprint region (1500–400 cm −1) is more difficult, consisting of dense, overlapping absorptions arising from coupling skeletal vibrations, ring deformation modes, and bending interactions that encode detailed molecular information. This overlap renders the region largely intractable to manual interpreta-tion 4,5 . Traditional computer-assisted structure elucidation (CASE) systems such as ACD/Structure Elucidator 6 partly addressed this gap by combining peak-matching against curated databases with rule-based fragment assembly, but their performance is fundamentally bounded by database coverage and by the manual effort required to encode interpretation rules. As a result, chemists have historically extracted only a small fraction of the structural information in IR spectra. The rise of data-driven methods fundamentally reframes this limitation: rather than asking how to encode rules for spectral interpretation, the question becomes how to learn them directly from data with deep learning (DL), a branch of artificial intelligence (AI). Early DL approaches to IR analysis treated the problem as multi-label classification, training models to predict which functional groups are present in the molecule from its spectrum. Convolutional neural networks (CNNs) became the dominant choice in this regime, achieving high F1 scores across a range of standard functional group taxonomies 7–9 .These methods established that the fingerprint region is richly informative when interpreted by sufficiently expressive models, but functional group classification, while useful for rapid characterization, falls short of the structural detail needed for unambiguous compound identification. Two molecules with identical functional group inventories can have very different connectivity, ring topologies, and substitution patterns, and these distinctions are precisely what determine reactivity, biological activity, and identity 10 .Direct prediction of full molecular structure from spectra is a substantially harder task. In recent years, the use of transformer architectures, originally developed for natural language 11 , in structure elucidation tasks has yielded promising results 5,12,13 . These approaches commonly adapt the Vision Transformer (ViT) 14 , encoding the spectrum as a sequence of patches and learning mappings from IR spectra and chemical formulae to structures represented as SMILES strings 15 . Evolutionary algorithms have also shown promise, particularly thus far for NMR-to-structure 16 ,while multimodal approaches combining IR with NMR and mass spectrometry have demonstrated that spectroscopic modalities are complementary, with combined-modality models approaching expert-chemist accuracy 17,18 . Beyond single end-to-end models, Doh et al. complement the generation workflow with specialized large language model sub-agents that perform post-hoc refinement of predicted structures 19 ; the ceiling of such refinement is nonetheless set by the underlying generative model — precisely the component this work seeks to characterize and improve. Despite this progress, virtually every published IR-to-structure model shares a critical, often understated assumption: the molecular formula is provided as input alongside the spectrum at both training and inference time. This converts the structure elucidation problem from genuine de novo structure prediction into a substantially easier task: ranking candidate isomers consistent with a known molecular formula. Furthermore, obtaining an exact molecular formula is in itself a challenging task that requires, for example, a combination of high resolution mass spectrometry, isotopic analysis, and combustion analysis. A model that provides formula at inference is, in effect, a post-processing module within a multi-instrument pipeline that has already eliminated most of the analytical uncertainty. Alberts et al. collapse the decoder’s search space to formula-consistent candidates 13 , which may obscure what is learned from spectral information. In this work, we introduce a formula-free architecture for de novo IR-to-SMILES structure elucidation that combines two complementary mechanisms: sparse expert specialization with non-additive aggregation, and contrastive cross-modal alignment. The first is a novel enhancement of the popular Mixture-of-Experts (MoE) neural network layer 20,21 for transformer decoders, in which expert outputs are aggregated through fuzzy data-fusion operators — specifically our Linear Order Statistic Neuron (LOSN) 22 and our Choquet Integral MLP (ChIMP) 23 — rather than the conventional Top-K weighted linear sum. This formulation retains the established benefits of sparse MoE (learned expert specialization, adaptive capacity allocation) while introducing order-sensitivity and explicit modeling of inter-expert synergy and redundancy. The second primary contribution is a modification of the transformer training objective that leverages auxiliary chemical information as a supervisory signal rather than a constraining inference-time input. Previously explored for simulated DFT-IR spectra in Zhang et al. 24 , this method entails optimizing a multi-criteria loss that includes a contrastive objective 25–27 aligning encoded IR spectral representations with encoded structure representations, encouraging a latent geometry that is organized by chemical identity and therefore more conducive to molecular disambiguation in the absence of formula constraints. 2arXiv Template A P REPRINT 
+
+Together, these contributions serve to inject a degree of compositional reasoning into structure elucidation models that is otherwise offloaded to the hard formula constraint present in previous approaches. Through the alignment mechanism, the model is encouraged to internalize the relationship between spectral features and atomic composition rather than bypass it. Our new MoE decoder complements this by providing the representational capacity to handle the expanded structural diversity that formula-free generation necessarily entails: where a formula-conditioned decoder navigates a constrained isomer subspace, a formula-free decoder must partition a far larger and more heterogeneous chemical space, and the order-sensitive and interaction-aware aggregation of LOSN and ChIMP provides a more expressive inductive bias for that task than a uniform dense FFN. We also identify and characterize the use of this aggregation in the processing of transformer encoder layers. By leveraging non-additive fuzzy logic, the model can learn to flexibly incorporate the respective representation layers learned by the spectral encoder into the cross-attention mechanism of the generative decoder. Beyond architectural novelty, this work also advances how IR structure elucidation models are evaluated: standard Top-K exact-match accuracy, while reproducible, conflates structurally informative near-misses with random failures and provides no diagnostic signal for systematic deficiencies. We therefore introduce a substructure-level evaluation methodology that decomposes model errors across fragment classes — including ring systems, chain lengths, and functional group substitution patterns — enabling principled analysis of where formula-free models succeed and fail relative to their formula-conditioned counterparts. 
+
+# 2 Related Works 
+
+Contrastive Learning. Aligning heterogeneous modalities is naturally framed as a contrastive problem: an encoder is trained to map corresponding pairs to nearby points in a shared latent space while separating non-corresponding pairs, typically via the InfoNCE objective 25 . CLIP 26 demonstrated this at scale with jointly trained image and text encoders, and CoCa 27 extended the paradigm to encoder-decoder architectures by jointly optimizing a contrastive alignment term alongside an autoregressive captioning loss, showing that the contrastive signal organizes the encoder representation space by cross-modal identity. Analogous alignment has since been applied to molecular property prediction 28 and vibrational spectroscopy 29,30 . Most directly related to our setting, Zhang and Ha 24 adapt CoCa to IR-to-SMILES prediction on simulated data, finding that the contrastive term improves both accuracy and latent organization. We adopt this formulation and additionally exploit the learned embedding space for inference-time retrieval as a complement to decoder generation. 
+
+Non-Additive Data Fusion. Combining multiple information sources is most often done through a linear weighted sum, which cannot represent the synergistic, redundant, or compensatory relationships that frequently hold between sources. The Choquet fuzzy integral 31 generalizes the weighted mean by parameterizing aggregation with a fuzzy measure that assigns a worth to every coalition of sources, capturing such interactions explicitly; the Linear Order Statistic (LOS), a variant of Ordered Weighted Averaging 32 , instead aggregates by rank position, recovering operators from minimum to maximum within a single parameterized family. Both depart fundamentally from the additive linear convex sum (LCS) used in current MoE layers. Despite their established use in multi-sensor fusion and multi-criteria decision making 33,34 , adoption in deep learning has been limited by non-trivial monotonicity constraints. We previously showed that the Choquet integral admits a multilayer network representation (ChIMP) 23 , with a Möbius-increment reparameterization (iChIMP) that enforces monotonicity by construction and trains under standard stochastic gradient descent (SGD). We also introduced the Linear Order Statistic Neuron (LOSN) 22 for order-sensitive, perceptron-style fusion over sorted inputs. These operators are the foundation of the aggregation mechanisms we bring to the transformer. 
+
+Aggregation in Transformer Architectures. Two distinct stages of the transformer combine information through aggregation, and both conventionally rely on linear weighted sums. The first is cross-layer fusion: the decoder’s cross-attention is conditioned only on the final encoder layer, discarding intermediate representations even though work in neural machine translation has repeatedly shown that layers encode qualitatively distinct information; lower layers capturing local, surface features and deeper layers more abstract, globally contextualized structure 35,36 . Peters et al. 36 showed that task-specific scalar mixing of all layers outperforms using the final layer alone, a benefit confirmed by subsequent learned-weighting schemes 37,38 . For IR encoding this organization is chemically meaningful, as early layers are positioned to capture local absorption features, while deeper layers encode structural context, so discarding intermediate layers risks losing critical evidence in the congested fingerprint region. The second stage, if utilized, is the Mixture-of-Experts (MoE) layer 39 , in which a gating network routes inputs to specialized expert sub-networks. Sparse MoEs activate only a subset of experts per token to enable scaling 20,21 , while differentiable variants such as Soft MoE 40 
+
+and SMEAR 41 replace hard routing with weighted averages of tokens or merged expert parameters. Fusion schemes for both stages remain linear at the point of aggregation; although fuzzy operators have been shown to integrate into deep networks 42 , to our knowledge they have never been applied to transformer layer fusion or MoE expert aggregation. 3arXiv Template A P REPRINT 
+
+This work treats both as instances of the same aggregation problem and addresses them with the non-additive operators introduced above. 
+
+# 3 Methods Patch Embedding [N, M]  
+
+> Input IR Spectrum
+> Multi-Head Attention
+> Add & Norm
+> Feed-Forward Network (FFN)
+> Add & Norm
+> Memory (Keys & Vals)
+> Multi-Head Cross Attention
+> Add & Norm
+> Masked Multi-Head Attention
+> Add & Norm
+> Mixture of Experts (MoE)
+> Add & Norm
+> <SOS> O
+> SMILES (so far)
+
+SMILES Embedding  
+
+> [S, M]
+> Llayers
+> Llayers
+> Linear
+> Softmax
+> [S, V]
+> (Cross Entropy Loss on Probabilities)
+> C…
+
+…s(i+1) s(i) s(n)      
+
+> Split to N slices/patches (s)
+> 0s(i) 1s(i+1) ns(n)
+
+…  
+
+> [N, P]
+> [N, M]
+> t1 t2 t3
+> (
+> t3*
+> next predicted token
+> [S, M]
+
+↻
+
+> RoPE
+
+↻
+
+> RoPE
+> OC(=O)C(N)C
+> <EOS> …
+> tN
+> final predicted SMILES
+
+# ↻
+
+A. Contrastive Loss B. Transformer   
+
+> O…
+> t1 …
+> C
+> t1
+> C
+> tN
+> True SMILES
+> SMILES Embedding
+> Transformer Encoder
+
+FFN FFN                                     
+
+> attention pool
+> …
+> I1S1I1S2…I1SD
+> I2S1I2S2…I2SD
+> …
+> …
+> …
+> IDS1IDS2…INSN
+> S1S2…SD
+> I1
+> I2…
+> ID
+> cosine similarity
+> InfoNCE…
+> autoregressive loop
+> predicted terminal token
+> CLS
+> CLS
+> learnable token
+
+Figure 1: The proposed transformer architecture. In (B) , an input IR spectrum is first sliced into N patches of size P, which are then passed through L encoder layers, producing keys and values that are applied to the L decoder layers. A final linear layer and softmax produce the next token, which is either saved for backpropagation or passed back to the head of the decoder to continue the process (autoregressive inference). Within the decoder, the feed-forward network is replaced with an MoE layer (see Figure 2). In (A) , the contrastive loss is derived via a cosine similarity matrix computed against latent representations of encoder outputs and molecular structures. Cross-entropy loss on decoder output probabilities is combined with this contrastive loss term to comprise the full optimization objective. Our model architecture follows the encoder-decoder transformer paradigm 11 , in which an encoder maps an input sequence to a collection of continuous representations and an autoregressive decoder generates the output token-by-token conditioned on those representations. Both components are built from stacked layers of multi-head self-attention and position-wise feed-forward sub-layers with residual connections and post-layer normalization 43 . Beam search generation yields a pool of k ranked candidate SMILES strings C for input spectra. We depart from prior applications of the transformer in three primary respects, each detailed in the subsections below. Figure 1.B illustrates the full architecture; additional implementation details and hyperparameter settings are detailed in Appendix A.3. 
+
+3.1 Contrastive Cross-Modal Alignment 
+
+The primary training objective — cross-entropy over next-token predictions of the target SMILES string — provides gradient signal to the encoder only through the decoder’s cross-attention, which is mediated by the decoder’s own evolving representations. In the formula-free setting, where no compositional prior constrains the decoder’s search space, this indirect supervision may be insufficient to produce a well-structured encoder latent space: two spectra 4arXiv Template A P REPRINT 
+
+corresponding to structurally distinct molecules may be mapped to nearby representations simply because their spectral profiles overlap in the fingerprint region. The decoder, lacking formula-based disambiguation, cannot correct for this at inference time. We address this by augmenting the primary objective with a contrastive alignment loss that directly supervises the geometry of the encoder’s output space. The alignment objective follows the CoCa framework 27 , instantiated with the CLIP-style InfoNCE loss 25,26 . This configuration was recently explored for this task in Zhang et. al 24 , albeit for simulated data. An overview is visualized in Figure 1.A, which depicts the target SMILES string passing through a unimodal transformer encoder and the encoder memory undergoing attentional pooling, following the setup of 27 . For a batch of N spectrum–molecule pairs 
+
+{(si, m i)}Ni=1 , spectral representations zsi are obtained by applying a multi-head attentional pooler over the encoder’s final hidden states and projecting into a shared alignment space of dimension dalign via a learned linear projection fϕ:
+
+zsi = fϕ(AttnPool( Henc  
+
+> i
+
+)) , (1) where Henc  
+
+> i
+
+∈ RP ×d collects the encoder hidden states over P spectral patch positions and AttnPool denotes cross-attention with a single learned query vector over those positions. Molecular representations zsmi  
+
+> i
+
+are obtained from a dedicated unimodal SMILES encoder: the target SMILES tokens are embedded via the shared token embedding table, a learnable CLS token is appended to the sequence, and the result is processed by a stack of causal self-attention layers with no cross-attention to the spectrum. The CLS token’s attention mask is fully unmasked so that it may attend to all preceding positions, giving it access to the complete sequence; its final hidden state is projected into the same alignment space via a learned linear gψ :
+
+zsmi  
+
+> i
+
+= gψ
+
+ hCLS 
+
+> i
+
+ , (2) where hCLS  
+
+> i
+
+is the unimodal encoder output at the CLS position. Critically, the unimodal SMILES encoder operates without access to the spectrum, ensuring that zsmi  
+
+> i
+
+is a spectrum-agnostic structural representation; the contrastive loss then forces the spectrum encoder to produce representations that are geometrically consistent with these structure-derived embeddings. Both projections are trained end-to-end and ℓ2-normalized before similarity computation. The InfoNCE loss is computed symmetrically over the batch: 
+
+Lalign = − 12N
+
+> N
+
+X
+
+> i=1
+
+h
+
+log exp  sim( zsi , zsmi  
+
+> i
+
+)/τ PNj=1 exp  sim( zsi , zsmi  
+
+> j
+
+)/τ 
+
++ log exp  sim( zs mi  
+
+> i
+
+, zsi )/τ PNj=1 exp  sim( zsmi  
+
+> i
+
+, zsj )/τ i
+
+,
+
+(3) where sim( ·, ·) denotes cosine similarity and τ is a learned temperature parameter, initialized to 1 and exponentiated during training to remain strictly positive. The loss treats the N − 1 remaining pairs in the batch as negatives for each anchor, so the effective difficulty of the contrastive task scales with batch size and, critically, with the structural diversity of the batch: batches containing molecules with similar structural motifs or overlapping spectral profiles present hard negatives that demand finer representational discrimination. The alignment loss is active during training and validation but not at inference; the attentional pooler, unimodal SMILES encoder, and projection heads fϕ and gψ do not participate in generation. The total training objective is a weighted combination of generative and alignment losses: 
+
+L = LCE + λ Lalign , (4) where λ is a scalar hyperparameter controlling the relative contribution of the alignment term. Section 4.2 provides further details on the compound loss objective. 
+
+3.2 Encoder Layer Fusion 
+
+The flow of the transformer architecture, as shown in Figure 1.B, routes the output of the final encoder layer (memory) to the decoder’s cross-attention module at every decoder layer L, discarding the intermediate representations produced by all preceding encoder layers. In this work, we seek to leverage these intermediate representations directly, taking inspiration from existing encoder fusion strategies and exploring the integration of fuzzy fusion operators. If we let 
+
+{Hℓ}Lℓ=1 denote the hidden state sequences produced by the L encoder layers, where Hℓ ∈ RB×T ×dmodel and T is the number of spectral tokens, encoder fusion strategies receive the stacked tensor X ∈ RB×T ×L×dmodel and produce a single fused memory ˆX ∈ RB×T ×dmodel that replaces Hℓ in the decoder’s cross-attention. A shared gate network, consisting of a mean-pool over the layer dimension followed by a linear projection, produces per-layer logits that are softmax-normalized to gate probabilities p ∈ RB×T ×L. Traditionally, the L layer representations are either averaged uniformly at each token position or gate probabilities pb,t ∈ ∆L−1 are used directly for input-dependent weighting. These are referred to as fixed and learned scalar mixing, respectively, as introduced in Peters et al. 36 . The fuzzy fusion strategies explored in this work are detailed below; explicit details on each operator can be found in Appendix A.2. 5arXiv Template A P REPRINT 
+
+LOSN. Layer representations are ranked by their ℓ2-norm at each token position — a content-derived ordering that is independent of the gate — and aggregated via a shared learned rank-weight vector w ∈ RL:
+
+ˆXb,t =
+
+> L
+
+X
+
+> ℓ=1
+
+wℓ · Hπ(ℓ) 
+
+> b,t
+
+, π = argsort  ∥Hℓb,t ∥2
+
+ 
+
+> ↓
+
+, (5) where π orders layers by descending representation norm at position (b, t ). The weight w1 attaches to whichever layer produced the highest-norm representation at that position, w2 to the second highest, and so on. The gate is computed, but not used for fusion; its cached values are retained for post-hoc comparison against the norm-based ordering. w is initialized with an exponential decay prior wℓ ∝ exp( ℓ/L ), encoding a soft inductive bias toward later layers that the model may override during training. In previous work, we formalized the extended linear order statistic (ELOS) 44 ,showing that the scalar rank-weight vector can be replaced with a per-dimension weight matrix W ∈ RL×dmodel . This generalization is utilized for the LOSN in this work. 
+
+ChIMP. The Choquet fusion strategy applies the k = 2 additive restriction of ChIMP 23,45 , treating each encoder layer as a distinct information source and modeling pairwise interactions between layers through a learned fuzzy measure (FM). Layers are again ranked by their ℓ2-norm at each token position, and the fused representation is computed as: 
+
+ˆXb,t =
+
+> L
+
+X
+
+> ℓ=1
+
+αℓ · Hπ(ℓ) 
+
+> b,t
+
++ X
+
+> i<j
+
+βij · min 
+
+
+
+Hπ(i) 
+
+> b,t
+
+, Hπ(j)
+
+> b,t
+
+
+
+, (6) where min is applied element-wise and π here orders layers by descending gate probability. The singleton terms αℓ
+
+capture the marginal contribution of the ℓ-th ranked layer; the interaction terms βij model whether the i-th and j-th ranked layers are synergistic ( βij > 0) or redundant ( βij < 0) when combined. The FM is parameterized by L +  L
+
+> 2
+
+
+
+free variables; for L = 6 this is 21 parameters. 
+
+3.3 Fuzzy Mixture-of-Experts (fMoE) Decoder 
+
+Standard transformer decoders consist of dense FFN networks applied at each layer after attention. In the formula-free setting, this architecture places the full burden of structural diversity on a single monolithic computation graph: the decoder must simultaneously handle aliphatic chains, heteroaromatic rings, halogenated substituents, and polar functional groups through the same learned weight matrix, relying on attention context alone to differentiate between them. We hypothesize that this is a poor inductive bias for formula-free generation, where the compositional diversity of the search space is strictly greater than in the formula-conditioned case. We therefore replace each decoder FFN sub-layer with a Mixture-of-Experts (MoE) layer 39 , composed of E expert networks, and aggregate their outputs using fuzzy aggregation operators drawn from the fuzzy-set and information-fusion literature in addition to the linear weighted sums used in canonical MoE formulations. We refer to these novel MoE layers as fMoE aggregation. Figure 2 illustrates the specifications for the different MoE layer architectures. 
+
+Expert computation. Each expert e ∈ { 1, ..., E } is a position-wise FFN with parameters θe independent of all other experts. Given the decoder hidden state x ∈ Rdmodel at a given position, each expert computes: 
+
+ve = FFN e(x, θ e), e = 1 , . . . , E, (7) yielding a set of E candidate output vectors {ve} of equal dimension. The aggregation problem is then: given these 
+
+E inputs, how should they be combined? In a sparse MoE, the answer is a weighted linear sum over router-assigned gates. This process is advantageous for scaling considerations (see Section 2), but maintains no effective strategy for fusion beyond the standard linear convex sum (LCS). The sparse MoE is shown in Figure 2.A; a standard MoE follows a very similar process except all expert softmax probabilities contribute accordingly to the convex sum. To extend the potential of this configuration, we explore two operators wherein we decouple routing from aggregation and treat the process as a fuzzy information fusion problem. Again, we refer readers to Appendix A.2 for additional context on fuzzy fusion operators. 
+
+MoE-LOSN. Depicted in Figure 2.B, MoE-LOSN modifies the decoder aggregation step by applying a separate LOSN (see Equation 15) independently to each output dimension of the E expert outputs, treating the expert index as the aggregation input: 
+
+[MoE-LOSN (x)] d = fLOSN 
+
+
+
+[v1,d , v 2,d , . . . , v E,d ], w(d)
+
+,d = 1 , . . . , d model ,
+
+(8) where ve,d is the d-th component of expert e’s output and w(d) is the per-dimension weight vector. This preserves the LOSN’s order-statistic semantics across expert outputs while remaining parallelizable across the output dimension. 6arXiv Template A P REPRINT W E3 x
+
+A. Linear Convex Sum (LCS) 
+
+B. Linear Order Statistic Neuron (LOSN) 
+
+C. 2-Additive Choquet Integral Multilayer Perceptron (ChIMP)                   
+
+> Token Hidden State Rd
+> Expert 1 E2 E3 …
+> Top-4 selected experts (softmax probs)
+> p1p3
+> E8
+> WE1 x
+> p1*p3*
+> renormalize
+> v1v3
+> output
+> expert output vectors v1v3
+> p1*p3*
+
++              
+
+> Token Hidden State Rd
+> v1,d = 0.9
+> v3,d = 0.3
+> v6,d = 0.1
+> v7,d = 0.7
+> xπ(3) = 0.3
+> xπ(2) = 0.7
+> xπ(1) = 0.9
+> xπ(4) = 0.1
+> Sorted into rank positions
+> expert outputs
+> w1
+> w2
+> w3
+> w4
+
+wT xπ + b              
+
+> learned weights on rank positions
+> WE6 x, W E7 x
+> Token Hidden State Rd
+> Expert 1 E2 …E8
+> WE1 xv1,d
+> v3,d
+> v6,d
+> v7,d expert outputs (per dimension)
+> WE3 x,
+> content
+> relationships
+> content
+> relationships
+> content
+> relationships
+> Choquet output
+> xπ(3) = 0.3
+> xπ(2) = 0.7
+> xπ(1) = 0.9
+
+Cg(v)              
+
+> × α 1
+> × α 2
+> × α 3singleton sum
+> interaction sum
+> min(1,2) × β 1
+> min(1,3) × β 2
+> min(2,3) × β 3
+> rank sorted
+> p6
+> p7
+> v6v7
+> p7*
+> p6*
+> v6v7
+
+++              
+
+> p7*
+> p6*
+> WE6 x, W E7 x
+> xπ(4) = 0.1
+> WE3 x
+> Expert 1 E2 E3 …E8
+> WE1 xWE6 x, W E7 x
+
+Figure 2: Standard and proposed expert aggregation methods for MoE. (A) The standard approach, with a sparse configuration. A router scores each expert for each token; only the top k experts are used ( k = 4 is shown here). The router scores pe are then used directly as weights in a linear convex sum (LCS). (B) Our LOSN fMoE approach decouples aggregation from routing, sorting expert outputs by magnitude per output dimension and applying a learned vector to rank positions. This diagram depicts the per-dimension (ELOS) variation. (C) Our other fMoE approach, ChIMP models pairwise and higher-order interactions between experts with learned singleton and pairwise interaction weights. 
+
+MoE-ChIMP. The Choquet Integral Multilayer Perceptron (ChIMP) 23 provides a strictly more expressive aggregation by modeling not only the marginal contribution of each expert but also pairwise and higher-order interactions between experts, through a learned fuzzy measure (FM) g : 2 X → R+. In this work, we apply the k = 2 additive restriction 45 ,retaining singleton and pairwise interaction terms while discarding higher-order coalitions to reduce the intractable scaling otherwise introduced at higher expert counts. Applied per output dimension, ChIMP aggregates expert outputs with explicit awareness of pairwise expert interactions, which is unavailable to any linear or order-statistic aggregation. The explicit MoE-ChIMP formulation, shown in Figure 2.C, is defined as: 
+
+[MoE-ChIMP (x)] d = C(2) 
+
+> g
+
+
+
+h(d); α(d), β(d)
+
+, h(d) = [ v1,d , v 2,d , . . . , v E,d ], d = 1 , . . . , d model , (9) where h(d) ∈ RE collects the d-th scalar output of each expert (i.e., he = ve,d in the notation of Eq. 17) and α(d) ∈ RE
+
+and β(d) ∈ R(E 
+
+> 2
+
+) are the learned singleton and pairwise interaction weights of the 2-additive FM for dimension d.
+
+Load balancing. The sparse Top-K LCS baseline (Figure 2.A) is trained with the standard auxiliary load-balancing loss 21 , which prevents the router from collapsing onto a small subset of experts and starving the remainder of training signal. This term regularizes the routing stage and is specific to router-selected aggregation: because MoE-LOSN and MoE-ChIMP aggregate over all E expert outputs by content-derived rank rather than over a router-selected subset, they 7arXiv Template A P REPRINT 
+
+are subject to no comparable collapse pressure and are trained without it. We give the formal definition in Appendix A.2. This asymmetry should be taken into account when interpreting the expert-utilization comparison in Appendix C.1, which is consequently not a controlled one. 
+
+# 4 Experimental Setup 
+
+4.1 Datasets 
+
+To set up a pipeline for supervised learning in the context of this problem, several considerations were taken into account concerning the data. In the interest of real-world application, and regarding data availability, it is advantageous to utilize simulated IR data as a component of this process, and as such a large simulated dataset of spectra synthesized via molecular dynamics and the PCFF forcefield first introduced by Alberts et al. 5 is used. This simulated dataset is paired with corresponding structures sampled from PubChem, and is herein referred to as the IBM-MD dataset. Additionally, the National Institute of Standards of Technology (NIST) Chemistry WebBook 46 provides experimentally-derived spectra and associated molecules; we synthesize a dataset from provided samples that includes only molecules containing C, H, O, N, S, P, and halogen atoms, and a heavy atom count of 6-13 similar to the subset explored in previous work and observed for the simulated IBM-MD dataset. We also benchmark performance on a third dataset synthesized via quantum chemical calculations by Zou et al. 47 , called the QM9S dataset. This dataset contains 127,468 samples, however molecular diversity is limited to a maximum of 9 heavy atoms per molecule, and only H, C, N, O, or F atoms. There are several preprocessing considerations employed to both synchronize the data language across the two competing datasets and constrain the feature space to dimensionality more amenable to initial experimentation. Roughly 1,500 real samples are duplicates of simulated samples, so these samples are first removed from the simulated dataset for pre-training. This ultimately results in 3,889 experimental samples and 633,864 simulated samples. IR spectra in both datasets are unified to a resolution of 2 cm −1, yielding 1,791 evenly spaced absorption measurements from 400-3982 cm −1. Min-max normalization is employed to standardize inputs in a manner conducive to machine learning models. It is often reasonable to represent molecular structure in graph form, but this is not easily utilized in common transformer models, particularly ViT. Luckily, advances in computational chemistry have led to the creation of a system for representing molecules using ASCII characters, known as the Simplified Molecular Input Line Entry System (SMILES) 15 . SMILES strings are built via a depth-first tree traversal of a standard chemical graph, and they are Hydrogen-implicit. They are fundamentally a one-to-many mapping, with a canonicalization protocol to unify the algorithm’s application. SMILES strings can be tokenized, or converted to numerical representations, in various ways; the method employed here is an atom-wise approach using a regular expression (RegEx) introduced in Schwaller et al. 48 . For the chemical subspace explored in this work, this results in a SMILES vocabulary size of 47. Data augmentation is often beneficial for training machine learning models, and it has been shown to be effective for transformer-based structure elucidation 5,12 . We find it best to employ SMILES enumeration 49 , a data augmentation technique that exploits the existence of non-canonical SMILES strings to expand the training corpus. Alberts et al. 
+
+find that augmenting each training sample with two non-canonical SMILES representations boosts Top-1 accuracy by around 5% 13 ; we explore varying degrees of SMILES augmentation to further characterize the benefit of this approach. Results of this analysis are detailed in Appendix C.3. 
+
+4.2 Training and Evaluation Training Objective. The model is trained end-to-end to autoregressively generate SMILES token sequences from IR spectral input. The primary training signal is the standard cross-entropy loss over the SMILES vocabulary, which at each decoding step penalizes the model’s predicted token distribution against the ground-truth next token under teacher forcing: 
+
+LCE = − 1
+
+N
+
+> N
+
+X
+
+> n=1
+> Tn
+
+X
+
+> t=1
+
+log pθ
+
+
+
+y(n) 
+
+> t
+
+| y(n) 
+
+> <t
+
+, X(n)
+
+, (10) where N is the number of training examples, Tn is the target sequence length for the n-th example, y(n) 
+
+> t
+
+is the ground truth token at position t, and X(n) is the encoded spectral representation. As defined in Equation 4, LCE is combined with a λ-weighted contrastive loss term Lalign to form the full optimization signal. The relative contribution of Lalign to the total training signal is a tunable hyperparameter; Zhang et al. find that raising this value leads to better structuring of latent embeddings 24 . Regardless, the cross entropy loss term is the primary signal driving the whole architecture to learn how to generate structures. Specific training parameter settings, such as the learning rate and number of epochs, are covered in Appendix A.4. 8arXiv Template A P REPRINT 
+
+Decoding and Generation. At inference time, the model generates candidate SMILES strings C via beam search with beam width 10, retaining the Top-K sequences by cumulative log-probability. No molecular formula is provided to the decoder at any point during inference. Each generated sequence is then parsed and canonicalized using RDKit 50 ,and then compared against the ground-truth structure using the equivalence of InChI 51 . Invalid SMILES strings that fail valence or sanitation checks are discarded from the candidate set prior to evaluation. Decoding is deterministic (no sampling, temperature 1.0) with a maximum generation length of 100 tokens. 
+
+Evaluation Metrics. Model performance is evaluated at multiple levels of structural resolution. The primary metric is Top-K exact-match prediction accuracy for K ∈ { 1, 5, 10 }. A prediction is counted as correct at rank k if the ground truth appears among the Top-K beam candidates. For predictions that do not exactly match the ground truth, Tanimoto similarity 52 between chemical fingerprints provides a continuous measure of structural proximity; we report the distribution of Tanimoto similarities over incorrect Top-1 predictions for different fingerprint representations. While exact match and Tanimoto similarity are both descriptive molecule-level metrics that are widely adopted in the literature, they can obscure qualitatively different error modes when evaluating the performance of these types of models. For instance, a model may recover the correct carbon skeleton while misclassifying a single functional group, or confuse structurally similar ring systems in ways invisible to fingerprint-based similarity. We therefore additionally report a substructure-level evaluation, decomposing predictions and ground truths into different fragment vocabularies and computing precision and recall over the resulting substructure sets. This provides finer-grained diagnostic signal regarding where in chemical space the model succeeds and fails, and is particularly informative for characterizing errors as a function of molecular complexity. When CoCa is active, we also evaluate alignment quality through a spectrum-to-SMILES retrieval task defined entirely within the shared CoCa latent space. This method was previously explored for contrastive alignment of vibrational spectroscopic modalities in Rocabert-Oriols et al. 29 ; we include it here as a diagnostic orthogonal to generation accuracy. For all N test examples, the L2-normalized spectrum embeddings S ∈ RN ×dalign and SMILES embeddings 
+
+M ∈ RN ×dalign are assembled into a full N × N cosine similarity matrix A = SM ⊤. The diagonal of A gives the per-pair cosine similarity; its mean quantifies how tightly matched pairs are drawn together on the unit hypersphere relative to all cross-pair distances. For each query spectrum i, the rank of its ground-truth SMILES is defined as the number of gallery entries at least as similar: ri = |j : Aij ≥ Aii |, with ties counted inclusively so that ri ≥ 1 always. Recall at K (R@K) is the fraction of queries for which ri ≤ K, reported at K ∈ 1, 5, 10 . These metrics characterize whether the CoCa objective has induced a latent geometry in which a query spectrum, presented with the full test set as its gallery, reliably recovers its paired SMILES among the nearest neighbors. 
+
+# 5 Results 
+
+This section details various experiments and the effect of different architectural modifications. We evaluate our model across three datasets: the IBM molecular-dynamics simulated dataset (IBM-MD), the QM9S quantum chemistry simulated dataset 47 , and the NIST experimental dataset 46 . Unless otherwise stated, all models are trained and evaluated 
+
+without auxiliary chemical formula input. The primary metric, Top-K accuracy, provides the most direct measure of overall performance. 
+
+5.1 IR Structure Elucidation 
+
+Table 1: IR-only structure elucidation performance on NIST experimental (fine-tuned) and IBM-MD simulated spectra. Missing table entries for previous works exist because they were not explicitly reported. 
+
+Model Input IBM-MD Simulated NIST Experimental 
+
+Model IR Formula Top-1 Top-5 Top-10 Top-1 Top-5 Top-10 Alberts et al. 5 ✓ ✓ 36.43 62.49 70.00 44.39 66.85 69.79 Alberts et al. 13 ✓ ✓ 50.62 — 72.39 63.25 79.15 83.56 Wu et al. 12 ✓ ✓ 50.96 74.24 78.80 53.23 71.99 76.54 Alberts et al. 5 ✓ ✕ 17.01 33.60 39.37 — — —Wu et al. 12 ✓ ✕ 23.84 42.24 50.17 — — —
+
+Ours ✓ ✕ 27.12 44.62 53.96 31.83 50.13 57.23 
+
+9arXiv Template A P REPRINT 
+
+Table 1 presents the primary comparison between our model and IR-only baselines on the NIST experimental dataset and the IBM-MD simulated dataset. Our best-performing model utilizes the MoE-LOSN decoder configuration and encoder layer fusion, and is trained with the CoCa contrastive loss configuration. Results analyzing these respective contribution components are detailed in the sections below. For the NIST dataset, IBM-MD-trained models are fine-tuned on a training subset of experimental NIST data. In the literature, few results describe performance in the IR-only regime; benchmark metrics measure models which take the formula as input alongside the spectrum. These previously reported metrics are shown in the table for the IBM-MD dataset; to our knowledge, no previous IR-only model implementations have been tested specifically on the NIST experimental dataset. For the former, our model achieves state-of-the-art Top-K accuracy in the IR-only setting; we report an impressive 31.83% Top-1 accuracy after fine-tuning on experimental data. GROUND TRUTH Top-1 Prediction Top-1 Prediction Top-1 Prediction GROUND TRUTH GROUND TRUTH       
+
+> Input Spectrum & Encoder Attention Map Input Spectrum & Encoder Attention Map Input Spectrum & Encoder Attention Map
+> Normalized attention
+> 1.0
+> 0.8
+> 0.6
+> 0.4
+> 0.2
+> 0.0
+> (a) (b) (c)
+> Cn1ccnc1C=O C(=O)c1ccco1 COc1ccc(C(N)=O)cc1N COc1ccc(C(=O)N)cc1 ClCCOc1ccccc1 ClCCOc1ccccc1
+
+Figure 3: Qualitative prediction examples on NIST experimental spectra. (a) Correct Top-1 prediction with encoder cross-attention heat map. We see the model focuses around 650-750 cm −1 for the alkyl chlorine, notes the aryl ether peak at ∼ 1220 cm −1, as well as the two diagnostic peaks between 1450-1600 cm −1 from carbon-carbon stretching within the aromatic ring. (b) Near-miss (Tanimoto = 0.52, later correctly identified at beam #8): The model misses a primary amine group, which is inherently harder to discern with the presence of overlapping methoxy and amide groups. 
+
+(c) Failure case (best-beam Tanimoto = 0.18): The model fails to identify the imidazole N CH 3 methyl group just under 3000 cm −1. More attention is weighted to less distinguishing areas, and a plausible but dissimilar heteroaromatic ring system is predicted. In Figure 3, we have representative prediction outcomes for experimental samples with our model: a correct Top-1 prediction, a near-miss with high Tanimoto similarity, and a failure case. Also shown is the corresponding input spectrum for each example with encoder cross-attention weights overlaid. This figure visualizes how the model processes input spectra, paying attention to specific wavenumber ranges during the generation of respective molecules. For many test samples, this is functionally analogous to how an expert chemist might analyze an IR spectrum. identifying diagnostic peaks and absorption behaviors. For failure cases, such as the one shown in Figure 3.c, we often see the model either paying attention to the wrong ranges or conflating overlapping absorption bands. For this specific example, 1-methyl-1H-imidazole-2-carboxaldehyde is mistaken for 2-furaldehyde/furfural, which, despite the low Tanimoto similarity, is a highly plausible mistake given that both molecules are small, five-member heteroaromatic rings with an attached aldehyde group. Visualization of select test samples and their Top-5 predictions are shown in Figure 4. A range of test samples are chosen to better illustrate common failure modes in addition to general versatility. While each generated molecule is canonicalized before comparison against the ground truth, this plot visualizes the exact generated string with RDKit’s 2D coordinate generation algorithm 50 . This algorithm is sensitive to the input atom order, and we can see that this sometimes results in inconsistent 2D visualizations for otherwise equivalent correct predictions (i.e., Sample 24). For Sample 78, the first four predictions contain eight carbons, while the fifth prediction contains seven carbons, consistent with the target. Of note is the general proximity of candidate molecules to true samples; for example, even Sample 26, which doesn’t see an exact match in the Top 5, still has multiple correct functional groups consistently identified. Sample 625 is composed primarily of chlorine atoms; the presence of the latter is consistently identified, likely due to the presence of strong C Cl stretching vibrations between 600-800 cm −1. Despite this, Octachlorocyclopentene is a 10 arXiv Template A P REPRINT 
+
+Figure 4: Select Top-5 predictions for the MoE-LOSN model on the NIST experimental test set. The model takes unseen experimental IR spectra from the held-out test dataset as input, generating a set of ordered predictions. These are then compared against ground truth molecules associated with the test spectra. Correct predictions, which span the chemically equivalent SMILES representation space for respective molecules, are highlighted in green and marked with checks, whereas incorrect predictions are highlighted in red. SMILES strings and Tanimoto similarity for each prediction are also shown. larger molecule in the context of the dataset and this may contribute to the observed difficulty in matching structural components such as the cyclopentene ring scaffold or the correct number of chlorine atoms. 
+
+5.2 Contrastive Loss 
+
+The effect of adding the contrastive loss Lalign term to the standard cross-entropy loss LCE is detailed in Figure 5. We weight the contribution of Lalign to the total objective with λ = 1 .0, and utilize a 2-layer unimodal SMILES transformer 11 arXiv Template A P REPRINT UMAP of Joint Spectrum-SMILES Latent Space Contrastive Retrieval R@K Top-K Prediction Accuracy 
+
+Figure 5: Effect of contrastive loss on model performance. (Left): Top-K prediction accuracy of our baseline model and the same model trained with the contrastive loss. (Middle): Retrieval accuracy R@K of the contrastive model at increasing candidate set sizes (R@1, R@5, R@10), showing the fraction of spectra whose correct molecule is recovered within the first R matches by embedding similarity. (Right): UMAP visualization of the joint embedding space aligned by the contrastive loss. Lines connect matched pairs. with dmodel = 512 . Doing this improves Top-K accuracy, primarily in the most restrictive case (Top-1). Findings for these metrics are in line with those observed in Zhang et al. 24 on simulated data. We also compute additional metrics and include a unified UMAP visualization to better characterize the effect of the contrastive signal. At test time, both spectra and SMILES are passed through their respective encoders and evaluated for retrieval accuracy (see Section 4.2 for specifics). We report high R@K retrieval accuracy, even when considering only a single candidate. This suggests that the model has learned a well-aligned latent space where spectra and SMILES pairs are highly proximate. This is further validated by the UMAP visualization, which shows tight clustering with few outliers. The mean cosine similarity between matched pairs is also high, at 83 .44 .
+
+5.3 Encoder Layer Fusion 
+
+Table 2: Top-K accuracy of different encoder layer fusion strategies. Results convey performance on experimental NIST data after fine-tuning respective IBM-MD trained models. All models use the contrastive loss as well. Model Top-1 Top-5 Top-10 Additional Parameters None 26.01 43.89 51.20 —Simple mean 22.49 39.66 46.16 —Gate-weighted 25.55 42.59 50.65 L(dmodel + 1) 
+
+LOSN 27.61 45.14 51.49 L(dmodel + 1) 
+
+ChIMP 27.10 45.71 51.62 L(dmodel + 1) +  L
+
+> 2
+
+
+
+As detailed in Section 2, leveraging the information of all encoder layers can be advantageous to transformers. Table 2 details an ablation of fusion strategies on the contrastive-trained model from Section 5.2. We can see that the simple mean formation, where we have a uniform average over layers, degrades performance. This is not surprising, as it necessitates equal contribution from all layers with no room for dynamic consideration. Interestingly, the addition of dynamic weighting with the gate-weighted strategy doesn’t have much of an effect. This is in contrast to the fuzzy fusion operator strategies, which each improve performance significantly. The rationale behind the gate-weighted performance may come down to the gate itself; training imbalance and gradient interference from the convoluted optimization path may blur the effect of this small component. With LOSN and ChIMP, there is no reliance on a well-calibrated gate — they instead compute aggregation on a per-token basis leveraging the content-derived ℓ2-norm sort. While the fusion methods do add learned parameters, the additions are negligible relative to the model as a whole, suggesting that the observed performance differences are purely attributable to the inductive bias of the aggregation operator. 12 arXiv Template A P REPRINT 
+
+Table 3: Top-K accuracy of different decoder aggregation strategies for various datasets. The IBM-MD and QM9S results are on held-out simulated samples, while the NIST results convey performance on experimental data after fine-tuning IBM-MD trained models. 
+
+IBM-MD Simulated QM9S Simulated NIST Experimental 
+
+Model Top-1 Top-5 Top-10 Top-1 Top-5 Top-10 Top-1 Top-5 Top-10 Dense FFN 24.21 42.99 50.23 52.15 69.53 71.48 27.21 45.14 51.49 MoE-LCS 25.06 42.63 50.76 55.58 72.40 74.98 27.86 45.84 51.52 MoE-LOSN 27.12 44.62 53.96 63.28 86.13 89.06 31.83 50.13 57.23 
+
+MoE-ChIMP 25.51 41.77 49.85 58.01 76.66 80.22 28.86 47.99 54.93 
+
+5.4 Decoder Aggregation Ablation 
+
+Table 3 details model performance for different decoder configurations. All models utilize the best contrastive loss configuration from Section 5.2 and LOSN encoder fusion per Section 5.3. MoE models are sparse, consisting of 8 experts with k = 4 as shown in Figure 2. The total active parameters of these 4 experts match the parameter count of the dense FFN for consistency. Additional hyperparameter settings are detailed in Appendix A.3. While the MoE-LCS model slightly outperforms the standard dense (FFN) approach across datasets, fuzzy aggregation methods show a distinct performance advantage. The MoE-LOSN model achieves the highest Top-1 accuracy of all tested models on the experimental test set. The MoE-ChIMP approach is only slightly better than the MoE-LCS baseline, which may be due to the fact that the Choquet formulation is less advantageous for Mixture of Experts due to the inherent lack of distinct heterogenity among experts. Interestingly, all models perform significantly better on QM9S samples; as suggested in Wu et al. 12 , this is likely due to the relative simplicity of spectra in this dataset. Density Functional Theory (DFT) is inherently static, wheras Molecular Dynamics (MD) simulations can capture mode coupling, fermi resonances, and anharmonicities naturally present in real-world measured spectra 53 .
+
+5.5 Tanimoto Similarity and Structural Proximity 
+
+Beyond exact-match accuracy, we report Tanimoto similarity to characterize structural proximity of incorrect predictions. Table 4 shows that even when our model does not recover the exact structure, its predictions remain chemically proximate to the target. Structural proximity is also further characterized by measuring the deviation in molecular weight between ground truth and predicted molecules. Finally, the model’s ability to generate structures with the correct chemical formulae is measured. Table 4: Structural proximity of Top-1 predictions on NIST experimental dataset for models with and without formula input. Molecular weight deviation (MAE) Tanimoto similarity for different fingerprint strategies, and formula accuracy (exact atom-count match) are reported. 
+
+Model Input Tanimoto Similarity Compositional Similarity 
+
+Model IR Formula MACCS RDKit Morgan MW MAE Formula Acc. Dense FFN ✓ ✕ 0.754 0.603 0.558 14.36 38.96 Dense FFN ✓ ✓ 0.797 0.636 0.595 2.94 65.62 MoE-LOSN ✓ ✕ 0.762 0.612 0.575 13.29 45.11 MoE-LOSN ✓ ✓ 0.831 0.649 0.621 2.21 74.43 
+
+5.6 Substructure-Level Error Analysis 
+
+Exact-match accuracy does not capture partial structural recovery. We therefore supplement Top-K metrics with various substructure metrics and similarity characterization. Figure 6 reports fragment-level precision and recall across chemically significant fragment classes through Breaking of Retrosynthetically Interesting Chemical Substructures (BRICS) decomposition 54 , providing finer-grained insight into where errors concentrate. More information on the BRICS fragmentation process, specifically the custom classes shown in Figure 6, can be found in Appendix B.2. Also recorded is the relative abundance of BRICS classes across the test dataset. This spread is similar to the spread of the training dataset, and is not necessarily prohibitive in that some classes are simply more chemically common, a reality reflected by the distribution of existing data sources. We see that certain BRICS fragments have lower performance, and 13 arXiv Template A P REPRINT 
+
+Figure 6: Per-fragment-class precision, recall, and F1 scores for BRICS fragment classes on held-out NIST experimental spectra (Top-1 prediction). Fragments are classified into 9 chemically distinct named categories as shown here; fragments not fitting into any of the established categories are classified as "other." The frequency of each fragment class across the test dataset, n, is recorded next to each class name. The vertical dashed line marks the macro F1 score for all classes. this is chemically meaningful: for example, ether/ester linkages are spectrally loud (i.e., carbonyl stretches), whereas halogens are more quiet and nitrogen heterocycles have complex ring structures and substitution patterns that affect absorption considerably. (tetrasubstituted benzene) (terminal chloride) (aryl thiol) 
+
+Figure 7: Substructure analysis. (A): Miss rate of sp 3-cut fragments vs. their frequency in the held-out test set. The SMILES of select outlier fragments are overlaid on the plot. (B): A comparison of select fragment miss rates for the standard IR-only model and a variation where the formula is also provided as input. Labeled is the SMILES string corresponding to the shown fragment, as well as respective sp 3-cut fragment classes and taxonomic context. 14 arXiv Template A P REPRINT 
+
+Aside from BRICS, we also evaluate performance using a custom fragmentation engine. This method differs from BRICS in that it is not retrosynthetically motivated, and rather cuts where sp 3 carbons bridge structural motifs such as aromatic rings. By separating core chemical structures from their modification patterns, we obtain a richer characterization of structural motifs that is distinct from bond environment rule-based approaches (such as BRICS). For more information on this fragmentation engine, refer to Appendix B.1. Figure 7.A shows miss rate vs. test set occurrences, identifying a few fragments that are disproportionately missed and labeling them with their respective molecular visualizations. Terminal chlorides are often missed; the plot specifically highlights aliphatic chlorides, but this is observed for ring substituents as well. While this may be due in part to class imbalance, it is more likely the result of overlapping absorption ranges in the fingerprint region that are attributed to other components at the expense of these fragments. This is corroborated by the visualization in Figure 7.B, which shows the miss rate for select fragments for our model (IR only) and our model with formula conditioning. We can see that the inclusion of the formula in input eliminates much of the issue with the aforementioned terminal fragments, likely because the model is able to refer to the formula to distinguish overlapping spectra. 
+
+# 6 Conclusion and Future Work 
+
+In this work, we demonstrate various strategies for improving the performance of de novo molecular structure elucidation models. Our model achieves Top-1 accuracy of 31.83%, Top-5 accuracy of 50.13%, and Top-10 accuracy of 57.23% on unseen experimental IR spectra. This is bolstered by the inclusion of fuzzy fusion of learned spectral features in the encoder and SMILES semantics in the decoder, as well as contrastive alignment. We find that fusion of different critical components in the transformer architecture is beneficial, suggesting that these models benefit from non-standard or fuzzy approaches to information aggregation in complex domains. We complement direct accuracy performance with additional metrics and visualizations that characterize robust capabilities of these models for analyzing infrared spectra and generating chemically valid SMILES strings. While accuracy compared to isomer ranking models is lower, we illustrate that the ultimate difference between generated candidates is minor, with the inclusion of formula priors only serving to distinguish underrepresented or overlapping absorption bands for small molecular components such as aryl thiols or terminal chlorides. These findings ultimately serve to emphasize the degree to which IR spectra encode structural information, and that the application of machine learning has the potential to accelerate typical elucidation workflows while also making the most out of measured properties. Future work in this area could further explore fuzzy aggregation, potentially implementing new operators that better serve either the limited scope of available experimental data, or the specific chemical concepts learned by model sub-components such as decoder experts. Another avenue for future research involves the shared latent space that is formed through the contrastive loss term. We find high retrieval accuracy for test samples, further suggesting the existence of a chemically structured representation. This may benefit downstream tasks such as research into multi-modal models for structure elucidation that incorporate other spectral properties, or better characterization of graph-based approaches. 
+
+# Resources 
+
+We open source all Python code associated with the paper, including custom model implementations and train-ing/evaluation scripts. The code will be available at https://github.com/ethanmick8/ir2structure . The experimental data are sourced from the NIST Chemistry WebBook ( https://webbook.nist.gov/chemistry/ ). For the IBM-MD dataset 5, data can be obtained from https://zenodo.org/records/7928396 , while the QM9S 47 
+
+was obtained from https://figshare.com/articles/dataset/QM9S_dataset/24235333 .
+
+# Acknowledgments 
+
+The authors acknowledge funding support from National Science Foundation (NSF) Award Number 2243526; NSF NRT-HDR: Advancing Materials Frontiers with Creativity and Data Science. M.J.Y. acknowledges partial support from the NSF Division of Materials Research (DMR) Polymers Program through Award Number 2235161. Additional support provided by the MU Materials Science & Engineering Institute (MUMSEI). Computational resources were provided by the National Research Platform (NRP) Nautilus cluster 55 .
+
+# References 
+
+[1] David R. Klein. Organic Chemistry . Wiley Global Education, 2013. 15 arXiv Template A P REPRINT 
+
+[2] Peter R. Griffiths. Handbook of Vibrational Spectroscopy . Wiley Global Education, 2006. [3] John Coates et al. Interpretation of infrared spectra, a practical approach. Encyclopedia of analytical chemistry ,12:10815–10837, 2000. [4] Peter Larkin. Infrared and Raman spectroscopy: principles and spectral interpretation . Elsevier, 2017. [5] Marvin Alberts, Federico Zipoli, and Teodoro Laino. Leveraging infrared spectroscopy for automated structure elucidation. Chemistry Communications , 7, 2024. doi:https://doi.org/10.1038/s42004-024-01341-w. [6] Mikhail Elyashberg and Dimitris Argyropoulos. Computer-assisted structure elucidation (case): Current and future perspectives. Magnetic Resonance in Chemistry , 59:667–668, 07 2021. doi:10.1002/mrc.5162. [7] Jonathan A. Fine, Anand A. Rajasekar, Krupal P. Jethava, and Gaurav Chopra. Spectral deep learn-ing for prediction and prospective validation of functional groups. Chem. Sci. , 11:4618–4630, 2020. doi:https://doi.org/10.1039/C9SC06240H. [8] Abigail A. Enders, Nicole M. North, Chase M. Fensore, Juan Velez-Alvarez, and Heather C. Allen. Functional group identification for ftir spectra using image-based machine learning models. Analytical Chemistry , 93(28): 9711–9718, 2021. doi:https://doi.org/10.1021/acs.analchem.1c00867. PMID: 34190551. [9] Guwon Jung, Son Gyo Jung, and Jacqueline M Cole. Automatic materials characterization from infrared spectra using convolutional neural networks. Chemical Science , 14(13):3600–3609, 2023. doi:https://doi.org/10.1039/D2SC05892H. [10] Guy W. Bemis and Mark A. Murcko. The properties of known drugs. 1. molecular frameworks. Journal of Medicinal Chemistry , 39(15):2887–2893, 1996. doi:https://doi.org/10.1021/jm9602928. PMID: 8709122. [11] Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N. Gomez, Lukasz Kaiser, and Illia Polosukhin. Attention is all you need, 2023. URL https://arxiv.org/abs/1706.03762 .[12] Wenjin Wu, Aleš Leonardis, Jianbo Jiao, Jun Jiang, and Linjiang Chen. Transformer-based models for predicting molecular structures from infrared spectra using patch-based self-attention. The Journal of Physical Chemistry A ,129(8):2077–2085, 2025. doi:https://doi.org/10.1021/acs.jpca.4c05665. PMID: 39951543. [13] Marvin Alberts, Federico Zipoli, and Teodoro Laino. Setting new benchmarks in ai-driven infrared structure elucidation. Digital Discovery , 4:1936–1943, 2025. doi:https://doi.org/10.1039/D5DD00131E. [14] Alexey Dosovitskiy et al. An image is worth 16x16 words: Transformers for image recognition at scale, 2021. URL https://arxiv.org/abs/2010.11929 .[15] David Weininger. Smiles, a chemical language and information system. 1. introduction to methodol-ogy and encoding rules. Journal of Chemical Information and Computer Sciences , 28(1):31–36, 1988. doi:https://doi.org/10.1021/ci00057a005. [16] Yongqi Jin, Jun-Jie Wang, Fanjie Xu, Xiaohong Ji, Zhifeng Gao, Linfeng Zhang, Guolin Ke, Rong Zhu, and Weinan E. Nmr-solver: Automated structure elucidation via large-scale spectral matching and physics-guided fragment optimization, 2025. URL https://arxiv.org/abs/2509.00640 .[17] Marvin Alberts, Oliver Schilter, Federico Zipoli, Nina Hartrampf, and Teodoro Laino. Unraveling molecular structure: A multimodal spectroscopic dataset for chemistry, 2024. URL https://arxiv.org/abs/2407. 17492 .[18] Martin Priessner, Richard J. Lewis, Magnus J. Johansson, Jonathan M. Goodman, Jon Paul Janet, and Anna Tomberg. Enhancing molecular structure elucidation with reasoning-capable llms. Digital Discovery , 5:1237–1251, 2026. doi:https://doi.org/10.1039/D5DD00359H. [19] Heewoong Noh, Namkyeong Lee, Gyoung S. Na, Kibum Kim, and Chanyoung Park. Ir-agent: Expert-inspired llm agents for structure elucidation from infrared spectra, 2025. URL https://arxiv.org/abs/2508.16112 .[20] Noam Shazeer, Azalia Mirhoseini, Krzysztof Maziarz, Andy Davis, Quoc Le, Geoffrey Hinton, and Jeff Dean. Outrageously large neural networks: The sparsely-gated mixture-of-experts layer. In International Conference on Learning Representations , 2017. URL https://openreview.net/forum?id=B1ckMDqlg .[21] William Fedus, Barret Zoph, and Noam Shazeer. Switch transformers: Scaling to trillion parameter models with simple and efficient sparsity. Journal of Machine Learning Research , 23(120):1–39, 2022. URL http: //jmlr.org/papers/v23/21-0998.html .[22] Charlie Veal, Alex Yang, Alex Hurt, Muhammad Aminul Islam, Derek T. Anderson, Grant Scott, James M Keller, Timothy C. Havens, and Bo Tang. Linear order statistic neuron. In 2019 IEEE International Conference on Fuzzy Systems (FUZZ-IEEE) , pages 1–6, 2019. doi:https://doi.org/10.1109/FUZZ-IEEE.2019.8858802. 16 arXiv Template A P REPRINT 
+
+[23] Muhammad Aminul Islam, Derek T. Anderson, Anthony J. Pinar, Timothy C. Havens, Grant Scott, and James M. Keller. Enabling explainable fusion in deep learning with fuzzy integral neural networks. IEEE Transactions on Fuzzy Systems , 28(7):1291–1300, 7 2020. doi:https://doi.org/10.1109/tfuzz.2019.2917124. [24] Colin Zhang and Yang Ha. Toward complete molecular structure prediction from infrared spec-troscopy using deep learning. Journal of chemical information and modeling , 66, 12 2025. doi:https://doi.org/10.1021/acs.jcim.5c01834. [25] Aaron van den Oord, Yazhe Li, and Oriol Vinyals. Representation learning with contrastive predictive coding, 2019. URL https://arxiv.org/abs/1807.03748 .[26] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry, Amanda Askell, Pamela Mishkin, Jack Clark, Gretchen Krueger, and Ilya Sutskever. Learning transferable visual models from natural language supervision, 2021. URL https://arxiv.org/abs/2103.00020 .[27] Jiahui Yu, Zirui Wang, Vijay Vasudevan, Legg Yeung, Mojtaba Seyedhosseini, and Yonghui Wu. Coca: Contrastive captioners are image-text foundation models. Transactions on Machine Learning Research , 2022. ISSN 2835-8856. URL https://openreview.net/forum?id=Ee277P3AYC .[28] Yuyang Wang, Jianren Wang, Zhonglin Cao, and Amir Barati Farimani. Molecular contrastive learn-ing of representations via graph neural networks. Nature Machine Intelligence , 4:1–9, 03 2022. doi:https://doi.org/10.1038/s42256-022-00447-x. [29] Pau Rocabert-Oriols, Camilla Lo Conte, Núria López, and Javier Heras-Domingo. Multi-modal con-trastive learning for chemical structure elucidation with vibraclip. Digital Discovery , 4:3818–3827, 2025. doi:https://doi.org/10.1039/D5DD00269A. [30] Adrian Mirza, Luc Patiny, and Kevin Maik Jablonka. End-to-end multimodal structure elucidation from raw spectra combining contrastive learning and evolutionary algorithms. Nature Communications , 17(5013), 2026. doi:https://doi.org/10.1038/s41467-026-73846-y. [31] Toshiaki Murofushi and Michio Sugeno. A theory of fuzzy measures: Representations, the choquet integral, and null sets. Journal of Mathematical Analysis and Applications , 159(2):532–549, 1991. ISSN 0022-247X. doi:https://doi.org/10.1016/0022-247X(91)90213-J. [32] R.R. Yager. On ordered weighted averaging aggregation operators in multicriteria decisionmaking. IEEE Transactions on Systems, Man, and Cybernetics , 18(1):183–190, 1988. doi:https://doi.org/10.1109/21.87068. [33] Sansanee Auephanwiriyakul, James M Keller, and Paul D Gader. Generalized choquet fuzzy integral fusion. 
+
+Information Fusion , 3(1):69–85, 2002. ISSN 1566-2535. doi:https://doi.org/10.1016/S1566-2535(01)00054-9. [34] Michel Grabisch and Christophe Labreuche. A decade of application of the choquet and sugeno integrals in multi-criteria decision aid. Annals of Operations Research , 175, 04 2008. doi:https://doi.org/10.1007/s10288-007-0064-2. [35] Xing Shi, Inkit Padhi, and Kevin Knight. Does string-based neural mt learn source syntax? In Proceedings of the 2019 Conference on Empirical Methods in Ntural Language Processing , pages 1526–1534, 01 2016. doi:https://doi.org/10.18653/v1/D16-1159. [36] Matthew E. Peters, Mark Neumann, Mohit Iyyer, Matt Gardner, Christopher Clark, Kenton Lee, and Luke Zettlemoyer. Deep contextualized word representations. In Proceedings of the 2018 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, Volume 1 (Long Papers) , pages 2227–2237, New Orleans, Louisiana, June 2018. Association for Computational Linguistics. doi:https://doi.org/10.18653/v1/N18-1202. [37] Zi-Yi Dou, Zhaopeng Tu, Xing Wang, Shuming Shi, and Tong Zhang. Exploiting deep representations for neural machine translation. In Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing , pages 4253–4262, Brussels, Belgium, October-November 2018. Association for Computational Linguistics. doi:https://doi.org/10.18653/v1/D18-1457. [38] Jian Yang, Yuwei Yin, Liqun Yang, Shuming Ma, Haoyang Huang, Dongdong Zhang, Furu Wei, and Zhoujun Li. Gtrans: Grouping and fusing transformer layers for neural machine translation. 
+
+IEEE/ACM Trans. Audio, Speech and Lang. Proc. , 31:1489–1498, November 2022. ISSN 2329-9290. doi:https://doi.org/10.1109/TASLP.2022.3221040. [39] Robert Jacobs, Michael Jordan, Steven Nowlan, and Geoffrey Hinton. Adaptive mixtures of local experts. Neural Computation , 3:79–87, 03 1991. doi:https://doi.org/10.1162/neco.1991.3.1.79. [40] Joan Puigcerver, Carlos Riquelme Ruiz, Basil Mustafa, and Neil Houlsby. From sparse to soft mixtures of experts. In International Conference on Learning Representations , volume 2024, 17 arXiv Template A P REPRINT 
+
+pages 28435–28445, 2024. URL https://proceedings.iclr.cc/paper_files/paper/2024/file/ 79fea214543ba263952ac3f4e5452b14-Paper-Conference.pdf .[41] Mohammed Muqeeth, Haokun Liu, and Colin Raffel. Soft merging of experts with adaptive routing. Transac-tions on Machine Learning Research , 2024. ISSN 2835-8856. URL https://openreview.net/forum?id= 7I199lc54z . Featured Certification. [42] Stanton R. Price, Steven R. Price, and Derek T. Anderson. Introducing fuzzy layers for deep learn-ing. In 2019 IEEE International Conference on Fuzzy Systems (FUZZ-IEEE) , pages 1–6. IEEE, 6 2019. doi:https://doi.org/10.1109/fuzz-ieee.2019.8858790. [43] Jimmy Lei Ba, Jamie Ryan Kiros, and Geoffrey E. Hinton. Layer normalization, 2016. URL https://arxiv. org/abs/1607.06450 .[44] Siva Krishna Kakula, Anthony Pinar, Timothy Havens, and Derek Anderson. Extended linear order statistic (elos) aggregation and regression. In 2020 IEEE International Conference on Fuzzy Systems (FUZZ-IEEE) , 07 2020. doi:https://doi.org/10.1109/FUZZ48607.2020.9177595. [45] Michel Grabisch. k-order additive discrete fuzzy measures and their representation. Fuzzy Sets and Systems , 92 (2):167–189, 1997. ISSN 0165-0114. doi:https://doi.org/10.1016/S0165-0114(97)00168-1. Fuzzy Measures and Integrals. [46] W. E. Wallace. Infrared spectra. In NIST Chemistry WebBook, NIST Standard Reference Database Number 69 .National Institute of Standards and Technology, Gaithersburg, MD 20899, 2024. [47] Zihan Zou, Yujin Zhang, Lijun Liang, Mingzhi Wei, Jiancai Leng, Jun Jiang, Yi Luo, and Wei Hu. A deep learning model for predicting selected organic molecular spectra. Nature Computational Science , 3:1–8, 11 2023. doi:https://doi.org/10.1038/s43588-023-00550-y. [48] Philippe Schwaller, Teodoro Laino, Théophile Gaudin, Peter Bolgar, Christopher A. Hunter, Costas Bekas, and Alpha A. Lee. Molecular transformer: A model for uncertainty-calibrated chemical reaction prediction. ACS Central Science , 5(9):1572–1583, 2019. doi:https://doi.org/10.1021/acscentsci.9b00576. PMID: 31572784. [49] Esben Jannik Bjerrum. Smiles enumeration as data augmentation for neural network modeling of molecules, 2017. URL https://arxiv.org/abs/1703.07076 .[50] Greg Landrum et al. rdkit/rdkit: 2026_03_3 (Q1 2026) Release. URL https://zenodo.org/records/ 20446949 .[51] Stephen Heller, Alan McNaught, Stephen Stein, Dmitrii Tchekhovskoi, and Igor Pletnev. Inchi - the worldwide chemical structure identifier standard. Journal of cheminformatics , 5:7, 01 2013. doi:10.1186/1758-2946-5-7. [52] Dávid Bajusz, Anita Rácz, and Károly Héberger. Why is tanimoto index an appropriate choice for fingerprint-based similarity calculations? Journal of Cheminformatics , 7(20), 05 2015. doi:https://doi.org/10.1186/s13321-015-0069-3. [53] Michael Gastegger, Jörg Behler, and Philipp Marquetand. Machine learning molecular dynamics for the simulation of infrared spectra. Chem. Sci. , 8, 08 2017. doi:https://doi.org/10.1039/C7SC02267K. [54] Jörg Degen, Christof Wegscheid-Gerlach, Andrea Zaliani, and Matthias Rarey. On the art of compiling and using ’drug-like’ chemical fragment spaces. ChemMedChem , 3:1503–7, 10 2008. doi:https://doi.org/10.1002/cmdc.200800178. [55] Derek Weitzel et al. The national research platform: Stretched, multi-tenant, scientific kubernetes cluster. In 
+
+Practice and Experience in Advanced Research Computing 2025: The Power of Collaboration , PEARC ’25, New York, NY, USA, 2025. Association for Computing Machinery. doi:https://doi.org/10.1145/3708035.3736060. [56] Alec Radford, Karthik Narasimhan, Tim Salimans, Ilya Sutskever, et al. Improving language understanding by generative pre-training, 2018. [57] Jianlin Su, Yu Lu, Shengfeng Pan, Ahmed Murtadha, Bo Wen, and Yunfeng Liu. Roformer: Enhanced transformer with rotary position embedding, 2023. URL https://arxiv.org/abs/2104.09864 .[58] Jerret Ross, Brian Belgodere, Vijil Chenthamarakshan, Inkit Padhi, Youssef Mroueh, and Payel Das. Large-scale chemical language representations capture molecular structure and properties. Nature Machine Intelligence , 4(12): 1256–1264, 2022. doi:https://doi.org/10.1038/s42256-022-00580-7. [59] Siva Krishna Kakula, Anthony J. Pinar, Muhammad Aminul Islam, Derek T. Anderson, and Timothy C. Havens. Novel regularization for learning the fuzzy choquet integral with limited training data. IEEE Transactions on Fuzzy Systems , 29(10):2890–2901, 2021. doi:https://doi.org/10.1109/TFUZZ.2020.3009722. 18 arXiv Template A P REPRINT 
+
+# A Implementation Details 
+
+A.1 Architecture 
+
+Transformers are primarily based on the self-attention mechanism, which involves mapping a query ( Q) and a set of key-value pairs ( K,V ) to an output. We calculate a scaled dot-product between Q and K:Attention (Q, K, V ) = softmax ( QK T
+
+√dk
+
+)V, (11) where softmax is a normalization layer yielding a probability distribution over respective rows in the matrix. The result of self-attention layers is a global receptive field over data representation, a key advantage over previous recurrent modeling networks. Multi-head attention extends the single-head attention mechanism by computing h attention functions in parallel over learned linear projections of Q, K, and V :MultiHead (Q, K, V ) = Concat (head 1, . . . , head h)W O , (12) where each head is computed as head i = Attention (QW Qi , KW Ki , V W Vi ), with learned projection matrices 
+
+W Qi , W Ki ∈ Rdmodel ×dk , W Qi ∈ Rdmodel ×dv and output projection W O ∈ Rhd v ×dmodel . The dimension per head is set to dk = dv = dmodel /h , keeping total parameter cost constant relative to single-head attention at the same model width. Each head attends independently over the full sequence, allowing the model to jointly represent information from different representation subspaces at different positions. This is a property particularly relevant to IR spectra, where structurally informative features are distributed across disjoint spectral regions. Each attention sub-layer is followed by a position-wise feed-forward network (FFN) applied identically and indepen-dently to each sequence position: FFN (x) = max(0 , xW 1 + b1)W2 + b2, (13) where W1 ∈ Rdmodel ×df f , W 2 ∈ Rdf f ×dmodel , and df f > d model is the inner dimensionality, typically set to 4×dmodel .While the attention sub-layer captures dependencies across positions, the FFN applies a learned nonlinear transformation locally at each position, providing the representational capacity to encode complex token-level features. The encoder and decoder both follow this attention-then-FFN pattern per layer, with residual connections and layer normalization applied around each sub-layer. The replacement of this FFN with a Mixture of Experts (MoE) module is the modification described in Section 3.3. Since the attention mechanism is permutation-equivariant — it contains no inherent notion of token order — positional information must be injected explicitly. Transformer models typically use sinusoidal or learned absolute positional embeddings 11,56 , which are appended to input embeddings prior to attention. In this work, we instead apply Rotary Position Embeddings (RoPE) 57 , which encode position by rotating the query and key vectors in each attention head by an angle proportional to their absolute position prior to computing the scaled dot-product. This results in an augmented version of Equation 11: Attention (Q, K, V ) = softmax 
+
+ (Rm 
+
+> Θ
+
+Q)( Rn
+
+> Θ
+
+K)⊤
+
+√dk
+
+
+
+V, (14) where Rm 
+
+> Θ
+
+is a block-diagonal rotation matrix parameterized by position m and a set of fixed frequency bases Θ. The key property of this formulation is that the inner product ⟨Rm 
+
+> Θ
+
+q, R n
+
+> Θ
+
+k⟩ depends only on the relative offset m − n,meaning relative positional relationships are encoded implicitly through the rotation rather than added as a separate absolute embedding term. Compared to sinusoidal and learned absolute schemes, RoPE has been shown to extrapolate better to sequence lengths not seen during training and to integrate more naturally with the attention computation, since positional information is embedded directly into the query-key interaction rather than into the token representations themselves 57 . It has also been shown to be effective for chemical language modeling and foundation models 58 . RoPE is used in the self-attention modules of the architecture, but not the cross-attention, since in that case Q comes from the decoder sequence while K and V are from the encoder, making position ambiguous. 
+
+A.2 Fuzzy Aggregation Operators Linear Order Statistic Neuron (LOSN). The LOSN 22 generalizes the Ordered Weighted Average (OWA) 32 to a neural setting by replacing the perceptron’s index-aligned dot product with a weight vector applied to the sorted inputs. For a scalar input vector xπ sorted in descending order xπ(1) ≥ xπ(2) ≥ · · · ≥ xπ(N ), the LOSN is: 
+
+fLOSN (x, w) = wtxπ + wN +1 , (15) 19 arXiv Template A P REPRINT 
+
+where w ∈ RN +1 are learned weights and wN +1 is a bias. The LOSN can be interpreted as N ! shared weight perceptrons — one per possible input ordering — collapsing the exponential number of sort-order configurations into a single parameter vector through the shared weights. Critically, by learning w rather than fixing it, the LOSN can recover max( w1 = 1 , w k> 1 = 0 ), min( wN = 1 , w k<N = 0 ), mean( wk = 1 /N ), and continuously interpolated variants thereof, providing a smooth, learnable spectrum between extremal and central aggregation behaviors. The Extended LOSN 44 introduces an additional layer of expressivity by applying LOSN independently at each output dimension rather than with a single shared weight vector across all dimensions. This permits a model configuration to learn to distinguish different dimensions of input representations in addition to their primary differences. 
+
+Choquet Integral Multilayer Perceptron (ChIMP). The discrete Choquet integral of outputs h = ( h1, ..., h E ) with respect to g is: 
+
+Cg (h) = 
+
+> E
+
+X
+
+> j=1
+
+hπ(j)
+
+ g(Aπ(j)) − g(Aπ(j−1) ) , (16) for permutation π such that hπ(1) ≥ hπ(2) ≥ · · · ≥ hπ(E), and where Aπ(j) = xπ(1) , ..., x π(j) and Aπ(j) = 0 . The FM g encodes the worth of each data source coalition: g({e}) reflects the marginal value of source e alone, while 
+
+g({e1, e 2}) captures synergistic or redundant interactions between pairs, with the Interaction Index Ig (i, j ) ∈ [−1, 1] 
+
+quantifying whether combining two sources is complementary (+1) or redundant (–1). Islam et al. 23 prove that the Choquet Integral (ChI) admits a multilayer network representation (ChIMP) that can be optimized via stochastic gradient descent (SGD) using an iChIMP formulation based on the Möbius representation of the integral: 
+
+Cg (h) = X
+
+> A⊆X
+
+g(A)o(A), o(A) = 
+
+(
+
+max 
+
+
+
+0, V 
+
+> xi∈A
+
+hi − W  
+
+> xj/∈A
+
+hj
+
+
+
+A ⊂ X, 
+
+V 
+
+> xi∈A
+
+hi A = X., (17) where the integrand terms o(A) are computed by a fixed sub-network of max, min, and f (a, b ) = max (0 , a − b) neurons with no learnable weights, and the FM variables g(A) are the sole learned parameters. The full iChIMP formulation maintains 2E − 1 variables and computes 2E − 1 integrand terms, which becomes intractable as E grows. In this work we adopt the k = 2 additive restriction 45 , which approximates the full FM by retaining only singleton and pairwise subset terms while setting all higher-order coalition values to zero. Under this restriction the Choquet integral reduces to: 
+
+C(2)  
+
+> g
+
+(h) = 
+
+> E
+
+X
+
+> e=1
+
+αe · hπ(e) + X
+
+> i<j
+
+βij · min  hπ(i), h π(j)
+
+ , (18) where αe ∈ R are learned singleton weights, βij ∈ R are learned pairwise interaction weights, and the min operator is the standard t-norm realization of the pairwise interaction term under 2-additivity. The parameter count reduces from 
+
+2E − 1 to E +  E
+
+> 2
+
+ while retaining the full pairwise interaction structure that is the primary expressiveness advantage of ChIMP over linear aggregation. This eliminates the need for the iChIMP fixed sub-network for computed o(A)
+
+terms; the 2-additive integral is computed directly as the sum of singleton-weighted sort inputs and interaction-weighted element-wise minima of sorted input pairs. Singleton weights are initialized at 1/E and interaction weights at zero, recovering a uniform weighted mean at initialization and allowing pairwise structure to emerge only as training supports it. An ℓ1 regularization term on β encourages sparse interaction structure, retaining only robustly supported source-pair relationships 59 .
+
+Load balancing for routed aggregation. The order-statistic and Choquet operators above aggregate over the full set of expert outputs independently of the router. The sparse top-k LCS baseline instead aggregates only the experts the router selects, which admits a failure mode absent from the fuzzy variants: without intervention the router can collapse onto a small subset of experts, routing nearly all tokens to them and leaving the rest undertrained. Following Fedus et al. 21 , the baseline is regularized with an auxiliary load-balancing loss 
+
+Lbal = E
+
+> E
+
+X
+
+> e=1
+
+fe · Pe, (19) where E is the number of experts, fe is the fraction of batch tokens dispatched to expert e, and Pe is the mean router probability assigned to expert e over the batch. The product fePe is minimized when both dispatch and routing confidence are spread uniformly, so the term penalizes imbalance; it is added to the objective with a small coefficient, 
+
+λbal , and disabled at inference. Because MoE-LOSN and MoE-ChIMP aggregate over all expert outputs rather than a router-selected subset, no expert is starved of gradient, and these variants are trained without this auxiliary term. 20 arXiv Template A P REPRINT 
+
+A.3 Model Hyperparameters 
+
+This section details the specific architecture hyperparameter settings employed for trained models. All experiments use the configuration settings detailed in Table 5 and Table 6 unless otherwise ablated. We keep the number of free/trainable parameters for the model fixed around 33 million; any variation here is due to the negligible addition of small layers for different architectural variations, such as the weights included in the LOSN encoder layer fusion as described in Equation 5. Table 5: Spectral encoder hyperparameters. 
+
+Hyperparameter Value Description 
+
+Spectral pre-processing 
+
+Wavenumber range 450–3,981 cm −1 Input spectral domain Spectral resolution 1,791 points Points after resampling Patch size 75 Consecutive points per patch Number of patches 23 Sequence length into encoder 
+
+Transformer encoder 
+
+dmodel 512 Model / embedding dimension num_heads 8 Attention heads 
+
+dhead 64 Dimension per head 
+
+Nenc 3 Number of encoder layers 
+
+dffn 2,048 FFN hidden dimension Positional encoding RoPE Rotary position embedding 57 
+
+Normalization Post-norm LayerNorm after residual 43 
+
+Dropout 0.05 Applied to attention and FFN 
+
+Fuzzy Encoder Fusion 
+
+Fusion operator 2-additive Choquet Over Nenc layer outputs Include embedding layer False Layers only, no patch embed Gate input Layer mean pool Rdmodel 
+
+Singleton weights init Uniform 1/L 
+
+Pairwise weights init 0 Additive measure at init Number of interaction terms  Nenc 
+
+> 2
+
+ = 15 
+
+Contrastive Loss Terms 
+
+Loss InfoNCE 25 ; Symmetric spectral–structural 
+
+Lalign weight λ = 1 .0 Compound loss weighting Temperature τ 0.07 Learnable, initialized at 0.07 Spectral pool method Attention pool per CoCa 27 
+
+Projection dimension 512 Shared embedding space Negatives In-batch 
+
+A.4 Training Settings 
+
+We train models on a single NVIDIA A100-80GB GPU (PCIe). The CPU used is the AMD EPYC 7713 (64 cores, 2.00 GHz, 256 cache), with 150 GB of RAM. We conduct a standard ablation of training hyperparameters to identify the optimal configuration for trained models. We utilize ADAM optimization, a 1-cycle learning rate schedule with a learning rate of 5e-4 and a 30% warmup phase, as well as a batch size of 256 for pretraining and 64 for finetuning. 
+
+# B Molecular Fragment Analysis 
+
+B.1 Custom Fragment Decomposition 
+
+To evaluate structural recovery beyond exact-match and fingerprint-based metrics, we decompose both ground-truth and predicted SMILES into sub-structural fragments using a custom aliphatic-linker fragmentation engine. 21 arXiv Template A P REPRINT 
+
+Table 6: SMILES decoder hyperparameters. 
+
+Hyperparameter Value Description 
+
+Tokenization 
+
+Tokenizer Atom-level SMILES Character + atom-type tokens 48 
+
+Vocabulary size 47 Comprising all possible tokens in explored data Max SMILES length 100 Tokens including [BOS] /[EOS] 
+
+Transformer decoder 
+
+dmodel 512 Shared with encoder num_heads 8 Attention heads 
+
+dhead 64 Dimension per head 
+
+Ndec 4 Number of decoder layers 
+
+dffn 2,048 FFN hidden dimension Positional encoding RoPE Self-attention Causal (masked) Cross-attention Standard MHA Query: decoder; Key/Value: encoder Normalization Post-norm Dropout 0.1 
+
+Decoder MoE (when active) 
+
+num_experts 8
+
+top_k 4Expert sizes 512 Matching active parameters of dense model Aggregation LCS / LOSN / ChIMP Per ablation condition 
+
+Lbal λbal = 0 .01 Load balancing loss weight (MoE-LCS only) ChIMP group size 64 Features per Choquet group Number of groups dmodel /64 = 8 ChIMP specific 
+
+Inference 
+
+Decoding Beam search Beam width 10 Number of generated candidates Length penalty 1.0 
+
+Fragmentation algorithm. Each molecule is fragmented by first identifying sp 3 aliphatic carbons (non-ring, single-bond only) as cut points, followed by a breadth-first search (BFS) from non-linked neighbors to yield distinct regions. A second pass is then conducted to strip substituents from ring cores and produce isolated ring scaffolds and their R-groups. The result is five semantically meaningful fragment classes: Aromatic , consisting of intact aromatic ring systems (benzene, pyridine), Non-Aromatic Ring , consisting of saturated/partially unsaturated rings such as cyclohexane, 
+
+Aromatic Substituent , consisting of R-groups directly attached to aromatic rings, Non-Aromatic Ring Substituent , same as the previous but for non-aromatics, and Aliphatic , which collects free sp 3 chains/branches not adjacent to ring systems. Fragment identity is therefore represented as the tuple (canonical SMILES , label ); two fragments are considered equivalent only when both components agree. 
+
+Per-sample metrics. Let G and P denote the fragment sets of the ground-truth and predicted molecules, respectively. We define Recall = |G ∩ P| |G| , Precision = |G ∩ P| |P| , F1 = 2 · Recall · Precision Recall + Precision , (20) with the convention that recall = 1 when |G| = 0 , and precision = 1 (resp. 0) when |P| = 0 and |G| = 0 (resp. 
+
+|G| > 0). For models that generate K beam hypotheses per spectrum, we select the beam that maximises (Recall , F 1)
+
+lexicographically. Macro-averaged recall, precision, and F1 are then reported across the test set, alongside a Molecular Perfection Rate (MPR) — the fraction of samples for which the selected beam contains neither missing nor extraneous fragments relative to the ground truth. 
+
+Fragment difficulty analysis. To identify structurally challenging motifs, we accumulate per-fragment shared and missed counts across the test set and restrict attention to fragments appearing in at least Nmin = 10 ground-truth molecules and above the 50 th percentile of occurrence frequency. Each qualifying fragment is ranked by miss rate, 22 arXiv Template A P REPRINT 
+
+enabling systematic identification of motifs that the model consistently fails to recover. This is the primary process that is applied and visualized in Figure 7. 
+
+B.2 BRICS Fragment Analysis 
+
+We also decompose molecules using the BRICS algorithm of Degen et al. 54 , which defines 16 retrosynthetically motivated bond-environment rules derived from medicinal-chemistry practice. Fragments are identified solely by their canonical SMILES string (BRICS dummy-atom labels [n ∗] are retained during canonicalization but stripped before structural classification); per-sample recall, precision, and F1 are computed identically to the custom scheme above. 
+
+Structural category classification. To obtain chemically interpretable error breakdowns, each BRICS fragment is assigned to one or more structural categories via SMARTS substructure matching (Table 7). Classification is multi-label :a fragment may belong to several categories simultaneously (i.e., a pyridine ring is both aromatic ring and nitrogen heterocycle ). Category-level true positives (TP), false positives (FP), and false negatives (FN) are accumulated over all test samples and used to compute per-category precision, recall, and F1, as reported in Figure 6. Table 7: Structural categories used for BRICS fragment classification. Matching is applied after stripping numbered dummy labels ( [n ∗] → [∗]). Atom number #0 denotes a dummy attachment atom and is used in the ether/ester pattern to capture fragments in which one or both oxygen neighbours are attachment points rather than explicit carbons.                     
+
+> Category Detection criterion Notes
+> Aromatic ring Any non-dummy heavy atom is aromatic Nitrogen heterocycle [n,N;R] Aromatic or aliphatic N in a ring Amide / lactam [CX3](=O)[NX3,NX2] Supersedes carbonyl (non-amide) Carbonyl (non-amide) C=O double bond; no amide match Aldehydes, ketones, carbamates Ether / ester linkage [#6,#0][OX2;!H][#6,#0] Bridging non-hydroxylic O Hydroxyl / alcohol [OX2H] Free O–H Halogen-bearing [F,Cl,Br,I] Any halogen substituent Aliphatic chain ( ≥3 C) ≥3 non-aromatic, non-ring sp 3carbons All bonds single Other No category matched Catch-all
+
+# C Additional Results 
+
+C.1 Mixture of Experts and Token Attribution MoE-LCS MoE-ChIMP 
+
+Figure 8: Expert SMILES token attribution for different MoE configurations. Bin intensity denotes the probability that a token belongs to a SMILES group given that the corresponding expert (row) was selected for it. C_chain is the most common of these groups; MoE-LCS makes this clear by delegating it to several experts. MoE-ChIMP, on the other hand, aided by the contribution of its informed aggregation module, disperses focus more evenly across potential classes. Figure 8 reports, for each expert, the distribution of SMILES token categories over the positions where that expert was the gate’s top choice. At every decoder MoE position, the gate produces a confidence ranking over the E experts; 23 arXiv Template A P REPRINT 
+
+Table 8: SMILES token categories used for expert attribution. Each character position of the SMILES string is assigned exactly one category. Atom ring membership and aromaticity are determined by RDKit 50 (GetIsAromatic ,
+
+RingInfo ), with a string-only heuristic fallback for SMILES that fail to parse; multi-character atoms (e.g., Cl , bracketed atoms) assign the atom’s category to every character in its span. Control tokens ( [BOS] /[EOS] /padding) are excluded prior to classification via the decoder token offset.                              
+
+> Category Detection criterion
+> Structural / connectivity markers
+> branch_open (branch_close )ring_closure Ring-bond digit or %dd double_bond =triple_bond #aromatic_bond :stereo @,@@ ,/,\
+> Carbon
+> C_aromatic Aromatic carbon
+> C_ring Aliphatic carbon in a ring
+> C_chain Aliphatic carbon not in a ring
+> Nitrogen
+> N_aromatic Aromatic nitrogen
+> N_ring Aliphatic nitrogen in a ring
+> N_chain Aliphatic nitrogen not in a ring
+> Oxygen / Sulfur
+> O_ring Oxygen in a ring
+> O_chain Oxygen not in a ring
+> S_ring Sulfur in a ring
+> S_chain Sulfur not in a ring
+> Halogen
+> FFluorine
+> Cl Chlorine
+> Br Bromine
+> IIodine
+> Other
+> PPhosphorus
+> other_atom Any other atomic symbol
+> other Any non-atom, non-structural character
+
+we record the rank-0 expert (highest gate confidence). This definition is applied identically to all variants. Each position is mapped back to its SMILES character and assigned to one of the [N] token categories of Table 8; positions corresponding to control tokens ( [BOS] /[EOS] /padding) are excluded. Counts are accumulated over the test set into an 
+
+E × [N ] matrix and row-normalized, so entry (e, c ) gives P (category c | expert e is rank-0 ) and each expert row sums to one. We attribute on the gate’s top choice rather than the realized aggregation weight so that the metric is well-defined and comparable across variants. For the routed LCS baseline, the rank-0 expert also participates directly in the convex sum; for MoE-LOSN and MoE-ChIMP the gate is computed but does not drive aggregation, which instead sorts and combines all expert outputs (Section 3.3). The heatmap therefore characterizes the specialization the gate has learned under each aggregation objective, not the per-token contribution to the output. We see that non-additive aggregation (MoE-ChIMP) appears to lead to more diverse experts, potentially placing a greater emphasis on under-represented substructures. The MoE-LCS, on the contrary, sees several of its experts focused on carbon chains (C_chain), which is easily the most common of the measured token types as defined in Table 8. This dispersion may follow directly from the gate decoupling; and for ChIMP the unconstrained organization may be further amplified: because the 2-additive measure assigns worth to pairs of experts, an individual expert need not be a self-sufficient predictor of any one category but can specialize narrowly and contribute through its interaction terms with complementary experts, rewarding coverage of under-represented motifs that are informative only in combination. 24 arXiv Template A P REPRINT 
+
+C.2 Encoder Fusion Standard (gate-weighted) 2-additive ChIMP 
+
+> (A)
+> (B)
+
+Figure 9: Encoder Fusion layer weight by spectral position, and relative contribution, for the standard gate-weighted approach and the proposed 2-additive ChIMP method. Higher gate weight indicates that the corresponding layer dominates at that wavenumber. To further characterize the effect that fuzzy fusion operators have on encoder layer utilization, Figure 9 presents a comparative analysis of the standard gate-weighted sum and the 2-additive Choquet integral fusion modes applied to the stacked encoder layer representations produced at each depth level of the spectral encoder. For each fusion variant we visualize (left panels) a heatmap of normalized per-layer contribution as a function of wavenumber ˜ν (cm −1), where each row corresponds to one encoder depth and color intensity reflects the effective weight assigned to that layer at each spectral position, and (right panels) the marginal contribution averaged across ˜ν, summarizing aggregate layer utilization. The 2-additive Choquet integral, by contrast, sorts encoder layer outputs at each spectral position by their L2-norm magnitude and applies learned rank-position weights rather than learned layer-identity weights. Because the identity of the highest-norm layer varies across ˜ν, the effective per-layer contribution becomes position-dependent without any spatial supervision. Figure 9.B demonstrates the resulting behavior: contribution is balanced across all encoder depths, and each layer displays a distinct spectral focus region corresponding to the wavenumber range where its representations carry the highest relative magnitude. With the 2-additive choquet integral, each pairwise term activates most strongly at positions where two rank-consecutive layers are simultaneously high-norm, producing conjunctive bonus at spectrally rich positions where multiple depths of encoding contribute complementary evidence. Ultimately, we get a depth-resolved, spectrally localized decomposition of encoder information that the standard gate-weighted mechanism cannot express. 
+
+C.3 SMILES Augmentation Analysis 
+
+Introduced in 49 and applied to isomer ranking models in Alberts et al. 13 , SMILES augmentation increases the size of the dataset by enumerating chemically equivalent SMILES representations for training samples. Previous works find that doubling the size of the training dataset by enumerating a single chemically equivalent SMILES string for each sample enhances Top-1 accuracy. We extend this analysis to explore the effect of additional enumeration, as most molecules have several chemically equivalent representations in addition to the canonical string. Figure 10 details the effect of different degrees of enumeration on the fine-tuning training corpus. The experimental test set remains unchanged. The model utilized is the best performing model as identified in the main body, save for the degree of augmentation. The primary benefit of SMILES augmentation is forcing the decoder to treat the structural prediction problem as representation-invariant, and this is better represented when the decoder is given a diverse range of SMILES-space representations to attribute to spectra. In Figure 10, we see the effect of different degrees of SMILES augmentation on our model. The decoder’s implicit prior over SMILES syntax is flatter and more robust with the added enumerations, and the impact is apparent — including no augmentations results in dramatically lower Top-K accuracy. As we add augmentations, this stabilizes. Ultimately, the specific enumeration value chosen is going to depend on the overall complexity of training molecules; for the relatively small experimental NIST set, this is determined to be 6. At 8 25 arXiv Template A P REPRINT 
+
+Figure 10: Varying degrees of SMILES enumeration of training samples on the experimental training set before fine-tuning, and their corresponding performance. Increasing degree of enumeration increases the size of the fine-tuning dataset. augmentations, we start to observe a dropoff in performance. This may be due to the contrastive loss, which specifically treats in-batch pairs as negatives. With each spectrum appearing 8 times in the training data, a non-trivial fraction of batches may contain multiple augmentations of the same molecule, leading the loss to push spectral embeddings away 
+
+from SMILES embeddings that are actually correct structural matches. 26
