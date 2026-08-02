@@ -41,17 +41,17 @@
 <section class="dpr-home-dashboard-card dpr-home-report-card">
   <div class="dpr-home-dashboard-header">
     <div>
-      <span class="dpr-home-dashboard-kicker">2026-08-01</span>
+      <span class="dpr-home-dashboard-kicker">2026-08-02</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">共 5 篇</strong>
+    <strong class="dpr-home-dashboard-count">共 2 篇</strong>
   </div>
   <dl class="dpr-home-dashboard-stats">
     <div class="dpr-home-dashboard-stat"><dt>累计更新</dt><dd>1 次</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>2</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>3</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>0</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>2</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-08-01 22:13:53 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-08-02 21:52:56 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -62,7 +62,9 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>今日共读5篇论文，其中精读2篇、速读3篇，重点聚焦化学信息学与分子生成。最值得关注的是NISPO开源命名工具和SE(3)-MeanFlow蛋白质骨架生成方法，均获8分高分。下一步可优先体验这两个工具，关注AI在分子结构解析与生成中的落地应用。</p>
+<p>今日速读2篇论文（均7.0分），聚焦图结构编码与原子系统3D预测。</p>
+<p>最值得关注：多项式滤波图编码器（CondPSE）和无监督原子策略优化（APO），可分别用于图表示学习与结构预测。</p>
+<p>建议下一步从APO入手，探索其在材料/分子模拟中的实际应用潜力。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -71,12 +73,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">精读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">2 篇</strong>
+    <strong class="dpr-home-dashboard-count">0 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="NISPO: Open-source IUPAC name generation tool">NISPO: Open-source IUPAC name generation tool</span></li><li><span class="dpr-home-dashboard-paper-title" title="SE(3)-MeanFlow: Few-Step Protein Backbone Generation on Lie Groups">SE(3)-MeanFlow: Few-Step Protein Backbone Generation on Lie Groups</span></li></ul>
+<p class="dpr-home-dashboard-empty">今日暂无推荐。</p>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>2</strong></span></div>
+
 </section>
 <section class="dpr-home-dashboard-card dpr-home-skim-card">
   <div class="dpr-home-dashboard-header">
@@ -84,12 +86,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">速读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">3 篇</strong>
+    <strong class="dpr-home-dashboard-count">2 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Data Fusion and Contrastive Alignment for Unconstrained IR Molecular Structure Elucidation">Data Fusion and Contrastive Alignment for Unconstrained IR Molecular Structure Elucidation</span></li><li><span class="dpr-home-dashboard-paper-title" title="Thermodynamics-Informed Machine Learning for Energy Materials Discovery">Thermodynamics-Informed Machine Learning for Energy Materials Discovery</span></li><li><span class="dpr-home-dashboard-paper-title" title="AskChem: Claim-Centered Infrastructure for Chemistry Literature Synthesis">AskChem: Claim-Centered Infrastructure for Chemistry Literature Synthesis</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="CondPSE: A Polynomial-Filtered Structural Encoder with Conditional Modulation for Graphs">CondPSE: A Polynomial-Filtered Structural Encoder with Conditional Modulation for Graphs</span></li><li><span class="dpr-home-dashboard-paper-title" title="APO: Unsupervised Atomic Policy Optimization for 3D Structure Prediction of Atomic Systems">APO: Unsupervised Atomic Policy Optimization for 3D Structure Prediction of Atomic Systems</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>3</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>2</strong></span></div>
 </section>
 </div>
 

@@ -1,0 +1,39 @@
+{
+  "label": "2026-08-02",
+  "date": "2026-08-02",
+  "generated_at": "2026-08-02T21:53:00",
+  "count": 2,
+  "papers": [
+    {
+      "paper_id": "202608/02/2607.25169v1-condpse-a-polynomial-filtered-structural-encoder-with-conditional-modulation-for-graphs",
+      "section": "quick",
+      "title_en": "CondPSE: A Polynomial-Filtered Structural Encoder with Conditional Modulation for Graphs",
+      "authors": "Woohyun Lee, Hogun Park",
+      "date": "2026-07-28",
+      "pdf": "https://arxiv.org/pdf/2607.25169v1",
+      "score": "7.0",
+      "evidence": "预训练图结构编码器可复用于下游图模型，适用于化学分子图",
+      "tldr": "消息传递图神经网络受1-WL测试限制，难以区分某些非连通图。现有位置结构编码（PSE）通过预训练编码器提取拓扑信号，但性能有限。本文提出CondPSE，利用可学习多项式滤波器组处理高斯节点探针，通过FiLM调制融合跨滤波器、局部消息传递和图级信号。在合成基准上显著提升CSL和EXP准确率，但真实分子性质预测中未超越GPSE，揭示了强结构判别与下游收益间的差距。",
+      "tags": "query:aichem-map",
+      "abstract_en": "Message-passing graph neural networks are bounded by the 1-WL test and can miss topological structure that distinguishes non-isomorphic graphs. Positional and structural encodings (PSE) inject such topology-derived signals, and learned PSE encoders such as GPSE pretrain a single encoder to produce these signals from random node probes, which can then be frozen and reused as inputs across downstream graph models. We present CondPSE, a learned PSE encoder that applies a learnable polynomial graph filter bank to standard Gaussian node probes and refines the resulting structural-response branches through FiLM-style modulation conditioned on cross-filter, local message-passing, and graph-level signals. CondPSE is pretrained to reconstruct node-level positional/structural targets and graph-level invariants, and is then frozen for use as a downstream input encoding. On synthetic structural-discrimination benchmarks, CondPSE separates graph structures that 1-WL-bounded message passing cannot: it raises CSL accuracy from 42.9% to 97.3% and EXP accuracy from 68.3% to 99.9% relative to GPSE, and ablations show that the polynomial filter bank accounts for most of this gain. On real molecular property prediction, the picture is more limited. With a hybrid local-message-passing/global-attention backbone, CondPSE performs comparably to GPSE without surpassing it, and a ZINC backbone sweep shows no consistent ordering between the two encoders. We report these results and discuss why strong synthetic structural discrimination does not, on its own, yield a downstream advantage for frozen learned PSE encoders, including the role of downstream integration and possible mismatch between structural pretraining targets and molecular property labels.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202608/02/2607.28553v1-apo-unsupervised-atomic-policy-optimization-for-3d-structure-prediction-of-atomic-systems",
+      "section": "quick",
+      "title_en": "APO: Unsupervised Atomic Policy Optimization for 3D Structure Prediction of Atomic Systems",
+      "authors": "Shentong Mo, Yatao Bian",
+      "date": "2026-07-30",
+      "pdf": "https://arxiv.org/pdf/2607.28553v1",
+      "score": "7.0",
+      "evidence": "面向三维原子结构预测的无监督策略优化",
+      "tldr": "3D原子结构预测对材料与药物研发至关重要，但现有流匹配模型依赖监督偏好对齐，而实验标注昂贵。本文提出APO，一种全无监督对齐框架，无需真实结构，通过双奖励机制（特征奖励与稳定性奖励）结合组相对策略优化，让模型在采样组内自我校正并识别物理合理构型。在晶体与抗体基准上超越监督基线，同时提升推理效率。",
+      "tags": "query:aichem-map",
+      "abstract_en": "Predicting the 3D structures of atomic systems is fundamental to advancing material science and drug discovery. While flow-matching models (, FlowDPO) have recently shown promise in this domain, their performance relies heavily on alignment with ground-truth coordinates via supervised preference learning. However, obtaining experimental labels for novel crystal phases or de novo proteins is prohibitively expensive, creating a bottleneck for structural modeling in data-scarce regimes. In this work, we propose (Atomic Policy Optimization), a fully unsupervised alignment framework that eliminates the need for ground-truth reference structures. APO adapts group-relative policy optimization to 3D atomic environments, utilizing a novel dual-reward mechanism: (i) a that reinforces the policy's dominant latent structural modes through eigen-decomposition of sample similarities, and (ii) a that enforces thermodynamic stability. Our framework enables the model to ``self-correct'' by identifying physically plausible configurations within sampled groups. Extensive benchmarks on crystal and antibody structure prediction demonstrate that APO consistently outperforms fully supervised baselines, achieving a new state-of-the-art in match rates and structural fidelity. Furthermore, we show that APO effectively straightens probability paths, significantly improving inference efficiency. Our results suggest that intrinsic physical consistency can serve as a superior guide for alignment compared to noisy, supervised coordinate matching.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
