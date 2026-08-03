@@ -1,0 +1,341 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-08-03T22:44:45.090704+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 4,
+    "deep_cap": 6,
+    "deep_selected": 4,
+    "quick_candidates": 4,
+    "quick_skim_target": 11,
+    "quick_selected": 4
+  },
+  "deep_dive": [
+    {
+      "id": "2607.29158v1",
+      "source": "arxiv",
+      "title": "Implicit Machine Learning Force Fields Accelerate Molecular Dynamics Simulations",
+      "abstract": "We introduce implicit machine learning force fields (I-MLFFs), which replace explicit stacks of neural network layers with self-consistent fixed-point equations. In molecular simulations, this formulation enables intermediate representations to be reused across successive timesteps, thereby warm-starting force evaluation. The resulting models effectively combine the computational footprint of a shallow, single-layer MLFF with the representational capacity and accuracy of a deep neural network. Our approach unlocks architecture-agnostic efficiency gains that are inaccessible when force prediction and trajectory integration are considered separately. We demonstrate this across three major classes of graph neural networks: invariant, equivariant Cartesian tensor, and SO(3)-equivariant spherical-tensor architectures. Each yields a two- to five-fold reduction in compute and memory footprint. Crucially, these gains are achieved while retaining full atomistic resolution and the original integration timestep, avoiding spatial or temporal coarse graining. Our contribution therefore advances the scaling frontier of quantum-mechanically faithful molecular simulation, enabling longer trajectories and larger atomistic systems within fixed GPU memory and compute budgets, and thereby opening access to new insights across biomolecular and material systems.",
+      "authors": [
+        "Johannes Maeß",
+        "Leon Werner",
+        "J. Thorben Frank",
+        "Winfried Ripken",
+        "Martin Michajlow",
+        "Joshua Futterer",
+        "Klaus-Robert Müller",
+        "Stefan Chmiela"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-07-31T08:38:13+00:00",
+      "link": "https://arxiv.org/pdf/2607.29158v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Implicit ML force fields accelerate molecular dynamics simulations",
+      "llm_evidence_cn": "隐式机器学习力场加速分子动力学模拟",
+      "llm_evidence": "隐式机器学习力场加速分子动力学模拟",
+      "canonical_evidence": "隐式机器学习力场加速分子动力学模拟",
+      "llm_tldr_en": "Implicit ML force fields replace explicit neural stacks with fixed-point equations, warm-starting across timesteps, combining a shallow footprint with deep-network accuracy to accelerate molecular dynamics simulations.",
+      "llm_tldr_cn": "常规机器学习力场在每一步分子动力学模拟中都需要完整前向传播，计算开销大。本文提出隐式机器学习力场（I-MLFF），用自洽不动点方程取代显式深层网络，并跨时间步复用中间表示。在不变图网络、等变网络等多种架构上验证了方法能保持深层网络的精度，同时享有浅层网络的计算开销。该工作为大规模分子动力学模拟提供了架构无关的加速新思路。",
+      "llm_tldr": "常规机器学习力场在每一步分子动力学模拟中都需要完整前向传播，计算开销大。本文提出隐式机器学习力场（I-MLFF），用自洽不动点方程取代显式深层网络，并跨时间步复用中间表示。在不变图网络、等变网络等多种架构上验证了方法能保持深层网络的精度，同时享有浅层网络的计算开销。该工作为大规模分子动力学模拟提供了架构无关的加速新思路。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.29479v1",
+      "source": "arxiv",
+      "title": "MolGVR: A Chemistry-Grounded Framework for Text-to-Molecule Generation",
+      "abstract": "Text-to-molecule generation is typically formulated as a one-shot sequence generation problem, where a model directly maps target descriptions to molecular representations. However, molecular descriptions often contain informative structural constraints, and violating such constraints can change the molecular identity. This makes chemical verification and error correction important but underexplored. To fill this gap, we propose MolGVR, a chemistry-grounded Generator--Verifier--Refiner framework. The Generator infers structural evidence and generates candidate molecules. The Verifier addresses the lack of chemical validation by converting descriptions into chemical constraints and checking candidates against them. The Refiner addresses generation failures by revising candidates rejected by the Verifier. Experiments on ChEBI-20 and PCDes show that MolGVR improves exact-match performance. These results suggest that coupling generation with executable verification and feedback-guided refinement is an effective way to improve text-to-molecule generation.",
+      "authors": [
+        "Qian Tan",
+        "Xuanyu Zhu",
+        "Lei Jiang",
+        "Zhonghang Yuan",
+        "Chen Zhang",
+        "Yuqiang Li"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-07-31T14:43:52+00:00",
+      "link": "https://arxiv.org/pdf/2607.29479v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Text-to-molecule generation with generator-verifier-refiner framework and chemical validation",
+      "llm_evidence_cn": "基于生成-验证-精炼框架的文本到分子生成，并带化学验证",
+      "llm_evidence": "基于生成-验证-精炼框架的文本到分子生成，并带化学验证",
+      "canonical_evidence": "基于生成-验证-精炼框架的文本到分子生成，并带化学验证",
+      "llm_tldr_en": "MolGVR is a chemistry-grounded generator-verifier-refiner framework for text-to-molecule generation, where the verifier converts descriptions into chemical constraints, enabling error correction and improved validity.",
+      "llm_tldr_cn": "文本到分子生成通常被建模为一次性序列生成，但描述中的结构约束一旦违反就可能改变分子身份。MolGVR提出化学基础的生成器-验证器-精炼器框架：生成器推断结构证据并生成候选分子；验证器将描述转化为化学约束并检查候选；精炼器修复失败案例。该框架通过显式化学校验显著提升生成分子的有效性与可控性，为自然语言驱动的分子设计提供了新范式。",
+      "llm_tldr": "文本到分子生成通常被建模为一次性序列生成，但描述中的结构约束一旦违反就可能改变分子身份。MolGVR提出化学基础的生成器-验证器-精炼器框架：生成器推断结构证据并生成候选分子；验证器将描述转化为化学约束并检查候选；精炼器修复失败案例。该框架通过显式化学校验显著提升生成分子的有效性与可控性，为自然语言驱动的分子设计提供了新范式。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "molecular generation and optimization with machine learning",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.28776v1",
+      "source": "arxiv",
+      "title": "Representations from Pretrained Machine-Learning Interatomic Potentials as Coarse Coordinates for Material Generation and Evaluation",
+      "abstract": "Generative machine learning is increasingly used for inorganic crystal structure generation. Most models and the corresponding evaluation approaches rely on simple forms of crystal structure representation. In this paper, we showcase the power of atom-averaged features from pretrained Machine-Learning Interatomic Potentials (MLIPs), such as MACE, for such tasks. We first introduce a distance measure that assesses the output of material generative models by capturing both quality and novelty in a single distribution-based evaluation framework. In particular, we introduce the Coarse-Fine Transport Distance (CFTD) using two different featurizers, where the quality component is based on coarse MACE features. We showcase CFTD's versatility in capturing crystal-structure quality while also detecting memorization, and compare it with the recently introduced continuous SUN metrics. We further show that coarse MACE features can be used as guidance for a material generative model.",
+      "authors": [
+        "Paul Hagemann",
+        "Katharina Ueltzen",
+        "Simon Müller",
+        "Janine George",
+        "Philipp Benner"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cond-mat.mtrl-sci"
+      ],
+      "published": "2026-07-30T18:56:34+00:00",
+      "link": "https://arxiv.org/pdf/2607.28776v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Pretrained MLIP representations and a transport distance metric for material generation evaluation",
+      "llm_evidence_cn": "预训练原子间势表示与传输距离指标用于材料生成评估",
+      "llm_evidence": "预训练原子间势表示与传输距离指标用于材料生成评估",
+      "canonical_evidence": "预训练原子间势表示与传输距离指标用于材料生成评估",
+      "llm_tldr_en": "Atom-averaged features from pretrained MLIPs (e.g., MACE) serve as coarse coordinates for material generation, and the Coarse-Fine Transport Distance evaluates quality and novelty in one framework.",
+      "llm_tldr_cn": "无机晶体生成模型及其评估大多依赖简单的结构表示，难以同时刻画生成结果的质量和新颖性。本文展示了预训练机器学习原子间势（如MACE）的原子平均特征可作为有效的粗粒度坐标，并提出了统一的粗-细传输距离（CFTD）评估框架，兼顾生成质量与新颖性。该表示不仅改善了材料生成模型的输出质量，也为生成式材料科学提供了更具判别力的评价指标。",
+      "llm_tldr": "无机晶体生成模型及其评估大多依赖简单的结构表示，难以同时刻画生成结果的质量和新颖性。本文展示了预训练机器学习原子间势（如MACE）的原子平均特征可作为有效的粗粒度坐标，并提出了统一的粗-细传输距离（CFTD）评估框架，兼顾生成质量与新颖性。该表示不仅改善了材料生成模型的输出质量，也为生成式材料科学提供了更具判别力的评价指标。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "molecular generation and optimization with machine learning",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.29510v1",
+      "source": "arxiv",
+      "title": "Ordered-to-disordered transfer learning with graph neural networks for formation-energy and HOMO-LUMO gap prediction in high-entropy perovskite oxides",
+      "abstract": "High-entropy perovskite oxides (HEPOs) represent a chemically complex class of materials with promising functional properties, yet their vast compositional space and, chemical/structural disorder pose significant challenge for accurate property prediction. Graph neural networks (GNNs) enable rapid exploration of materials space but are often limited by the availability of representative training data. Here, we investigate ordered-to-disordered transfer learning using GNNs for formation-energy and HOMO-LUMO gap prediction in HEPOs by transferring knowledge learned from chemically ordered perovskites. Four representative GNN models, including CGCNN, GATGNN, ALIGNN and M3GNet are evaluated to understand the role of structural representations, spanning pairwise two-body and angular three-body interactions in transfer performance. We find strong property-dependent transfer behavior: formation-energy prediction transfers effectively to disordered HEPOs, whereas HOMO-LUMO gap prediction shows limited transferability due to its sensitivity to local chemical environments. Incorporating a small HEPO-specific training dataset substantially improves HOMO-LUMO gap prediction. Representation-level analysis using UMAP further highlights the importance of encoding three-body geometric information such as in ALIGNN for capturing complex structure-property relationships and improving transferability.",
+      "authors": [
+        "Panupol Untarabut",
+        "Narjes Jomaa",
+        "Sylvian Cadars",
+        "Olivier Masson",
+        "Samuel Bernard",
+        "Assil Bouzid",
+        "Santanu Saha"
+      ],
+      "primary_category": "cond-mat.mtrl-sci",
+      "categories": [
+        "cond-mat.mtrl-sci",
+        "cond-mat.other",
+        "cs.LG"
+      ],
+      "published": "2026-07-31T15:13:32+00:00",
+      "link": "https://arxiv.org/pdf/2607.29510v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Ordered-to-disordered transfer learning with GNNs for perovskite property prediction",
+      "llm_evidence_cn": "基于GNN的有序到无序迁移学习用于钙钛矿性质预测",
+      "llm_evidence": "基于GNN的有序到无序迁移学习用于钙钛矿性质预测",
+      "canonical_evidence": "基于GNN的有序到无序迁移学习用于钙钛矿性质预测",
+      "llm_tldr_en": "Ordered-to-disordered transfer learning with four GNN models improves formation-energy and HOMO-LUMO gap prediction in high-entropy perovskite oxides by transferring knowledge from ordered perovskites.",
+      "llm_tldr_cn": "高熵钙钛矿氧化物的组成复杂性和无序性使得传统图神经网络难以获得足够的代表数据来进行性质预测。本文研究从化学有序钙钛矿向无序高熵体系迁移知识的有序到无序迁移学习，并使用CGCNN、GATGNN、ALIGNN和M3GNet四种GNN模型进行验证。结果表明该策略能有效提高形成能和HOMO-LUMO带隙的预测精度，缓解了数据稀缺带来的瓶颈，为复杂无序材料的机器学习建模提供了一种通用方法。",
+      "llm_tldr": "高熵钙钛矿氧化物的组成复杂性和无序性使得传统图神经网络难以获得足够的代表数据来进行性质预测。本文研究从化学有序钙钛矿向无序高熵体系迁移知识的有序到无序迁移学习，并使用CGCNN、GATGNN、ALIGNN和M3GNet四种GNN模型进行验证。结果表明该策略能有效提高形成能和HOMO-LUMO带隙的预测精度，缓解了数据稀缺带来的瓶颈，为复杂无序材料的机器学习建模提供了一种通用方法。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "chemical foundation model pre-training and transfer learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2607.28692v1",
+      "source": "arxiv",
+      "title": "SciToolAgent-Evo: An Ontology-Aware Self-Evolving Agent for Open-World Scientific Tool Acquisition",
+      "abstract": "Large language model (LLM) agents have been increasingly adopted in scientific research for organizing and invoking specialized computational tools. However, their reliance on predefined tool spaces with static semantics limits their applicability to open-world scientific workflows, where tool requirements, capabilities, and boundaries evolve dynamically. To this end, we propose SciToolAgent-Evo, an ontology-aware self-evolving agent for open-world scientific tool acquisition. Driven by an evolving memory of skills, experiences, and an ontologized tool graph, it distills generalizable knowledge from contrastive trajectories during accumulation, whereas during inference, it formulates active requests and utilizes a LinUCB-based bandit gate to dynamically balance exploration and exploitation. Once a novel tool is acquired, its scientific ontology is completed online for seamless integration into the known graph. Moreover, we introduce OpenSciToolBench, a benchmark containing 900 realistic tasks across four difficulty levels. Extensive evaluations show that SciToolAgent-Evo achieves state-of-the-art performance, validating its robustness and generalization.",
+      "authors": [
+        "Yuqi Tang",
+        "Chenyi Zhou",
+        "Libin Wang",
+        "Keyan Ding",
+        "Qiang Zhang",
+        "Huajun Chen"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.CL"
+      ],
+      "published": "2026-07-30T08:47:11+00:00",
+      "link": "https://arxiv.org/pdf/2607.28692v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "LLM agent for scientific tool acquisition, applicable to chemistry workflows",
+      "llm_evidence_cn": "面向科学工具获取的LLM智能体，可适用于化学工作流",
+      "llm_evidence": "面向科学工具获取的LLM智能体，可适用于化学工作流",
+      "canonical_evidence": "面向科学工具获取的LLM智能体，可适用于化学工作流",
+      "llm_tldr_en": "Proposes an ontology-aware self-evolving agent for open-world scientific tool acquisition, using evolving memory and LinUCB to adapt tool semantics and support AI-driven chemistry discovery.",
+      "llm_tldr_cn": "该论文提出SciToolAgent-Evo，旨在解决LLM智能体依赖静态预定义工具空间，难以适应开放世界科学工作流的问题。其核心是一个具有本体感知能力的自进化智能体，通过技能与经验记忆的演化以及本体化工具图来泛化知识，并在推理时采用LinUCB策略主动请求工具。实验表明该方法能够在动态工具环境中持续获取适切工具。该工作为包括化学合成规划在内的科学AI智能体提供了通用且可演化的工具获取范式，推动AI4Chem智能体系统的实际部署。",
+      "llm_tldr": "该论文提出SciToolAgent-Evo，旨在解决LLM智能体依赖静态预定义工具空间，难以适应开放世界科学工作流的问题。其核心是一个具有本体感知能力的自进化智能体，通过技能与经验记忆的演化以及本体化工具图来泛化知识，并在推理时采用LinUCB策略主动请求工具。实验表明该方法能够在动态工具环境中持续获取适切工具。该工作为包括化学合成规划在内的科学AI智能体提供了通用且可演化的工具获取范式，推动AI4Chem智能体系统的实际部署。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "What are the latest advances in retrosynthesis, synthesis planning, and AI agents for chemistry, and how are these systems evaluated?",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.27556v1",
+      "source": "arxiv",
+      "title": "Evaluating Agentic Bioinformatics through Function, Evidence, and Validation",
+      "abstract": "Large language model agents increasingly plan, execute, and interpret biological analyses, yet fluent responses, successful tool calls, and benchmark performance alone do not establish scientific credibility. Existing reviews primarily organize biological agents by application, architecture, and agentic capability, but do not jointly operationalize the accountability of agent-generated workflows. We address this gap by treating the inspectable workflow trajectory, rather than architecture or final output alone, as the primary unit of analysis. We introduce the Function--Evidence--Validation (FEV) framework, which separates demonstrated workflow operations, traceable support for actions and claims, and use-case-specific validation. Using FEV, we map 109 agentic or agent-adjacent systems and 28 benchmark or evaluation resources, representing 128 unique publications across genomics, single-cell and spatial omics, protein science, drug discovery, computational pathology, and general bioinformatics automation. Across domains, planning and tool-mediated execution have advanced more rapidly than replayability, provenance, robust scientific assessment, external validation, and prospective empirical testing. We therefore argue that agentic bioinformatics should be assessed through workflow correctness rather than final-answer correctness alone. FEV provides a practical basis for comparing systems and designing transparent, auditable, and scientifically accountable bioinformatics workflows.",
+      "authors": [
+        "Phuc Pham",
+        "Truong-Son Hy"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.MA"
+      ],
+      "published": "2026-07-30T01:00:36+00:00",
+      "link": "https://arxiv.org/pdf/2607.27556v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Proposes FEV framework for evaluating agentic scientific workflows, transferable to chemistry AI agents",
+      "llm_evidence_cn": "提出FEV框架评估科学智能体工作流，可迁移到化学AI智能体",
+      "llm_evidence": "提出FEV框架评估科学智能体工作流，可迁移到化学AI智能体",
+      "canonical_evidence": "提出FEV框架评估科学智能体工作流，可迁移到化学AI智能体",
+      "llm_tldr_en": "Instead of judging agents by final outputs, the FEV framework evaluates the inspectable workflow trajectory across function, evidence, and validation, providing accountability for LLM-driven bioinformatics and other scientific agents.",
+      "llm_tldr_cn": "大型语言模型智能体在科学任务中越来越普及，但流畅输出和工具调用成功并不能证明其科学可靠性。本文提出FEV框架，以可检查的工作流轨迹而非最终输出为分析单元，从功能、证据和验证三个维度评估智能体。该框架可用于审查生物信息学智能体，也能推广到化学合成规划等AI智能体的评估。这为科学智能体的可信评估提供了通用方法论。",
+      "llm_tldr": "大型语言模型智能体在科学任务中越来越普及，但流畅输出和工具调用成功并不能证明其科学可靠性。本文提出FEV框架，以可检查的工作流轨迹而非最终输出为分析单元，从功能、证据和验证三个维度评估智能体。该框架可用于审查生物信息学智能体，也能推广到化学合成规划等AI智能体的评估。这为科学智能体的可信评估提供了通用方法论。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "What are the latest advances in retrosynthesis, synthesis planning, and AI agents for chemistry, and how are these systems evaluated?",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.28990v1",
+      "source": "arxiv",
+      "title": "Scaling Scientific Discovery Environments for Turn-Level Agentic RL",
+      "abstract": "Large language model agents have shown promising capabilities in data-driven scientific discovery tasks, where an agent interacts with an execution environment and produces a statistical claim. Long-horizon scientific analysis remains constrained by the lack of process supervised environments over real-world scientific data. This paper introduces SciDisco, a scalable framework for training Scientific Discovery agents in process-verifiable environments. SciThèque compiles hypotheses, datasets, hidden evidence graphs, and verifiers into task environments where analytical progress can be checked during interaction. DAG-grounded trajectory synthesis uses these environments to construct verifier-filtered multi-turn demonstrations. DiscoPO then uses the environment as the source of training signal, assigning turn-level credit to actions that produce verifiable analytical evidence. Experiments show that SciDisco-14B reaches state-of-the-art on hypothesis-driven scientific data analysis benchmarks.",
+      "authors": [
+        "Yucheng Xu",
+        "Keyi Zhang",
+        "Yuyang Yu",
+        "Min Zhang",
+        "Shiyuan Meng",
+        "Pei Chu",
+        "Zhongying Tu"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-07-31T03:34:39+00:00",
+      "link": "https://arxiv.org/pdf/2607.28990v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Process-verifiable scientific discovery environments for training agentic RL, applicable to chemistry agents",
+      "llm_evidence_cn": "面向智能体强化学习的进程可验证科学发现环境，可应用于化学智能体",
+      "llm_evidence": "面向智能体强化学习的进程可验证科学发现环境，可应用于化学智能体",
+      "canonical_evidence": "面向智能体强化学习的进程可验证科学发现环境，可应用于化学智能体",
+      "llm_tldr_en": "Introduces SciDisco, a scalable framework for training scientific discovery agents using process-verifiable environments, DAG-grounded trajectory synthesis, and turn-level RL.",
+      "llm_tldr_cn": "长周期科学分析智能体因缺乏对真实科学数据的过程监督环境而难以训练。该论文提出SciDisco框架：将假说、数据集、隐藏证据图与验证器编译为可交互的任务环境，使分析进程的每一步都能被检查；并借助DAG引导的轨迹合成生成验证器过滤的多轮演示，最后使用DiscoPO进行回合级强化学习。结果表明该框架可扩展训练出能够在真实科学数据上提出有效统计断言的智能体。这一框架对化学领域的AI智能体训练（如合成规划与实验决策）具有直接的迁移价值。",
+      "llm_tldr": "长周期科学分析智能体因缺乏对真实科学数据的过程监督环境而难以训练。该论文提出SciDisco框架：将假说、数据集、隐藏证据图与验证器编译为可交互的任务环境，使分析进程的每一步都能被检查；并借助DAG引导的轨迹合成生成验证器过滤的多轮演示，最后使用DiscoPO进行回合级强化学习。结果表明该框架可扩展训练出能够在真实科学数据上提出有效统计断言的智能体。这一框架对化学领域的AI智能体训练（如合成规划与实验决策）具有直接的迁移价值。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "What are the latest advances in retrosynthesis, synthesis planning, and AI agents for chemistry, and how are these systems evaluated?",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.29225v1",
+      "source": "arxiv",
+      "title": "Frugal Bayesian Optimization: Scalable Surrogates for Data- and Resource-Limited Discovery",
+      "abstract": "Bayesian Optimization (BO) is widely adopted for data-efficient optimization in scientific and engineering applications, yet its computational cost is rarely evaluated alongside optimization performance. Here we present a systematic, compute-aware study of BO that evaluates surrogate models along two axes: optimization quality and computational frugality. Across eight benchmark functions and nine real-world datasets spanning materials science, mechanics, robotics, chemistry, and machine learning, we benchmark four surrogate models: Gaussian Processes, Random Forests, NGBoost, and Bayesian Adaptive Spline Surfaces. We show that Gaussian Process-based BO consistently incurs the highest time and memory overhead without delivering superior optimization or sample efficiency. In contrast, scalable alternatives achieve equal or better performance at a fraction of the computational cost. Motivated by these findings, we introduce a surrogate-recommendation framework that predicts the most suitable BO surrogate from inexpensive dataset characteristics. Together, these results establish FruBO as a reproducible, compute-aware baseline for Bayesian Optimization and provide practical guidance for surrogate selection under limited computational and experimental budgets.",
+      "authors": [
+        "Panagiotis Krokidas",
+        "Christoforos Rekatsinas",
+        "Vassilis Sioros",
+        "Grigorios M. Chatziathanasiou",
+        "Efi-Maria Papia",
+        "George Giannakopoulos"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "physics.chem-ph",
+        "physics.comp-ph"
+      ],
+      "published": "2026-07-31T09:55:38+00:00",
+      "link": "https://arxiv.org/pdf/2607.29225v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Compute-aware Bayesian optimization with scalable surrogates, benchmarked on chemistry datasets, relevant to molecular discovery",
+      "llm_evidence_cn": "计算感知的贝叶斯优化与可扩展代理模型，在化学数据集上测试，适用于分子发现",
+      "llm_evidence": "计算感知的贝叶斯优化与可扩展代理模型，在化学数据集上测试，适用于分子发现",
+      "canonical_evidence": "计算感知的贝叶斯优化与可扩展代理模型，在化学数据集上测试，适用于分子发现",
+      "llm_tldr_en": "A compute-aware study of Bayesian optimization shows Gaussian Process surrogates incur high time/memory costs without superior performance, identifying frugal alternatives across materials, chemistry, and other real-world datasets.",
+      "llm_tldr_cn": "贝叶斯优化被广泛用于化学和材料科学中的数据高效优化，但其计算成本很少被评估。本文进行了计算感知的系统研究，在多个基准和真实数据集上比较GP、随机森林、NGBoost和贝叶斯自适应样条面。结果表明高斯过程的时间与内存开销最高，却没有带来明显优势。该发现有助于在资源受限的分子优化场景中选择更节省的代理模型。",
+      "llm_tldr": "贝叶斯优化被广泛用于化学和材料科学中的数据高效优化，但其计算成本很少被评估。本文进行了计算感知的系统研究，在多个基准和真实数据集上比较GP、随机森林、NGBoost和贝叶斯自适应样条面。结果表明高斯过程的时间与内存开销最高，却没有带来明显优势。该发现有助于在资源受限的分子优化场景中选择更节省的代理模型。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "molecular generation and optimization with machine learning",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}
