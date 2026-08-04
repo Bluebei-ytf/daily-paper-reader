@@ -1,0 +1,262 @@
+Title: Scikit-fingerprints: Python library for scikit-learn compatible molecular fingerprints and chemoinformatics
+
+URL Source: https://arxiv.org/pdf/2608.02027v1
+
+Published Time: Tue, 04 Aug 2026 02:12:41 GMT
+
+Number of Pages: 31
+
+Markdown Content:
+# Scikit-fingerprints: Python library for scikit-learn compatible molecular fingerprints and chemoinformatics 
+
+# Jakub Adamczyk ∗,†,‡ and Adam Staniszewski †,‡
+
+†Faculty of Computer Science, AGH University of Krakow, Cracow, Poland 
+
+‡Contributed equally 
+
+E-mail: jadamczy@agh.edu.pl 
+
+Abstract 
+
+We present scikit-fingerprints , a comprehensive, fully scikit-learn compatible library for molecular machine learning in Python, based on RDKit. Molecular fingerprints and related functionalities are workhorses of chemoinformatics, yet the widely used open-source frameworks are not compatible with the wider Python machine learning ecosystem based on scikit-learn conventions. scikit-fingerprints closes this gap, bringing molecular fingerprints, molecular filters, similarity and distance measures, applicability domain estimation, data splitting strategies, and more under a single, familiar interface. Scikit-learn compatibility means that an entire chemoinformatics workflow, from a raw SMILES string to a deployable model, can be assembled from composable building blocks and can reuse the mature tooling of the surrounding ecosystem. The under-lying RDKit code makes it familiar and extensible for custom chemoinformatics use cases. We put a strong focus on unified interfaces, ease of use, computational efficiency, customization, and extensibility. scikit-fingerprints makes molecular machine learning faster to prototype, easier to reproduce, and simpler to deploy. 
+
+1arXiv:2608.02027v1 [cs.LG] 3 Aug 2026 Introduction and motivation 
+
+Molecules are the fundamental objects of chemoinformatics. They are most commonly stored as molecular graphs, which must be turned into fixed-length numerical vectors before the majority of downstream algorithms, and machine learning (ML) models in particular, can process them. This vectorization is typically performed with molecular fingerprints, feature extraction algorithms that encode structural, topological, or physicochemical information about a molecule as a vector 1. Fingerprints underpin a broad range of chemoinformatics tasks, including molecular property and activity prediction 2,3 , virtual screening and simi-larity searching 4,5 , chemical space visualization 6,7 , clustering and diversity picking 8,9 , and data splitting for reliable model evaluation 10,11 . Fingerprint-based models remain highly competitive baselines, often matching or exceeding neural networks on molecular property prediction 2,12–15 .Building a QSAR/QSPR model, however, is rarely a single step. A realistic workflow reads and standardizes molecular structures, filters out undesirable compounds, computes one or several molecular fingerprints, splits the data to evaluate out-of-distribution general-ization (e.g., via scaffold split), tunes hyperparameters, evaluates with domain-appropriate metrics, and finally assesses whether new predictions fall within the model’s applicability domain 16,17 . Each of these steps has well-established methodology, yet in practice they are stitched together with ad hoc scripts, which is repetitive, error-prone, and hard to repro-duce 18 . As chemoinformatics workflows evolve from experimental scripts into production-grade deployments, there is a pressing need for proper MLOps practices and interoperability among the tools used. In the Python ecosystem, scikit-learn 19 has become the de facto standard for tabular machine learning, valued for its consistent and widely adopted API 20 . A large family of com-patible libraries follows the same conventions, including imbalanced-learn 21 for resampling, UMAP 22,23 for dimensionality reduction, and HDBSCAN 24,25 for clustering. This shared in-terface is precisely what makes complex pipelines composable and reusable. Chemoinformat-2ics, unfortunately, has largely stood apart from it. The most widely used open-source toolkits - RDKit 26 , the Chemistry Development Kit (CDK) 27 , and Open Babel 28 - are written in C++ or Java, expose object-oriented APIs tied to their own molecule types, and provide little to no support for the scikit-learn interface and for parallel computation. Their Python wrappers can be cumbersome to combine with ML tooling, resulting in brittle pipelines with significant customization and code duplication between QSAR/QSPR projects. The first release of scikit-fingerprints addressed one part of this gap by providing effi-cient, scikit-learn compatible molecular fingerprints 29 . Since then, the library has grown well beyond fingerprinting into a general chemoinformatics toolkit, covering many functionalities applied either prior to computing molecular fingerprints, or based on those representations. In this work we present scikit-fingerprints 2.0, whose scope now covers the whole molecu-lar ML workflow inside the scikit-learn ecosystem. In addition to molecular fingerprints, the library provides molecular filters, similarity and distance measures, applicability domain esti-mators, scaffold-aware train-test splitters, efficient fingerprint-aware hyperparameter search, and other functionalities useful in building and evaluating QSAR/QSPR pipelines. It builds upon RDKit, with a focus on efficiency and parallelism, but also conforms to the scikit-learn API. This allows users to express experimental workflows as serializable pipelines, interoper-able with the rest of the ecosystem and related libraries, and easily deployable into practical chemoinformatics applications. 
+
+scikit-fingerprints is fully open-source, distributed under the permissive MIT license, and available on PyPI. Code is hosted on GitHub at https://github.com/MLCIL/ scikit-fingerprints . We provide an extensive documentation and tutorials on GitHub and at https://scikit-fingerprints.readthedocs.io/latest/ .3scikit-fingerprints 
+
+scikit-learn compatible chemoinformatics 
+
+Molecular fingerprints 
+
+30+ fingerprints 
+
+> ECFP, MACCS, E3FP, Mordred, MAP4, ...
+
+Molecular filters 
+
+30+ filters 
+
+> Lipinski, PAINS, REOS, Brenk, ...
+
+Distances and similarities 
+
+12 measures 
+
+> Tanimoto, Dice, MCS, Fraggle, ...
+
+Applicability domain 
+
+11 estimators 
+
+> kNN, leverage, convex hull, TOPKAT, ...
+
+Model selection 
+
+Train-test splits & tuning 
+
+> Scaffold, Butina, MaxMin, ...
+
+Preprocessing 
+
+Data loading & processing 
+
+> Load Mol from SMILES, InChI, SDF; ConformerGenerator
+
+Datasets 
+
+Built-in benchmarks 
+
+> MoleculeNet, TDC, MoleculeACE, LRGB
+
+Figure 1: Overview of scikit-fingerprints functionalities. 
+
+# Functionalities 
+
+All functionality lives in the skfp package, grouped into submodules that mirror the stages of a chemoinformatics workflow. See Figure 1 for an overview of functionalities. Fingerprints and preprocessors are scikit-learn transformers, exposing the .transform() 
+
+method; as they are inherently stateless, the .fit() method does not need to be called. All computations across different classes are parallelized with joblib , with controllable mini-batching and optional progress bars. Train-test splitters, similarity and distance measures, and quality metrics are plain functions, matching the scikit-learn signatures. Compatibility with the scikit-learn API is enforced by inheritance from scikit-learn base classes and verified by a suite of unit and integration tests, run on CI/CD with a matrix of Python versions and operating systems. We note that scikit-fingerprints is not merely an RDKit wrapper, but also implements a wide range of novel methods and functionalities, such as molecular filters based on physic-ochemical properties and applicability domain checkers. The following subsections describe 4each area, noting where components go beyond what RDKit provides directly. 
+
+# Molecular fingerprints 
+
+Molecular fingerprints are feature extraction algorithms that turn a molecule into a fixed-length numerical vector that a machine learning model can consume. They encode structural, topological, or physicochemical information, embedding molecular graphs in a vector space, where tabular ML models can be applied 1. The resulting vector representation itself is also commonly referred to as a fingerprint. There is a large variety of fingerprint methods, since the choice of representations strongly influences downstream performance. This is particularly because the notion of molecular similarity in the arising vector space depends on the algorithmic choices. The optimal choice for a given task cannot be known in advance, a problem further complicated by the fact that fingerprints themselves are configurable via various hyperparameters. For example, a popular Extended Connectivity FingerPrint (ECFP) 30 can optionally include chirality information, or count occurrences of subgraphs rather than just detect their presence (binary vs. count variant). As such, a practitioner typically wants to try many fingerprints, tune their hyperparameters, and also potentially build more complex pipelines, e.g., with feature selection or concatenating multiple fingerprints. scikit-fingerprints is built around exactly this need, offering over 30 fingerprints behind a single, uniform interface. Every fingerprint is a stateless scikit-learn transformer. All fingerprint classes inherit from 
+
+BaseFingerprintTransformer , and accept a list of RDKit Mol objects or SMILES strings (parsed as molecules internally), returning either a dense NumPy array 31 or a sparse SciPy CSR matrix 32 . Behavioral options are set through constructor parameters, e.g., the output length for hashed fingerprints, or a binary vs. count variant. This uniformity is the key design decision: fingerprints can be swapped or combined easily within scikit-learn pipelines. Since the transformers are stateless, they carry an empty .fit() and can be dropped into pipelines, cross-validation, and grid search without special handling. See Listing 1 for a code 5example. The implemented fingerprints span all the major families used in chemoinformatics. Sub-structural fingerprints, such as MACCS 33 and Klekota-Roth 34 , indicate the presence of pre-defined substructures, typically defined with SMARTS patterns, and yield directly inter-pretable, human-readable features. Hashed fingerprints enumerate local environments in a molecule and hash them into a vector of chosen length. These include, for example, ECFP 30 
+
+(also known as the Morgan fingerprint), Atom Pair 35 , and Topological Torsion 36 . Descriptor-based fingerprints collect scalar physicochemical or graph-theoretic quantities into a vector, ranging from electrotopological EState indices 37 to the comprehensive Mordred descriptor set 38 . A substantial subset of the fingerprints is conformer-based, capturing spatial geometry rather than the molecular graph alone. These include, for example, GETAWAY 39 , E3FP 40 ,and MAP4 41 . This coverage includes every fingerprint available in the established toolkits alongside further additions, giving users a single place to obtain and compare them. Computing fingerprints over large molecular datasets is often the most expensive step of a workflow, so efficiency is treated as a first-class concern. Because molecules are processed in-dependently, fingerprint computation is embarrassingly parallel. Every transformer exposes an n_jobs parameter and parallelizes across CPU cores using Joblib 42 , which also supports distributed computation on HPC clusters via a Dask backend 43 . The underlying structural matching relies on RDKit’s optimized C++ routines 26 . Since fingerprints are typically long and extremely sparse 29 , particularly substructural and hashed ones, sparse output sharply reduces memory use, which is especially valuable during hyperparameter search when several copies of the feature matrix may coexist. Interpretability is supported wherever it is meaningful. Fingerprints with human-readable features implement the standard .get_feature_names_out() method, so their outputs con-nect directly to scikit-learn feature importance measures and to explanation tools such as SHAP 44 , allowing model behavior to be traced back to concrete substructures or descriptors. 6Listing 1: Molecular fingerprints example.         
+
+> 1from skfp.fingerprints import ECFPFingerprint 23smiles_list = ["O=C(O)c1ccccc1O", "CCO", "[C-]#N"] 4fp = ECFPFingerprint(count=True, n_jobs=-1) 5X = fp.transform(smiles_list) # SMILES in, NumPy array out
+
+# Molecular filters 
+
+Molecular filters remove compounds that are undesirable for a given task, such as retaining only drug-like compounds or removing known reactive groups. This is a standard step in many chemoinformatics workflows, particularly virtual screening and compound library design. Filters can be roughly divided into two groups: those based on allowed ranges of physicochemical properties, and those detecting disallowed substructures. The former encode primarily drug-likeness or lead-likeness rules based on simple molecular properties, including Lipinski’s Rule of Five 45 , Ghose 46 , Veber 47 , and REOS 48 , among others. We note that no such filters are implemented directly in RDKit, whereas scikit-fingerprints implements over a dozen. Substructural filters flag problematic chemical motifs, most notably PAINS 49 for pan-assay interference compounds, with others including, e.g., Brenk 50 and Glaxo 51 rule sets, defined with SMARTS patterns. 
+
+scikit-fingerprints provides over 30 filters as transformers that accept molecules and re-turn the subset passing the rules. See Listing 2 for a code example. As filtering is often an interactive process, detailed results on passing or failing particular filter conditions can also be returned. As filters are often designed for specific applications, such as pesticides 52,53 
+
+or RNA-targeting small compounds 54 , implementing custom ones is particularly easy. It requires only inheriting from the base filter class and overriding the _apply_mol_filter() 
+
+method. 7Listing 2: Molecular filters example.         
+
+> 1from skfp.filters import LipinskiFilter 23smiles_list = ["O=C(O)c1ccccc1O", "CCO", "[C-]#N"] 4filt = LipinskiFilter() 5smiles_passing = filt.transform(smiles_list) # subset that passes
+
+# Distances and similarities 
+
+Similarity and distance measures are central to virtual screening, clustering, and diversity analysis. RDKit provides such measures, but only for its own fingerprint objects, which prevents their direct use with the distance-based algorithms of the scikit-learn ecosystem. 
+
+scikit-fingerprints implements them as functions, primarily based on NumPy and SciPy ar-rays, making them fully interoperable with scikit-learn. Those include classic similarities like Tanimoto, Dice, Sokal-Sneath, or Kulczynski, as well as measures based on direct com-parison of molecular graphs, such as Maximum Common Subgraph (MCS) 55 and Fraggle 56 
+
+similarities, with over a dozen measures in total. Each one is available in similarity and distance forms and, where applicable, in binary and count variants. Because the distance functions have standard signatures, they can be passed as custom metrics to, for example, scikit-learn k-nearest neighbors, UMAP, HDBSCAN, and other methods based on nearest neighbors. This aligns the behavior of those algorithms with fingerprint representations throughout the ecosystem. Another application is the computation of pairwise similarity matrices, which can be used as kernel matrices 57 for SVMs and other kernel methods, as well as for diversity analysis, clustering, and other downstream tasks. We implemented a highly optimized version of such bulk computation of N × N matrices with sparse matrix operations, utilizing the fact that molecular fingerprints are highly sparse, with often just a few percent of non-zero entries 29 .This results in significant speedups over naive loops, due to vectorization and better CPU utilization, allowing scaling to larger datasets. See Listing 3 for a code example. 8Listing 3: Bulk similarity computation example.                 
+
+> 1from skfp.filters import LipinskiFilter 2from skfp.distances import bulk_tanimoto_binary_similarity 3from skfp.fingerprints import ECFPFingerprint 45smiles_list = ["O=C(O)c1ccccc1O", "CCO", "[C-]#N"] 6fp = ECFPFingerprint() 7X = fp.transform(smiles_list) 8sims = bulk_tanimoto_binary_similarity(X, X) # NxN matrix
+
+# Model selection 
+
+Reliable evaluation requires splits that reflect the distribution shift a model will encounter in practice. scikit-fingerprints provides five scaffold-aware and diversity-aware splitting strate-gies as functions matching scikit-learn’s train_test_split signature: deterministic and randomized Bemis-Murcko scaffold splits 11,58 , Butina clustering split 8, MaxMin diversity split 59 , and a PubChem-based time split 60 . Each is available in both train-test and train-validation-test forms. See Listing 4 for a code example. Listing 4: Scaffold train-test split example.            
+
+> 1from skfp.model_selection.splitters import scaffold_train_test_split 23smiles = [ 'c1ccccc1 ','C1CCCCC1 ','CCO ','CCN ','CCCl ','CCBr ']4train_smiles, test_smiles = scaffold_train_test_split(smiles, test_size=2)
+
+Hyperparameter tuning is a common bottleneck for QSAR/QSPR pipelines, because scikit-learn assumes that a .transform() call is cheap and can be recomputed for every com-bination of hyperparameters. When tuning hyperparameters of molecular fingerprints and a downstream model, e.g., LightGBM 61 , the naive combination of Pipeline and GridSearchCV 
+
+recomputes the fingerprint for every estimator configuration. scikit-fingerprints addresses this with a nested search loop. Two classes implement it: FingerprintEstimatorGridSearch 
+
+for exhaustive search, and FingerprintEstimatorRandomizedSearch for randomized search. In both, the fingerprint is computed once per fingerprint configuration and reused across all 9estimator configurations; when only estimator hyperparameters are tuned, it is computed a single time. The savings grow with the cost of the fingerprint and the size of the estimator grid, as we show in the Benchmarks section. QSAR models are frequently used for virtual screening, where the top-k ranking is of interest, rather than the overall classification performance. scikit-fingerprints implements dedicated virtual screening measures, including enrichment factor, RIE 62 , and BEDROC 63 .Thanks to scikit-learn compatibility, they can, for example, be used directly as optimization targets in hyperparameter tuning. 
+
+# Preprocessing utilities 
+
+Preprocessing transformers cover the entry and exit points of a pipeline. Input-output classes convert between molecules and SMILES, InChI, SDF, and amino-acid sequences, for example, 
+
+MolFromSmilesTransformer and MolToInchiTransformer . Since a molecule can have many valid SMILES forms and real datasets contain questionable structures, MolStandardizer 
+
+applies the widely recommended RDKit standardization steps to improve data quality at the start of a workflow. Conformer-based fingerprints require 3D structures, which can be generated with the 
+
+ConformerGenerator class using the .transform() method. It wraps the ETKDGv3 algo-rithm 64 with default settings that balance speed on easy molecules against robustness on difficult ones. Conformations for 3D fingerprints can also be provided with external tools, but our implementation is designed for easy, robust usage and is also fully parallelized. 
+
+# Applicability domain checks 
+
+A model’s predictions are trustworthy only for molecules resembling its training data. Ap-plicability domain (AD) analysis quantifies this and is essential for responsible deployment, yet it has no native RDKit support. scikit-fingerprints implements 11 AD estimators from scratch, including distance and density approaches such as k-nearest neighbors and distance-10 to-centroid, geometric approaches such as bounding box, PCA bounding box, and convex hull, and statistical approaches such as leverage, Hotelling’s T 2 test, and the TOPKAT descriptor-range method 17 .As those are dataset-dependent estimators, they implement the scikit-learn estimator interface with .fit() and .predict() . Fitted on training data, the estimator determines whether new molecules fall inside the domain, a check useful for flagging potentially un-reliable predictions in production. Further, many methods provide a per-sample measure of prediction reliability, e.g., the leverage value 65 , and they can be computed using the 
+
+.score_samples() method. 
+
+# Built-in datasets 
+
+Fair benchmarking depends on standardized datasets and splits. scikit-fingerprints hosts curated datasets on the HuggingFace Hub 66 with automatic downloading, caching, and Parquet-based compression, loaded through scikit-learn-style functions such as load_bbbp() .The current version integrates the widely used MoleculeNet benchmark 10 , the Ther-apeutics Data Commons (TDC) 67 , the Long Range Graph Benchmark (LRGB) peptide datasets 68 , and MoleculeACE for activity-cliff evaluation 69 . Data can be returned as SMILES and labels or as a Pandas DataFrame 70 . Predefined train-test splits are also provided where possible for standardized benchmarking. See Listing 5 for a code example. Listing 5: Example of loading a built-in MoleculeACE ChEMBL 204 Ki dataset.       
+
+> 1from skfp.datasets.moleculeace import load_chembl204_ki 23# downloads from HuggingFace Hub as necessary 4smiles_list, labels = load_chembl204_ki()
+
+11 Usage examples 
+
+Here, we present larger usage examples, as the value of unified interfaces is greatest in end-to-end pipelines. In particular, full chemoinformatics workflows can be easily implemented with scikit-fingerprints , covering various tasks such as QSAR/QSPR, virtual screening, vi-sualization, and more. In Listing 6, we present a complete classification pipeline for the hERG dataset by Karim et al. 71 from the Therapeutics Data Commons (TDC) benchmark 67 . This dataset is a binary classification task, with molecules labeled as hERG ( < 10 μM) and non-hERG ( ≥ 10 μM) blockers. We load the data (automatically downloading it from HuggingFace Hub), convert SMILES to molecules, perform a scaffold train-test split, compute count ECFP fingerprints, train a Random Forest classifier, and evaluate using the AUROC metric. The entire workflow integrates directly with scikit-learn as a Pipeline object, which is finally retrained on the whole dataset and serialized to disk with Joblib. It could then be deployed to a production QSAR application to serve predictions via a web server, for example. As a more involved pipeline, in Listing 7 we present a conformer-based QSAR pipeline for regression, which also integrates with other libraries from the scikit-learn ecosystem. We first load a generic CSV file with “SMILES“ and “target“ columns. Then we generate conformations with the ETKDGv3 algorithm, perform a Butina train-test split, compute and concatenate E3FP fingerprints and RDKit 2D descriptors, remove highly correlated features with feature-engine 72 , train a LightGBM regressor 61 , and evaluate using the MAE metric. Ligand-based virtual screening pipelines are commonly applied to filter down large li-braries. scikit-fingerprints offers parallelization with mini-batching, molecular filters, sparse fingerprints for memory usage reduction, and other functionalities useful for this purpose. In Listing 8, we present such a pipeline for an arbitrary bioactivity screening, modeled as binary classification. We apply REOS and PAINS filters 48,49 , perform a MaxMin split 59 ,calculate sparse PubChem fingerprints 73 , train a logistic regression classifier using a fast solver for sparse matrices, and finally evaluate using the BEDROC metric 63 , which checks 12 Listing 6: End-to-end QSAR hERG classification pipeline. 
+
+1 import joblib 2 from sklearn.ensemble import RandomForestClassifier 3 from sklearn.metrics import roc_auc_score 4 from sklearn.pipeline import make_pipeline 56 from skfp.datasets.tdc import load_herg_karim 7 from skfp.fingerprints import ECFPFingerprint 8 from skfp.model_selection import scaffold_train_test_split 9 from skfp.preprocessing import MolFromSmilesTransformer 10 11 smiles, y = load_herg_karim() 12 smiles_train, smiles_test, y_train, y_test = scaffold_train_test_split( 13 smiles, y, test_size=0.2 14 )15 16 pipeline = make_pipeline( 17 MolFromSmilesTransformer(), 18 ECFPFingerprint(count=True), 19 RandomForestClassifier(n_jobs=-1, random_state=0), 20 )21 pipeline.fit(smiles_train, y_train) 22 23 y_pred = pipeline.predict_proba(smiles_test)[:, 1] 24 auroc = roc_auc_score(y_test, y_pred) 25 print (f"AUROC: {auroc:.2%}") 26 27 pipeline.fit(smiles, y) 28 joblib.dump(pipeline, "herg_model.joblib") 
+
+early enrichment capabilities. This pipeline is applied directly to SMILES, creating RDKit 
+
+Mol objects internally as mini-batches. This minimizes memory usage, as, at scale, those objects take up significantly more memory than SMILES strings. Lastly, in Listing 9 we show a data exploration scenario, where we want to visualize the molecular dataset on a 2D plane using UMAP 22,23 . scikit-fingerprints offers distances and similarities based on NumPy arrays, with interfaces integrating with the rest of the scikit-learn ecosystem. We load the BACE dataset from the MoleculeNet benchmark 10 , compute count ECFP fingerprints, and then pass the Tanimoto distance for count vectors 74 to UMAP for dimensionality reduction. 13 Listing 7: Conformer-based QSAR regression. 
+
+1 import pandas as pd 2 from feature_engine.selection import DropCorrelatedFeatures 3 from lightgbm import LGBMRegressor 4 from sklearn.metrics import mean_absolute_error 5 from sklearn.pipeline import make_pipeline, make_union 67 from skfp.fingerprints import E3FPFingerprint, RDKit2DDescriptorsFingerprint 8 from skfp.model_selection import butina_train_test_split 9 from skfp.preprocessing import ConformerGenerator, MolFromSmilesTransformer 10 11 df = pd.read_csv("dataset.csv") # columns: "SMILES", "target" 12 smiles = df["SMILES"] 13 labels = df["target"] 14 15 mol_from_smiles = MolFromSmilesTransformer(n_jobs=-1) 16 conf_gen = ConformerGenerator(optimize_force_field="MMFF94", n_jobs=-1) 17 18 mols = mol_from_smiles.transform(smiles) 19 mols = conf_gen.transform(mols) 20 21 mols_train, mols_test, y_train, y_test = butina_train_test_split( 22 mols, labels, test_size=0.2 23 )24 25 pipeline = make_pipeline( 26 make_union( 27 E3FPFingerprint(n_jobs=-1), 28 RDKit2DDescriptorsFingerprint(n_jobs=-1), 29 ), 30 DropCorrelatedFeatures(threshold=0.9), 31 LGBMRegressor(n_jobs=-1, random_state=0), 32 )33 pipeline.fit(mols_train, y_train) 34 35 y_pred = pipeline.predict(mols_test) 36 mae = mean_absolute_error(y_test, y_pred) 37 print (f"MAE: {mae:.3f}") 
+
+# Benchmarks 
+
+We evaluate scikit-fingerprints in a few selected use cases. All experiments in this section are based on the representative HIV dataset of the MoleculeNet benchmark 10 . It was chosen 14 Listing 8: Ligand-based virtual screening pipeline. 
+
+1 import numpy as np 2 import pandas as pd 3 from sklearn.linear_model import LogisticRegression 4 from sklearn.pipeline import make_pipeline 56 from skfp.datasets.moleculenet import load_hiv 7 from skfp.filters import PAINSFilter, REOSFilter 8 from skfp.fingerprints import PubChemFingerprint 9 from skfp.metrics import bedroc_score 10 from skfp.model_selection import maxmin_train_test_split 11 12 df = pd.read_csv("dataset.csv") 13 smiles = df["SMILES"] 14 y = df["label"] 15 16 # verbose option shows progress bars 17 filt_reos = REOSFilter(n_jobs=-1, batch_size=1000, verbose=True) 18 filt_pains = PAINSFilter(n_jobs=-1, batch_size=1000, verbose=True) 19 20 smiles_filtered, y_filtered = filt_reos.transform_x_y(smiles, y) 21 smiles_filtered, y_filtered = filt_pains.transform_x_y(smiles_filtered, y_filtered) 22 23 smiles_train, smiles_test, y_train, y_test = maxmin_train_test_split( 24 smiles_filtered, y_filtered, test_size=0.2 25 )26 27 pipeline = make_pipeline( 28 PubChemFingerprint(sparse=True, batch_size=1000, n_jobs=-1), 29 LogisticRegression(solver="newton-cg"), # solver for sparse problems 30 )31 pipeline.fit(smiles_train, y_train) 32 33 y_pred = pipeline.predict_proba(smiles_test)[:, 1] 34 bedroc = bedroc_score(y_test, y_pred) 35 print (f"BEDROC: {bedroc:.3f}") 
+
+since it is large enough (34,000 compounds) to evaluate scalability on typical QSAR/QSPR workflows. Experiments were performed on a PC with an Intel Core i9-13900H CPU (14 cores, 20 threads) and 64 GB RAM. All reported measurements are averages of 5 runs. 15 Listing 9: Molecular dataset visualization.                         
+
+> 1import matplotlib.pyplot as plt 2import umap 34from skfp.datasets.moleculenet import load_bace 5from skfp.distances import tanimoto_count_distance 6from skfp.fingerprints import ECFPFingerprint 78smiles, y = load_bace() 9fp = ECFPFingerprint(count=True) 10 X = fp.transform(smiles) 11 12 embedding = umap.UMAP(metric=tanimoto_count_distance).fit_transform(X) 13 14 plt.scatter(embedding[:, 0], embedding[:, 1], c=y) 15 plt.show()
+
+# Hyperparameter tuning 
+
+As described in the Model selection section, scikit-fingerprints implements the 
+
+FingerprintEstimatorGridSearch class. Whereas the typical combination of GridSearchCV 
+
+and Pipeline in scikit-learn recomputes fingerprints for every parameter combination and cross-validation fold, our implementation optimizes this, reusing fingerprints with given hy-perparameters when tuning downstream classifiers. Gains are particularly strong when tun-ing fingerprints that are more expensive to compute, and with larger grids of downstream models. We use a combination of the RDKit fingerprint 26 and a Random Forest (RF) classifier, with two hyperparameter grids for tuning: 
+
+• small: fingerprint { “count”: [False, True], “fp_size”: [1024, 2048] } , Random Forest { “min_samples_split”: [2, 5, 10] } 
+
+• large: fingerprint { “count”: [False, True], “fp_size”: [512, 1024, 2048] } ,Random Forest { “min_samples_split”: [2, 5, 10], “max_depth”: [None, 10, 20], “n_estimators”: [100, 200, 500] } 
+
+16 For the small grid, this results in 4 combinations for the fingerprint and 3 for RF, so with 5-fold CV the scikit-learn implementation computes the fingerprint 60 times, and scikit-fingerprints only 4 times. For the large grid, there are 6 and 27 combinations, respectively, which gives 810 fingerprint computations for scikit-learn, and 6 for scikit-fingerprints .Figure 2 shows total tuning time as a function of dataset size. Our implementation is faster in every case, but the gains are stronger for the large grid, as expected. For 10,000 molecules, scikit-fingerprints is faster by almost 9.5 minutes. 
+
+Figure 2: Hyperparameter tuning time. 
+
+# PubChem fingerprint calculation 
+
+The PubChem (CACTVS) fingerprint 73 is an 881-bit substructure-key fingerprint, designed for similarity searching, and exposed through the PUG REST web API. However, this imple-mentation has considerable downsides: it works only for compounds in PubChem, requires first fetching the CID number based on SMILES, requires a large number of HTTP requests, 17 is frequently overloaded and returns errors requiring retries, and allows only limited paral-lelization per client due to rate limiting. Together, those result in very high computation time to embed whole datasets. As key definitions are publicly available, we implemented them in the PubChemFingerprint 
+
+class, using SMARTS patterns. Our implementation is also fully parallelized, and we also offer a count-based variant, as many binary keys rely on counting atoms, e.g., the number of carbons C ≥ 2, C ≥ 4, C ≥ 8, C ≥ 16 . This approach is considerably faster, as shown in Figure 3, allowing scaling to much larger datasets. We measure only the time to calculate fingerprints based on CID numbers, so in practice the total API time would be roughly twice as long. 
+
+Figure 3: PubChem fingerprint computation. 
+
+# Bulk Tanimoto similarity computation 
+
+Computing bulk Tanimoto similarities between molecules, resulting in an N × K similarity matrix, arises in many places in chemoinformatics. Examples include evaluating similarity of known active ligands to compounds in a screening catalog, or visualizing the distribution of similarities between molecules in a dataset (resulting in an N × N matrix) or between datasets. As molecular fingerprints are very sparse, and most similarity measures for binary 18 vectors use only bit-wise AND / OR / SUM operations, such bulk computation can be implemented using sparse CSR matrix operations. Such an approach is not available in RDKit, which only supports one-to-many similarity evaluations, resulting in function call overhead. In Figure 4, we compare the speed of scikit-fingerprints and RDKit in bulk N × N
+
+similarity matrix computation. Our implementation is considerably faster for this type of task, with favorable scalability particularly for larger data sizes. 0 5000 10000 15000 20000 25000 30000 
+
+> Number of molecules
+> 0
+> 5
+> 10
+> 15
+> 20
+> 25
+> 30
+> 35
+> Time [s]
+> scikit-fingerprints
+> RDKit
+
+Figure 4: Bulk Tanimoto similarity computation. 
+
+# Large-scale fingerprint computation 
+
+Molecular fingerprints are nowadays used for exploration and virtual screening of large-scale chemical spaces. For such use cases, parallelization, mini-batching, and sparse representa-tions in scikit-fingerprints are directly useful. As an example, we calculate 2048-bit ECFP4 fingerprints on COCONUT 75 , ChEMBL 37 76 , and Mcule (In Stock subset) 77 .We measure the total computation time, molecules per second (throughput), and total 19 memory usage when using sparse fingerprints. To contextualize the gain from the latter, we also calculate how much memory the dense representation would use, and the memory savings. Results are summarized in Table 1. scikit-fingerprints is highly scalable to such libraries even on commodity hardware, both in terms of wall time and RAM requirements. Table 1: Large-scale fingerprint computation.                             
+
+> Dataset Number of molecules Total time Molecules per second Sparse matrix memory Dense matrix memory Memory usage reduction ratio
+> COCONUT 695 k15 s46 .3k35 MB 1.3GB 39 ×
+> ChEMBL 2.9M62 s46 .7k145 MB 5.5GB 39 ×
+> Mcule 7.1M1534 s4.7k312 MB 13 .6GB 45 ×
+
+# Conclusion 
+
+scikit-fingerprints brings the breadth of chemoinformatics into the scikit-learn ecosystem. Building on RDKit, it unifies molecular fingerprints, filters, distance and similarity measures, applicability domain estimation, scaffold- and diversity-aware data splitting, fingerprint-aware hyperparameter tuning, virtual screening metrics, and curated benchmark datasets behind a single, consistent interface. Because every component is a scikit-learn transformer or a compatible function, an entire workflow - from a raw SMILES string to a serialized, deployable model - can be expressed as a composable pipeline and combined freely with the surrounding ecosystem. Alongside this uniformity, our focus on parallelization, mini-batching, and sparse representations keeps the library efficient, while its extensible design makes adding custom components straightforward. 
+
+scikit-fingerprints is under active development, with new functionalities further expand-ing the depth and scope of the library. We are working towards integrating embeddings from pretrained neural networks, like CLAMP 78 and CheMeleon 79 , as molecular finger-prints based on representation learning 80 . Other directions include adding clustering, such as Taylor-Butina 8, and diversity picking like Ashton’s algorithm 59 , as well as further train-test splitting strategies like DataSAIL 81 . As a fully open-source project under the permissive 20 MIT license, scikit-fingerprints welcomes community contributions, and we hope it will con-tinue to lower the barrier to reproducible, production-ready molecular machine learning. 
+
+# Acknowledgement 
+
+The authors thank all contributors to the scikit-fingerprints library, in particular Piotr Ludy-nia and Michał Stefanik. They also thank BIT Student Scientific Society for computational resources and organizational help. 
+
+# References 
+
+(1) Todeschini, R.; Consonni, V. Molecular Descriptors for Chemoinformatics ; Wiley-VCH, 2009. (2) Jiang, D.; Wu, Z.; Hsieh, C.-Y.; Chen, G.; Liao, B.; Wang, Z.; Shen, C.; Cao, D.; Wu, J.; Hou, T. Could Graph Neural Networks Learn Better Molecular Representation for Drug Discovery? A Comparison Study of Descriptor-Based and Graph-Based Models. 
+
+Journal of Cheminformatics 2021 , 13 , 12. (3) Zagidullin, B.; Wang, Z.; Guan, Y.; Pitkänen, E.; Tang, J. Comparative Analysis of Molecular Fingerprints in Prediction of Drug Combination Effects. Briefings in Bioin-formatics 2021 , 22 , bbab291. (4) Riniker, S.; Landrum, G. A. Open-Source Platform to Benchmark Fingerprints for Ligand-Based Virtual Screening. Journal of Cheminformatics 2013 , 5, 26. (5) Muegge, I.; Mukherjee, P. An Overview of Molecular Fingerprint Similarity Search in Virtual Screening. Expert Opinion on Drug Discovery 2016 , 11 , 137–148. (6) Riniker, S.; Landrum, G. A. Similarity Maps - A Visualization Strategy for Molecular Fingerprints and Machine-Learning Methods. Journal of Cheminformatics 2013 , 5, 43. 21 (7) Lovrić, M.; Ðuričić, T.; Tran, H. T. N.; Hussain, H.; Lacić, E.; Rasmussen, M. A.; Kern, R. Should We Embed in Chemistry? A Comparison of Unsupervised Transfer Learning with PCA, UMAP, and VAE on Molecular Fingerprints. Pharmaceuticals 
+
+2021 , 14 , 758. (8) Butina, D. Unsupervised Data Base Clustering Based on Daylight’s Fingerprint and Tanimoto Similarity: A Fast and Automated Way to Cluster Small and Large Data Sets. Journal of Chemical Information and Computer Sciences 1999 , 39 , 747–750. (9) Hernández-Hernández, S.; Ballester, P. J. On the Best Way to Cluster NCI-60 Molecules. Biomolecules 2023 , 13 , 498. (10) Wu, Z.; Ramsundar, B.; Feinberg, E. N.; Gomes, J.; Geniesse, C.; Pappu, A. S.; Leswing, K.; Pande, V. MoleculeNet: A Benchmark for Molecular Machine Learning. 
+
+Chemical Science 2018 , 9, 513–530. (11) Hu, W.; Fey, M.; Zitnik, M.; Dong, Y.; Ren, H.; Liu, B.; Catasta, M.; Leskovec, J. Open Graph Benchmark: Datasets for Machine Learning on Graphs. Advances in Neural Information Processing Systems. 2020. (12) Adamczyk, J.; Czech, W. Molecular Topological Profile (MOLTOP) - Simple and Strong Baseline for Molecular Graph Classification. Frontiers in Artificial Intelligence and Applications (ECAI 2024) 2024 , 392 , 1575–1582. (13) Adamczyk, J.; Ludynia, P.; Czech, W. Molecular fingerprints are strong models for peptide function prediction. Bioinformatics 2026 , 42 , btag179. (14) Adamczyk, J.; Poziemski, J.; Siedlecki, P. Evaluating machine learning models for predicting pesticide toxicity to honey bees. Ecotoxicology and Environmental Safety 
+
+2026 , 312 , 119869. 22 (15) Adamczyk, J. Towards Rational Pesticide Design with Graph Machine Learning Models for Ecotoxicology. Proceedings of the 34th ACM International Conference on Informa-tion and Knowledge Management. 2025; pp 6777–6780. (16) Sieg, J.; Feldmann, C. W.; Hemmerich, J.; Stork, C.; Sandfort, F.; Eiden, P.; Mathea, M. MolPipeline: A Python Package for Processing Molecules with RDKit in Scikit-learn. Journal of Chemical Information and Modeling 2024 , 64 , 9027–9033. (17) Sahigara, F.; Mansouri, K.; Ballabio, D.; Mauri, A.; Consonni, V.; Todeschini, R. Com-parison of Different Approaches to Define the Applicability Domain of QSAR Models. 
+
+Molecules 2012 , 17 , 4791–4810. (18) Hoyt, C. T.; Zdrazil, B.; Guha, R.; Jeliazkova, N.; Martinez-Mayorga, K.; Nittinger, E. Improving Reproducibility and Reusability in the Journal of Cheminformatics. Journal of Cheminformatics 2023 , 15 , 62. (19) Pedregosa, F. et al. Scikit-learn: Machine Learning in Python. Journal of Machine Learning Research 2011 , 12 , 2825–2830. (20) Buitinck, L.; Louppe, G.; Blondel, M.; Pedregosa, F.; Mueller, A.; Grisel, O.; Nicu-lae, V.; Prettenhofer, P.; Gramfort, A.; Grobler, J.; Layton, R.; VanderPlas, J.; Joly, A.; Holt, B.; Varoquaux, G. API Design for Machine Learning Software: Experiences from the Scikit-learn Project. ECML PKDD Workshop: Languages for Data Mining and Machine Learning. 2013; pp 108–122. (21) Lemaître, G.; Nogueira, F.; Aridas, C. K. Imbalanced-learn: A Python Toolbox to Tackle the Curse of Imbalanced Datasets in Machine Learning. Journal of Machine Learning Research 2017 , 18 , 1–5. (22) McInnes, L.; Healy, J.; Melville, J. UMAP: Uniform Manifold Approximation and Pro-jection for Dimension Reduction. arXiv preprint arXiv:1802.03426 2018 ,23 (23) Healy, J.; McInnes, L. Uniform manifold approximation and projection. Nature Reviews Methods Primers 2024 , 4, 82. (24) McInnes, L.; Healy, J.; Astels, S. hdbscan: Hierarchical Density Based Clustering. 
+
+Journal of Open Source Software 2017 , 2, 205. (25) McInnes, L.; Healy, J. Accelerated Hierarchical Density Based Clustering. Data Mining Workshops (ICDMW), 2017 IEEE International Conference on. 2017; pp 33–42. (26) Landrum, G.; others RDKit: Open-Source Cheminformatics. https://www.rdkit.org ,2026. (27) Steinbeck, C.; Han, Y.; Kuhn, S.; Horlacher, O.; Luttmann, E.; Willighagen, E. The Chemistry Development Kit (CDK): An Open-Source Java Library for Chemo- and Bioinformatics. Journal of Chemical Information and Computer Sciences 2003 , 43 ,493–500. (28) O’Boyle, N. M.; Banck, M.; James, C. A.; Morley, C.; Vandermeersch, T.; Hutchi-son, G. R. Open Babel: An Open Chemical Toolbox. Journal of Cheminformatics 
+
+2011 , 3, 33. (29) Adamczyk, J.; Ludynia, P. Scikit-fingerprints: Easy and Efficient Computation of Molecular Fingerprints in Python. SoftwareX 2024 , 28 , 101944. (30) Rogers, D.; Hahn, M. Extended-Connectivity Fingerprints. Journal of Chemical Infor-mation and Modeling 2010 , 50 , 742–754. (31) Harris, C. R.; Millman, K. J.; van der Walt, S. J.; Gommers, R.; Virtanen, P.; Cour-napeau, D.; Wieser, E.; Taylor, J.; Berg, S.; Smith, N. J.; others Array Programming with NumPy. Nature 2020 , 585 , 357–362. (32) Virtanen, P.; Gommers, R.; Oliphant, T. E.; Haberland, M.; Reddy, T.; Courna-peau, D.; Burovski, E.; Peterson, P.; Weckesser, W.; Bright, J.; others SciPy 1.0: 24 Fundamental Algorithms for Scientific Computing in Python. Nature Methods 2020 ,
+
+17 , 261–272. (33) Durant, J. L.; Leland, B. A.; Henry, D. R.; Nourse, J. G. Reoptimization of MDL Keys for Use in Drug Discovery. Journal of Chemical Information and Computer Sciences 
+
+2002 , 42 , 1273–1280. (34) Klekota, J.; Roth, F. P. Chemical Substructures That Enrich for Biological Activity. 
+
+Bioinformatics 2008 , 24 , 2518–2525. (35) Carhart, R. E.; Smith, D. H.; Venkataraghavan, R. Atom Pairs as Molecular Features in Structure-Activity Studies: Definition and Applications. Journal of Chemical Infor-mation and Computer Sciences 1985 , 25 , 64–73. (36) Nilakantan, R.; Bauman, N.; Dixon, J. S.; Venkataraghavan, R. Topological Torsion: A New Molecular Descriptor for SAR Applications. Comparison with Other Descriptors. 
+
+Journal of Chemical Information and Computer Sciences 1987 , 27 , 82–85. (37) Hall, L. H.; Kier, L. B. Electrotopological State Indices for Atom Types: A Novel Combination of Electronic, Topological, and Valence State Information. Journal of Chemical Information and Computer Sciences 1995 , 35 , 1039–1045. (38) Moriwaki, H.; Tian, Y.-S.; Kawashita, N.; Takagi, T. Mordred: A Molecular Descriptor Calculator. Journal of Cheminformatics 2018 , 10 , 4. (39) Consonni, V.; Todeschini, R.; Pavan, M. Structure/Response Correlations and Similar-ity/Diversity Analysis by GETAWAY Descriptors. 1. Theory of the Novel 3D Molecular Descriptors. Journal of Chemical Information and Computer Sciences 2002 , 42 , 682– 692. (40) Axen, S. D.; Huang, X.-P.; Cáceres, E. L.; Gendelev, L.; Roth, B. L.; Keiser, M. J. A 25 Simple Representation of Three-Dimensional Molecular Structure. Journal of Medicinal Chemistry 2017 , 60 , 7393–7409. (41) Capecchi, A.; Probst, D.; Reymond, J.-L. One Molecular Fingerprint to Rule Them All: Drugs, Biomolecules, and the Metabolome. Journal of Cheminformatics 2020 , 12 ,43. (42) Joblib Development Team Joblib: Running Python Functions as Pipeline Jobs. https: //joblib.readthedocs.io , 2024. (43) Rocklin, M. Dask: Parallel Computation with Blocked Algorithms and Task Scheduling. Proceedings of the 14th Python in Science Conference. 2015; pp 126–132. (44) Lundberg, S. M.; Lee, S.-I. A Unified Approach to Interpreting Model Predictions. Advances in Neural Information Processing Systems. 2017. (45) Lipinski, C. A.; Lombardo, F.; Dominy, B. W.; Feeney, P. J. Experimental and Com-putational Approaches to Estimate Solubility and Permeability in Drug Discovery and Development Settings. Advanced Drug Delivery Reviews 1997 , 23 , 3–25. (46) Ghose, A. K.; Viswanadhan, V. N.; Wendoloski, J. J. A Knowledge-Based Approach in Designing Combinatorial or Medicinal Chemistry Libraries for Drug Discovery. 1. A Qualitative and Quantitative Characterization of Known Drug Databases. Journal of Combinatorial Chemistry 1999 , 1, 55–68. (47) Veber, D. F.; Johnson, S. R.; Cheng, H.-Y.; Smith, B. R.; Ward, K. W.; Kopple, K. D. Molecular Properties That Influence the Oral Bioavailability of Drug Candidates. Jour-nal of Medicinal Chemistry 2002 , 45 , 2615–2623. (48) Walters, W. P.; Murcko, M. A. Prediction of ’Drug-Likeness’. Advanced Drug Delivery Reviews 2002 , 54 , 255–271. 26 (49) Baell, J. B.; Holloway, G. A. New Substructure Filters for Removal of Pan Assay Interference Compounds (PAINS) from Screening Libraries and for Their Exclusion in Bioassays. Journal of Medicinal Chemistry 2010 , 53 , 2719–2740. (50) Brenk, R.; Schipani, A.; James, D.; Krasowski, A.; Gilbert, I. H.; Frearson, J.; Wy-att, P. G. Lessons Learnt from Assembling Screening Libraries for Drug Discovery for Neglected Diseases. ChemMedChem 2008 , 3, 435–444. (51) Hann, M.; Hudson, B.; Lewell, X.; Lifely, R.; Miller, L.; Ramsden, N. Strategic Pooling of Compounds for High-Throughput Screening. Journal of Chemical Information and Computer Sciences 1999 , 39 , 897–902. (52) Hao, G.; Dong, Q.; Yang, G. A comparative study on the constitutive properties of marketed pesticides. Molecular Informatics 2011 , 30 , 614–622. (53) Adamczyk, J.; Poziemski, J.; Siedlecki, P. ApisTox: a new benchmark dataset for the classification of small molecules toxicity on honey bees. Scientific Data 2025 , 12 , 5. (54) Allen, T. E.; McDonagh, J. L.; Broncel, M.; Bryant, C. J.; Incarnato, D.; Vasude-van, A.; Khan, R. T. Physicochemical principles driving small molecule binding to RNA. BioRxiv 2024 , 2024–01. (55) Raymond, J. W.; Gardiner, E. J.; Willett, P. RASCAL: Calculation of Graph Similarity using Maximum Common Edge Subgraphs. The Computer Journal 2002 , 45 , 631–644. (56) Hussain, J. Fraggle - A New Similarity Searching Algorithm. RDKit User Group Meet-ing; implementation in the RDKit, 2013; https://github.com/rdkit/rdkit .(57) Ralaivola, L.; Swamidass, S. J.; Saigo, H.; Baldi, P. Graph Kernels for Chemical Infor-matics. Neural Networks 2005 , 18 , 1093–1110. (58) Bemis, G. W.; Murcko, M. A. The Properties of Known Drugs. 1. Molecular Frame-works. Journal of Medicinal Chemistry 1996 , 39 , 2887–2893. 27 (59) Ashton, M.; Barnard, J.; Casset, F.; Charlton, M.; Downs, G.; Gorse, D.; Holliday, J.; Lahana, R.; Willett, P. Identification of Diverse Database Subsets Using Property-Based and Fragment-Based Molecular Descriptions. Quantitative Structure-Activity Re-lationships 2002 , 21 , 598–604. (60) Kim, S.; Chen, J.; Cheng, T.; Gindulyte, A.; He, J.; He, S.; Li, Q.; Shoemaker, B. A.; Thiessen, P. A.; Yu, B.; Zaslavsky, L.; Zhang, J.; Bolton, E. E. PubChem 2023 Update. 
+
+Nucleic Acids Research 2023 , 51 , D1373–D1380. (61) Ke, G.; Meng, Q.; Finley, T.; Wang, T.; Chen, W.; Ma, W.; Ye, Q.; Liu, T.-Y. Light-GBM: A Highly Efficient Gradient Boosting Decision Tree. Advances in Neural Infor-mation Processing Systems. 2017. (62) Sheridan, R. P.; Singh, S. B.; Fluder, E. M.; Kearsley, S. K. Protocols for Bridging the Gap between Virtual Screening and High Throughput Screening. Journal of Chemical Information and Computer Sciences 2001 , 41 , 1395–1406. (63) Truchon, J.-F.; Bayly, C. I. Evaluating Virtual Screening Methods: Good and Bad Metrics for the "Early Recognition" Problem. Journal of Chemical Information and Modeling 2007 , 47 , 488–508. (64) Wang, S.; Witek, J.; Landrum, G. A.; Riniker, S. Improving Conformer Generation for Small Rings and Macrocycles Based on Distance Geometry and Experimental Torsional-Angle Preferences. Journal of Chemical Information and Modeling 2020 , 60 , 2044– 2058. (65) Gramatica, P. Principles of QSAR Models Validation: Internal and External. QSAR & Combinatorial Science 2007 , 26 , 694–701. (66) Wolf, T.; Debut, L.; Sanh, V.; Chaumond, J.; Delangue, C.; Moi, A.; Cistac, P.; Rault, T.; Louf, R.; Funtowicz, M.; others HuggingFace’s Transformers: State-of-the-Art Natural Language Processing. arXiv preprint arXiv:1910.03771 2019 ,28 (67) Huang, K.; Fu, T.; Gao, W.; Zhao, Y.; Roohani, Y.; Leskovec, J.; Coley, C. W.; Xiao, C.; Sun, J.; Zitnik, M. Therapeutics Data Commons: Machine Learning Datasets and Tasks for Drug Discovery and Development. Advances in Neural Information Processing Systems, Datasets and Benchmarks Track. 2021. (68) Dwivedi, V. P.; Rampášek, L.; Galkin, M.; Parviz, A.; Wolf, G.; Luu, A. T.; Beaini, D. Long Range Graph Benchmark. Advances in Neural Information Processing Systems, Datasets and Benchmarks Track. 2022. (69) van Tilborg, D.; Alenicheva, A.; Grisoni, F. Exposing the Limitations of Molecular Machine Learning with Activity Cliffs. Journal of Chemical Information and Modeling 
+
+2022 , 62 , 5938–5951. (70) McKinney, W. Data Structures for Statistical Computing in Python. Proceedings of the 9th Python in Science Conference 2010 , 56–61. (71) Karim, A.; Lee, M.; Balle, T.; Sattar, A. CardioTox Net: A Robust Predictor of hERG Channel Blockade Based on Deep Learning Meta-Feature Ensembles. Journal of Chem-informatics 2021 , 13 , 60. (72) Galli, S. Feature-engine: A Python Package for Feature Engineering for Machine Learn-ing. Journal of Open Source Software 2021 , 6, 3642. (73) National Center for Biotechnology Information PubChem Substructure Finger-print (V1.3). https://ftp.ncbi.nlm.nih.gov/pubchem/specifications/pubchem_ fingerprints.pdf , 2009. (74) Bajusz, D.; Rácz, A.; Héberger, K. Why Is Tanimoto Index an Appropriate Choice for Fingerprint-Based Similarity Calculations? Journal of Cheminformatics 2015 , 7, 20. (75) Chandrasekhar, V.; Rajan, K.; Kanakam, S. R. S.; Sharma, N.; Weißenborn, V.; Schaub, J.; Steinbeck, C. COCONUT 2.0: a comprehensive overhaul and curation 29 of the collection of open natural products database. Nucleic Acids Research 2025 , 53 ,D634–D643. (76) Zdrazil, B.; Felix, E.; Hunter, F.; Manners, E. J.; Blackshaw, J.; Corbett, S.; De Veij, M.; Ioannidis, H.; Lopez, D. M.; Mosquera, J. F.; others The ChEMBL Database in 2023: a drug discovery platform spanning multiple bioactivity data types and time periods. Nucleic Acids Research 2024 , 52 , D1180–D1192. (77) Mcule.com Mcule: Online Drug Discovery Platform and Purchasable Compound Database. https://mcule.com , Accessed 2026. (78) Seidl, P.; Vall, A.; Hochreiter, S.; Klambauer, G. Enhancing Activity Prediction Models in Drug Discovery with the Ability to Understand Human Language. Proceedings of the 40th International Conference on Machine Learning (ICML). 2023. (79) Burns, J. W.; others Deep Learning Foundation Models from Classical Molecular De-scriptors. arXiv preprint arXiv:2506.15792 2025 ,(80) Praski, M.; Adamczyk, J.; Czech, W. Benchmarking pretrained molecular embedding models for molecular representation learning. arXiv preprint arXiv:2508.06199 2025 ,(81) Joeres, R.; Blumenthal, D. B.; Kalinina, O. V. Data splitting to avoid information leakage with DataSAIL. Nature Communications 2025 , 16 .30 TOC Graphic

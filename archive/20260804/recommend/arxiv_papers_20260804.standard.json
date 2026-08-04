@@ -1,0 +1,483 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-08-04T23:24:34.402630+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 10,
+    "deep_cap": 6,
+    "deep_selected": 7,
+    "quick_candidates": 5,
+    "quick_skim_target": 11,
+    "quick_selected": 5
+  },
+  "deep_dive": [
+    {
+      "id": "2608.00393v1",
+      "source": "arxiv",
+      "title": "MolecularCanvas: LLM-assisted Small-Molecule Drug Discovery via Structure-Guided Constraints",
+      "abstract": "Small-molecule drug discovery relies on iterative molecular optimization, where chemists repeatedly modify candidate compounds to balance multiple competing properties such as efficacy, toxicity, and solubility. Recent advances in generative AI (GenAI) have shown promise in accelerating this process by automatically proposing new molecular structures or targeted modifications. However, existing GenAI-based molecular design tools remain poorly aligned with experts' real-world workflows. Specifically, they offer limited support for specifying structure-level modification intents on molecules, provide insufficient transparency into model-generated modifications, and lack integrated support for downstream property evaluation with external computational tools. To address these challenges, we introduce MolecularCanvas, an interactive system that enables users to iteratively construct an optimization context by integrating high-level goals, structure-level annotations, property constraints, and reference-based preferences. This context guides the generation of candidate molecules across diverse molecular structures. MolecularCanvas further enhances transparency by providing evidence for AI-generated suggestions and streamlines molecular evaluation by integrating commonly used computational tools for property assessment into a unified interface. Finally, a user study with 12 participants demonstrates the usefulness and effectiveness of MolecularCanvas in helping users optimize candidate molecules.",
+      "authors": [
+        "Haoyu Dong",
+        "Rui Sheng",
+        "Shuhao Zhang",
+        "Yushi Sun",
+        "Dingyang Wu",
+        "Hanxiang Chao",
+        "Olexandr Isayev",
+        "Huamin Qu",
+        "Yuyang Wu",
+        "Yanna Lin"
+      ],
+      "primary_category": "cs.HC",
+      "categories": [
+        "cs.HC"
+      ],
+      "published": "2026-08-01T02:08:01+00:00",
+      "link": "https://arxiv.org/pdf/2608.00393v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "LLM-assisted generative molecular design with structure-guided constraints for iterative optimization",
+      "llm_evidence_cn": "LLM辅助的生成式分子设计，以结构引导约束实现迭代优化",
+      "llm_evidence": "LLM辅助的生成式分子设计，以结构引导约束实现迭代优化",
+      "canonical_evidence": "LLM辅助的生成式分子设计，以结构引导约束实现迭代优化",
+      "llm_tldr_en": "MolecularCanvas aligns generative AI with expert drug-discovery workflows, enabling structure-level modification intents and integrated property evaluation.",
+      "llm_tldr_cn": "该论文提出MolecularCanvas，解决现有生成式分子设计工具与专家工作流不对齐的问题。该工具允许化学家指定结构层面的分子修改意图，并借助LLM在约束引导下生成候选分子，同时集成下游性质评估以增强透明性。这使小分子药物发现的迭代优化流程更可控、更高效，也体现了LLM在化学分子设计与优化中的应用价值。",
+      "llm_tldr": "该论文提出MolecularCanvas，解决现有生成式分子设计工具与专家工作流不对齐的问题。该工具允许化学家指定结构层面的分子修改意图，并借助LLM在约束引导下生成候选分子，同时集成下游性质评估以增强透明性。这使小分子药物发现的迭代优化流程更可控、更高效，也体现了LLM在化学分子设计与优化中的应用价值。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "molecular generation and optimization with machine learning",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.00776v1",
+      "source": "arxiv",
+      "title": "Generic Vision and Cross-Attention for Reaction Yield Prediction",
+      "abstract": "Traditional reaction yield prediction is constrained by 1D quantum descriptors that lack explicit spatial information. To address this gap, a dual-modal Vision Cross-Attention architecture is proposed, fusing tabular physical-organic data with 2D molecular topologies. Notably, it is demonstrated that a generic computer vision backbone processing simple 2D skeletal structures independently outperforms purely quantum-based baselines. By synergizing both modalities, superior predictive accuracy compared to traditional methodologies is achieved by the optimal cross-attention framework (Test RMSE = 5.27%). Through mechanistic probing, active, descriptor-guided spatial querying is observed, effectively offloading macroscopic steric identification to the visual pathway. Furthermore, a dynamic chemical hierarchy is learned by the network to heavily prioritize critical steric bottlenecks, such as the aryl halide. Concurrently, residual skip connections are utilized to protect non-spatial electronic parameters from destructive attenuation during fusion. Collectively, a scalable and highly interpretable blueprint is provided for augmenting physical chemistry with deep visual learning.",
+      "authors": [
+        "Qiwei Han",
+        "Chi Zhou"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "physics.chem-ph"
+      ],
+      "published": "2026-08-01T17:14:26+00:00",
+      "link": "https://arxiv.org/pdf/2608.00776v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "chemical reaction yield prediction with dual-modal vision cross-attention",
+      "llm_evidence_cn": "化学反应产率预测，双模态视觉交叉注意力",
+      "llm_evidence": "化学反应产率预测，双模态视觉交叉注意力",
+      "canonical_evidence": "化学反应产率预测，双模态视觉交叉注意力",
+      "llm_tldr_en": "Reaction yield prediction constrained by 1D quantum descriptors lacking spatial info. Proposes dual-modal Vision Cross-Attention fusing tabular physical-organic data with 2D molecular topologies. Generic vision backbone alone beats quantum baselines; optimal cross-attention achieves Test RMSE 5.27%. Mechanistic probing shows descriptor-guided spatial querying, enhancing yield prediction.",
+      "llm_tldr_cn": "传统反应产率预测受限于一维量子描述符，缺乏空间信息。为此提出双模态视觉交叉注意力架构，将表格物理有机数据与二维分子拓扑结合，并使用通用视觉骨干处理2D骨架。在测试集上RMSE达5.27%，优于量子基线。机制探针表明视觉分支能主动进行描述符引导的空间查询，有效识别位阻信息。该方法为反应预测提供了可迁移的通用视觉融合新思路。",
+      "llm_tldr": "传统反应产率预测受限于一维量子描述符，缺乏空间信息。为此提出双模态视觉交叉注意力架构，将表格物理有机数据与二维分子拓扑结合，并使用通用视觉骨干处理2D骨架。在测试集上RMSE达5.27%，优于量子基线。机制探针表明视觉分支能主动进行描述符引导的空间查询，有效识别位阻信息。该方法为反应预测提供了可迁移的通用视觉融合新思路。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "chemical reaction prediction using artificial intelligence",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.01007v1",
+      "source": "arxiv",
+      "title": "Fused Bayesian Flow Networks for Dual-Target Molecular Design",
+      "abstract": "Dual-target drug design aims to generate 3D molecules that can simultaneously interact with two target proteins, offering a promising route for discovering polypharmacological compounds against complex diseases. While recent generative models have shown encouraging performance in single-target drug design, existing dual-target approaches either focus on sequence generation or introduce an additional predictive drift term into the diffusion-based generative trajectory, which limits their ability to fully integrate feature information from both targets. We propose FusedBFN, a fused Bayesian flow network (BFN) for dual-target molecular design. FusedBFN formulates dual-target generation as distribution fusion in a unified continuous parameter space and employs a product-of-experts formulation to incorporate dual-target information throughout the generative process. To address the scarcity of dual-target structural data, we leverage a pretrained target-aware BFN model as the shared backbone. We further introduce a chemically aware prior-based alignment method and a prior-free pocket alignment strategy to construct aligned dual-target contexts. Extensive experiments demonstrate that FusedBFN generates molecules with strong binding affinity toward dual targets while maintaining favorable molecular properties.",
+      "authors": [
+        "Jingyuan Zhou",
+        "Shikui Tu",
+        "Lei Xu"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-08-02T05:23:26+00:00",
+      "link": "https://arxiv.org/pdf/2608.01007v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "generative model for dual-target 3D molecular design using fused Bayesian flow networks",
+      "llm_evidence_cn": "基于融合贝叶斯流网络的生成模型，用于双靶点三维分子设计",
+      "llm_evidence": "基于融合贝叶斯流网络的生成模型，用于双靶点三维分子设计",
+      "canonical_evidence": "基于融合贝叶斯流网络的生成模型，用于双靶点三维分子设计",
+      "llm_tldr_en": "FusedBFN integrates two target-conditioned Bayesian flow networks via distribution fusion, enabling 3D molecule generation that simultaneously binds two protein targets.",
+      "llm_tldr_cn": "双靶点药物设计旨在生成能同时作用于两种靶蛋白的3D分子，但现有方法融合信息有限。本文提出FusedBFN，将双靶点生成形式化为统一连续参数空间中的分布融合，利用贝叶斯流网络在生成过程中充分整合两个靶标的特征。该模型可生成同时满足双靶点约束的三维分子，为多靶向药物发现提供了新的生成框架。",
+      "llm_tldr": "双靶点药物设计旨在生成能同时作用于两种靶蛋白的3D分子，但现有方法融合信息有限。本文提出FusedBFN，将双靶点生成形式化为统一连续参数空间中的分布融合，利用贝叶斯流网络在生成过程中充分整合两个靶标的特征。该模型可生成同时满足双靶点约束的三维分子，为多靶向药物发现提供了新的生成框架。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "molecular generation and optimization with machine learning",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.01162v1",
+      "source": "arxiv",
+      "title": "From oligomers to entangled polymers: How to train a transferable machine learning interatomic potential",
+      "abstract": "Over the past decade, Machine Learning Interatomic Potentials (MLIPs) have emerged as a powerful technique for performing molecular dynamics (MD) simulations with nearly ab initio accuracy. Alongside the development of new descriptors and advanced machine learning architectures, sophisticated procedures for the generation of diverse and accurate reference datasets have been established. To date, research has focused primarily on MLIPs for crystalline or amorphous inorganic and small molecular systems; however, large macromolecules such as polymers remain underrepresented in the literature, despite beeing an important class of materials. In this work, we investigate several aspects of developing MLIPs for polymers, utilizing polyethylene as a representative, yet simple model system. First, we compare various local atomic descriptors, identifying the Atomic Cluster Expansion (ACE) as the most effective for this application. Second, we implement and automatized active learning scheme to efficiently generate diverse training data and demonstrate that ACE potentials fitted on small oligomers are transferable to larger polymers. Given that the accurate reproduction of the density depends critically on a correct description of intermolecular interactions, which are far more complex to learn than intramolecular interactions, we carefully evaluate the performance of the ACE potentials with respect to non-bonded interactions. By utilizing the computationally efficient OPLS-AA force field as a ground truth reference, we are able to perform a direct comparison of nanosecond-scale MD trajectories resulting from the ACE and reference potential. We find that the ACE potential accurately reproduces key thermodynamic, structural and dynamical properties.",
+      "authors": [
+        "Mirko Fischer",
+        "Andreas Heuer"
+      ],
+      "primary_category": "cond-mat.soft",
+      "categories": [
+        "cond-mat.soft"
+      ],
+      "published": "2026-08-02T11:32:42+00:00",
+      "link": "https://arxiv.org/pdf/2608.01162v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Training transferable machine learning interatomic potentials for polymer molecular dynamics",
+      "llm_evidence_cn": "面向聚合物分子动力学的可迁移机器学习原子间势训练方法",
+      "llm_evidence": "面向聚合物分子动力学的可迁移机器学习原子间势训练方法",
+      "canonical_evidence": "面向聚合物分子动力学的可迁移机器学习原子间势训练方法",
+      "llm_tldr_en": "The paper investigates how to train transferable machine learning interatomic potentials for polymers, addressing dataset generation and transferability for MD simulations of large macromolecules.",
+      "llm_tldr_cn": "机器学习原子间势（MLIP）能以接近从头计算的精度加速分子动力学模拟，但现有研究多聚焦于无机或小分子体系，聚合物等大分子体系缺乏系统研究。本文系统研究从低聚物到缠结聚合物的MLIP训练流程，涵盖参考数据集生成与可迁移性设计。利用专门的数据采样与训练策略，为聚合物体系构建可迁移的MLIP。该工作填补了聚合物领域机器学习势能函数的空白，有助于复杂高分子材料的原子级模拟。",
+      "llm_tldr": "机器学习原子间势（MLIP）能以接近从头计算的精度加速分子动力学模拟，但现有研究多聚焦于无机或小分子体系，聚合物等大分子体系缺乏系统研究。本文系统研究从低聚物到缠结聚合物的MLIP训练流程，涵盖参考数据集生成与可迁移性设计。利用专门的数据采样与训练策略，为聚合物体系构建可迁移的MLIP。该工作填补了聚合物领域机器学习势能函数的空白，有助于复杂高分子材料的原子级模拟。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.01369v1",
+      "source": "arxiv",
+      "title": "CRAFTS: Collaborative Role-Adaptive Fine-Tuning of LLM Agents for Chemical Process Simulation",
+      "abstract": "Constructing an executable chemical-process model remains manually intensive. Chemical engineers translate underspecified requests into coupled decisions about unit operations, thermodynamics, streams, specifications, degrees of freedom (DoF), initialization, solver repair, and optimization; one error can invalidate the model. CRAFTS mirrors the staged workflow of chemical engineers by decomposing simulation building into bounded subtasks assigned to seven bounded roles, with deterministic IDAES/Pyomo gates between stages. Given a natural-language request, process flowsheet diagram (PFD) evidence, and curated chemical-engineering knowledge, Input Understanding and Intent recover requirements, constraints, and process semantics; visual, topology, and specification specialists translate them into typed simulator contracts; and Debug and Optimization support bounded repair and eligible optimization. Fine-tuning is applied to the three schema-critical visual, topology, and specification roles, while the remaining roles use untuned Qwen. The resulting VisualGraphIR, TopologyIR, SpecIR, BuildPlan, and SolveReport expose unit, port, thermodynamic, numerical, and execution decisions. Compatible constructors, property packages, and runners are attached only after semantic artifacts pass engineering gates. We introduce OpenIDAES-450, a 450-case IDAES process- simulation dataset, and evaluate the complete seven-role LangChain/LangGraph workflow through solve and eligible optimization on its frozen 82-case held-out split. CRAFTS completes the prescribed validation and execution contract for for 91.5% of cases and achieves unit, stream, and directed-connection F1 scores of 0.815, 0.791, and 0.782. These results demonstrate the effectiveness of role specialization, typed intermediate representations, and deterministic engineering gates for reliable automated process-model construction.",
+      "authors": [
+        "Ziyun Zhang",
+        "Yuxin Lin",
+        "Eldin Wee Chuan Lim",
+        "Xinghao Ding"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.MA"
+      ],
+      "published": "2026-08-02T16:42:47+00:00",
+      "link": "https://arxiv.org/pdf/2608.01369v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "LLM agents fine-tuned for chemical process simulation",
+      "llm_evidence_cn": "用于化学过程模拟的LLM代理角色自适应微调",
+      "llm_evidence": "用于化学过程模拟的LLM代理角色自适应微调",
+      "canonical_evidence": "用于化学过程模拟的LLM代理角色自适应微调",
+      "llm_tldr_en": "CRAFTS decomposes chemical process simulation into seven bounded subtasks handled by role-adaptive LLM agents with deterministic IDAES/Pyomo gates, improving reliability and automation of executable model construction from natural language.",
+      "llm_tldr_cn": "化学过程模拟构建仍大量依赖人工，工程师需将模糊请求转化为多个耦合决策。CRAFTS将模拟构建分解为七个有界子任务，并分配给七个角色自适应微调的LLM代理，阶段间用IDAES/Pyomo确定性门控衔接。给定自然语言请求、流程图证据和化工知识，各角色协同完成输入理解、意图恢复与建模。结果表明该框架能够提高过程模拟构建的可靠性与自动化水平，展示了LLM代理在化学工程中的实用价值。",
+      "llm_tldr": "化学过程模拟构建仍大量依赖人工，工程师需将模糊请求转化为多个耦合决策。CRAFTS将模拟构建分解为七个有界子任务，并分配给七个角色自适应微调的LLM代理，阶段间用IDAES/Pyomo确定性门控衔接。给定自然语言请求、流程图证据和化工知识，各角色协同完成输入理解、意图恢复与建模。结果表明该框架能够提高过程模拟构建的可靠性与自动化水平，展示了LLM代理在化学工程中的实用价值。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "large language models for chemistry applications",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.01431v1",
+      "source": "arxiv",
+      "title": "PolymerGPT: Multi-property Optimization with a Decoder-Based GPT Model for Generative Polymer Design",
+      "abstract": "Polymer property prediction and inverse generative design targeting desired properties are two crucial tasks in machine learning-assisted polymer design. While the former has received considerable attention, there have been limited methods developed for the latter. Existing methods focus on single-property optimization in the generative process, whereas accurate prediction of macroscopic material behavior requires simultaneous control of multiple physical properties. In this paper, we provide a transformative framework for direct optimization of a large collection of polymer properties. We propose PolymerGPT, a decoder-based GPT model that incorporates up to 37 commonly used polymer properties into the generative process via learned conditioning prefixes. It also supports a scaffold condition that specifies a desired scaffold for predicted structures. Our experimental results demonstrate that PolymerGPT achieves exceptional performance for unconditional and conditional generation while maintaining high validity, uniqueness, and novelty. Conditioning on five key properties yields generated structures whose predicted values closely match all target properties simultaneously.",
+      "authors": [
+        "Charlie Pyle",
+        "Adarsh Gadari",
+        "C. Adrian Figg",
+        "Zhenquan Jia",
+        "Yaohang Li",
+        "Chunjiang Zhu"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cond-mat.mtrl-sci",
+        "cs.CE",
+        "cs.LG"
+      ],
+      "published": "2026-08-02T18:26:04+00:00",
+      "link": "https://arxiv.org/pdf/2608.01431v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "decoder-based GPT for multi-property generative polymer design",
+      "llm_evidence_cn": "基于解码器GPT的多属性聚合物生成与优化",
+      "llm_evidence": "基于解码器GPT的多属性聚合物生成与优化",
+      "canonical_evidence": "基于解码器GPT的多属性聚合物生成与优化",
+      "llm_tldr_en": "PolymerGPT is a decoder-based GPT model that integrates up to 37 polymer properties directly into the generative process, enabling multi-property optimization for inverse polymer design.",
+      "llm_tldr_cn": "聚合物逆生成设计受限于单属性优化，难以满足多物理性质协同调控的需求。作者提出PolymerGPT，一种解码器GPT模型，将最多37种常用聚合物性质编码进生成过程，实现多属性直接优化。与现有单属性方法相比，该模型在生成过程中能够同时优化多种目标性质，为聚合物逆向设计提供更实用的方案。PolymerGPT展示了大型语言模型架构在材料多属性生成中的潜力。",
+      "llm_tldr": "聚合物逆生成设计受限于单属性优化，难以满足多物理性质协同调控的需求。作者提出PolymerGPT，一种解码器GPT模型，将最多37种常用聚合物性质编码进生成过程，实现多属性直接优化。与现有单属性方法相比，该模型在生成过程中能够同时优化多种目标性质，为聚合物逆向设计提供更实用的方案。PolymerGPT展示了大型语言模型架构在材料多属性生成中的潜力。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "molecular generation and optimization with machine learning",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.01734v1",
+      "source": "arxiv",
+      "title": "LLM-Guided Retrieval for Prediction of Molecular Perturbation Responses",
+      "abstract": "Predicting transcriptomic responses to small-molecule perturbations across cell lines is central to drug discovery, but exhaustive profiling of drug-cell combinations is infeasible. We frame molecular perturbation prediction as retrieve-and-aggregate: approximate an unmeasured drug's response in a cell line by aggregating measured responses of a small set of biologically related compounds. We propose LLM-Guided Retrieval (LGR), where a large language model (LLM) ranks candidate neighbor drugs (restricted to those profiled in the target cell line); after which a fixed mean aggregator combines their observed expression deltas to form the prediction. We evaluate on the Tahoe-100M single-cell perturbation atlas under unseen-drug, unseen-cell-line, and open-world regimes. LGR consistently improves over drug mean, ChemCPA, and chemistry-based kNN baselines, with the strongest gains for unseen cell-line generalization, where it achieves higher correlation and lower error than mean baselines. Across settings, LGR improves directional (sign) accuracy of gene regulation, indicating better recovery of biologically meaningful perturbation effects even when magnitude-based metrics are similar. These results suggest that retrieval quality, rather than predictor complexity, is a key driver of zero-shot molecular perturbation prediction, and that LLMs can provide a useful biological prior when used as constrained retrieval modules.",
+      "authors": [
+        "Betty Xiong",
+        "Jan-Christian Huetter",
+        "Gabriele Scalia",
+        "Tommaso Biancalani",
+        "Sepideh Maleki"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-08-03T05:57:02+00:00",
+      "link": "https://arxiv.org/pdf/2608.01734v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "LLM guides retrieval of neighboring drugs to predict molecular perturbation responses",
+      "llm_evidence_cn": "大语言模型引导近邻药物检索以预测分子扰动响应",
+      "llm_evidence": "大语言模型引导近邻药物检索以预测分子扰动响应",
+      "canonical_evidence": "大语言模型引导近邻药物检索以预测分子扰动响应",
+      "llm_tldr_en": "LGR uses an LLM to rank biologically related candidate drugs, then aggregates their measured expression changes to predict transcriptomic responses of unseen drug-cell combinations.",
+      "llm_tldr_cn": "分子扰动响应预测中，测遍所有药物-细胞组合不可行。本文将预测重构为检索-聚合：用大语言模型从已测量药物中检索生物相关近邻，再聚合其表达变化来预测未测量组合的响应。在Tahoe-100M数据集上，该方法在未见药物和未见细胞系场景下均表现优异，为利用大语言模型知识进行药物反应推理提供了高效方案。",
+      "llm_tldr": "分子扰动响应预测中，测遍所有药物-细胞组合不可行。本文将预测重构为检索-聚合：用大语言模型从已测量药物中检索生物相关近邻，再聚合其表达变化来预测未测量组合的响应。在Tahoe-100M数据集上，该方法在未见药物和未见细胞系场景下均表现优异，为利用大语言模型知识进行药物反应推理提供了高效方案。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "large language models for chemistry applications",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2608.00149v1",
+      "source": "arxiv",
+      "title": "A Synthetically-accessible Universe of Chemically Recyclable Polymers",
+      "abstract": "Polymers synthesized via ring-opening polymerization (ROP) of cyclic monomers represent an important class of materials due to their chemical recyclability and possible insertion in several critical applications. We present a dataset of 1 million synthetically realizable ROP polymer structures generated through a combination of Virtual Forward Synthesis (VFS) and polymer expert language models and qualified by stringent chemical heuristics. VFS is used to generate ROP polymers by applying known reactions to existing monomers. The polymer foundation models polyBART and POLYT5 further enable the generation of ROP candidates, with polyBART exploring its learned latent space and POLYT5 producing candidates via sequence-to-sequence generation. The resulting ROP polymers are subjected to robust filtering criteria to ensure novelty, validity and overall data quality through a combination of automated validation pipelines and a comprehensive set of chemist-informed heuristic rules introduced in this work for the first time. We hope that this dataset will serve as a valuable resource for downstream sustainable applications.",
+      "authors": [
+        "Anagha Savit",
+        "Wei Xiong",
+        "Harikrishna Sahu",
+        "Shivank S. Shukla",
+        "Will R. Gutekunst",
+        "Rampi Ramprasad"
+      ],
+      "primary_category": "cond-mat.soft",
+      "categories": [
+        "cond-mat.soft",
+        "cs.AI"
+      ],
+      "published": "2026-07-31T16:46:02+00:00",
+      "link": "https://arxiv.org/pdf/2608.00149v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Generation of recyclable polymer structures using virtual forward synthesis and polymer foundation models",
+      "llm_evidence_cn": "利用虚拟正向合成和聚合物基础模型生成可回收聚合物结构",
+      "llm_evidence": "利用虚拟正向合成和聚合物基础模型生成可回收聚合物结构",
+      "canonical_evidence": "利用虚拟正向合成和聚合物基础模型生成可回收聚合物结构",
+      "llm_tldr_en": "Generates a dataset of one million synthetically realizable chemically recyclable polymers using virtual forward synthesis and polymer language models, demonstrating foundation models for polymer generation.",
+      "llm_tldr_cn": "由于可化学回收聚合物在可持续材料中的重要性，需要高效生成大量可合成的候选结构。作者结合虚拟正向合成与聚合物基础模型polyBART和POLYT5，生成了一百万个可合成且可回收的环开环聚合聚合物结构，并用严格化学启发式筛选。该方法展示了基础模型在聚合物分子生成中的潜力，为可持续材料设计提供资源。",
+      "llm_tldr": "由于可化学回收聚合物在可持续材料中的重要性，需要高效生成大量可合成的候选结构。作者结合虚拟正向合成与聚合物基础模型polyBART和POLYT5，生成了一百万个可合成且可回收的环开环聚合聚合物结构，并用严格化学启发式筛选。该方法展示了基础模型在聚合物分子生成中的潜力，为可持续材料设计提供资源。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "molecular generation and optimization with machine learning",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2608.02027v1",
+      "source": "arxiv",
+      "title": "Scikit-fingerprints: Python library for scikit-learn compatible molecular fingerprints and chemoinformatics",
+      "abstract": "We present scikit-fingerprints, a comprehensive, fully scikit-learn compatible library for molecular machine learning in Python, based on RDKit. Molecular fingerprints and related functionalities are workhorses of chemoinformatics, yet the widely used open-source frameworks are not compatible with the wider Python machine learning ecosystem based on scikit-learn conventions. scikit-fingerprints closes this gap, bringing molecular fingerprints, molecular filters, similarity and distance measures, applicability domain estimation, data splitting strategies, and more under a single, familiar interface. Scikit-learn compatibility means that an entire chemoinformatics workflow, from a raw SMILES string to a deployable model, can be assembled from composable building blocks and can reuse the mature tooling of the surrounding ecosystem. The underlying RDKit code makes it familiar and extensible for custom chemoinformatics use cases. We put a strong focus on unified interfaces, ease of use, computational efficiency, customization, and extensibility. scikit-fingerprints makes molecular machine learning faster to prototype, easier to reproduce, and simpler to deploy.",
+      "authors": [
+        "Jakub Adamczyk",
+        "Adam Staniszewski"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.SE"
+      ],
+      "published": "2026-08-03T10:23:55+00:00",
+      "link": "https://arxiv.org/pdf/2608.02027v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Provides scikit-learn compatible molecular fingerprints, data splitting, and similarity measures for molecular property benchmarks",
+      "llm_evidence_cn": "提供与scikit-learn兼容的分子指纹、数据划分和相似性度量，支持分子属性基准测试",
+      "llm_evidence": "提供与scikit-learn兼容的分子指纹、数据划分和相似性度量，支持分子属性基准测试",
+      "canonical_evidence": "提供与scikit-learn兼容的分子指纹、数据划分和相似性度量，支持分子属性基准测试",
+      "llm_tldr_en": "The paper presents scikit-fingerprints, a Python library that integrates molecular fingerprints and chemoinformatics tools with scikit-learn, enabling standard ML pipelines from SMILES to deployable models.",
+      "llm_tldr_cn": "分子指纹是化学信息学的核心工具，但现有框架难以融入scikit-learn生态。本文提出scikit-fingerprints库，基于RDKit实现与scikit-learn完全兼容的分子指纹、分子过滤、相似性/距离度量、适用域估计和数据划分等功能。用户可从原始SMILES构建完整化学信息学工作流并部署模型，适配Python机器学习生态。该库填补了化学信息学与主流机器学习工具之间的接口空白，为分子性质预测与生成基准测试提供了标准化基础。",
+      "llm_tldr": "分子指纹是化学信息学的核心工具，但现有框架难以融入scikit-learn生态。本文提出scikit-fingerprints库，基于RDKit实现与scikit-learn完全兼容的分子指纹、分子过滤、相似性/距离度量、适用域估计和数据划分等功能。用户可从原始SMILES构建完整化学信息学工作流并部署模型，适配Python机器学习生态。该库填补了化学信息学与主流机器学习工具之间的接口空白，为分子性质预测与生成基准测试提供了标准化基础。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "What benchmark datasets and evaluation metrics are commonly used for molecular property prediction and generation?",
+      "matched_requirement_id": "req-9",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2608.02157v1",
+      "source": "arxiv",
+      "title": "RamanPFN: learning from Raman spectral structure with a tabular foundation model",
+      "abstract": "Raman spectroscopy enables non-destructive, label-free molecular characterization across materials science, biomedicine and process monitoring. Predictive Raman datasets often contain few labelled spectra and thousands of ordered wavenumbers, with informative variation within bands and across distant spectral regions. Latent-variable chemometrics accommodates collinear small-sample data but can obscure fine peak morphology, whereas deep spectral networks resolve this structure only after task-specific training. TabPFN avoids task-specific parameter fitting through pretrained in-context inference, but processes very wide inputs as feature-subsampled views that do not preserve joint visibility of related bands. We present RamanPFN, a spectral representation framework that encodes these dependencies before TabPFN inference. Global Compositional Unmixing constructs non-negative coordinates over the complete spectrum so that distant bands with shared latent variation occupy a common predictive axis. Local Vibrational Subspace Encoding represents contiguous wavenumber regions with multiple orthogonal modes that retain independent changes in peak shape, intensity and position. The representations are evaluated separately and combined at the prediction level. Evaluation covered 150 tasks from 74 public Raman datasets. RamanPFN reduced root-mean-square error by 19.6% on average across 129 regression targets relative to direct TabPFN inference and further reduced the remaining classification error by 9.0% across 21 classification tasks. These results establish explicit spectral representation as an effective interface between high-dimensional Raman measurements and reusable tabular inference.",
+      "authors": [
+        "Xingyu Pan",
+        "Huan Wang",
+        "Jinjia Guo",
+        "Zhenlin Zhao",
+        "Siming Dong",
+        "Jixi Lu"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-08-03T12:37:55+00:00",
+      "link": "https://arxiv.org/pdf/2608.02157v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "adapts a pretrained tabular foundation model to spectral chemical characterization",
+      "llm_evidence_cn": "将预训练表格基础模型适配到光谱化学表征",
+      "llm_evidence": "将预训练表格基础模型适配到光谱化学表征",
+      "canonical_evidence": "将预训练表格基础模型适配到光谱化学表征",
+      "llm_tldr_en": "RamanPFN adapts TabPFN to preserve joint visibility of related wavenumber bands, enabling few-shot Raman spectral analysis without task-specific training.",
+      "llm_tldr_cn": "拉曼光谱数据常样本少、波长有序且信息分布跨越远距离区间。现有深度网络需任务特定训练，而通用表格基础模型TabPFN在宽输入下会破坏相关波段的联合可见性。本文提出RamanPFN，通过光谱特定的结构化处理扩展TabPFN，在保留谱带结构的同时进行上下文推理，实现无需参数拟合的少量样本光谱分析，为化学光谱学提供新的基础模型范式。",
+      "llm_tldr": "拉曼光谱数据常样本少、波长有序且信息分布跨越远距离区间。现有深度网络需任务特定训练，而通用表格基础模型TabPFN在宽输入下会破坏相关波段的联合可见性。本文提出RamanPFN，通过光谱特定的结构化处理扩展TabPFN，在保留谱带结构的同时进行上下文推理，实现无需参数拟合的少量样本光谱分析，为化学光谱学提供新的基础模型范式。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "chemical foundation model pre-training and transfer learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.02402v1",
+      "source": "arxiv",
+      "title": "From fragmented data to actionable design: Physics-calibrated learning for plastic upcycling",
+      "abstract": "Thermochemical upgrading of plastic waste is a key upcycling pathway, yet the experimental literature is fragmented by heterogeneous conditions and incomplete reporting. Complete-case learning would retain only 10.99% of the curated experiments, while target imputation can introduce biased supervision. Here we develop a Physics-Calibrated, Missingness-Gated, and Load-Balanced Mixture-of-Experts (PC-MG-MoE) framework that converts structured missingness into an informative learning signal. PC-MG-MoE learns directly from partially observed experiments without target imputation, reconstructs physically consistent product distributions, accommodates cross-laboratory heterogeneity, and provides interpretable model behaviour rather than black-box prediction alone. Under stringent source-grouped validation, it achieved the lowest aggregate absolute error among the evaluated models, supporting engineering screening under cross-laboratory heterogeneity. Wet-lab experiments provide an external comparison, showing key composition-dependent trends. Implemented as an interactive web-based workflow, PC-MG-MoE enables forward screening, physics-grounded constrained inverse design, targeted experimental planning that supports reduced experimental workload and trial-and-error, and laboratory-specific adaptation with new platform-specific data. This work establishes a transferable framework for converting fragmented literature data into experimentally actionable guidance for model-guided plastic upcycling and broader thermochemical systems.",
+      "authors": [
+        "Jingyang Bai",
+        "Zijia Wang",
+        "Xiangyi Long",
+        "Marcos Millan",
+        "Binjian Nie",
+        "Mingyue Ding"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-08-03T15:47:49+00:00",
+      "link": "https://arxiv.org/pdf/2608.02402v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "physics-calibrated mixture-of-experts predicts product distributions from heterogeneous thermochemical reaction experiments",
+      "llm_evidence_cn": "物理校准的混合专家模型从异质热化学反应实验预测产物分布",
+      "llm_evidence": "物理校准的混合专家模型从异质热化学反应实验预测产物分布",
+      "canonical_evidence": "物理校准的混合专家模型从异质热化学反应实验预测产物分布",
+      "llm_tldr_en": "PC-MG-MoE learns from partially observed plastic upcycling experiments without target imputation, reconstructing physically consistent product distributions and outperforming complete-case learning.",
+      "llm_tldr_cn": "塑料热化学升级的实验数据零散且条件异质，直接丢弃缺失样本会丢失大量信息，插补又可能引入偏差。本文提出物理校准、缺失门控与负载均衡的混合专家框架PC-MG-MoE，直接从部分观测实验学习，无需目标插补即可重建物理一致的产物分布，并兼容跨实验室异质性。该方法提升了碎片化数据下的反应产物预测可靠性，为材料设计提供可解释决策支持。",
+      "llm_tldr": "塑料热化学升级的实验数据零散且条件异质，直接丢弃缺失样本会丢失大量信息，插补又可能引入偏差。本文提出物理校准、缺失门控与负载均衡的混合专家框架PC-MG-MoE，直接从部分观测实验学习，无需目标插补即可重建物理一致的产物分布，并兼容跨实验室异质性。该方法提升了碎片化数据下的反应产物预测可靠性，为材料设计提供可解释决策支持。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "chemical reaction prediction using artificial intelligence",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2608.02595v1",
+      "source": "arxiv",
+      "title": "onepot-Bench 0: towards lab-aware in silico chemistry benchmarks",
+      "abstract": "Language models are playing an increasingly important role in laboratory science, performing tasks such as experiment planning, execution, and post-hoc analysis. However, precisely measuring their abilities is difficult, as scientific capabilities require a mixture of both problem-solving skills and domain-specific intuition. Existing evaluations rarely measure the capabilities required to make reliable decisions in a physical laboratory and often rely on public data that may have appeared in model training corpora.   We introduce onepot-Bench 0, a proprietary benchmark suite for evaluating language models on synthetic chemistry capabilities relevant to wet-lab execution. onepot-Bench 0 comprises three complementary evaluations: ChemAbacus measures tool-free cheminformatics literacy and numerical reasoning; SynthRefusal characterizes safety and refusal behavior across a variety of benign, controlled, and designer-drug targets; and SynthBench evaluates reaction-outcome prediction and catalyst selection using private experimental data generated in our laboratory. Together, these evaluations probe basic competency, reliability, and deeper knowledge, all skills which are required for reliable performance in the lab.",
+      "authors": [
+        "Brandon Wang",
+        "Andrei S. Tyrin",
+        "Daniil A. Boiko"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-08-03T17:58:27+00:00",
+      "link": "https://arxiv.org/pdf/2608.02595v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "benchmark suite for evaluating language models on synthetic chemistry lab tasks",
+      "llm_evidence_cn": "评估语言模型在合成化学湿实验任务上能力的基准套件",
+      "llm_evidence": "评估语言模型在合成化学湿实验任务上能力的基准套件",
+      "canonical_evidence": "评估语言模型在合成化学湿实验任务上能力的基准套件",
+      "llm_tldr_en": "Introduces onepot-Bench 0, a proprietary benchmark suite with three evaluations (ChemAbacus and others) for measuring language models' chemistry problem-solving and wet-lab execution capabilities.",
+      "llm_tldr_cn": "语言模型在实验室科学中应用日益广泛，但现有评估难以衡量其湿实验执行所需的问题求解和领域直觉，且常依赖可能已进入训练集的公开数据。为此提出onepot-Bench 0，一个专有基准套件，包含ChemAbacus等三项互补评估，分别测试工具无关的化学计算能力和实验室相关决策能力。该基准为语言模型的合成化学实际执行能力提供了更贴近真实实验室场景的评价。",
+      "llm_tldr": "语言模型在实验室科学中应用日益广泛，但现有评估难以衡量其湿实验执行所需的问题求解和领域直觉，且常依赖可能已进入训练集的公开数据。为此提出onepot-Bench 0，一个专有基准套件，包含ChemAbacus等三项互补评估，分别测试工具无关的化学计算能力和实验室相关决策能力。该基准为语言模型的合成化学实际执行能力提供了更贴近真实实验室场景的评价。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "large language models for chemistry applications",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    }
+  ]
+}

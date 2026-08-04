@@ -1,0 +1,387 @@
+Title: Generic Vision and Cross-Attention for Reaction Yield Prediction
+
+URL Source: https://arxiv.org/pdf/2608.00776v1
+
+Published Time: Tue, 04 Aug 2026 00:48:27 GMT
+
+Number of Pages: 12
+
+Markdown Content:
+# Generic Vision and Cross-Attention for Reaction Yield Prediction 
+
+Qiwei Han 1,2 and Chi Zhou 21Department of Chemistry, Duke University, Durham, NC 27708, USA 
+
+> 2
+
+Department of Computer Science, Georgia Institute of Technology, Atlanta, GA 30332, USA 
+
+Abstract 
+
+Traditional reaction yield prediction is constrained by 1D quantum descriptors that lack explicit spatial information. To address this gap, a dual-modal Vision Cross-Attention ar-chitecture is proposed, fusing tabular physical-organic data with 2D molecular topologies. Notably, it is demonstrated that a generic computer vision backbone processing simple 2D skeletal structures independently outperforms purely quantum-based baselines. By synergiz-ing both modalities, superior predictive accuracy compared to traditional methodologies is achieved by the optimal cross-attention framework (Test RMSE = 5.27%). Through mech-anistic probing, active, descriptor-guided spatial querying is observed, effectively offloading macroscopic steric identification to the visual pathway. Furthermore, a dynamic chemical hierarchy is learned by the network to heavily prioritize critical steric bottlenecks, such as the aryl halide. Concurrently, residual skip connections are utilized to protect non-spatial electronic parameters from destructive attenuation during fusion. Collectively, a scalable and highly interpretable blueprint is provided for augmenting physical chemistry with deep visual learning. 
+
+## 1 Introduction 
+
+The integration of high-throughput experimen-tation (HTE) with machine learning (ML) has fundamentally transformed the landscape of predictive synthetic chemistry [1, 2, 3, 4]. The ability to accurately predict reac-tion yields in silico offers a paradigm shift for reaction optimization, enabling researchers to virtually screen vast combinatorial chemi-cal spaces while drastically reducing the time, cost, and material waste associated with em-pirical bench-work [5, 6]. Historically, state-of-the-art yield predic-tion models have relied heavily on explicit 1D molecular representations, such as Mor-gan fingerprints, reaction-driven fingerprints (DRFP), or explicitly calculated quantum-mechanical (QM) descriptors [7, 8, 9, 10]. Seminal work by Doyle, Sigman, and others has demonstrated that concatenating molec-ular features—such as HOMO/LUMO ener-gies, dipole moments, and Sterimol parame-ters—into tabular datasets can yield highly ac-curate predictive models when paired with al-gorithms like Random Forests or Multilayer Perceptrons (MLPs) [1, 11]. However, this traditional tabular approach presents two sig-nificant bottlenecks. First, the explicit cal-culation of high-level Density Functional The-ory (DFT) descriptors is computationally pro-hibitive for millions of theoretical screening candidates [12]. Second, compressed 1D nu-merical arrays often struggle to holistically capture the complex, 2D and 3D steric envi-ronments and topological overlaps that govern transition-state reactivity in a reaction mixture [13, 14]. To bypass the computational expense of QM descriptors, recent advances in chem-ical deep learning have increasingly turned to implicit spatial representations, most no-tably through computer vision [15, 16]. In-1arXiv:2608.00776v1 [cs.LG] 1 Aug 2026 spired by the success of Convolutional Neu-ral Networks (CNNs) in image recognition, re-searchers have demonstrated that networks op-erating directly on 2D skeletal molecular draw-ings (e.g., Chemception) can successfully ex-tract chemical heuristics—such as aromaticity, steric hindrance, and functional group pres-ence—without requiring prior physical calcu-lations [17, 18, 19]. While these vision-only approaches offer extraordinary computational scalability, they inherently lack the explicit quantum-physical precision (e.g., exact atomic charges) provided by tabular data, often result-ing in an informational ceiling when predicting highly sensitive catalytic yields [20, 21]. Consequently, the next frontier in chemi-cal AI lies in multimodal architectures capa-ble of bridging the gap between implicit spa-tial topologies (vision) and explicit physical pa-rameters (tabular data) [22]. To maximize this multimodal synergy, previous research has ex-tensively explored cross-attention mechanisms, demonstrating them to be a highly promis-ing direction for fusing disparate data types [23, 24, 25]. By allowing one modality to dy-namically query the localized features of an-other, these attention-based architectures have consistently achieved state-of-the-art perfor-mance in complex multimodal tasks, making them the theoretical ideal for aligning 1D phys-ical properties with 2D chemical structures. In this work, we introduce a dual-modal architecture that synergizes explicit tabular QM data with high-quality 2D molecular images to predict high-throughput reaction yields. Specifically, we sought to determine if an off-the-shelf, generic vision backbone (ResNet-18)—completely devoid of domain-specific chemical pre-training—could extract sufficient topological information to rival ex-plicitly calculated physics descriptors. Fur-thermore, we conducted a rigorous architec-tural ablation study to investigate the underly-ing mechanisms of multimodal fusion, directly comparing dynamic cross-attention against ex-plicit vector concatenation (Simple Concat). Notably, our results demonstrate that a generic vision model processing high-quality 2D reaction topologies significantly outperforms a purely tabular MLP base-line anchored on computationally expensive quantum-mechanical descriptors (5.60% vs. 6.79% RMSE). By unifying these modalities through our optimal Vision Cross-Attention framework, we successfully bridge 2D topol-ogy and 1D physical parameters to achieve su-perior predictive accuracy compared to tradi-tional methodologies (Test RMSE = 5.27%). Beyond top-level predictive accuracy, we conducted a mechanistic analysis to under-stand the internal logic of this multimodal approach. Our findings indicate that rather than passively pooling visual data, the cross-attention mechanism actively queries the 2D images based on the tabular descriptors, al-lowing it to efficiently map macroscopic steric environments. Furthermore, analyzing the at-tention weights reveals that the network es-tablishes a learned chemical hierarchy. It exhibits highly targeted spatial routing, pri-oritizing critical steric bottlenecks (e.g., the aryl halide) while de-emphasizing the topol-ogy of non-critical components. Finally, we observed a ”Residual Bottleneck,” highlighting that skip connections are mathematically nec-essary to preserve purely non-spatial quantum parameters during the fusion process. Over-all, this framework provides a highly inter-pretable, computationally efficient blueprint for augmenting explicit physical chemistry with generic computer vision. 
+
+## 2 Computational Methods 
+
+2.1 Dataset Partitioning and Modal-ity Generation 
+
+We utilized the benchmark rxnpredict dataset developed by the Doyle Lab [1], which maps high-throughput reaction yields to rigorously calculated tabular physical-organic descrip-tors (e.g., HOMO/LUMO energies, dipole mo-ments, and Sterimol parameters). To ensure rigorous evaluation, the dataset was randomly partitioned into a 70:30 training and held-out test split, utilizing a locked random seed to guarantee strict reproducibility across all ar-chitectural ablations. To facilitate the dual-modal architecture, each reaction was parsed into two distinct rep-resentations: 
+
+• Tabular Descriptors: The explicit 2Figure 1: The Dual-Modal Vision Cross-Attention Architecture. 2D spatial topologies extracted via a generic ResNet-18 backbone are actively queried by 1D physical-organic descrip-tors to dynamically contextualize the macroscopic reaction space. A residual skip connection explicitly bypasses the spatial attention bottleneck to preserve strict quantum-chemical rigor prior to the final yield prediction. 1D physical-organic features were ex-tracted and normalized using zero-mean, unit-variance standardization fitted ex-clusively on the training set to prevent data leakage. 
+
+• 2D Visual Topologies: We gener-ated standard 2D skeletal structure im-ages for each individual reaction com-ponent—specifically the additive, aryl halide, base, and ligand—using RDKit [26]. Images were standardized to a res-olution of 224 × 224 pixels, converted to RGB tensors, and normalized using standard ImageNet parameters. To en-sure the network learned innate chem-ical topology rather than the arbitrary layout of a composite grid, these compo-nents were rendered and processed as in-dependent images, aligned during train-ing via a unique compound key (experi-mental plate, row, and column). 
+
+2.2 Modality Encoders 
+
+To process the multi-modal inputs, we em-ployed distinct neural network pathways for feature extraction prior to modality fusion. 
+
+Tabular Pathway: The scaled physical-organic descriptors were passed through aFeed-Forward Multi-Layer Perceptron (MLP) to generate a dense, dimensionally aligned tab-ular embedding of size d = 256. 
+
+Vision Pathway: To extract 2D spatial features, we purposefully utilized a generic ResNet-18 convolutional neural network [27] pre-trained exclusively on ImageNet. While domain-specific models are tailored for phys-ical chemistry, this backbone was designed for general-purpose computer vision and was not specifically exposed to molecules during pre-training. We hypothesized that the network could implicitly learn 2D steric bulk and topo-logical overlaps strictly from the geometric arrangement of the line-angle drawings. To isolate the cross-attention learning dynamics, the convolutional backbone parameters were completely frozen. The four reactant images were processed individually and stacked along the sequence dimension, yielding a discrete vi-sual embedding matrix Xvis ∈ R4×dk , allowing the downstream fusion mechanisms to interact with each specific reagent independently. 32.3 Architectural Ablation and Fu-sion Strategies 
+
+To rigorously investigate the underlying mech-anisms of feature fusion, we systemati-cally evaluated two distinct mathematical ap-proaches for bridging the explicit 1D tabular data with the implicit 2D visual embeddings: an explicit concatenation approach (Simple Concat) and a dynamic querying approach (Cross-Attention). 
+
+Strategy A: Simple Concat Fusion (The Baseline) 
+
+In the Simple Concat architecture, we bypass complex spatial routing in favor of a chemically blind, globally averaged topological state. The component visual embeddings ( Xvis ) are col-lapsed via an unweighted Mean Pooling oper-ation: 
+
+Xpool = 14
+
+> 4
+
+X
+
+> j=1
+
+Xvis,j (1) This averaged visual state is then explicitly concatenated with the raw tabular descriptors (Xtab ) and passed directly to the prediction head: 
+
+Xf used = Concat( Xpool , X tab ) (2) 
+
+Strategy B: Multi-Head Cross-Attention Fusion (The Champion) 
+
+To test whether dynamic, descriptor-guided spatial weighting could outperform a rigid global average, we designed a Multi-Head Vi-sion Cross-Attention architecture (Figure 1). In standard attention paradigms, relevance scores are computed via the dot product of a Query ( Q) and a Key ( K), scaled and multi-plied by a Value ( V ) [23]. In our proposed architecture, the scaled physical-organic tabular descriptors ( Xtab ) act as the central anchor (the Query), while the 2D visual embeddings extracted from the generic ResNet-18 backbone ( Xvis ) act as the Keys and Values. This explicitly allows the quantum math to actively search the visual topology. To enable the network to simultaneously monitor distinct topological features, we execute spatial routing via Multi-Head Cross-Attention utiliz-ing h = 8 independent heads. For each head 
+
+i ∈ { 1, . . . , h }, we compute the projections into a shared latent dimension dk = 256 using learn-able weight matrices WQ,i , WK,i , and WV,i :
+
+Qi = Xtab WQ,i (3) 
+
+Ki = Xvis WK,i (4) 
+
+Vi = Xvis WV,i (5) The cross-attention for each independent head is subsequently computed by taking the scaled dot-product of the explicit tabular query and the implicit visual keys, generating dy-namic spatial routing weights: head i = softmax 
+
+ QiKTi
+
+√dk
+
+
+
+Vi (6) The outputs from all h = 8 heads are then concatenated and projected through a final output weight matrix W O to produce the uni-fied vision-contextualized embedding, Xattn :
+
+Xattn = Concat(head 1, . . . , head h)W O (7) Crucially, to prevent this spatial attention mechanism from acting as a destructive in-formational bottleneck for purely non-spatial parameters (e.g., electronic states or dipole moments), we implemented a residual skip-connection [27]. The contextualized output from the multi-head attention block ( Xattn ) is concatenated directly with the raw, unmodified tabular features ( Xtab ) to shield the rigorous quantum chemistry: 
+
+Xf used = Concat( Xattn , X tab ) (8) Finally, for both architectural strategies, this fused representation is passed through a Multi-Layer Perceptron (MLP) prediction head to output the continuous reaction yield prediction, ˆ y:ˆy = MLP( Xf used ) (9) 
+
+2.4 Training Protocol and Inter-pretability Metrics 
+
+All networks were implemented in PyTorch and trained to predict continuous reaction yield (%) utilizing a Mean Squared Error (MSE) loss function. Optimization was driven by the AdamW optimizer (batch size = 32, ini-tial learning rate = 1 × 10 −3, weight decay = 41 × 10 −4), with the learning rate dynamically modulated via a Cosine Annealing scheduler with warm restarts. Models were trained for 500 epochs, employing strict checkpointing to preserve the specific network weights that min-imized held-out validation loss. Top-level predictive performance was quan-tified on the unseen test set using Root Mean Square Error (RMSE) and the coefficient of de-termination ( R2). Beyond predictive accuracy, we extracted specific interpretability metrics to determine mechanistic feature reliance. Per-mutation Feature Importance (PFI) was calcu-lated by individually shuffling each tabular fea-ture array across the test set and recording the absolute resulting increase in RMSE. Finally, for the spatial routing analysis, raw softmax attention scores were extracted directly from the cross-attention layers during the forward pass over the test set, prior to multiplication with the Value ( V ) matrix. 
+
+## 3 Results and Discussion 
+
+3.1 The Surprising Efficacy of Generic Vision and Modality Fu-sion 
+
+We first sought to answer a provocative core hypothesis: can an off-the-shelf, generic vi-sion model extract enough spatial topology from high-quality 2D skeletal drawings to rival explicitly calculated quantum-mechanical de-scriptors? As shown in Figure 2, the isolated Tabular MLP establishes a formidable baseline (RMSE = 6.80%) by leveraging explicit 1D physical-organic features (e.g., HOMO/LUMO, dipole moments). Notably, this neural network base-line alone already significantly outperforms the previous state-of-the-art Random Forest benchmark established in the literature [1]. However, when we evaluated the isolated Vision-Only baseline—where high-resolution 2D reaction topologies were processed through a frozen, ImageNet-trained ResNet-18 and ag-gregated via global mean pooling prior to final MLP prediction—the model achieved a signif-icantly lower error (RMSE = 5.60%). This is a noteworthy observation. It implies that in complex chemical reactions, macro-scopic steric environments are complementary and equally vital to electronic states, though they often remain difficult to capture using purely 1D quantum arrays. Conversely, the generic ResNet-18 model appears adept at ex-tracting geometric bulk directly from the im-ages, despite lacking explicit chemical pre-training. Interestingly, when we attempted a naive multimodal fusion (the Simple Concat ar-chitecture), the predictive performance was suboptimal, proving slightly worse than the Vision-Only baseline. This degradation high-lights a well-known pitfall in multimodal learn-ing: modality dominance [28, 29]. When pas-sively pooled visual embeddings are directly concatenated with dense, explicit tabular pa-rameters, the network naturally gravitates to-ward the easily interpretable tabular numbers during training. Consequently, it dilutes the highly effective spatial representations learned by the vision backbone. To overcome this modality dominance, our Cross-Attention framework eschews passive pooling in favor of an active, dynamic integra-tion strategy [23, 24]. Rather than treating the 1D quantum arrays and 2D visual embed-dings as isolated vectors to be concatenated, the cross-attention mechanism projects them into a shared latent space. Specifically, the ex-plicit tabular descriptors act as targeted math-ematical queries , while the dense 2D spatial feature maps serve as the keys and values . This architectural bottleneck forces a strict inter-modal dependency: the network cannot sim-ply ignore the visual data during training be-cause the 1D electronic features are explicitly tasked with retrieving complementary steric in-formation from the 2D image pathway. By structurally enforcing the equal importance of sterics and electronics without allowing one to overshadow the other, the framework success-fully synergizes 1D physical properties with 2D spatial context, achieving a highly competitive predictive accuracy (5.27% RMSE). 
+
+3.2 Mechanisms of Fusion: Shifting from Mass Proxies to Explicit Spatial Querying 
+
+To elucidate the internal reasoning of the net-works beyond top-level performance metrics, 50 20 40 60 80 100 
+
+Experimental Yield (%) 
+
+0
+
+20 
+
+40 
+
+60 
+
+80 
+
+100 
+
+> Predicted Yield (%)
+
+R2 = 0.9347 
+
+RMSE = 6.80% 
+
+A. Tabular MLP Baseline 
+
+0 20 40 60 80 100 
+
+Experimental Yield (%) 
+
+R2 = 0.9569 
+
+RMSE = 5.60% 
+
+B. Vision-Only (ResNet-18) 
+
+0 20 40 60 80 100 
+
+Experimental Yield (%) 
+
+R2 = 0.9528 
+
+RMSE = 5.78% 
+
+C. Simple Concat Fusion 
+
+0 20 40 60 80 100 
+
+Experimental Yield (%) 
+
+R2 = 0.9607 
+
+RMSE = 5.27% 
+
+D. Cross-Attention (Champion) Figure 2: Evaluating Architectural Fusion and Modality Synergy. Predictive perfor-mance (RMSE and R2) across baseline and fused architectures. The dual-modal Cross-Attention framework achieves the lowest error, seamlessly synergizing spatial visual topology with explicit tabular quantum descriptors. 0 2 4 6 8 10 
+
++RMSE Penalty (%) 
+
+Additive O1 Electrostatic Charge 
+
+Additive N1 Electrostatic Charge 
+
+Aryl Halide C2 Nmr Shift 
+
+Additive C5 Nmr Shift 
+
+Additive Dipole Moment 
+
+Additive E Homo 
+
+Aryl Halide Dipole Moment 
+
+Additive C3 Nmr Shift 
+
+Aryl Halide H2 Electrostatic Charge 
+
+Aryl Halide Molecular Weight 
+
++3.01% 
+
++3.02% 
+
++3.37% 
+
++3.42% 
+
++3.43% 
+
++3.52% 
+
++4.02% 
+
++5.21% 
+
++5.71% 
+
++9.38% 
+
+A. Tabular MLP Baseline 
+
+0 2 4 6 8 10 
+
++RMSE Penalty (%) 
+
+Aryl Halide Ovality 
+
+Aryl Halide C3 Nmr Shift 
+
+Additive C5 Nmr Shift 
+
+Aryl Halide Dipole Moment 
+
+Aryl Halide C2 Nmr Shift 
+
+Additive Dipole Moment 
+
+Aryl Halide Molecular Weight 
+
+Aryl Halide H2 Electrostatic Charge 
+
+Additive E Homo 
+
+Additive O1 Electrostatic Charge 
+
++0.77% 
+
++0.78% 
+
++1.15% 
+
++1.16% 
+
++1.19% 
+
++1.20% 
+
++1.27% 
+
++1.74% 
+
++2.54% 
+
++4.51% 
+
+B. Simple Concat (Mean Pooling) 
+
+0 2 4 6 8 10 
+
++RMSE Penalty (%) 
+
+Additive C3 Nmr Shift 
+
+Aryl Halide C3 Nmr Shift 
+
+Aryl Halide Ovality 
+
+Base Ovality 
+
+Base Surface Area 
+
+Aryl Halide Surface Area 
+
+Additive C5 Electrostatic Charge 
+
+Aryl Halide Molecular Volume 
+
+Aryl Halide H2 Electrostatic Charge 
+
+Additive Dipole Moment 
+
++0.40% 
+
++0.43% 
+
++0.43% 
+
++0.44% 
+
++0.44% 
+
++0.56% 
+
++0.58% 
+
++0.58% 
+
++0.67% 
+
++1.25% 
+
+C. Cross-Attention (Spatial Querying) 
+
+Figure 3: Mechanistic shifts in feature reliance via Permutation Feature Importance (PFI). (A) Tabular Baseline: The MLP relies heavily on aryl halide molecular weight as a mathematical proxy for molecular size. (B) Simple Concat: Passive mean pooling blurs spatial details, forcing the network to take a computational shortcut, falling back on molecular weight and purely electronic descriptors. (C) Cross-Attention: The mechanism executes a targeted spatial alignment. By actively anchoring on explicit tabular shape parameters (e.g., volume, ovality, surface area), it successfully offloads steric identification to the 2D visual em-beddings. 6we employed Permutation Feature Importance (PFI) [30] to map how the different architec-tures allocate predictive labor between the ex-plicit quantum chemistry and the computer vi-sion pathway (Figure 3). In the isolated Tabular MLP (Figure 3A), the network exhibits a disproportionate reliance on aryl halide molecular weight 
+
+(+9.38% RMSE penalty). Because the strictly 1D architecture lacks macroscopic spatial con-text, it is forced to utilize molecular weight as a general, mathematical heuristic to estimate steric bulk. Previously, we attributed the performance degradation of the Simple Concat architecture relative to the Vision-Only baseline to modal-ity dominance. By analyzing its Permutation Feature Importance (Figure 3B), we uncover the precise computational behavior driving this dominance: shortcut learning . Because the simple concatenated framework compresses the ResNet feature maps using unweighted mean pooling, critical localized spatial details are mathematically obscured. Unlike the isolated Vision-Only baseline, which is strictly forced to decipher visual features to minimize loss, the concatenated model is provided an alternative: the explicit tabular descriptors. Consequently, the network takes a computational shortcut, preferentially extracting its predictive signal from the mathematically simpler tabular fea-tures rather than untangling the blurred vi-sual embeddings. This dynamic explains the shifting, yet persistent, importance of the aryl halide molecular weight. Although the intro-duction of macroscopic visual data reduces its absolute dominance—dropping it from the top-ranked feature to the fourth—molecular weight remains firmly within the top ten. It survives as a necessary 1D heuristic proxy for steric bulk precisely because the network’s visual spatial resolution has been degraded, illustrating why simple concatenation struggles to fully syner-gize multimodal data. In stark contrast, the Cross-Attention framework (Figure 3C) executes a highly active, descriptor-guided spatial alignment .Strikingly, molecular weight completely van-ishes from its most critical features. Instead, the tabular query relies strictly on explicit macroscopic shape descriptors—specifically 
+
+molecular volume , surface area , and 
+
+ovality . The cross-attention mechanism ac-tively utilizes these physical parameters to query the generic ResNet topology, effectively tasking the visual pathway to localize the cor-responding steric density within the 2D image. This demonstrates that the cross-attention ar-chitecture successfully and selectively offloads steric identification to the visual modality, ren-dering the fusion model exceptionally robust to tabular permutations. A critical question arises: why does the iso-lated Tabular MLP rely on molecular weight rather than the explicit geometric descriptors (e.g., volume) already present in the tabular dataset? This behavior stems from the inter-play of feature variance and spatial blindness. Molecular weight is an exact, invariant scalar, whereas computed molecular volume is intrin-sically noisy, heavily dependent on the spe-cific 3D conformer generation protocol [31, 32]. Because a purely 1D architecture must treat its inputs as definitive answers—and lacks the spatial context to localize where an estimated volume physically resides—it preferentially an-chors to the noiseless exactitude of molecular mass to approximate generalized bulk. However, within the Cross-Attention framework, the role of tabular volume fun-damentally shifts: it is no longer treated as a definitive scalar answer, but rather as a direc-tional search query. This aligns perfectly with the formal Query-Key-Value (QKV) routing established in modern attention mechanisms [23, 24, 33]. Because geometric parameters like volume and surface area correlate directly with 2D topological area, the network uti-lizes these noisy tabular estimates as explicit mathematical queries to actively interrogate the visual pathway. The high-fidelity 2D im-age serves as the absolute structural verifier. The model uses the rough volume estimate to search the visual keys, relying entirely on the image’s values to confirm, localize, and map the actual steric bulk. By utilizing the visual modality to ground the noisy geometric query in absolute spatial reality, the cross-attention mechanism successfully mitigates tabular con-former noise and renders the crude proxy of molecular weight obsolete. Finally, it is worth considering the behav-7ior of the cross-attention mechanism in data-constrained scenarios where explicit geomet-ric tabular descriptors (e.g., volume and sur-face area) are omitted from the dataset. In such cases, neural networks exhibit opportunis-tic feature routing. Deprived of direct geomet-ric queries, the tabular encoder synthesizes a latent spatial query by aggregating secondary 1D proxies, such as molecular weight, heavy atom count, and implicit electronic signatures. While this synthesized query is inherently less precise than explicit volume, the architectural integrity of the cross-attention bottleneck re-mains intact. The network still projects this proxy-based query into the shared latent space to interrogate the visual pathway, allowing the 2D image to continuously function as the abso-lute structural verifier—compensating for the impoverished tabular query by mapping crude mass approximations directly onto the ground-truth visual topology. 
+
+3.3 Architectural Ablation and the Learned Chemical Hierarchy 
+
+To understand the specific design principles contributing to our champion 5.27% RMSE, we performed a targeted architectural ablation, investigating both the information flow and the spatial attention distribution (Figure 4). We first identified a critical phenomenon termed the Residual Bottleneck (Figure 4A). When explicit quantum descriptors are exclu-sively forced through the attention fusion block (Cross-Attention without Residual), the model exhibits a severe accuracy penalty (RMSE = 6.17%). This proves that while attention acts as an effective filter for querying phys-ical shapes, it acts as a destructive informa-tional bottleneck for purely non-spatial quan-tum arrays (e.g., dipole moments or HOMO en-ergies). The inclusion of a residual skip connec-tion mathematically bypasses this bottleneck, shielding the unattenuated chemistry and cul-minating in the highly linear predictive corre-lation of the Champion architecture. Finally, to demystify how the network routes this spatial information, we system-atically extracted the model’s internal atten-tion mechanisms during the evaluation phase. Specifically, we performed a complete forward pass over the unseen held-out test set. To en-sure we captured the network’s pure spatial decision-making process, we extracted the data using the standard scaled dot-product atten-tion formulation: 
+
+Attention W eights = Sof tmax 
+
+ Q × KT
+
+√d
+
+
+
+By logging the raw attention tensors strictly at this computational step—immediately fol-lowing the softmax normalization but prior to multiplication with the visual Value ( V ) ma-trix—we isolate the unadulterated probability distributions generated by the 8 independent heads. Unlike static model parameters, these extracted scores sum to 1.0 and dictate ex-actly where the tabular query ( Q) mathemat-ically ”looks” among the visual keys ( K) for any given reaction. The global distribution of these raw atten-tion tensors across the test set (Figure 4B) re-veals extreme variance. Rather than default-ing to a uniform baseline, individual heads fre-quently output scores of absolute zero (Median = 0.0000), indicating that the cross-attention mechanism executes highly sparse, binary-like spatial routing. Furthermore, because the visual pathway processes the reaction as four distinct image embeddings loaded in strict sequence (Addi-tive, Aryl Halide, Base, and Ligand), we can di-rectly map these logged attention probabilities back to specific chemical components. By av-eraging the raw attention distributions across all 8 independent heads for every reaction in the test set, we calculated a singular global at-tention map for each prediction. This aggre-gated data allowed us to quantify the network’s overall visual priority, establishing the learned chemical hierarchy shown in Figure 4C. Statistical analysis of these component-mapped distributions refutes the hypothesis that the generic ResNet embeddings lack the resolution for targeted spatial querying. The network entirely avoids passive mean pool-ing—which would yield a uniform 0.25 atten-tion score with zero variance across all com-ponents. Instead, it establishes a strict, data-driven chemical hierarchy. The network heav-ily prioritizes the 2D topology of the Aryl Halide, allocating it 53.27% of the global at-tention budget on average (Mean = 0.5327). 8Cross-Attention    
+
+> (No Residual)
+> Cross-Attention
+> (Champion)
+> 4.50
+> 4.75
+> 5.00
+> 5.25
+> 5.50
+> 5.75
+> 6.00
+> 6.25
+> 6.50
+> Test RMSE (%)
+> 6.17%
+> 5.27%
+> A. The Residual Bottleneck
+> Head 1
+> Head 2
+> Head 3
+> Head 4
+> Head 5
+> Head 6
+> Head 7
+> Head 8
+> Attention Mechanism (8 Heads)
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> Cross-Attention Weight
+> B. Raw Distribution by Attention Head
+> Additive Aryl Halide Base Ligand
+> Reagent Component (2D Topology)
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> C. Learned Chemical Hierarchy
+
+Figure 4: Architectural ablation and visual verification of dynamic spatial special-ization. (A) The Residual Bottleneck: Forcing non-spatial electronic descriptors entirely through the spatial attention block severely compromises predictive accuracy (6.17% RMSE). Implementing a residual skip connection protects these quantum parameters from destructive attenuation, restoring superior predictive accuracy (5.27%). (B) Raw Distribution by Head: 
+
+The raw softmax attention scores from the 8 independent heads exhibit extreme variance (0.0 to 1.0), demonstrating sparse, binary-like spatial routing rather than passive, uniform pooling. 
+
+(C) Learned Chemical Hierarchy: Tokenizing the visual input into four distinct reactant embeddings enables a direct mapping of attention scores to specific chemical components. The network dynamically shifts its visual focus, heavily prioritizing the 2D topology of the Aryl Halide (Mean = 0.5327) while almost entirely suppressing the Base (Mean = 0.0294). Strikingly, the Aryl Halide’s median attention score is 0.5000, indicating that for at least half of all test reactions, the network dedicates the absolute majority of its visual focus exclu-sively to this single structural bottleneck. Con-versely, the 2D topology of the Base is com-pletely suppressed (Mean = 0.0294), with the network allocating it zero attention in over 75% of the dataset (75th Percentile = 0.0000). This highly polarized, sparse distribution proves that the cross-attention mechanism is profoundly dynamic. Guided by the explicit tabular quantum descriptors, the AI effectively learned which specific steric bottlenecks govern the reaction space, actively routing its generic visual pathway to the most critical structural components. 
+
+## 4 Limitations and Future Di-rections 
+
+While the dual-modal Cross-Attention archi-tecture achieves highly competitive predictive performance, several limitations present clear avenues for future research. First, although the generic ResNet-18 excels at macroscopic spatial routing, it lacks explicit atomic preci-sion. Substituting this backbone with chem-ically pre-trained vision foundation models could enable the microscopic localization of specific functional groups or transition-state geometries. Second, the framework relies on computationally expensive DFT-derived quan-tum descriptors (e.g., HOMO/LUMO ener-gies) to anchor its queries, limiting the high-throughput screening of uncharted molecular scaffolds. Future iterations could integrate Graph Neural Networks (GNNs) to rapidly ap-proximate these quantum parameters, bypass-ing the DFT computational bottleneck. Fi-nally, while 2D topologies effectively capture general steric bulk, they inherently lack dy-namic 3D conformational awareness. Adapt-ing this multimodal framework to incorporate computationally lightweight 3D point clouds or E(3)-equivariant architectures remains a criti-cal next step for modeling highly stereoselec-tive reaction pathways. 
+
+## 5 Conclusion 
+
+In this study, we developed a dual-modal Vi-sion Cross-Attention architecture that success-fully bridges the gap between rigorous, ex-9plicitly calculated quantum-chemical parame-ters and implicit 2D molecular topologies for high-throughput reaction yield prediction. By utilizing a parallel cross-attention mechanism coupled with a protective residual skip con-nection, our framework effectively fuses 1D physical-organic tabular descriptors with 2D spatial embeddings extracted via an off-the-shelf computer vision backbone (ResNet-18). Comprehensive evaluation on the bench-mark rxnpredict dataset yielded a compelling discovery: despite possessing strictly zero chemical pre-training, a generic vision model processing high-fidelity 2D geometric topolo-gies significantly outperformed a standard baseline relying exclusively on computation-ally expensive quantum-mechanical descriptors (5.60% vs. 6.79% Test RMSE). Ultimately, unifying these representations in our optimal Cross-Attention architecture achieved superior predictive accuracy compared to traditional methodologies (RMSE = 5.27%, R2 = 0.961), systematically resolving complex edge cases that isolated, single-modality baselines strug-gled to contextualize. Beyond top-level performance metrics, our mechanistic analyses illuminated the inter-nal logic of multimodal chemical networks. Through Permutation Feature Importance (PFI), we observed an elegant division of labor: the cross-attention mechanism actively anchors on tabular shape descriptors (e.g., volume and ovality) to query the visual embeddings, effec-tively offloading macroscopic steric identifica-tion to the 2D pathway. This frees the tabular network to focus exclusively on highly precise, non-spatial electronic states. Furthermore, extracting the raw softmax attention scores debunked the assumption that generic vision models force chemical networks into passive pooling. Instead, guided by ex-plicit tabular queries, the network executes ex-treme, sparse spatial routing to establish a strict chemical hierarchy. It dynamically ded-icated the vast majority of its visual focus to critical steric bottlenecks (e.g., the Aryl Halide) while completely suppressing the vi-sual topology of non-critical components. Fi-nally, our architectural ablations demonstrated the absolute necessity of residual skip connec-tions to bypass this spatial attention block, preventing the destructive attenuation of non-spatial quantum parameters—a phenomenon we termed the Residual Bottleneck .Ultimately, this work challenges the pre-vailing assumption that highly specialized, domain-specific pre-training is an absolute pre-requisite for chemical deep learning. By demonstrating that generic visual networks can execute highly intelligent spatial routing when guided by explicit physical-organic mathemat-ics, we provide a synergistic, computationally lightweight blueprint for the ongoing develop-ment of fast, spatially aware predictive models in synthetic reaction optimization. 
+
+## Acknowledgements 
+
+This research received no specific grant from any funding agency in the public, commercial, or not-for-profit sectors. The authors grate-fully acknowledge the Doyle Lab at Princeton University for generating and open-sourcing the rxnpredict dataset, which served as the foundational benchmark for this study. 
+
+Artificial Intelligence Disclosure 
+
+In accordance with academic publishing guide-lines, the authors disclose the use of Google’s Gemini as an editorial assistant for text refine-ment and to assist in generating the schematic in Figure 1. The authors take full responsibil-ity for the final scientific content. All quanti-tative data visualizations (Figures 2, 3, and 4) were generated programmatically via Python directly from raw experimental and model out-puts. 
+
+## References 
+
+[1] Derek T Ahneman et al. Predicting re-action performance in c–n cross-coupling using machine learning. Science , 360:186– 190, 2018. [2] Damith Perera et al. A platform for au-tomated nanomole-scale reaction screen-ing and micromole-scale synthesis in flow. 
+
+Science , 359:429–434, 2018. [3] Felix Strieth-Kalthoff et al. Machine learning the ropes: principles, applica-10 tions and directions in synthetic chem-istry. Chem. Soc. Rev. , 49:6154–6168, 2020. [4] Connor W Coley et al. Autonomous discovery in the chemical sciences part ii: Outlook. Angew. Chem. Int. Ed. ,59:23414–23436, 2020. [5] Benjamin J Shields et al. Bayesian reac-tion optimization as a tool for chemical synthesis. Nature , 590:89–96, 2021. [6] J Schwallko et al. Machine learning for chemical reactivity and reaction condi-tions. Curr. Opin. Chem. Biol. , 65:11–18, 2021. [7] Daniel Probst et al. Reaction classification and yield prediction using the differential reaction fingerprint drfp. Digit. Discov. ,1:91–97, 2022. [8] Andrew F Zahrt et al. Prediction of higher-selectivity catalysts by computer-driven workflow and machine learning. 
+
+Science , 363:eaau5631, 2019. [9] Jolene P Reid et al. Holistic predictive models of spatial and electronic require-ments for ligand-mediated selective catal-ysis. Nature , 571:343–348, 2019. [10] Frederik Sandfort et al. A structure-based platform for predicting chemical reactiv-ity. Chem , 6:1379–1390, 2020. [11] Tobias Gensch et al. A comprehensive dis-covery platform for organophosphorus lig-ands for catalysis. J. Am. Chem. Soc. ,144:1205–1217, 2022. [12] Colin A Grambow et al. Deep learning of activation energies. J. Phys. Chem. Lett. ,11:2992–2997, 2020. [13] Steven Kearnes et al. Molecular graph convolutions: moving beyond fingerprints. 
+
+J. Comput.-Aided Mol. Des. , 30:595–608, 2016. [14] Zhenqin Wu et al. Moleculenet: abenchmark for molecular machine learn-ing. Chem. Sci. , 9:513–530, 2018. [15] Igor V Tetko et al. Bigchem: Challenges and opportunities for big data analysis in chemistry. Mol. Inform. , 39:1900132, 2020. [16] Kohulan Rajan et al. Decimer: towards deep learning for chemical image recogni-tion. J. Cheminf. , 13:1–9, 2021. [17] Garrett B Goh et al. Chemception: a deep neural network with minimal chemistry knowledge. arXiv preprint arXiv:1706.06689 , 2017. [18] Thomas B Kimber et al. Deep learning in virtual screening: recent applications and developments. Int. J. Mol. Sci. , 22:4435, 2021. [19] Jos´ e Jim´ enez-Luna et al. Drug discov-ery with explainable artificial intelligence. 
+
+Nat. Mach. Intell. , 2:573–584, 2020. [20] Jon Paul Janet et al. A quantitative un-certainty metric controls error in neural network-driven chemical discovery. Chem. Sci. , 10:7913–7922, 2019. [21] Keiser V Chuang et al. Comment on ”pre-dicting reaction performance in c–n cross-coupling using machine learning”. Sci-ence , 362:eaat8603, 2018. [22] Jian Guo et al. Multimodal deep learning for chemical applications. J. Chem. Inf. Model. , 63:3561–3578, 2023. [23] Ashish Vaswani et al. Attention is all you need. Adv. Neural Inf. Process. Syst. , 30, 2017. [24] Andrew Jaegle et al. Perceiver: General perception with iterative attention. In 
+
+Int. Conf. Mach. Learn. , pages 4651–4664, 2021. [25] Qiwei Han et al. Chemfusion: A mul-timodal cross-attention network for re-action yield prediction. arXiv preprint arXiv:2607.17033 , 2026. [26] Greg Landrum et al. Rdkit: Open-source cheminformatics software, 2024. 11 [27] Kaiming He et al. Deep residual learn-ing for image recognition. In Proc. IEEE Conf. Comput. Vis. Pattern Recognit. ,pages 770–778, 2016. [28] Weiyao Wang et al. What makes train-ing multi-modal classification networks hard? In Proc. IEEE/CVF Conf. Com-put. Vis. Pattern Recognit. , pages 12695– 12705, 2020. [29] Nan Wu et al. Characterizing and over-coming the greedy nature of learning in multi-modal representations. In Int. Conf. Learn. Represent. , 2022. [30] Aaron Fisher et al. All models are wrong, but many are useful: Learning a variable’s importance. J. Mach. Learn. Res. , 20:1– 81, 2019. [31] Jean-Paul Ebejer et al. Freely available conformer generation methods: how good are they? J. Chem. Inf. Model. , 52:1146– 1158, 2012. [32] Simon Axelrod et al. Geom, energy-annotated molecular conformations. Sci. Data , 9:185, 2022. [33] Nicolas Carion et al. End-to-end object detection with transformers. In Eur. Conf. Comput. Vis. , pages 213–229, 2020. 12

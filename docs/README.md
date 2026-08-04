@@ -41,17 +41,17 @@
 <section class="dpr-home-dashboard-card dpr-home-report-card">
   <div class="dpr-home-dashboard-header">
     <div>
-      <span class="dpr-home-dashboard-kicker">2026-08-03</span>
+      <span class="dpr-home-dashboard-kicker">2026-08-04</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">共 8 篇</strong>
+    <strong class="dpr-home-dashboard-count">共 12 篇</strong>
   </div>
   <dl class="dpr-home-dashboard-stats">
     <div class="dpr-home-dashboard-stat"><dt>累计更新</dt><dd>1 次</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>4</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>4</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>7</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>5</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-08-03 22:53:19 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-08-04 23:36:55 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -62,7 +62,9 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>今日共读8篇论文，精读2篇高分工作，重点围绕AI for Science与分子生成。最值关注的是9.0分的《Implicit Machine Learning Force Fields》与《MolGVR》，分别加速分子动力学模拟和实现文本到分子生成。建议普通读者优先了解机器学习力场对仿真效率的提升，再关注代理与贝叶斯优化等前沿方向。</p>
+<p>今日精读12篇文献，聚焦AI驱动的药物分子设计与反应产率预测，同时速读可回收聚合物与塑料升级回收新进展。</p>
+<p>最值得关注：LLM结合结构约束的分子发现框架（9.0分）与通用视觉交叉注意力产率预测模型（9.0分），均展现强实用潜力。</p>
+<p>建议普通读者优先关注化学可回收聚合物与塑料升级的物理校准方法，它们更贴近可持续材料落地。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -71,12 +73,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">精读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">4 篇</strong>
+    <strong class="dpr-home-dashboard-count">7 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Implicit Machine Learning Force Fields Accelerate Molecular Dynamics Simulations">Implicit Machine Learning Force Fields Accelerate Molecular Dynamics Simulations</span></li><li><span class="dpr-home-dashboard-paper-title" title="MolGVR: A Chemistry-Grounded Framework for Text-to-Molecule Generation">MolGVR: A Chemistry-Grounded Framework for Text-to-Molecule Generation</span></li><li><span class="dpr-home-dashboard-paper-title" title="Representations from Pretrained Machine-Learning Interatomic Potentials as Coarse Coordinates for Material Generation and Evaluation">Representations from Pretrained Machine-Learning Interatomic Potentials as Coarse Coordinates for Material Generation and Evaluation</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="MolecularCanvas: LLM-assisted Small-Molecule Drug Discovery via Structure-Guided Constraints">MolecularCanvas: LLM-assisted Small-Molecule Drug Discovery via Structure-Guided Constraints</span></li><li><span class="dpr-home-dashboard-paper-title" title="Generic Vision and Cross-Attention for Reaction Yield Prediction">Generic Vision and Cross-Attention for Reaction Yield Prediction</span></li><li><span class="dpr-home-dashboard-paper-title" title="Fused Bayesian Flow Networks for Dual-Target Molecular Design">Fused Bayesian Flow Networks for Dual-Target Molecular Design</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>4</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>7</strong></span></div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-skim-card">
   <div class="dpr-home-dashboard-header">
@@ -84,12 +86,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">速读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">4 篇</strong>
+    <strong class="dpr-home-dashboard-count">5 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="SciToolAgent-Evo: An Ontology-Aware Self-Evolving Agent for Open-World Scientific Tool Acquisition">SciToolAgent-Evo: An Ontology-Aware Self-Evolving Agent for Open-World Scientific Tool Acquisition</span></li><li><span class="dpr-home-dashboard-paper-title" title="Scaling Scientific Discovery Environments for Turn-Level Agentic RL">Scaling Scientific Discovery Environments for Turn-Level Agentic RL</span></li><li><span class="dpr-home-dashboard-paper-title" title="Frugal Bayesian Optimization: Scalable Surrogates for Data- and Resource-Limited Discovery">Frugal Bayesian Optimization: Scalable Surrogates for Data- and Resource-Limited Discovery</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="A Synthetically-accessible Universe of Chemically Recyclable Polymers">A Synthetically-accessible Universe of Chemically Recyclable Polymers</span></li><li><span class="dpr-home-dashboard-paper-title" title="From fragmented data to actionable design: Physics-calibrated learning for plastic upcycling">From fragmented data to actionable design: Physics-calibrated learning for plastic upcycling</span></li><li><span class="dpr-home-dashboard-paper-title" title="onepot-Bench 0: towards lab-aware in silico chemistry benchmarks">onepot-Bench 0: towards lab-aware in silico chemistry benchmarks</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>4</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>5</strong></span></div>
 </section>
 </div>
 
