@@ -1,0 +1,602 @@
+Title: End-to-end differentiable retrieval of molecular spectra using hydrodynamics, chemistry, and radiative transfer
+
+URL Source: https://arxiv.org/pdf/2607.28727v1
+
+Published Time: Mon, 03 Aug 2026 00:06:41 GMT
+
+Number of Pages: 12
+
+Markdown Content:
+Astronomy & Astrophysics manuscript no. aa59232-26 ©ESO 2026 Monday 3 rd August, 2026 
+
+# End-to-end differentiable retrieval of molecular spectra using hydrodynamics, chemistry, and radiative transfer 
+
+T. Grassi 1, 2, ⋆ , G. Vermariën 3, 4 , J. E. Pineda 1 , S. Spezzano 1 , S. Bovino 5, 6, 7, and P. Caselli 1, 2 
+
+> 1
+
+Max-Planck-Institut für Extraterrestrische Physik, Giessenbachstraße 1, 85748 Garching, Germany  
+
+> 2
+
+ORIGINS Excellence Cluster, Boltzmannstraße 2, 85748 Garching, Germany  
+
+> 3
+
+Leiden Observatory, Leiden University, PO Box 9513, 2300 RA Leiden, The Netherlands  
+
+> 4
+
+SURF, Amsterdam, The Netherlands  
+
+> 5
+
+Department of Chemistry, Sapienza University of Rome, P.le Aldo Moro 5, 00185 Rome, Italy  
+
+> 6
+
+Departamento de Astronomía, Facultad Ciencias Físicas y Matemáticas, Universidad de Concepción, Av. Esteban Iturra s /n Barrio Universitario, Casilla 160, Concepción, Chile  
+
+> 7
+
+INAF, Osservatorio Astrofisico di Arcetri, Largo E. Fermi 5, 50125, Firenze, Italy Received -; accepted -
+
+ABSTRACT 
+
+Aims. We aim to reproduce observed molecular line emission using a pipeline that couples hydrodynamics, chemistry, and radiative transfer capable of simultaneously optimizing all relevant physical and chemical parameters. 
+
+Methods. We developed an end-to-end di ff erentiable jax pipeline consisting of a custom hydrodynamical code, a modified version of the di ff erentiable chemical code C arbox , and a custom radiative transfer code. We tested the framework using controlled synthetic data. 
+
+Results. We demonstrate that the framework can recover the parameters of hydrodynamical shock models directly from molecular line spectra and optimize selected chemical reaction rate coe ffi cients through gradient-based optimization. The di ff erentiable formulation enables e ffi cient optimization of the coupled physical and chemical model while preserving the full time-dependent evolution. 
+
+Key words. . . . 
+
+1. Introduction 
+
+Inferring the physical and chemical conditions of astronomi-cal sources from molecular-line observations is a central chal-lenge in astrophysics. Several methods have been proposed through the years, leveraging chemo-dynamical 1D models to determine source kinematic (e.g., Keto et al. 2015; Sip-ilä & Caselli 2018; Sipilä et al. 2022 in prestellar cores), or chemical postprocessing techniques based on more complicated 3D (magneto)hydrodynamical MHD simulations (e.g., Ferrada-Chamorro et al. 2021; Jensen et al. 2023; Priestley et al. 2023; Navarro-Almaida et al. 2024; Narayan et al. 2025). More recently, the use of machine learning and statistical techniques has increased, including deep reinforcement learn-ing (Qiu et al. 2026), interpretable techniques (Heyl et al. 2023a; Asensio Ramos et al. 2024; Diop et al. 2024; Grassi et al. 2025; Vermariën et al. 2025a,b), standard deep neural networks meth-ods (Behrens et al. 2024; Kessler et al. 2025; Megías et al. 2025; Morisset et al. 2025), Bayesian methods (Makrymallis & Viti 2014; Accurso et al. 2017; Ma ff ucci et al. 2018; De Ceuster et al. 2023; Heyl et al. 2023b; Lin et al. 2025; Palud et al. 2025), lin-ear algebra-based techniques (Juvela et al. 1996; Gomez Gonza-lez et al. 2016; de Mijolla et al. 2024), as well as autoencoders (Portillo et al. 2020; Grassi et al. 2022; Sulzer & Buck 2023; Mahmud et al. 2026). In addition to these methods, di ff erentiable frameworks have recently emerged in the astrophysical domain, showing clear advantages of employing these techniques. For example, E xo - 
+
+> ⋆
+
+Corresponding author, e-mail: tgrassi@mpe.mpg.de 
+
+JAX (Kawahara et al. 2025a,b) is the first di ff erentiable spec-trum model for exoplanets and brown dwarfs that can compute cross-sections as functions of temperature and pressure, thereby minimizing interpolation errors in high-dispersion spectra. Ad-ditionally, di ff erentiable hydrodynamic solvers for astrophysical environments have recently emerged, enabling e ffi cient reverse-mode di ff erentiation of time-dependent fluid evolution (Kochkov et al. 2021; Storcks & Buck 2024; Wang et al. 2024; Horowitz & Luki´ c 2025; Horowitz et al. 2025; Horowitz 2026; Potluri et al. 2026; Storcks et al. 2026), as well as for reaction-di ff usion prob-lems (Pavlov 2026). Concurrently, the development of di ff erentiable astrochem-ical models, exemplified by C arbox (Vermariën et al. 2025b), has enabled large non-equilibrium chemical networks to be optimized using gradient-based methods. Likewise, Ray-trax 
+
+(Branca et al. 2025) demonstrated fully di ff erentiable time-dependent radiative transfer with support for inverse problems and adjoint calculations. Di ff erentiable models have also been employed for problem inversion in circumstellar disks (Kueny et al. 2026) and proto-planetary disks (Yoshida et al. 2026) to retrieve spatial dust fea-tures, as well as dust surface density, temperature, and grain-size distribution. Despite these advances in the machine-learning and di ff er-entiable simulation landscape, existing approaches usually focus on individual components of the physical problem, and yet no existing system o ff ers a fully di ff erentiable pipeline that consis-tently connects dynamical evolution, time-dependent chemistry, radiative transfer, and emergent spectra within a unified frame-
+
+Article number, page 1 of 11 arXiv:2607.28727v1 [astro-ph.IM] 30 Jul 2026 A&A proofs: manuscript no. aa59232-26 
+
+work. Such a capability is particularly attractive for contempo-rary astrophysical inference problems. Moreover, di ff erentiabil-ity of the solution allows for the propagation of derivatives of the observable with respect to any parameter, avoiding surro-gate models and computationally expensive finite-di ff erence ap-proximations. These features make it possible to solve inverse problems in which physical conditions are inferred directly from spectra. In this work, we present the first fully di ff erentiable astro-physical pipeline that combines one-dimensional hydrodynam-ics, time-dependent chemistry, radiative transfer, and spectral synthesis within a single end-to-end framework, although their applicability depends on the models’ underlying physics. Imple-mented entirely in jax , our pipeline supports automatic di ff eren-tiation in forward and reverse modes and preserves gradient in-formation throughout the calculation. This allows us to optimize physical parameters against spectra and facilitate local sensitiv-ity analysis. In Sect. 2, we will present the hydrodynamical code, our modified version of C arbox , and the custom radiative transfer code, and we will first test the C arbox di ff erentiability to in-fer the chemical rate coe ffi cients. In Sect. 3, we will employ the complete pipeline to retrieve the ground truth parameters of a shock with chemistry and radiative transfer from the correspond-ing synthetic spectrum. In Sect. 4, we will describe the limita-tions of our model, while in Sect. 5, we present the conclusions. 
+
+2. Differentiable pipeline 
+
+The newly developed jax (Bradbury et al. 2018) di ff erentiable pipeline consists of a chain of three modules: (i) a custom 1D hydrodynamic code, (ii) a time-dependent chemical solver con-sisting of a modified version of C arbox (Vermariën et al. 2025b), and (iii) a custom radiative transfer code. This pipeline is end-to-end di ff erentiable, meaning that it is possible to obtain the partial derivatives of all the desired quantities, in particular, the derivatives of the output spectra produced by the radiative trans-fer, with respect to the hydrodynamic parameters (e.g., the ini-tial conditions), the chemical parameters (e.g., a set of reaction rates), or the radiative transfer parameters (e.g., the collisional rates). This allows the optimization of every desired parameter with respect to the expected spectral output, as well as the local sensitivity analysis. The hydrodynamical code can be interpreted as an opera-tor yh = H(θh), that given a set of parameters θh (e.g., the ini-tial conditions or the integration time) produces an output yh
+
+(e.g., the gas distribution at a given time, or the velocity dis-tribution). Analogously, the time-dependent chemical code is 
+
+yc = C(yh, θ c), where the parameters θc could be the reaction rate coe ffi cients or the integration time, and the output yc are the abundances of the desired chemical species at the given time. Finally, the radiative transfer operator is I ≡ yr = R(yh, yc, θ r), where the parameters θr are the molecular data or each cell’s mi-croturbulence, while the output I is the spectrum of one or more chemical species and one or more atomic /molecular transitions. Since all three operators are developed using jax , thanks to automatic di ff erentiation, through the inherent derivatives tree, we have simultaneously access to ∂I/∂θ h, ∂I/∂θ c, and ∂I/∂θ r,i.e., we can di ff erentiate the output spectra I with respect to any parameter θ in the pipeline. In addition to the forward pipeline, jax allows for comput-ing the backward pass, which is essential in applications such as constrained optimization, parameter inference, and sensitiv-ity analysis, where gradients of a loss function with respect to initial conditions or model parameters are required. These gradi-ents propagate information backward through the system’s entire time evolution. We will describe the details of each pipeline module in the next sections. 
+
+> 2.1. Differentiable hydrodynamics
+
+We have developed a 1D hydrodynamical code which integrates the conservative form of the hydrodynamical equations for den-sity ( ρ), momentum ( ρ3), and energy density ( E), using a stan-dard Riemann HLL solver (Harten et al. 1983). See Appendix A for further details. For the aims of the present paper, we limit the code to have a single velocity component and no magnetic fields. These missing features are relevant, for example, in modeling oblique shocks, and the technical details of the implementations have already been discussed in Grassi et al. (2019). Analogously, we do not resolve chemical evolution alongside the code, which will in-fluence the temperature evolution via non-adiabatic cooling and heating and, in some cases, by a ff ecting the fluid adiabatic index, mean molecular weight, and the non-ideal MHD coe ffi cients. This presents an additional numerical challenge, more in terms of computational cost rather than development complexity (e.g., see Grassi et al. 2014 and the discussion in Sect. 2.2). Despite these shortcomings, the conclusions of this work remain unaf-fected. However, in the future, we will increase the complexity of this pipeline by including these features. Although implementing the HLL Riemann solver presents no particular di ffi culties for automatic di ff erentiation, the second-order Runge-Kutta method used to integrate the equation in time warrants further discussion due to the variable timestep. In fact, the timestep is determined by the Courant– Friedrichs–Lewy (CFL) condition (Lewy & Courant 1928). The maximum characteristic speed, considering all the cells (Toro et al. 1994), is 
+
+3max = max 
+
+> i
+
+ |3i| + cs,i
+
+ , (1) where cs,i is the sound speed of the ith cell. The CFL timestep is then 
+
+∆tCFL = CCFL 
+
+∆z
+
+3max 
+
+, (2) with CCFL = 0.1 the Courant number and ∆z the cell size. The timestep is limited by a prescribed maximum value ∆tmax , and by the remaining integration time, yielding 
+
+∆t = min CCFL 
+
+∆z
+
+3max 
+
+, ∆tmax , tend ,h − t
+
+!
+
+, (3) where tend ,h is the desired total integration time of the hydrody-namics, so that the last term avoids overshooting the desired end of the simulation, and ∆tmax = 10 −2 ∆z is to avoid extremely large timesteps. The whole procedure, as in the present form, produces an adaptive variable time step ∆t. Therefore, this implementation of the time-stepping is based on a “while loop” that exits when the condition t = tend ,h is satisfied. Since ∆t is not known in advance, the number of iterations is unpredictable. This is not a problem for standard forward simulations, and in jax the forward pass can be implemented e ffi ciently using lax “while loop”. However, reverse-mode automatic di ff erentiation through such dynami-cally sized loops is not directly supported, since the backward          
+
+> Article number, page 2 of 11 T. Grassi et al.: End-to-end di ff erentiable retrieval of molecular spectra using hydrodynamics, chemistry, and radiative transfer
+> Fig. 1. Sketch of the pipeline. The first step is to run a hydrodynamical code that evolves the density ρ(z), velocity v(z), and temperature T(z). Then the chemical evolution produces the chemical species abundances n(z). Finally, the radiative transfer produces the emission lines I(ν), or equivalently I(3). Our code allows us to backpropagate the loss gradients with respect to the target spectra.
+
+pass requires access to the sequence of intermediate states. For this reason, gradient evaluation must rely on an adjoint strategy based on checkpointing and recomputation of the forward tra-jectory. This approach avoids storing the full time history while enabling reverse-mode di ff erentiation through simulations with adaptive, state-dependent time stepping. We used the equinox 
+
+implementation 1, which elegantly solves the problem by storing only a set of intermediate checkpoints. The code has been tested with a standard Sod’s shock tube test using 128 cells (Sod 1978), yielding the expected di ff usivity produced by the HLL solver (Grassi et al. 2019; Teyssier 2002; Teyssier et al. 2006). Written in the present form, the code allows us to compute the partial derivatives with respect to any desired parameter. An example related to the Sod’s shock tube test is to obtain the derivatives of the final density distribution with respect to the final integration time tend ,h. In practice, we solve the forward problem up to a desired time, for example tend ,h = 0.2 s, and then via the backward pass we obtain ∂ρ (z)/∂ tend ,h, i.e., we obtain the derivative of the density with respect to the total integration time at every spatial position when t = tend ,h. This can be extended to every output quantity that can be derived with respect to ev-ery parameter. We will leverage this property to enable e ff ective parameter optimization. 
+
+2.2. Differentiable chemistry 
+
+For this stage of the pipeline, we need a di ff erentiable time-dependent integrator. To this aim, we use the C arbox code (Ver-mariën et al. 2025b), developed in jax and designed to be di ff er-entiable. The code is publicly available 2, and described in detail in the companion paper. This code solves the classic problem as-         
+
+> 1while_loop function from equinox.internal in https:// github.com/patrick-kidger/equinox , commit 38e2086 .
+> 2https://github.com/GijsVermarien/carbox/ , modified from commit 839b465 .
+
+sociated with a set of chemical reactions, i.e., solving the system of coupled ordinary di ff erential equations dni(t)dt = P(n, k) − ni L(n, k) , (4) where ni is the number density of a given chemical species, 
+
+P(n, k) is the species production, as a function of all the abun-dances n and all the reaction rate coe ffi cients k, while L is the de-struction of the given species. This set of equations is integrated in time using a solver that supports sti ff ness, adaptive time-stepping, and, preferably, Jacobian sparsity (Hindmarsh et al. 2005). C arbox integrates the system of equations by using a di ff erentiable solver from the library diffrax 3 (Kidger 2022), in particular, a Kvaerno integrator of order 3 or 5, depending on the sti ff ness (Kværnø 2004). Although this solver, when applied to large systems of di ff erential chemical equations, is less e ffi cient than well-established BDF solvers (Hindmarsh et al. 2005), the advantage is the capability of allowing backpropagation via a re-cursive checkpoints adjoint method, similar to the one described for the time “while loop” of the hydrodynamical solver. In this way, the code is capable of di ff erentiating the output with re-spect to the initial conditions and various parameters (e.g., tem-perature, cosmic-ray ionization rate, and visual extinction). The output is represented either by the final abundances 4 n(t = tend ), but also the complete evolution of the abundances in time, i.e., the trajectory n(t) from t = 0 to t = tend .For our pipeline, we modified C arbox to extend its di ff eren-tiability with respect to individual rate equations. We assumed that the ith rate expression in the chemical network is controlled by three coe ffi cients αi, βi, and γi and can have three main forms: (i) the canonic Arrhenius ki = αi(T/300 K) β 
+
+> i
+
+exp( −γi/T ) for generic gas-phase reactions, (ii) the cosmic-rays-induced reac-tions form ki = αiζ, where ζ is the ionization rate of H 2, and (iii)       
+
+> 3https://github.com/patrick-kidger/diffrax ,commit
+> ae856ad .
+> 4Note that tend here is not the same as the hydrodynamical code. Article number, page 3 of 11 A&A proofs: manuscript no. aa59232-26
+
+ki = αi FUV exp( −γi AV) for the photochemical reactions, where 
+
+FUV is the radiation intensity in Draine’s units, and AV is the visual extinction. We limit the present set of rate equations to these gas-phase reactions, aware that other types of reactions exist (e.g., three-body and surface). We modified the code to retrieve derivatives with respect to any of the parameters men-tioned here. For example, we can di ff erentiate the abundance of a specific species at a given time with respect to a parameter of a given reaction rate, e.g., ∂nHCO + (t = 10 kyr) /∂α 5, where the abundance of HCO + at 10 kyr is di ff erentiated with respect to 
+
+α5, one of the parameters of the 5th reaction in the chemical net-work. This can be calculated for any combination of outputs and parameters. These modifications enable optimization of reaction rates with respect to a specific target. We tested the capability of our code of leveraging automatic di ff erentation by predicting the rate coe ffi cient of a chemical network using a given set of time-dependent abundances n(t; T, ζ ) at di ff erent temperatures and cosmic ray ionization rates. Instead of optimizing a single set of n(t) trajectories (i.e., at a single T and ζ), we run multiple instances of C arbox on a grid of T and ζ values all at the same time. This is possible thanks to vectorization via jax.vmap , and we optimize all of α, β, and γ together. This is equivalent to optimizing the rate coe ffi cients simultaneously across multiple temperatures and cosmic-ray ionization values. The network employed is relatively small, consisting of 25 reactions (4 cosmic-ray-induced, 4 photochemical, and the rest standard gas-phase), and is based on Bialy & Sternberg (2015), including their water formation path starting with cosmic-ray-induced oxygen ionization and the CO /HCO + formation route (see Appendix E). This is designed to capture interpretable chemical e ff ects while remaining relatively time- and memory-effi cient. Although the network is relatively simple, it already has 63 free parameters to be optimized simultaneously. We are aware that this network is not state-of-the-art and is used here only for illustrative purposes. We note that the optimization can reproduce most of the tar-get values for α, β, and γ, except for some values that do not contribute to the modeled abundances over the selected range of 
+
+T and ζ and are therefore unconstrained. Details on the optimiza-tion method can be found in Appendix B. The code’s ability to perform simultaneous vectorized opti-mization across models with di ff erent parameters is crucial for the application in Sect. 3. 
+
+2.3. Differentiable radiative transfer 
+
+In order to predict the emission from the simulated region, we developed a custom radiative transfer code written in jax , sim-ilar to the one presented in Levis et al. (2025), but including level-population calculations. We use the spectral data and col-lisional rate coe ffi cients from the L amda database (Schöier et al. 2005), in particular the energy of the ith excited levels Ei, their radiative coe ffi cients Ai j and collisional coe ffi cients Ci j (T ) be-tween the ith and jth levels, the latter for a set of available col-lisional partners. Since the temperature is a function of the posi-tion z, the collisional rate coe ffi cients are log-interpolated from the database using an interpolator vectorized in the z direction. These parameters allow us to construct a set of di ff erential equa-tions similar to Eq. (4), but for the excited levels, where the ith level is populated by Pk C ji n j nk, where k is the list of colliders, and by A ji n j when j > i. Analogously, the level is depopulated by − Pk Ci j ni nk and −Ai j ni when i > j. By assuming equilib-rium (d ni/dt = 0) and imposing number density conservation (Pi ni = ntot ), we solve the linear system to obtain the level pop-ulations ni (e.g., see Maio et al. 2007). This operation is vec-torized to compute the level population over the full simulation domain simultaneously, i.e., ni(z), a matrix of Nz × NL elements, where Nz is the number of cells, and NL the number of excited levels. The level population is used to compute the emission of the transition at ν0 from the ith to the jth level, 
+
+jν(z) = hν0
+
+4π Ai j ni(z) ϕ (ν, z) , (5) where h is Planck’s constant, and the line shape is 
+
+ϕ(ν, z) = ca(z)ν0
+
+√π exp 
+
+− c2(ν − ˆν0)2
+
+ν20a(z)2
+
+ , (6) with c the speed of light, ˆ ν0(z) = ν0(1 −3(z)/c) takes into account the Doppler e ff ect produced by the moving gas cell 5, ν0 is the rest frame frequency of the given transition, and 
+
+a(z) =
+
+s
+
+32turb (z) + 2kBT (z)
+
+μ , (7) where 3turb is the turbulence parameter, and μ is the chemical species mean molecular weight 6.Analogously, the absorption is 
+
+αν(z) = hν0
+
+4π (Blu nl − Bul ni) ϕ(ν, z) (8) where Bul = Aul c2/(2 hν30) and Blu gl = Bul gu are defined assum-ing upper ( u) and lower ( l) level transitions, where g are the sta-tistical weights of the levels. The total absorption from the observer to a specific position 
+
+z is given by the cumulative integral 7 along the spatial dimension 
+
+τν(z) =
+
+Z z
+
+> 0
+
+αν(z′) d z′ , (9) and therefore the final spectrum is obtained by integrating the full domain of size LI(ν) =
+
+Z L
+
+> 0
+
+jν(z) e−τν(z)dz , (10) where the output along the line of sight is in cgs units is erg s −1 cm −2 Hz −1, i.e., units of 10 23 Jy. The code can include background radiation, not employed in this work. All the op-erations mentioned above are vectorized along the z coordinate, but also along the frequency coordinate, so that we can compute 
+
+I for all the molecular transitions at the same time. The code in-ternally uses frequency units, but the output spectra are functions of velocity, i.e., 3 = c(ν0 − ν)/ν 0.The code is implemented to take as input the name of the molecule, the list of desired colliders, the spatial distribution of the molecule number density nmol (z), the number density distri-bution of the colliders nk(z), the gas velocity 3(z), its temperature 
+
+T (v), and the turbulence 3turb (z). The result is a set of spectra             
+
+> 5In our case, we have a single velocity component 3≡3z, so there is no need to deproject the component with respect to the observer.
+> 6Note: in units of mass (g), not amu.
+> 7We use the function of the library quadex that is jax -friendly, sup-ports automatic di ff erentiations, and is easily vectorizable. See https: //github.com/f0uriest/quadax , commit 2273ba8 .Article number, page 4 of 11 T. Grassi et al.: End-to-end di ff erentiable retrieval of molecular spectra using hydrodynamics, chemistry, and radiative transfer
+
+I(3), one for each chemical species transition, where 3 = 0 corre-sponds to the rest frame, i.e., where ν = ν0. The spectral resolu-tion ∆3 can also be chosen. The output spectrum is di ff erentiable with respect to all the aforementioned parameters, except ∆3.The code has been benchmarked against the PDR benchmark results (Röllig et al. 2007) for level populations and the emission of C, C +, and O lines, using C loudy as reference data (Ferland et al. 2017). The emission and absorption part has been tested against LOC (Juvela 1997, 2020). See Appendix C for further details. 
+
+2.3.1. Optically thick case 
+
+In this specific setup, we omit the contributions of the radiation-induced transitions to the level population. Their rate coe ffi cients depend on the Blu and Bul coe ffi cients but also on the radiation in the specific cell, or better, on the integral of the product of the line shape and the radiation field, i.e., R ϕ(ν, z) jν(z) d ν. Although this is a local quantity, the radiation field in a cell jν(z) depends on the opacity and emission of the other cells, i.e., on the popu-lation of the excited levels in each cell and the opacity between cells. This suggests that we need to use an iterative procedure to achieve convergence of the level population. There are several techniques to solve this problem (e.g., see van Zadelho ff et al. 2002; van der Tak et al. 2007; Dullemond et al. 2012), but they all rely on an unknown number of iterations, which complicates the storage of the history of reverse-mode di ff erentiation used to leverage di ff erentiability, as we reported in Sect. 2.1. For testing, we implemented the full calculation using pure Lambda iteration without any specific accelerator, such as ALI or MALI (Rybicki & Hummer 1991, 1992). This is possible be-cause the code reaches the convergence relatively quickly, in terms of actual GPU time, thanks to the extensive vectorization of the code to compute the opacity between the ith and the jth cell ∆τi j (ν), while the total radiation in each cell is computed with the jax.einsum , again leveraging complete vectorization. We solved the convergence issue of reverse di ff erentiation using the checkpoints method, as in Sect. 2.1. We will employ the full radiative transfer code in future works. 
+
+3. End-to-end optimization 
+
+The complete pipeline allows us to di ff erentiate the output spec-trum I(3) with respect to any parameter included in the hydrody-namical, chemical, and radiative transfer codes. Thanks to this capability, analogously to the optimization test with C arbox , we can optimize the spectrum I(3) produced by the radiative transfer code to the desired parameters. As an example, we model a 1D shock in a box of size 
+
+L = 10 4 au with 128 grid elements and initial jump condi-tions (left and right) at z = L/2 as ( nL, nR)=(10 3, 4 × 10 3) cm −3,(3L, 3R)=(1 , 0) km s −1, ( TL, TR)=(10 3, 10) K, i.e., a hot moving gas impacting on a denser, cold, static gas. The gas is assumed ideal with adiabatic index γ = 1.4 and mean molecular weight 
+
+μ = 2.33 mp, where mp is the proton mass. The simulation is stopped at t = 10 3 yr. The final quantities n(z) and T (z) are provided to C arbox ,that assuming ζ = 10 −17 s−1, AV = 2 mag, and initial condi-tions proportional to the total density as nH2 (z) = n(z), nC(z) =
+
+10 −4n(z), and nO(z) = 3×10 −4n(z) (Röllig et al. 2007), integrates the system of di ff erential equations to tend = 10 5 yr. The chem-ical network is the same as that used in Sect. 2.2, and the aim here is to mimic a chemical post-processing operation, since the chemistry is calculated after the complete hydrodynamic inte-gration rather than during each hydrodynamical step via operator splitting. The output quantity nHCO + (z) is provided to the radiative transfer code, alongside T (z) and 3(z) from the hydrodynami-cal code. The turbulence is set to 3turb (z) = 0.07 km s −1, constant in the whole domain. We employ this rather small value to have sharper spectral features in the output spectrum (cf. Pineda et al. 2026). The radiative transfer mimics an observation along the z
+
+component of the shock, considering the transition J = 1 → 0 of HCO + (J = 0 is the ground level), with ν0 = 89 .189 GHz (Müller et al. 2005). The spectrum spans 4 km s −1 using 100 spectral channels. The chemical code also provides nH2 (z), which is em-ployed to compute ortho-H 2 and para-H 2 colliders, considering an ortho-to-para ratio of 3, and we use the data from the L amda 
+
+database 8 (Schöier et al. 2005). We do not include any mock ob-servational noise. Hence, the molecule can be observed regard-less of the obtained abundance. However, the hydrodynamical and chemical evolutions play a significant role in the final ob-served abundance, thereby providing an e ff ective benchmark for our pipeline. In this optimization test, we want to obtain the exact shape of the HCO + spectrum in the velocity space I(3), by optimiz-ing the parameters nL, TL, and 3L from the hydrodynamic mod-ule, tend , α18 , and β18 from the chemistry, and vturb from the radiative transfer. In practice, we assume we do not know the left characteristics of the shock’s initial conditions ( nL, TL, and 
+
+3L), the chemical post-processing integration time ( tend ) and the rate coe ffi cients for HCO + + e− → CO + H, namely k(T ) =
+
+α18 (T/300 K) β18 . Finally, we do not know the amount of micro-turbulence vturb that determines the line shape. This set of param-eters samples unknowns from each module of the pipeline. We want to minimize the L2-norm of the di ff erence of the target and optimized I(3), normalized to the maximum of the target, and we also normalize the input parameters in the log-arithmic space. The Adam optimizer (Kingma & Ba 2015) is from the jax optimization library optax (DeepMind et al. 2020) and has a learning rate of 0 .03, and the other param-eters are set to their defaults. This learning rate is rather ag-gressive, but despite some initial oscillations, it recovers the re-sults in a few iterations (see Appendix D). We uniformly ran-domize in the logarithmic space the initial conditions in the ranges of nL = [30, 3 ×10 4] cm −3, 3L = [30 , 3 × 10 5] cm s −1,
+
+TL = [30 , 3×10 3] K, tend = [10 2, 10 6] yr, 3turb =[0.01 ,0.5] km s −1,
+
+α18 = [10 −8, 10 −4] cm 3 s−1, and β18 =[-2, 2], the last one normal-ized in linear space. Not all the initial conditions produce e ff ective convergence, suggesting that the curvature of the parameter hyperspace is not always positive. In theory, it could be possible to explore the eigenvalues of the corresponding Hessian matrix to determine the curvature, but the checkpointing on the backward di ff erentia-tion used for the “while loop” in the hydrodynamics discussed in Sect. 2.1 is not designed to support second-order reverse mode. The solution reported in Fig. 2 is found after 270 epochs 9, but a reasonably accurate fit is found after around 60 iterations, and the remaining iterations are used to fine-tune the solution (see Appendix D). The synthetic spectrum is well reproduced, includ-ing the profiles of the key quantities, proving that the pipeline is relatively robust and allows backward di ff erentiation. The peak     
+
+> 8https://home.strw.leidenuniv.nl/~moldata/datafiles/ hco+.dat
+> 9Approximately 6 minutes on the NVIDIA Quadro RTX 4000, year 2018. Article number, page 5 of 11 A&A proofs: manuscript no. aa59232-26
+> Table 1. Target and optimized parameters after 270 epochs.
+
+Parameter Target Optimized Units 
+
+nL 1.0(3) 9.5(2) cm −3
+
+vL 1.0(4) 1.2(4) cm s −1
+
+TL 1.0(3) 1.0(3) K
+
+tend 1.0(5) 5.5(3) yr 
+
+3turb 7.0(3) 7.5(3) cm s −1
+
+α18 2.8(-7) 4.7(-7) cm 3 s−1
+
+β18 -0.69 -0.59 -     
+
+> Notes. a(b)=a×10 b.
+
+in the spectrum (first panel, top row) maps the main velocity components at approximately 0.6 km s −1 and the second peak on the left side is determined by the static gas from 0.75 z/L to z/L
+
+(last panel, top row). The intensity of these two features maps the tracer (last panel, bottom row) and the colliders’ abundances (top panel, central row, since H 2 is the main constituent of the gas). In the top right panel, it should be noted that the 0.6 km s −1
+
+feature (horizontal dashed line) is determined by the abundance of the tracer HCO + and the collider H 2, as shown by the dashed red curve indicating the product n(HCO +) · n(H 2). For comparison, we report the solution at the first epoch in Fig. 2, i.e., the solution with randomized parameters (dotted lines, except in the center panel, bottom row, omitted for clar-ity). We note that the initial abundance of HCO + is far from the expected solution after one iteration, suggesting that the opti-mization of the chemistry might play a crucial role in the result-ing spectrum. We also note that the optimized spectrum closely matches the target spectrum, whereas the other quantities show some discrepancies. This indicates that there are some degenera-cies among the quantities, or that the spectrum is not very sensi-tive to them. An example is the abundances of CO and electrons (solid and dashed green and red lines in the lower central panel), which show a small discrepancy, indicating that their exact abun-dances are not relevant to the final spectrum. In Table 1, the expected parameter values are all reproduced (nL, TL, 3L, 3turb , α18 and β18 ), suggesting that they are all rele-vant to produce the target output. The only parameter that is rel-atively di ff erent is tend , which is smaller than the expected target value. This is because, in this specific example, the abundance of HCO + relevant to reproducing the spectra reaches the expected values after only 5 × 10 3 yr, and therefore the optimization does not need to evolve the chemistry for longer. 
+
+> 3.1. Local sensitivity analysis
+
+The impact of the various parameters can be quantified by lever-aging the intrinsic characteristics of automatic di ff erentiation. Since, by construction, we have access to the partial deriva-tives, we can measure the local sensitivity with respect to the parameters. It is possible to compute the sensitivity to all the 100 spectral velocity channels with respect to every parameter with the Jacobian, e.g., ∂I(3)/∂ nL or ∂I(3)/∂α 18 . In our pipeline, due to the implementation of adjoint checkpoints in the hydro-dynamic while loop, we cannot use the forward Jacobian-vector product ( jvp ), instead, we use the Jacobian evaluated row-by-row via reverse-mode automatic di ff erentiation ( jacrev ). This will slightly reduce the computational e ffi ciency, but it allows us to evaluate the derivatives reported in Fig. 3, where in the up-per panel we show the optimized spectra for reference (same as in the first panel of Fig. 2), and in the lower panel the corre-sponding derivatives. As a quantity for local sensitivity, we use 
+
+|θ| · ∂I(3)/∂θ , which allows us to have a scaled partial derivative independent of the order of magnitude of the actual parameter value θ.We note that the feature in the larger peak around 0 .6 km s −1
+
+positively correlates with the gas density and the temperature at the left interface ( nL and TL), suggesting that the intensity of the emitted line is controlled by the upstream density (more material, more emission) and the temperature (higher tempera-ture, more populated excited levels). Analogously, the left inter-face velocity ( 3L) positively correlates with the peak intensity, indicating that increasing the upstream velocity will produce a brighter line peak (more material at the peak velocity). It is worth noting that the position of the peak in the up-per panel does not correspond to a peak in the derivatives in the lower panel, but they are shifted to higher velocity (see the vertical dashed line at 0 .6 km s −1). This is because larger hydrodynamical parameters are expected to shift the emission peak to higher velocities (due to greater pressure or momentum). Conversely, the maxima /minima of the derivative of the non-hydrodynamical parameters correspond to the peaks because they do not a ff ect the velocity of the fluid, but only the abun-dance of the tracer. In fact, in Fig. 3, the chemical integration time tend inversely correlates with the emission intensity, indicating that a longer chemical evolution will reduce the abundance of HCO +. The parameter α18 controls the recombination of HCO +, explaining the negative derivative over the entire domain. The slope of the rate coe ffi cient temperature dependence is controlled by β18 as 
+
+k(T ) ∝ T β18 . Higher β18 means favoring the destruction of HCO +
+
+at higher temperatures, explaining the negative derivative for the highest peak (it is produced in the hotter region T ≳ 800 K, see Fig. 2), and the positive derivative for the zero-velocity peak (produced when T ≈ 10 K). Finally, the microturbulence velocity 3turb determines the shape of the lines, in particular, it plays a relevant role for the width of the line with zero velocity. This can be noted by the sign inversion of the purple line in Fig. 3 around 3 = 0 km s −1. It means that increasing 3turb increases the “sides” of the line, re-ducing the height of the central peak (cf. Grassi et al. 2026). This eff ect is slightly visible for the highest peak at 3 ≈ 0.6 km s −1.
+
+4. Limitations 
+
+The principal limitation is the relatively low dimensionality of the problem, which reduces the actual impact on memory and realistic computational intensity. In particular, the hydrody-namical code is a 1D, single-velocity-component, no-magnetic-field, uniform Cartesian grid with a relatively di ff usive solver (HLL). However, the main implementation challenge is back-propagating derivatives, particularly the uncertainty arising from the unknown number of integration steps due to adaptive time-stepping. The latter problem has been solved with checkpoint-ing. The chemical part using C arbox has a similar issue, i.e., we use a relatively small chemical network that captures some key chemical features, but it is well below most state-of-the-art chemical networks. Another limitation of the code is the limited capability of the Kvaerno implicit sti ff solver, which has reduced performance compared to well-established solvers (Hindmarsh et al. 2005) and is not easily di ff erentiable, unlike diffrax . In this case, the technical di ffi culty was incorporating an optimiza-tion framework that treats the rate coe ffi cient parameters as opti-
+
+> Article number, page 6 of 11
+
+T. Grassi et al.: End-to-end di ff erentiable retrieval of molecular spectra using hydrodynamics, chemistry, and radiative transfer 2 1 0 1 2                                                
+
+> v/ km s1
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> I(v) / max(I target )
+> Target
+> Epoch 270
+> Epoch 0
+> 0.0 0.2 0.4 0.6 0.8 1.0
+> z/L
+> 0
+> 2000
+> 4000
+> 6000
+> 8000
+> 10000
+> 12000
+> n(z) / cm  3
+> 0.0 0.2 0.4 0.6 0.8 1.0
+> z/L
+> 0.0
+> 0.1
+> 0.2
+> 0.3
+> 0.4
+> 0.5
+> 0.6
+> 0.7
+> v(z) / km s  1
+> 0.0 0.2 0.4 0.6 0.8 1.0
+> z/L
+> 0
+> 200
+> 400
+> 600
+> 800
+> 1000
+> T(z) / K
+> 0.0 0.2 0.4 0.6 0.8 1.0
+> z/L
+> 10 14
+> 10 12
+> 10 10
+> 10 8
+> 10 6
+> 10 4
+> ni(z) /  ntot (z)
+> C
+> C+
+> CO
+> E
+> H2O
+> H2O+
+> HCO+
+> O
+> O+
+> OH
+> 0.0 0.2 0.4 0.6 0.8 1.0
+> z/L
+> 10 13
+> 10 12
+> nHCO  + (z) /  ntot (z)
+> 1
+> 2
+> 3
+> 4
+> 5
+> 6
+> 7
+> 8n(H 2) n(HCO  + )
+> 1e 6
+
+Fig. 2. Comparison of the target quantities (solid blue), evaluated at epoch 0 (dotted green), and at epoch 270 (solid orange). We show the HCO +
+
+(1 → 0) emission normalized by the maximum of the target emission profile (top left), the density profile (top center), the velocity profile (top right, left black y-scale), the n(HCO +) · n(H 2) product using the densities of the target (top right, right red y-scale), the temperature profile (bottom left), a subset of the chemical species relative abundances (center bottom), and the abundance of HCO + (bottom right). The vertical dashed lines in the top-left panel show the peaks of the two components. In the top right panel, the horizontal dashed line corresponds to the velocity of the main feature at 3 ≈ 0.6 km s −1 in the top-left panel. The bottom center panel shows only the target (solid lines) and the epoch 270 quantities (dashed lines). Note that the horizontal axis of the top left panel is velocity ( 3), while for the other panels is the spatial coordinate in units of the simulation box length ( z/L). 
+
+mizable elements and vectorizes the optimization over a grid of models to simultaneously optimize the rate coe ffi cients. Another limitation that will impact computational resources (especially the time required per forward-modeling step) is the use of chemistry alongside hydrodynamics to address cooling and heating, and therefore computing the temperature evolution consistently (Grassi et al. 2014). In this paper, we consider chem-istry as a post-processing stage. The critical limit here is the ef-ficiency of the di ff erentiable solver in diffrax , which is not ca-pable of the required speed, while another aspect is the lack of cooling and heating terms in C arbox . While the latter problem is shown to be easily solvable 10 , the former requires a community eff ort to develop an e ff ective solver with numerical e ffi ciency comparable to CVODE (Cohen et al. 1996) or DLSODES (Hind-marsh et al. 2005). Finally, the present radiative transfer calculation only consid-ers thin emission and therefore does not encounter the technical issues associated with optically thick radiative transfer. How-ever, we have successfully tested a code version that includes these additional complications, but we will use it in future, more realistic applications. Analogously to hydrodynamics, the main issue concerns the unknown iteration steps, arising from the un-known convergence of the Lambda iterations used to solve the level population. This issue has been solved again with check- 
+
+> 10
+
+see https://github.com/GijsVermarien/carbox/pull/7 .
+
+pointing, as discussed in Sect. 2.1 and Sect. 2.3. Apart from the optically thick issues, the code’s main feature is its extensive vectorization, which allows us to compute emission lines with minimal numerical impact and full di ff erentiability, though only in a 1D setup. 
+
+5. Conclusions 
+
+We presented the first end-to-end di ff erentiable pipeline that en-ables the solution of hydrodynamics, chemistry, and radiative transfer. This will allow us to use the observed spectra to op-timize any desired model parameter at any stage of the compu-tational pipeline. The hydrodynamic and the radiative transfer codes have been designed specifically for this work, while the chemical code is a modified version of C arbox . We showed that it is possible to leverage di ff erentiability to optimize entire sets of chemical rate coe ffi cients and to optimize the physical con-ditions of a shock to produce a target spectrum of HCO +. Al-though still limited in complexity, this pipeline advocates using di ff erentiable models as a promising research avenue for the fu-ture. This work establishes a foundation for di ff erentiable multi-physics modeling in astrophysics and provides a pathway toward next-generation simulation-based inference techniques. 
+
+Article number, page 7 of 11 A&A proofs: manuscript no. aa59232-26 0.0           
+
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> I(v) / max(I target )
+> 2.0 1.5 1.0 0.5 0.0 0.5 1.0 1.5 2.0
+> v/ km s 1
+> 7500
+> 5000
+> 2500
+> 0
+> 2500
+> 5000
+> 7500
+> 10000
+> 12500
+> | i| [ I(v) /  i]
+> nL
+> vL
+> TL
+> tend
+> vturb
+> 18
+> 18
+
+Fig. 3. Top panel: the HCO + (1 → 0) emission normalized by the max-imum of the target emission profile (same as top left panel of Fig. 2). Bottom panel: the partial derivatives of the parameters multiplied by the value of the parameters evaluated as for the solution in the top panel, il-lustrating the sensitivity of the di ff erent parameters. In both panels, the dashed vertical lines indicate the position of the two peaks. 
+
+6. Tools employed 
+
+The text of this paper has been refined with Grammarly, while parts of the code have been written using Copilot’s inline com-pletion in VS Code. The source code is not publicly available at this stage, as it is under active development. It will be released once a stable version is available. 
+
+Acknowledgements. TG, JEP, SS, and PC gratefully acknowledge the support of the Max Planck Society. SB acknowledges support from ANID Basal Project FB210003. 
+
+References 
+
+Accurso, G., Saintonge, A., Bisbas, T. G., & Viti, S. 2017, MNRAS, 464, 3315 Amano, T. 1990, The Journal of Chemical Physics, 92, 6492 Anicich, V. G. & Huntress, Jr., W. T. 1986, ApJS, 62, 553 Asensio Ramos, A., Westendorp Plaza, C., Navarro-Almaida, D., et al. 2024, MNRAS, 531, 4930 Behrens, E., Mangum, J. G., Viti, S., et al. 2024, ApJ, 977, 38 Bialy, S. & Sternberg, A. 2015, MNRAS, 450, 4424 Bradbury, J., Frostig, R., Hawkins, P., et al. 2018, JAX: composable transforma-tions of Python +NumPy programs Branca, L., Rost, R., & Buck, T. 2025, arXiv e-prints, arXiv:2511.09389 Cohen, S. D., Hindmarsh, A. C., & Dubois, P. F. 1996, Computer in Physics, 10, 138 De Ceuster, F., Ceulemans, T., Cockayne, J., Decin, L., & Yates, J. 2023, MN-RAS, 518, 5536 de Mijolla, D., Holdship, J., Viti, S., & Heyl, J. 2024, ApJ, 961, 225 DeepMind, Babuschkin, I., Baumli, K., et al. 2020, The DeepMind JAX Ecosys-tem Diop, A., Cleeves, L. I., Anderson, D. E., Pegues, J., & Plunkett, A. 2024, ApJ, 962, 90 Dullemond, C. P., Juhasz, A., Pohl, A., et al. 2012, RADMC-3D: A multi-purpose radiative transfer tool, Astrophysics Source Code Library, record ascl:1202.015 Ferland, G. J., Chatzikos, M., Guzmán, F., et al. 2017, Rev. Mexicana Astron. Astrofis., 53, 385 Ferrada-Chamorro, S., Lupi, A., & Bovino, S. 2021, MNRAS, 505, 3442 Gomez Gonzalez, C. A., Absil, O., Absil, P.-A., et al. 2016, A&A, 589, A54 Grassi, T., Bovino, S., Schleicher, D. R. G., et al. 2014, MNRAS, 439, 2386 Grassi, T., Nauman, F., Ramsey, J. P., et al. 2022, 668, A139 Grassi, T., Padovani, M., Galli, D., et al. 2025, A&A, 702, A71 Grassi, T., Padovani, M., Ramsey, J. P., et al. 2019, MNRAS, 484, 161 Grassi, T., Pineda, J. E., Spezzano, S., et al. 2026, arXiv e-prints, arXiv:2603.06791 Harada, N., Herbst, E., & Wakelam, V. 2010, ApJ, 721, 1570 Harten, A., Lax, P. D., & Leer, B. v. 1983, SIAM Review, 25, 35 Heyl, J., Butterworth, J., & Viti, S. 2023a, MNRAS, 526, 404 Heyl, J., Viti, S., & Vermariën, G. 2023b, Faraday Discussions, 245, 569 Hindmarsh, A. C., Brown, P. N., Grant, K. E., et al. 2005, ACM Trans. Math. Softw., 31, 363–396 Horowitz, B. 2026, arXiv e-prints, arXiv:2607.10983 Horowitz, B. & Luki´ c, Z. 2025, MNRAS, 544, 960 Horowitz, B., Luki´ c, Z., Nagamine, K., & Oku, Y. 2025, arXiv e-prints, arXiv:2512.13403 Jensen, M. J., Bilodeau, R. C., Safvan, C. P., et al. 2000, ApJ, 543, 764 Jensen, S. S., Spezzano, S., Caselli, P., Grassi, T., & Haugbølle, T. 2023, A&A, 675, A34 Juvela, M. 1997, A&A, 322, 943 Juvela, M. 2020, A&A, 644, A151 Juvela, M., Lehtinen, K., & Paatero, P. 1996, MNRAS, 280, 616 Kawahara, H., Kawashima, Y., Tada, S., et al. 2025a, ApJ, 985, 263 Kawahara, H., Kawashima, Y., Tada, S., et al. 2025b, ApJ, 985, 263 Kessler, N., Csengeri, T., Cornu, D., Bontemps, S., & Bouscasse, L. 2025, arXiv e-prints, arXiv:2510.09119 Keto, E., Caselli, P., & Rawlings, J. 2015, MNRAS, 446, 3731 Kidger, P. 2022, arXiv e-prints, arXiv:2202.02435 Kingma, D. P. & Ba, J. 2015, in 3rd International Conference on Learning Rep-resentations, ICLR 2015, San Diego, CA, USA, May 7-9, 2015, Conference Track Proceedings, ed. Y. Bengio & Y. LeCun Kochkov, D., Smith, J. A., Alieva, A., et al. 2021, Proceedings of the National Academy of Science, 118, e2101784118 Kueny, J. K., Long, J. D., Males, J. R., et al. 2026, arXiv e-prints, arXiv:2606.23478 Kværnø, A. 2004, BIT Numerical Mathematics, 44, 489 Levis, A., Luong, N., Teague, R., et al. 2025, arXiv e-prints, arXiv:2509.03623 Lewy, H. abd Friedrichs, K. & Courant, R. 1928, Mathematische Annalen, 100, 32 Lin, Y., Adachi, M., Spezzano, S., et al. 2025, A&A, 700, A84 Ma ff ucci, D. M., Wenger, T. V., Le Gal, R., & Herbst, E. 2018, ApJ, 868, 41 Mahmud, S. S., Auddy, S., Turner, N., & Bary, J. S. 2026, ApJ, 997, 225 Maio, U., Dolag, K., Ciardi, B., & Tornatore, L. 2007, MNRAS, 379, 963 Makrymallis, A. & Viti, S. 2014, ApJ, 794, 45 Megías, A., Jiménez-Serra, I., Dulieu, F., et al. 2025, A&A, 702, A87 Morisset, C., Charlot, S., Sánchez, S. F., et al. 2025, MNRAS, 538, 1884 Müller, H. S., Schläder, F., Stutzki, J., & Winnewisser, G. 2005, Journal of Molecular Structure, 742, 215 Narayan, J., Tritsis, A., & Federrath, C. 2025, MNRAS, 544, 4173 Navarro-Almaida, D., Lebreuilly, U., Hennebelle, P., et al. 2024, A&A, 685, A112 Palud, P., Bron, E., Chainais, P., et al. 2025, A&A, 698, A311 Pavlov, G. 2026, Computer Physics Communications, 326, 110205 Pineda, J. E., Friesen, R. K., (co-PIs), et al. 2026, ApJS, 282, 18 Portillo, S. K. N., Parejko, J. K., Vergara, J. R., & Connolly, A. J. 2020, AJ, 160, 45 Potluri, A., Rodriguez, A., Garcia, T. N., et al. 2026, arXiv e-prints, arXiv:2601.12204 Priestley, F. D., Clark, P. C., & Whitworth, A. P. 2023, MNRAS, 519, 6392 Qiu, Y., Zhang, T., Liu, T., et al. 2026, ApJS, 283, 1 Röllig, M., Abel, N. P., Bell, T., et al. 2007, A&A, 467, 187 Rybicki, G. B. & Hummer, D. G. 1991, A&A, 245, 171 Rybicki, G. B. & Hummer, D. G. 1992, A&A, 262, 209 Schöier, F. L., van der Tak, F. F. S., van Dishoeck, E. F., & Black, J. H. 2005, A&A, 432, 369 Sipilä, O. & Caselli, P. 2018, A&A, 615, A15 Sipilä, O., Caselli, P., Redaelli, E., & Spezzano, S. 2022, A&A, 668, A131 Sod, G. A. 1978, Journal of Computational Physics, 27, 1 Storcks, L. & Buck, T. 2024, arXiv e-prints, arXiv:2410.23093 
+
+Article number, page 8 of 11 T. Grassi et al.: End-to-end di ff erentiable retrieval of molecular spectra using hydrodynamics, chemistry, and radiative transfer 
+
+Storcks, L., Thuerey, N., & Buck, T. 2026, arXiv e-prints, arXiv:2607.18176 Sulzer, I. & Buck, T. 2023, arXiv e-prints, arXiv:2312.06015 Teyssier, R. 2002, A&A, 385, 337 Teyssier, R., Fromang, S., & Dormy, E. 2006, Journal of Computational Physics, 218, 44 Toro, E. F., Spruce, M., & Speares, W. 1994, Shock Waves, 4, 25 van der Tak, F. F. S., Black, J. H., Schöier, F. L., Jansen, D. J., & van Dishoeck, E. F. 2007, A&A, 468, 627 van Zadelho ff , G.-J., Dullemond, C. P., van der Tak, F. F. S., et al. 2002, A&A, 395, 373 Vermariën, G., Bisbas, T. G., Viti, S., et al. 2025a, Machine Learning: Science and Technology, 6, 025069 Vermariën, G., Grassi, T., Van de Sande, M., et al. 2025b, arXiv e-prints, arXiv:2511.10558 Wakelam, V., Gratier, P., Loison, J.-C., et al. 2024, A&A, 689, A63 Wang, W., Zhang, X., Bezgin, D., et al. 2024, arXiv e-prints, arXiv:2406.19494 Woon, D. E. & Herbst, E. 2009, ApJS, 185, 273 Yoshida, T. C., Macías, E., Rosotti, G., et al. 2026, arXiv e-prints, arXiv:2607.12618 Zanchet, A., Bussery-Honvault, B., Jorfi, M., & Honvault, P. 2009, Physical Chemistry Chemical Physics, 11, 6182 
+
+Article number, page 9 of 11 A&A proofs: manuscript no. aa59232-26 
+
+Appendix A: Hydrodynamical equations 
+
+The hydrodynamic equations are solved in conservative form, 
+
+∂U
+
+∂t + ∂F(U)
+
+∂z = 0 , (A.1) with 
+
+U =
+
+
+
+ρρ3
+
+E
+
+ , F =
+
+
+
+ρ3
+
+ρ32 + pv(E + p)
+
+ , (A.2) and 
+
+E = p
+
+γ − 1 + 12 ρ32 , (A.3) where z is the spatial coordinate, ρ is the mass density, 3 is the z
+
+(and only) component of the velocity, p is the pressure, E is the energy density, and γ is the adiabatic index. Using a finite-volume discretization on a uniform cell grid, the semi-discrete update is dUi
+
+dt = − Fi+1/2 − Fi−1/2
+
+∆z . (A.4) The intercell fluxes are computed with the HLL approximate Riemann solver, 
+
+FHLL = S RFL − S LFR + S LS R(UR − UL)
+
+S R − S L
+
+, (A.5) with 
+
+S L = min( vL − cs,L, vR − cs,R), S R = max( 3L + cs,L, 3R + cs,R) ,
+
+(A.6) where the left and right components are considered, and where 
+
+c2s ρ = γ p is employed to compute the speed of sound c.In addition to these, we use ρ = n μ, where n is the gas num-ber density and μ its mean molecular weight, and p = n k BT ,where kB is the Boltzmann constant, while T is the gas tempera-ture. The code allows three types of boundary conditions: Dirich-let (constant derivatives), fixed (zero derivatives), or periodic. We use Dirichlet boundary conditions unless otherwise speci-fied. 
+
+Appendix B: Rate coefficient fitting 
+
+We use the library optax (DeepMind et al. 2020) to optimize the rate coe ffi cients for a given set of time-dependent abun-dances n(t; T, ζ ) at di ff erent temperatures and cosmic ray ion-ization rates. Our target quantity is a Nt × NT × Nζ matrix, where 
+
+Nt = 50 is the number of timesteps (1 − 10 5 yr, log-spaced), 
+
+NT = 5 the number of temperatures (10-300 K, log-spaced), and 
+
+Nζ the number of cosmic rays values (10 −18 − 10 −14 s−1, log-spaced). The optimization target Nt × NT × Nζ matrix is constructed by running C arbox on a grid of T and ζ values for a specific set of α, β, and γ (i.e., the values found in the KIDA database, Wakelam et al. 2024). For numerical stability, this matrix is nor-malized in the logarithmic space, and the loss is constructed by minimizing the L2-norm of the di ff erence between the target and the computed matrix. The initial parameters are also normalized      
+
+> Fig. B.1. Time evolution of the abundances of selected chemical species (4 out of 16). Each panel represents a chemical species, while each tra-jectory is for a specific Tand ζcombination. The solid lines are the tar-get solutions, while the dashed line is the optimized solution, which, in most cases, perfectly overlaps, apart from H +, which shows the largest di ff erence among all 16 molecules.
+
+to their expected ranges in log space, except for β and the pho-tochemistry γ, which are normalized in linear space. We found that the exact normalization range is not relevant to the optimiza-tion, whereas the choice of logarithmic or linear space is crucial. We then randomize the parameters to have a completely di ff er-ent set of initial conditions. Thanks to automatic di ff erentiation, 
+
+optax (using an Adam optimizer with a learning rate of 0 .03, Kingma & Ba 2015) converges after approximately 1000 iter-ations, which takes approximately 20 minutes on an NVIDIA Quadro RTX 4000 (8GB, 2018 version), depending on the ini-tial conditions. The number of iterations is significantly reduced if only a subset of reactions is optimized, with the 63-parameter optimization representing an extreme case. We report the results of this optimization in Fig. B.1, where each panel represents the time-dependent abundance of a chem-ical species, and each trajectory is computed at a given T and ζ
+
+combination. The dashed lines are the optimized model, while the solid lines are the ground truth. 
+
+Appendix C: Radiative transfer benchmarks 
+
+To test our radiative transfer module, we first verified the level-population calculations against the results of the PDR bench-mark by Röllig et al. (2007). In particular, we used the output of Cloudy for the F1 model (constant temperature and density, i.e., 
+
+T = 50 K, n = 10 3 cm −3). Giving that the emission of a specific transition u → l is Iul = nu Aul (Eu − El), we inferred the popula-tion level ni from the emission of C at 370 and 610 μm, and C + at 158 μm as a function of spatial position within the slab. We em-ployed the chemical composition computed by C loudy (i.e., nC
+
+and nC+ ) and compared the inferred level population of C loudy 
+
+with our code. For C, the colliders are H, H +, e – , and H 2, while for C + we have H, e – , and H 2, where in both cases we assume 
+
+> Article number, page 10 of 11
+
+T. Grassi et al.: End-to-end di ff erentiable retrieval of molecular spectra using hydrodynamics, chemistry, and radiative transfer 10 12 10 13 10 14 10 15 10 16 10 17 10 18 10 19            
+
+> z[cm]
+> 10 6
+> 10 5
+> 10 4
+> 10 3
+> 10 2
+> n [cm  3]
+> C( n= 1)
+> C( n= 2)
+> C+(n= 1)
+> This work
+> CLOUDY
+
+Fig. C.1. PDR population level of C and C +, where the ground levels (n = 0) are omitted for clarity. The dashed lines are for C loudy , while our model has solid lines. 2.0 1.5 1.0 0.5 0.0 0.5 1.0 1.5 2.0 
+
+> Velocity (km/s)
+> 0
+> 2
+> 4
+> 6
+> 8
+> 10
+> TB / K,  HCO  + (1-0)
+> This work
+> LOC
+
+Fig. C.2. Emission of the 1 → 0 transition of HCO + from our code (blue line), and from LOC (orange line). 
+
+an ortho-to-para ratio of 1, but the exact ratio has no relevant impact on the final result. The results are in Fig. C.1, where the level populations overlap. To test the emission and absorption components, we instead compared our emission spectrum with that produced by LOC. The latter is a code that requires defining a 3D structure. We therefore constructed a 64 × 128 × 64 cartesian box, where the 
+
+y component corresponds to the line of sight (LOS). The dimen-sion of the box along the LOS is 10 6 au, and half of the size in the other two dimensions, with a total density of H 2 of 10 4 cm −3, and HCO + fraction of 10 −9, both constant in the box. The tempera-ture is 30 K, and the microturbulence is 0 .2 km s −1. We assume no background radiation in this test. We noted that, due to the ge-ometric di ff erences between the two codes, the level populations di ff er, especially at the boundary conditions. To avoid geomet-ric e ff ects and test the emission /absorption machinery only, we therefore provided the level populations calculated by LOC to our code. The brightness temperature of the 1 → 0 transition of HCO + is reported in Fig. C.2. 
+
+Table E.1. Reaction rate coe ffi cients used in this work. Reaction Rate coe ffi cient ( k)1 O + CR → O+ + e– 2.80 ζ
+
+2 C + CRP → C+ + e– 2.62 ζ
+
+3 CO + CR → C + O 5.00 ζ
+
+4 H2 + CR → H + H 0.01 ζ
+
+5 O+ + H2 → OH + + H 1.60 × 10 −9
+
+6 OH + + H2 → H2O+ + H 1.00 × 10 −9
+
+7 H2O+ + H2 → H3O+ + H 6.10 × 10 −10 
+
+8 H3O+ + e– → H2O + H 1.10 × 10 −7T −0.50 3
+
+9 H2O+ + e– → OH + H 8.60 × 10 −8T −0.50 3
+
+10 H2O+ + e– → O + H2 3.90 × 10 −8T −0.50 3
+
+11 OH + + e– → O + H 6.30 × 10 −9T −0.48 3
+
+12 O+ + e– → O + γ 3.40 × 10 −12 T −0.63 3
+
+13 C+ + e– → C + γ 4.40 × 10 −12 T −0.61 3
+
+14 C + OH → CO + H 1.15 × 10 −10 T −0.34 3
+
+15 C+ + OH → CO + + H 5.67 × 10 −10 
+
+16 C+ + OH → CO + + H 2.40 × 10 −9T −0.50 3
+
+17 CO + + H → CO + H+ 4.00 × 10 −10 
+
+18 HCO + + e– → CO + H 2.80 × 10 −7T −0.69 3
+
+19 CO + + H2 → HCO + + H 7.28 × 10 −10 
+
+20 H+ + e– → H + γ 3.50 × 10 −12 T −0.70 3
+
+21 H + H → H2 2.12 × 10 −17 (dust) 22 H2 + γ → H + H 5.68 × 10 −11 exp( −4.18 AV)23 C + γ → C+ + e– 3.39 × 10 −10 exp( −3.76 AV)24 CO + γ → C + O 2.43 × 10 −10 exp( −3.88 AV)25 H2O + γ → OH + H 7.72 × 10 −10 exp( −2.63 AV)
+
+Notes. T3 = T/300 K. CR are cosmic rays, CRP photons from cosmic rays-induced excitations, and γ photons. Reaction rates are from Ani-cich & Huntress (1986); Amano (1990); Jensen et al. (2000); Woon & Herbst (2009); Zanchet et al. (2009); Harada et al. (2010); Wakelam et al. (2024). 
+
+Appendix D: Loss and convergence 
+
+In Fig. D.1, we report the loss evolution (top) and the resulting spectrum every 30 epochs up to 120, followed by the final re-sult at 270 epochs (bottom). We note that the learning rate leads to large oscillations during gradient descent, but convergence is relatively straightforward. We also noted that not all randomized initial conditions yield a smooth gradient descent, and in some cases, the optimizer’s learning rate needs to be fine-tuned. The bottom panel shows that convergence toward the target spectrum is relatively fast, producing viable results by around 60 epochs. We also note that the final result is not perfectly reproduced, as evidenced by a small di ff erence in the main peak that is not re-covered after 270 epochs. 
+
+Appendix E: Chemical network 
+
+In Table E.1, we report the reactions and the corresponding rate coe ffi cients. 
+
+Article number, page 11 of 11 A&A proofs: manuscript no. aa59232-26 10 0 10 1 10 2               
+
+> Iteration
+> 10 4
+> 10 3
+> 10 2
+> 10 1
+> Loss
+> 2.0 1.5 1.0 0.5 0.0 0.5 1.0 1.5 2.0
+> v/ km s1
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> I(v) / max(I target )
+> Epoch 0
+> Epoch 30
+> Epoch 60
+> Epoch 90
+> Epoch 120
+> Epoch 270
+> Target
+
+Fig. D.1. Top panel: the loss function as a function of iterations. Bottom panel: the observed intensity over epochs. During the early epochs, the optimization shifts the distribution to higher velocities. At later epochs, the shape morphs into the asymmetric target distribution. The dashed curve is the target spectrum, while the vertical dashed lines indicate the peaks discussed in the text. Article number, page 12 of 11

@@ -1,0 +1,416 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-08-05T22:42:15.065087+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 4,
+    "deep_cap": 6,
+    "deep_selected": 4,
+    "quick_candidates": 5,
+    "quick_skim_target": 11,
+    "quick_selected": 5
+  },
+  "deep_dive": [
+    {
+      "id": "2608.02642v1",
+      "source": "arxiv",
+      "title": "MDArena: Evaluating Coding Agents on Realistic Molecular Dynamics Workflows",
+      "abstract": "Accelerating scientific discovery is among the most consequential applications of AI, and computational biomolecular simulation stands out as a particularly promising target within this broader effort. Coding agents promise to automate significant portions of this workflow, yet their reliability on realistic molecular dynamics (MD) tasks remains poorly characterized. To address this issue, we introduce MDArena, a benchmark of 50 containerized tasks drawn from active biomolecular simulation projects, spanning 29 molecular systems and 14 broad research protocols, including trajectory analysis, complex system preparation, free-energy protocols, and enhanced sampling. We evaluate six model/harness configurations spanning Codex and OpenCode. Among the evaluated configurations, Codex GPT-5.5 at extra-high reasoning effort performs best, reaching 24/50 Strict-Pass@1 successes (48%), followed by Codex GPT-5.5 Medium with 21/50, and OpenCode Gemini Flash 3.5 with 20/50. Average correctness and process rewards are substantially higher than strict success rates across all configurations, indicating that agents frequently make meaningful partial progress but fail on the fine-grained details required for reproducible scientific workflows. Hard tasks remain largely unsolved, particularly membrane-protein system preparation and alchemical free-energy setup, both unsolved or near-unsolved by every evaluated configuration. MDArena thus exposes a substantial gap between the usefulness of coding agents as supervised assistants and their reliability as autonomous MD researchers, while providing a reproducible and extensible platform for tracking progress toward closing it.",
+      "authors": [
+        "Nithishwer Mouroug Anand",
+        "Wei-Tse Hsu",
+        "Kyle Vaccaro",
+        "Eden James Gage",
+        "Jonathan David Colburn",
+        "Linda Xi Phan",
+        "Minjoon Seo",
+        "Kevin Guan",
+        "Philip C. Biggin"
+      ],
+      "primary_category": "physics.chem-ph",
+      "categories": [
+        "physics.chem-ph",
+        "cs.AI"
+      ],
+      "published": "2026-07-31T13:48:07+00:00",
+      "link": "https://arxiv.org/pdf/2608.02642v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Benchmark for evaluating AI coding agents on MD workflows",
+      "llm_evidence_cn": "用于评估AI编程智能体在分子动力学工作流上的基准",
+      "llm_evidence": "用于评估AI编程智能体在分子动力学工作流上的基准",
+      "canonical_evidence": "用于评估AI编程智能体在分子动力学工作流上的基准",
+      "llm_tldr_en": "MDArena introduces a benchmark of 50 containerized tasks from active biomolecular simulation projects, spanning 29 molecular systems and 14 protocols, to evaluate coding agents on realistic molecular dynamics workflows.",
+      "llm_tldr_cn": "加速生物分子模拟是AI的重要应用，但编码智能体在真实分子动力学任务上的可靠性尚不清楚。本文提出MDArena基准，包含来自活跃生物分子模拟项目的50个容器化任务，覆盖29个分子系统与14类研究流程，如轨迹分析、复合物体系准备、自由能计算与增强采样。对多种模型/配置的评估揭示了当前编码智能体的能力与局限，为化学AI智能体研究提供了标准化评测。",
+      "llm_tldr": "加速生物分子模拟是AI的重要应用，但编码智能体在真实分子动力学任务上的可靠性尚不清楚。本文提出MDArena基准，包含来自活跃生物分子模拟项目的50个容器化任务，覆盖29个分子系统与14类研究流程，如轨迹分析、复合物体系准备、自由能计算与增强采样。对多种模型/配置的评估揭示了当前编码智能体的能力与局限，为化学AI智能体研究提供了标准化评测。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "What are the latest advances in retrosynthesis, synthesis planning, and AI agents for chemistry, and how are these systems evaluated?",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.03260v1",
+      "source": "arxiv",
+      "title": "ED-DiT: Physics-Guided Diffusion Pretraining for Transferable Molecular Representations from Electron Density",
+      "abstract": "Pretraining has shown strong potential for learning transferable representations, yet it remains underexplored for electron-density-based molecular learning. Electron density provides a continuous three-dimensional description of molecular electronic structure, capturing both local spatial patterns and global physical quantities. This raises a key question: can electron-density fields be used for self-supervised pretraining to learn a shared representation that transfers across diverse electronic-structure-related tasks? We propose ED-DiT, a physics-guided Diffusion Transformer for self-supervised pretraining on electron-density point clouds. ED-DiT learns reusable representations by reconstructing corrupted and partially masked log-density fields across diffusion noise levels. An electron-number consistency constraint is further introduced to preserve the total electronic mass. The pretrained encoder can be adapted to property prediction, open-/closed-shell classification, molecule-electron-density retrieval, and molecule-conditioned electron-density prediction. Experiments on six EDBench tasks show that ED-DiT consistently outperforms the same architecture trained from scratch, especially under limited supervision. For molecule-conditioned electron-density prediction, it reduces RMSE from 2.2474 to 1.3753 and surpasses the available baseline. With only 10% labels, it improves orbital energy prediction RMSE from 0.0293 to 0.0138. These results demonstrate the effectiveness of physics-guided electron-density pretraining for learning transferable molecular representations.",
+      "authors": [
+        "Liang Shuang",
+        "Haocheng Wang",
+        "Jiayi Song",
+        "Shuquan Ye",
+        "Ben Fei"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-08-04T07:33:35+00:00",
+      "link": "https://arxiv.org/pdf/2608.03260v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Physics-guided diffusion pretraining for transferable molecular representations from electron density",
+      "llm_evidence_cn": "利用电子密度进行物理引导扩散预训练以获得可迁移分子表示",
+      "llm_evidence": "利用电子密度进行物理引导扩散预训练以获得可迁移分子表示",
+      "canonical_evidence": "利用电子密度进行物理引导扩散预训练以获得可迁移分子表示",
+      "llm_tldr_en": "Proposes ED-DiT, a physics-guided Diffusion Transformer for self-supervised pretraining on electron-density point clouds, learning reusable representations that transfer across diverse electronic-structure-related tasks.",
+      "llm_tldr_cn": "电子密度提供分子电子结构的连续三维描述，但面向电子密度的预训练研究仍不充分。作者提出物理引导扩散Transformer ED-DiT，在电子密度点云上进行自监督预训练，通过重建被破坏的密度场学习可复用表示。该表示可迁移到多种电子结构相关任务，验证了电子密度场作为自监督预训练信号的有效性。",
+      "llm_tldr": "电子密度提供分子电子结构的连续三维描述，但面向电子密度的预训练研究仍不充分。作者提出物理引导扩散Transformer ED-DiT，在电子密度点云上进行自监督预训练，通过重建被破坏的密度场学习可复用表示。该表示可迁移到多种电子结构相关任务，验证了电子密度场作为自监督预训练信号的有效性。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "chemical foundation model pre-training and transfer learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.02888v1",
+      "source": "arxiv",
+      "title": "Adaptive Inference and Convergence of Free Energy Landscapes Using Non-parametric Bayesian Enhanced Sampling",
+      "abstract": "Enhanced sampling techniques are central to the study of statistically rare events in the computer modeling and simulation of molecular phenomena. In this work, we report the development and integration of a Gaussian process model, adaptive, uncertainty-driven sampling scheme for enhanced sampling. The framework trains a Gaussian process model on an iteratively improving estimate of the free energy landscape. Regions of high uncertainty within the reaction phase space are increasingly sampled, and the uncertainty is computed on-the-fly during free energy reconstruction, serving as a convergence metric. This approach provides a generalizable strategy that can be extended to complex molecular processes.",
+      "authors": [
+        "Daisy Kamp",
+        "Sinai Lee",
+        "Ronald Phung",
+        "Xavier Garcia",
+        "Joni Spencer",
+        "Alvin Yu",
+        "Elizabeth M. Y. Lee"
+      ],
+      "primary_category": "physics.chem-ph",
+      "categories": [
+        "physics.chem-ph"
+      ],
+      "published": "2026-08-03T21:19:27+00:00",
+      "link": "https://arxiv.org/pdf/2608.02888v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Gaussian-process-based enhanced sampling for free energy landscapes in molecular simulation",
+      "llm_evidence_cn": "基于高斯过程的增强采样用于分子模拟中的自由能景观",
+      "llm_evidence": "基于高斯过程的增强采样用于分子模拟中的自由能景观",
+      "canonical_evidence": "基于高斯过程的增强采样用于分子模拟中的自由能景观",
+      "llm_tldr_en": "A Gaussian-process-based adaptive enhanced sampling scheme that targets high-uncertainty regions in free energy landscapes, providing on-the-fly convergence metrics for molecular simulations.",
+      "llm_tldr_cn": "增强采样是研究分子稀有事件的核心手段，但传统方法依赖人为设计。本文开发了基于高斯过程模型的自适应不确定性驱动采样方案，在自由能重建过程中优先采样高不确定区域，并将不确定性作为收敛指标。该框架可推广至复杂分子过程，为分子模拟中的自由能计算提供高效通用策略。",
+      "llm_tldr": "增强采样是研究分子稀有事件的核心手段，但传统方法依赖人为设计。本文开发了基于高斯过程模型的自适应不确定性驱动采样方案，在自由能重建过程中优先采样高不确定区域，并将不确定性作为收敛指标。该框架可推广至复杂分子过程，为分子模拟中的自由能计算提供高效通用策略。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.03855v1",
+      "source": "arxiv",
+      "title": "Bi-semantic Chemical Embedder for Joint Representation Learning of SMILES and Natural Language",
+      "abstract": "Transformer models have revolutionized natural language processing (NLP), and text-based molecular representations like SMILES have successfully extended these architectures to chemistry. However, domain-adaptive pre-training often causes models to overfit to chemical syntax, catastrophically forgetting their foundational semantic capabilities. To address this challenge, we introduce CheMatE, a chemistry-oriented embedding model that jointly captures molecular structure and domain-specific natural language within the same representation space. Built on a ModernBERT backbone, CheMatE learns bi-semantic representations through a two-stage training procedure: continued masked language modeling (MLM) followed by a Matryoshka contrastive learning stage via Multiple Negative Ranking Loss (MNRL). First, we train the model using MLM on a novel, large-scale corpus of SMILES-annotated, long-context scientific documents that were constructed and curated from FineWeb and ChemPile (comprising 10.4B and 11.5B tokens, respectively). Subsequently, the model undergoes contrastive learning using a synthetic dataset of SMILES-text pairs algorithmically derived from our original training corpus. This design exposes the model to SMILES-enriched scientific literature, enabling bi-semantic understanding. We evaluate CheMatE across a range of downstream tasks covering molecular property prediction and scientific language understanding. Our results demonstrate that coupling our custom-curated datasets with this sequential training strategy yields robust, highly transferable representations. By effectively unifying structural and contextual signals within a single text-based framework, CheMatE achieves competitive performance across both specialized chemistry models and general-purpose language model baselines.",
+      "authors": [
+        "David Ming Segura",
+        "Jeremy Goumaz",
+        "Joshua W. Sin",
+        "Bojana Ranković",
+        "Philippe Schwaller"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-08-04T15:57:38+00:00",
+      "link": "https://arxiv.org/pdf/2608.03855v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Bi-semantic chemical embedder for joint representation learning of SMILES and natural language",
+      "llm_evidence_cn": "SMILES与自然语言联合表示的双语义化学嵌入器",
+      "llm_evidence": "SMILES与自然语言联合表示的双语义化学嵌入器",
+      "canonical_evidence": "SMILES与自然语言联合表示的双语义化学嵌入器",
+      "llm_tldr_en": "Introduces CheMatE, a chemistry-oriented embedding model built on ModernBERT that jointly learns molecular structure and domain-specific natural language via continued masked language modeling and Matryoshka contrastive learning, mitigating catastrophic forgetting of semantic capabilities.",
+      "llm_tldr_cn": "化学领域的Transformer模型在领域自适应预训练中常过度拟合SMILES语法，导致语义能力灾难性遗忘。作者提出基于ModernBERT的CheMatE嵌入模型，通过连续掩码语言建模和Matryoshka对比学习，在统一表示空间中联合编码分子结构与化学自然语言。该模型保持了对化学语法的理解，同时保留了基础语义能力，适用于下游化学语言应用。",
+      "llm_tldr": "化学领域的Transformer模型在领域自适应预训练中常过度拟合SMILES语法，导致语义能力灾难性遗忘。作者提出基于ModernBERT的CheMatE嵌入模型，通过连续掩码语言建模和Matryoshka对比学习，在统一表示空间中联合编码分子结构与化学自然语言。该模型保持了对化学语法的理解，同时保留了基础语义能力，适用于下游化学语言应用。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "large language models for chemistry applications",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2608.02688v1",
+      "source": "arxiv",
+      "title": "Learning Molecular Representations from Cellular Phenotypes with Structure Preservation",
+      "abstract": "Phenotypic drug discovery enables the discovery of functional relationships between molecular structures and cellular responses. However, existing multimodal representation learning methods often optimize cross-modal alignment without considering the intrinsic organization of chemical space, resulting in distorted molecular representations and loss of structural information. We propose \\textbf{PhenMol}, a structure-preserving framework for phenotype-aware molecular representation learning. PhenMol disentangles molecular and cellular representations into shared and private components, enabling phenotype-guided alignment while preserving chemical structures through a dedicated molecular branch. This design integrates cellular phenotype information without disrupting molecular neighborhood organization. Experiments on approximately $3.04 \\times 10^{4}$ molecule--cell morphology pairs demonstrate that PhenMol improves molecular property prediction across 270 bioactivity tasks, molecule--phenotype retrieval, and clinical trial outcome prediction. Moreover, ECFP4-based structural analysis shows that PhenMol better preserves molecular neighborhoods and reduces embedding distortion compared with existing multimodal alignment methods. These results highlight the importance of structure-aware constraints in multimodal molecular representation learning and provide an effective approach for integrating cellular phenotypes with chemical knowledge for drug discovery.",
+      "authors": [
+        "Xuan Lin",
+        "Jingyu Sheng",
+        "Tengfei Ma",
+        "Li Sun",
+        "Dapeng Xiong"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-08-03T08:33:54+00:00",
+      "link": "https://arxiv.org/pdf/2608.02688v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "structure-preserving molecular representation learning from cellular phenotypes, aligned with cross-modal pre-training",
+      "llm_evidence_cn": "面向表型感知的分子表示学习，通过共享/私有分解和分子分支实现结构保持，可迁移到下游化学任务",
+      "llm_evidence": "面向表型感知的分子表示学习，通过共享/私有分解和分子分支实现结构保持，可迁移到下游化学任务",
+      "canonical_evidence": "面向表型感知的分子表示学习，通过共享/私有分解和分子分支实现结构保持，可迁移到下游化学任务",
+      "llm_tldr_en": "Phenotypic drug discovery needs molecular representations that align with cellular responses while preserving chemical structure; PhenMol disentangles shared and private components to enable phenotype-guided alignment without distorting chemical space.",
+      "llm_tldr_cn": "表型药物发现需要既能对齐细胞反应又不丢失化学结构的分子表示。现有跨模态表示方法常过度追求对齐而扭曲化学空间。本文提出PhenMol，将分子与细胞表示分解为共享和私有部分，通过专用分子分支保持结构信息，实现表型引导的对齐。该方法在保持化学结构的同时集成细胞表型信息，为下游药物发现任务提供了更稳健的分子表示。这也为化学基础模型中的多模态预训练提供了结构保持的正则化思路。",
+      "llm_tldr": "表型药物发现需要既能对齐细胞反应又不丢失化学结构的分子表示。现有跨模态表示方法常过度追求对齐而扭曲化学空间。本文提出PhenMol，将分子与细胞表示分解为共享和私有部分，通过专用分子分支保持结构信息，实现表型引导的对齐。该方法在保持化学结构的同时集成细胞表型信息，为下游药物发现任务提供了更稳健的分子表示。这也为化学基础模型中的多模态预训练提供了结构保持的正则化思路。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "chemical foundation model pre-training and transfer learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.28727v1",
+      "source": "arxiv",
+      "title": "End-to-end differentiable retrieval of molecular spectra using hydrodynamics, chemistry, and radiative transfer",
+      "abstract": "We aim to reproduce observed molecular line emission using a pipeline that couples hydrodynamics, chemistry, and radiative transfer, capable of simultaneously optimizing all relevant physical and chemical parameters. We developed an end-to-end differentiable Jax pipeline consisting of a custom hydrodynamical code, a modified version of the differentiable chemical code Carbox, and a custom radiative transfer code. We tested the framework using controlled synthetic data. We demonstrate that the framework can recover the parameters of hydrodynamical shock models directly from molecular line spectra and optimize selected chemical reaction rate coefficients through gradient-based optimization. The differentiable formulation enables efficient optimization of the coupled physical and chemical model while preserving the full time-dependent evolution.",
+      "authors": [
+        "T. Grassi",
+        "G. Vermariën",
+        "J. E. Pineda",
+        "S. Spezzano",
+        "S. Bovino",
+        "P. Caselli"
+      ],
+      "primary_category": "astro-ph.IM",
+      "categories": [
+        "astro-ph.IM"
+      ],
+      "published": "2026-07-30T18:00:02+00:00",
+      "link": "https://arxiv.org/pdf/2607.28727v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "gradient-based optimization of chemical reaction rate coefficients in a differentiable pipeline",
+      "llm_evidence_cn": "在可微管线中基于梯度优化化学反应速率系数",
+      "llm_evidence": "在可微管线中基于梯度优化化学反应速率系数",
+      "canonical_evidence": "在可微管线中基于梯度优化化学反应速率系数",
+      "llm_tldr_en": "An end-to-end differentiable Jax pipeline couples hydrodynamics, chemistry and radiative transfer to recover shock parameters and optimize reaction rate coefficients directly from molecular spectra.",
+      "llm_tldr_cn": "该工作构建了耦合流体力学、化学与辐射传输的端到端可微Jax管线，能够直接从分子谱线中同时优化物理和化学参数。在受控合成数据上，该方法成功恢复了流体力学激波模型参数，并利用梯度优化优化了选定的化学反应速率系数。这为从观测光谱推断反应机制提供了可微计算框架。",
+      "llm_tldr": "该工作构建了耦合流体力学、化学与辐射传输的端到端可微Jax管线，能够直接从分子谱线中同时优化物理和化学参数。在受控合成数据上，该方法成功恢复了流体力学激波模型参数，并利用梯度优化优化了选定的化学反应速率系数。这为从观测光谱推断反应机制提供了可微计算框架。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "How is deep learning applied to reaction mechanism inference and catalysis design?",
+      "matched_requirement_id": "req-10",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.03688v1",
+      "source": "arxiv",
+      "title": "Machine Learning-Guided Screening of Advantageous Solvents for Solid Polymer Electrolytes in Lithium Metal Batteries",
+      "abstract": "Trace residual solvents in solid polymer electrolytes (SPEs) significantly affect electrolyte and interface properties, where optimal selection enhances ionic conductivity and transference numbers. However, solvent complexity hinders general screening methods. We establish a universal criterion linking electronic (HOMO, LUMO) and macroscopic properties (dielectric constant, dipole moment, polarizability) via machine learning on an approximately 10,000-solvent dataset from high-throughput DFT. Two solvents, N-methoxy-N-methyl-2,2,2-trifluoroacetamide and 2,2,2-trifluoro-N,N-dimethylacetamide, were identified. Experimental incorporation of trace N-methoxy-N-methyl-2,2,2-trifluoroacetamide into a poly(vinylidene fluoride-co-hexafluoropropylene) matrix achieves a 4.5 V window, 5.5x10^-4 S cm^-1 conductivity (30 C), and 0.78 Li+ transference number. The cell retains 86.7% capacity over 500 cycles (LiFePO4) and 98.7% after 200 cycles at 2C (LiNi0.9Co0.05Mn0.05O2), outperforming 2,2,2-trifluoro-N,N-dimethylacetamide, dimethylformamide, N-methyl-2-pyrrolidone, and dimethyl sulfoxide. This synergy enables balanced ion transport, wide stability, and cycling durability, advancing safer, high-energy lithium metal batteries. Our integrated approach establishes a solvent screening paradigm for rational SPE design, accelerating next-generation battery development.",
+      "authors": [
+        "Jiadong Shen",
+        "Junjie Chen",
+        "Xiaosa Xu",
+        "Jin Li",
+        "Zhenyu Wang",
+        "Pengzhu Lin",
+        "Zixiao Guo",
+        "Yu Wang",
+        "Jing Sun",
+        "Baoling Huang",
+        "Tianshou Zhao"
+      ],
+      "primary_category": "cond-mat.mtrl-sci",
+      "categories": [
+        "cond-mat.mtrl-sci"
+      ],
+      "published": "2026-08-04T13:57:32+00:00",
+      "link": "https://arxiv.org/pdf/2608.03688v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "ML screening of 10k DFT solvents to select advantageous electrolytes",
+      "llm_evidence_cn": "基于高吞吐DFT数据上的机器学习筛选电解质溶剂",
+      "llm_evidence": "基于高吞吐DFT数据上的机器学习筛选电解质溶剂",
+      "canonical_evidence": "基于高吞吐DFT数据上的机器学习筛选电解质溶剂",
+      "llm_tldr_en": "Machine learning on high-throughput DFT data links electronic and macroscopic solvent properties to screen advantageous solid-polymer-electrolyte solvents; two candidates were confirmed experimentally.",
+      "llm_tldr_cn": "固态聚合物电解质中残留溶剂显著影响电解液与界面性能，但溶剂复杂性阻碍通用筛选。作者基于约一万种溶剂的高通量DFT数据，用机器学习建立电子性质（HOMO/LUMO）与宏观性质（介电常数、偶极矩、极化率）之间的通用判据，识别出两种有利溶剂，并经实验验证。该方法有望加速电池电解质溶剂的理性筛选。",
+      "llm_tldr": "固态聚合物电解质中残留溶剂显著影响电解液与界面性能，但溶剂复杂性阻碍通用筛选。作者基于约一万种溶剂的高通量DFT数据，用机器学习建立电子性质（HOMO/LUMO）与宏观性质（介电常数、偶极矩、极化率）之间的通用判据，识别出两种有利溶剂，并经实验验证。该方法有望加速电池电解质溶剂的理性筛选。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "molecular generation and optimization with machine learning",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2608.02858v1",
+      "source": "arxiv",
+      "title": "Physics-Informed and Knowledge-Driven Generative AI for Autonomous Discovery of Porous Oxide Energy Materials: Opportunities and Challenges",
+      "abstract": "The discovery of next-generation energy-storage materials is increasingly limited by the complexity of the underlying design problem rather than by computational capability alone. Porous transition-metal oxides represent a particularly challenging class of battery materials because their performance emerges from coupled interactions among crystal chemistry, pore architecture, ion transport, electrochemistry, electro-chemo-mechanics, synthesis, manufacturing, and battery-system operation. Recent advances in generative artificial intelligence (AI) have demonstrated remarkable capabilities for generating chemically plausible crystal structures. However, current approaches remain largely focused on crystallographic validity and thermodynamic stability. This perspective presents a roadmap for advancing generative AI beyond crystal generation toward physics-informed, application-aware, and synthesis-aware inverse design. Using porous oxide electrodes as a representative materials platform, we propose a seven-tier physics-informed inverse-design framework integrating chemistry, thermodynamics, transport, electrochemistry, durability, cell compatibility, and manufacturability. We further identify the \"Missing Data Problem\" as a fundamental bottleneck limiting application-aware AI and introduce an autonomous knowledge-generation framework supported by a Porous Oxide Energy Materials Ontology and a continuously evolving \"Knowledge Base\". Together, these concepts establish the foundation for Synthesis-Aware, Closed-Loop Autonomous Discovery, providing a general framework for AI-enabled autonomous materials discovery across energy-storage materials and other functional materials.",
+      "authors": [
+        "Dibakar Datta"
+      ],
+      "primary_category": "cond-mat.mtrl-sci",
+      "categories": [
+        "cond-mat.mtrl-sci"
+      ],
+      "published": "2026-08-03T20:27:19+00:00",
+      "link": "https://arxiv.org/pdf/2608.02858v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Generative AI for autonomous discovery of chemically plausible crystal structures; strongly related to molecular generation/optimization methods.",
+      "llm_evidence_cn": "生成式AI用于自主发现化学合理的晶体结构，与分子生成与优化方法高度相关。",
+      "llm_evidence": "生成式AI用于自主发现化学合理的晶体结构，与分子生成与优化方法高度相关。",
+      "canonical_evidence": "生成式AI用于自主发现化学合理的晶体结构，与分子生成与优化方法高度相关。",
+      "llm_tldr_en": "Discusses physics-informed, knowledge-driven generative AI for discovering porous oxide battery materials, highlighting opportunities and challenges in coupling crystal chemistry, transport, and synthesis.",
+      "llm_tldr_cn": "该综述/展望论文指出多孔氧化物储能材料的发现瓶颈在于跨尺度耦合复杂性而非单纯算力，并系统分析了生成式AI在生成化学合理晶体结构方面的进展与不足。文章强调物理信息与领域知识约束对自主材料发现的重要性，梳理了晶格化学、孔结构、离子输运、电化学与制造等多尺度挑战。这项工作为面向能源材料的生成式机器学习研究方向提供了清晰的问题框架与机遇分析。",
+      "llm_tldr": "该综述/展望论文指出多孔氧化物储能材料的发现瓶颈在于跨尺度耦合复杂性而非单纯算力，并系统分析了生成式AI在生成化学合理晶体结构方面的进展与不足。文章强调物理信息与领域知识约束对自主材料发现的重要性，梳理了晶格化学、孔结构、离子输运、电化学与制造等多尺度挑战。这项工作为面向能源材料的生成式机器学习研究方向提供了清晰的问题框架与机遇分析。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "molecular generation and optimization with machine learning",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.03525v1",
+      "source": "arxiv",
+      "title": "MinerU.Chem: A High-Precision System for Optical Chemical Structure and Reaction Recognition",
+      "abstract": "In organic chemistry papers and patents, molecular structures, reaction schemes, and experimental conditions are often presented as molecular structure depictions, reaction diagrams, and complex tables or figures. Such information is difficult for general-purpose document parsing systems to directly convert into machine-readable data. This limits data production for organic chemistry knowledge base construction and for AI for Chemistry tasks such as reaction prediction, retrosynthesis, condition recommendation, molecular property prediction, and drug molecule design. This report introduces MinerU.Chem, a document parsing system for organic chemistry literature integrated into the MinerU online platform. Built on top of MinerU's general document parsing pipeline, MinerU.Chem adds five chemistry-specific modules: chemistry relevance filtering, molecular structure detection, molecule identifier extraction, molecular structure recognition, and reaction scheme parsing. Together, these modules convert organic-chemistry-related image regions in documents into a Molecule Summary List and a Reaction Summary List. For molecular structure recognition, MinerU.Chem uses CARBON (Complex Atomic Representation and Bonding Object Notation) as its core representation. CARBON enables recognition results to preserve both the visual layout of the original image and complex chemical semantics, while supporting the export of standard downstream formats such as MolFile and SMILES. On the SMILES-evaluable subset of MolRecBench-Wild (N=2,392), MinerU.Chem's molecular structure recognition module achieves a SMILES exact-match accuracy of 93.02%, outperforming the best evaluated comparison system, GPT-5.6-Sol (74.87%), by 18.15 percentage points. The system has been integrated into the MinerU online platform and is available at https://mineru.net/OpenSourceTools/Extractor .",
+      "authors": [
+        "Haote Yang",
+        "Jiang Wu",
+        "Jingchao Wang",
+        "Xingjian Wei",
+        "Lixin Ma",
+        "Linye Li",
+        "Chen Zhu",
+        "Xiaolong Wu",
+        "Yuheng Lu",
+        "Ziran Zhu",
+        "Junyuan Gao",
+        "Lingli Ge",
+        "Yuan Xu",
+        "Huijie Ao",
+        "QianQian Wu",
+        "Dechen Lin",
+        "Huaiyu Gu",
+        "Lu Chen",
+        "Shengxin Lu",
+        "ShaSha Wang",
+        "Yuanyuan Cao",
+        "Zhejia Yu",
+        "Ruijie Zhang",
+        "Zimai Tian",
+        "Jiaxing Sun",
+        "Yinfan Wang",
+        "Jiahe Song",
+        "Chuang Wang",
+        "Yubin Wang",
+        "Rui Nie",
+        "Hao Zheng",
+        "Bowen Jiang",
+        "Hongbin Lai",
+        "Yifan He",
+        "Chengjin Liu",
+        "Tingting Zhang",
+        "Liqun Wei",
+        "Lijun Wu",
+        "Bin Wang",
+        "Yuqiang Li",
+        "Guangyu Wang",
+        "Wei Li",
+        "Bowen Zhou",
+        "Dahua Lin",
+        "Conghui He"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-08-04T12:09:02+00:00",
+      "link": "https://arxiv.org/pdf/2608.03525v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "extracts chemical structures and reactions from literature to enable reaction prediction and retrosynthesis",
+      "llm_evidence_cn": "从文献中提取化学结构与反应，支持反应预测和逆合成等AI4Chem任务",
+      "llm_evidence": "从文献中提取化学结构与反应，支持反应预测和逆合成等AI4Chem任务",
+      "canonical_evidence": "从文献中提取化学结构与反应，支持反应预测和逆合成等AI4Chem任务",
+      "llm_tldr_en": "MinerU.Chem is a document parsing system that converts chemical structures, reaction schemes and experimental conditions from organic chemistry papers and patents into machine-readable data for AI tasks.",
+      "llm_tldr_cn": "有机化学文献中的分子结构、反应方案和实验条件常以图表形式存在，通用文档解析系统难以将其转为机器可读数据，制约了反应预测、逆合成等AI化学任务。MinerU.Chem是基于MinerU平台的有机化学文献解析系统，能够高精度识别化学结构和反应图。该系统直接为化学知识库构建和多种AI4Chem应用提供高质量数据支持。",
+      "llm_tldr": "有机化学文献中的分子结构、反应方案和实验条件常以图表形式存在，通用文档解析系统难以将其转为机器可读数据，制约了反应预测、逆合成等AI化学任务。MinerU.Chem是基于MinerU平台的有机化学文献解析系统，能够高精度识别化学结构和反应图。该系统直接为化学知识库构建和多种AI4Chem应用提供高质量数据支持。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "chemical reaction prediction using artificial intelligence",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
