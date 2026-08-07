@@ -1,0 +1,415 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-08-07T04:41:42.593481+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 6,
+    "deep_cap": 6,
+    "deep_selected": 6,
+    "quick_candidates": 4,
+    "quick_skim_target": 11,
+    "quick_selected": 4
+  },
+  "deep_dive": [
+    {
+      "id": "2608.04257v1",
+      "source": "arxiv",
+      "title": "Geometry-Informed Parameter-Efficient Fine-Tuning of Pre-trained Molecular GNNs for Blood-Brain Barrier Permeability Prediction",
+      "abstract": "Blood-brain barrier permeability (BBBP) prediction is a critical screening task in central nervous system drug discovery, where candidate molecules must be assessed for whether they can cross, or should be prevented from crossing, the blood-brain barrier. However, this task remains challenging because of limited, class-imbalanced datasets and sensitivity to molecular structure. Recent advances in deep learning have established graph neural networks (GNNs) as a powerful approach for molecular representation learning, while pre-trained molecular GNNs provide transferable knowledge for downstream tasks. However, full fine-tuning is often parameter-inefficient and prone to overfitting, whereas existing parameter-efficient fine-tuning (PEFT) methods mainly adapt node features or the two-dimensional covalent graph, limiting their ability to capture three-dimensional geometry and second-order interactions. To address these limitations, we propose BBBP-GeoPEFT, a geometry-informed PEFT framework for pre-trained molecular GNNs. BBBP-GeoPEFT constructs distance-based graphs at multiple cutoffs and their corresponding line graphs from molecular conformers to capture spatial atom and second-order edge interactions. Lightweight auxiliary geometric graph encoders generate cutoff-specific representations, which are incorporated into each pre-trained layer through node-wise cutoff attention and gated residual connections. This design preserves pre-trained knowledge while incorporating permeability-relevant geometric information with a small trainable-parameter budget. Experiments on a curated BBBP dataset show that BBBP-GeoPEFT achieves competitive performance compared with full fine-tuning and representative PEFT baselines. Under both random and scaffold splitting, BBBP-GeoPEFT achieves competitive or improved ROC-AUC and accuracy in most experiments while updating only 10.1% of the model parameters.",
+      "authors": [
+        "Marco Vieto Vega",
+        "Long D. Nguyen",
+        "Binh P. Nguyen"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-08-04T22:29:08+00:00",
+      "link": "https://arxiv.org/pdf/2608.04257v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Parameter-efficient fine-tuning of pre-trained molecular GNNs for molecular property prediction, directly aligned with chemical foundation model transfer learning.",
+      "llm_evidence_cn": "面向分子性质预测的预训练分子图神经网络参数高效微调，直接对应化学基础模型迁移学习需求。",
+      "llm_evidence": "面向分子性质预测的预训练分子图神经网络参数高效微调，直接对应化学基础模型迁移学习需求。",
+      "canonical_evidence": "面向分子性质预测的预训练分子图神经网络参数高效微调，直接对应化学基础模型迁移学习需求。",
+      "llm_tldr_en": "Proposes geometry-informed parameter-efficient fine-tuning of pre-trained molecular GNNs to improve blood-brain barrier permeability prediction with limited imbalanced data.",
+      "llm_tldr_cn": "血脑屏障通透性预测对中枢神经系统药物发现至关重要，但受限于数据量小、类别不平衡和结构敏感性。本文提出几何信息引导的参数高效微调方法，在预训练分子图神经网络基础上仅更新少量参数，避免全量微调带来的参数低效与过拟合。该方法为分子性质预测中的迁移学习提供了实用范式，可推广到其他下游分子任务。",
+      "llm_tldr": "血脑屏障通透性预测对中枢神经系统药物发现至关重要，但受限于数据量小、类别不平衡和结构敏感性。本文提出几何信息引导的参数高效微调方法，在预训练分子图神经网络基础上仅更新少量参数，避免全量微调带来的参数低效与过拟合。该方法为分子性质预测中的迁移学习提供了实用范式，可推广到其他下游分子任务。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "chemical foundation model pre-training and transfer learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.05120v1",
+      "source": "arxiv",
+      "title": "DASyR-LLM: Domain-Aware Symbolic Regression with LLMs for Kinetic Model Discovery",
+      "abstract": "Kinetic model discovery is a central challenge in chemical engineering, as accurate rate expressions are essential for understanding and controlling chemical and biological processes. Symbolic regression (SR) has emerged as a powerful data-driven approach for identifying interpretable kinetic models, but usually operates without domain knowledge, often exploring physicochemically implausible models. Large language models (LLMs) offer a promising avenue for injecting domain expertise into this search. Here, we introduce an LLM-guided SR framework, embedding an LLM module within an iterative SR algorithm for automated kinetic model discovery. The LLM performs two roles at each iteration: (1) a qualitative physicochemical critique of the best SR candidates, and (2) the proposal of new candidate rate expressions guided by the SR-generated models and embedded chemical knowledge. Our framework is evaluated on four in silico case studies of increasing complexity, spanning heterogeneous catalysis and bioprocess systems. Results show the LLM-guided framework reduces iterations to identify the ground-truth model by $41.7-79.3\\%$ versus a state-of-the-art SR framework, with the LLM directly proposing the correct model structure in over half of the guided runs. In practical settings, where each iteration typically requires a new wet-lab experiment, this translates into a substantial reduction in experimental effort. Predictive performance on an independent validation set is equivalent between both approaches, with $R^2>0.98$ in all case studies. Ablation studies indicate that both the SR component and the LLM scale contribute to this performance, with a reduced-size LLM largely retaining discovery efficiency. These findings demonstrate that LLMs can effectively inject domain knowledge into scientific model discovery, paving the way toward fully automated, domain-aware kinetic modelling pipelines.",
+      "authors": [
+        "Roberto Aliaga Medina",
+        "Paulina Quintanilla",
+        "Antonio del Rio Chanona"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.CE",
+        "cs.SC"
+      ],
+      "published": "2026-08-05T17:48:45+00:00",
+      "link": "https://arxiv.org/pdf/2608.05120v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "LLM-guided symbolic regression for automated kinetic model discovery in chemical engineering",
+      "llm_evidence_cn": "面向化学工程动力学模型发现的域感知大语言模型符号回归",
+      "llm_evidence": "面向化学工程动力学模型发现的域感知大语言模型符号回归",
+      "canonical_evidence": "面向化学工程动力学模型发现的域感知大语言模型符号回归",
+      "llm_tldr_en": "DASyR-LLM embeds LLMs into iterative symbolic regression to inject domain knowledge for automated kinetic model discovery, using qualitative physicochemical critique to guide search toward interpretable and plausible rate expressions.",
+      "llm_tldr_cn": "动力学模型发现是化学工程的核心难题，准确的速率表达式对理解反应过程至关重要，但传统符号回归常忽略领域知识而探索物化上不合理的模型。本文提出DASyR-LLM，将大语言模型嵌入迭代符号回归流程，在每个迭代中提供定性物理化学批评与候选式改进，从而自动发现可解释的动力学模型。实验表明该方法能有效识别符合物理化学规律的速率表达式，为化学动力学建模提供了新工具。",
+      "llm_tldr": "动力学模型发现是化学工程的核心难题，准确的速率表达式对理解反应过程至关重要，但传统符号回归常忽略领域知识而探索物化上不合理的模型。本文提出DASyR-LLM，将大语言模型嵌入迭代符号回归流程，在每个迭代中提供定性物理化学批评与候选式改进，从而自动发现可解释的动力学模型。实验表明该方法能有效识别符合物理化学规律的速率表达式，为化学动力学建模提供了新工具。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "How is deep learning applied to reaction mechanism inference and catalysis design?",
+      "matched_requirement_id": "req-10",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.06259v1",
+      "source": "arxiv",
+      "title": "RxnCLF: Contrastive Transformation-Aware Reaction Foundation Model for Improved Reactivity Prediction",
+      "abstract": "Reaction yield prediction remains challenging because labeled data are scarce and reaction space is both combinatorially large and sparsely populated, limiting the generalization of existing reaction representations. String-, fingerprint-, and graph-based reaction encodings only partially capture chemical transformations, making accurate prediction difficult for reactions with complex substrates. We propose reaction contrastive learning foundation (RxnCLF), a self-supervised contrastive framework for reaction representation learning. RxnCLF is built on a condensed reaction graph (CRG) that unifies reactant and product information into a single graph, enabling the model to learn explicit and enriched transformation structure rather than disconnected graphs. Pretrained on 1.7 million Pistachio reactions, RxnCLF learns a compact and continuous latent space that captures both reaction-center features and broader side chain contexts, making it transformation-aware and chemically interpretable. Fine-tuned on multiple yield prediction benchmarks, including Buchwald-Hartwig, Pd-catalyzed BH coupling, and proprietary HTE C-N coupling and amide formation datasets, RxnCLF consistently outperforms graph and sequence-based baselines, improving R2 and achieving the best performance overall. Our results highlight the promise of CRG-based RxnCLF as a scalable reaction foundation model, with the potential to generalize across broader reaction spaces and support diverse downstream reaction informatics tasks, including regioselectivity prediction, enantioselectivity prediction, and reaction condition optimization.",
+      "authors": [
+        "Yiting Zheng",
+        "Cheng Fang",
+        "Anthony Donofrio",
+        "Haote Li"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-08-06T16:51:23+00:00",
+      "link": "https://arxiv.org/pdf/2608.06259v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Contrastive transformation-aware reaction foundation model for reactivity prediction",
+      "llm_evidence_cn": "基于对比学习的反应基础模型用于反应性预测",
+      "llm_evidence": "基于对比学习的反应基础模型用于反应性预测",
+      "canonical_evidence": "基于对比学习的反应基础模型用于反应性预测",
+      "llm_tldr_en": "Proposes RxnCLF, a self-supervised contrastive framework on condensed reaction graphs to learn reaction representations, improving yield prediction under scarce labeled data.",
+      "llm_tldr_cn": "反应产率预测面临标注数据稀缺和反应空间稀疏的挑战，现有反应表示难以充分刻画化学变换。RxnCLF基于凝聚反应图，将反应物与产物信息统一到单一图中，并通过自监督对比学习学习反应表示。该模型能显式学习丰富的变换结构，在复杂底物反应上改善产率预测泛化能力。作为反应基础模型，它为反应性预测和反应表示学习提供了一种新的预训练范式。",
+      "llm_tldr": "反应产率预测面临标注数据稀缺和反应空间稀疏的挑战，现有反应表示难以充分刻画化学变换。RxnCLF基于凝聚反应图，将反应物与产物信息统一到单一图中，并通过自监督对比学习学习反应表示。该模型能显式学习丰富的变换结构，在复杂底物反应上改善产率预测泛化能力。作为反应基础模型，它为反应性预测和反应表示学习提供了一种新的预训练范式。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "chemical foundation model pre-training and transfer learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.04113v1",
+      "source": "arxiv",
+      "title": "Out-Of-The-Loop Multi-Fidelity Bayesian Optimization",
+      "abstract": "Black-box optimization is a ubiquitous problem in science and engineering, often dealing with expensive objective functions with cheaper lower-fidelity proxies available. Multi-fidelity Bayesian optimization (MF-BO) is a principled approach to this problem, leveraging correlations across different fidelities when querying the objective. However, for many important MF-BO tasks, the true highest-fidelity function is prohibitively expensive to be part of the optimization loop. Nevertheless, practitioners often have gold standard data (observations of the highest-fidelity function) obtained from previous experiments that might provide information for the current task. For instance, in molecular optimization, chemists often pick the top-$k$ candidate molecules using various computer simulations, and later reveal their true objective function values. In this work, we demonstrate the suboptimality of standard MF-BO algorithms in the real-world scenarios above, even under ideal assumptions. Next, we mitigate this problem by incorporating historical high-fidelity data accompanied by task descriptors---which can be explicitly given or extracted from unstructured metadata. We demonstrate the effectiveness of our methods on synthetic functions, as well as real-world problems in chemistry and hyperparameter optimization.",
+      "authors": [
+        "Gustavo Sutter",
+        "Hao Wang",
+        "Luis Ricardez-Sandoval",
+        "Pascal Poupart",
+        "Agustinus Kristiadi"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-08-04T18:07:26+00:00",
+      "link": "https://arxiv.org/pdf/2608.04113v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "multi-fidelity Bayesian optimization using gold standard historical data, with application to molecular candidate selection",
+      "llm_evidence_cn": "利用历史金标准数据的多保真贝叶斯优化，应用于分子候选物筛选",
+      "llm_evidence": "利用历史金标准数据的多保真贝叶斯优化，应用于分子候选物筛选",
+      "canonical_evidence": "利用历史金标准数据的多保真贝叶斯优化，应用于分子候选物筛选",
+      "llm_tldr_en": "Presents an out-of-the-loop multi-fidelity BO method that leverages historical gold-standard data to improve optimization when the highest fidelity is too expensive, with molecular optimization as an application.",
+      "llm_tldr_cn": "多保真贝叶斯优化通常需要在优化循环中访问最高保真函数，但许多分子优化问题的高保真评估过于昂贵。本文提出利用历史金标准数据（如化学家已挑选出的top-k分子）在循环外提供信息。该方法在不增加高保真查询的情况下提升多保真BO的表现，并在分子优化等设定中展示优势。这为昂贵黑盒优化中的已有实验数据利用提供了新思路。",
+      "llm_tldr": "多保真贝叶斯优化通常需要在优化循环中访问最高保真函数，但许多分子优化问题的高保真评估过于昂贵。本文提出利用历史金标准数据（如化学家已挑选出的top-k分子）在循环外提供信息。该方法在不增加高保真查询的情况下提升多保真BO的表现，并在分子优化等设定中展示优势。这为昂贵黑盒优化中的已有实验数据利用提供了新思路。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "molecular generation and optimization with machine learning",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.04170v1",
+      "source": "arxiv",
+      "title": "Visualizing Graph-to-Answer Mechanism Recovery in Materials-Science Hypothesis Generation",
+      "abstract": "AI co-scientists can generate fluent materials-science hypotheses, but fluency does not show that an answer preserves a scientifically meaningful mechanism. We present a graph-to-answer mechanism-tracing case study for Graph-PRefLexOR-8B, a Qwen3-8B model adapted to expose distinct stages for brainstorming, graph construction, pattern extraction, and synthesis. We organize semantic backtracking, graph corruption, activation-based recovery measurements, and layer-by-token-region grids into a visual diagnostic workflow for inspecting this pathway. Across 100 open-ended materials-science questions, final answers remain closest to the model's own structured stages, especially synthesis. Under graph corruption, a full sweep over 37 residual-stream checkpoints, the embedding output and 36 transformer blocks, shows little mechanism recovery in the earlier transition region at layers 7--10, recovery instead concentrates in late synthesis and answer-start regions around layers 30 and 36. The workflow is intended to help scientists and model developers identify where a generated hypothesis loses or regains mechanism support before it is passed to downstream experimental planning.",
+      "authors": [
+        "Shashwat Sourav",
+        "Subhadeep Pal",
+        "Markus J. Buehler",
+        "Sanjay Das",
+        "Fiona Y. Wang",
+        "Dominik Soos",
+        "Tirthankar Ghosal"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI"
+      ],
+      "published": "2026-08-04T19:29:04+00:00",
+      "link": "https://arxiv.org/pdf/2608.04170v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "visual diagnostic workflow for mechanism tracing in LLM-based AI co-scientist for materials-science hypothesis generation",
+      "llm_evidence_cn": "基于LLM的材料科学AI协同科学家机制恢复的可视化诊断流程",
+      "llm_evidence": "基于LLM的材料科学AI协同科学家机制恢复的可视化诊断流程",
+      "canonical_evidence": "基于LLM的材料科学AI协同科学家机制恢复的可视化诊断流程",
+      "llm_tldr_en": "Presents a visual graph-to-answer mechanism-tracing workflow for an LLM-based AI co-scientist, revealing how structured stages contribute to final hypotheses and how graph corruption affects recovery.",
+      "llm_tldr_cn": "AI协同科学家能生成流畅的材料科学假说，但流畅性并不代表保留了科学机制。本文对基于Qwen3的图-答案模型Graph-PRefLexOR-8B开展机制追踪案例研究，利用语义回溯、图扰动和激活恢复测量构建可视化诊断工作流。在100个开放问题上，最终答案与模型自身结构化阶段（尤其综合）最接近，图扰动扫描揭示了关键残差连接对机制恢复的影响。该工作为评估和解释化学/材料AI智能体的推理过程提供了可操作的工具。",
+      "llm_tldr": "AI协同科学家能生成流畅的材料科学假说，但流畅性并不代表保留了科学机制。本文对基于Qwen3的图-答案模型Graph-PRefLexOR-8B开展机制追踪案例研究，利用语义回溯、图扰动和激活恢复测量构建可视化诊断工作流。在100个开放问题上，最终答案与模型自身结构化阶段（尤其综合）最接近，图扰动扫描揭示了关键残差连接对机制恢复的影响。该工作为评估和解释化学/材料AI智能体的推理过程提供了可操作的工具。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "What are the latest advances in retrosynthesis, synthesis planning, and AI agents for chemistry, and how are these systems evaluated?",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.05314v1",
+      "source": "arxiv",
+      "title": "Machine learning for sample-based quantum diagonalization: generative configuration recovery and the classical-simulability frontier",
+      "abstract": "Sample-based quantum diagonalization (SQD), equivalently quantum-selected configuration interaction (QSCI), has in two years become a pragmatic centre of gravity of pre-fault-tolerant quantum chemistry: a quantum processor samples electronic configurations, and the many-electron Hamiltonian is diagonalized classically in the resulting determinant subspace. Its accuracy is set entirely by which configurations enter that subspace, a selection problem for machine learning made acute by a coupon-collector bottleneck. We critically review the ecosystem of generative and learned selectors, organizing it by the object each method generates and the importance signal it exploits, and expose one conspicuous gap: a reward-proportional generative-flow-network proposer built for tail discovery. We then confront the field's central question -- whether the quantum sampler beats classical selected configuration interaction -- and report a carefully scoped negative: across published same-active-space comparisons, strong classical selected CI matches or beats the quantum-sampled subspace, and the flagship single-layer circuits now admit polynomial-time classical energy estimation. We distil a benchmarking standard and turn the negative into a regime map, then test it with FCI-exact experiments that confirm one prediction and refute another: the cheap prior's rank correlation with the exact weights declines with multireference character (a usable coordinate), but a controlled single-molecule noise sweep shows the one generative advantage we find, robustness to valid-shot starvation, to be generic rather than the multireference-specific effect a confounded contrast first suggested. Finally, we flag learning from quantum experiments, whose classical sample-complexity lower bound is an unconditional theorem, as the one adjacent frontier where a quantum advantage is provable but not yet bridged to chemistry.",
+      "authors": [
+        "Nicolás Bonilla Vargas"
+      ],
+      "primary_category": "quant-ph",
+      "categories": [
+        "quant-ph",
+        "physics.chem-ph"
+      ],
+      "published": "2026-08-05T18:15:19+00:00",
+      "link": "https://arxiv.org/pdf/2608.05314v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Machine learning for sample-based quantum diagonalization in quantum chemistry",
+      "llm_evidence_cn": "机器学习在量子化学中的样本量子对角化中的应用综述",
+      "llm_evidence": "机器学习在量子化学中的样本量子对角化中的应用综述",
+      "canonical_evidence": "机器学习在量子化学中的样本量子对角化中的应用综述",
+      "llm_tldr_en": "This paper critically reviews generative and learned configuration selectors for sample-based quantum diagonalization in quantum chemistry, organizing methods by generated object and importance signal, and exposing a key limitation.",
+      "llm_tldr_cn": "样本量子对角化（SQD）已成为前容错量子化学的核心方法，其精度取决于进入行列式子空间的电子构型。本文对该生态中的生成式与学习式构型选择器进行批判性综述，按方法生成的对象和利用的重要性信号加以组织，并揭示一个关键局限。文章为量子化学中机器学习的应用提供了系统理解，并为改进构型选择策略指明方向。",
+      "llm_tldr": "样本量子对角化（SQD）已成为前容错量子化学的核心方法，其精度取决于进入行列式子空间的电子构型。本文对该生态中的生成式与学习式构型选择器进行批判性综述，按方法生成的对象和利用的重要性信号加以组织，并揭示一个关键局限。文章为量子化学中机器学习的应用提供了系统理解，并为改进构型选择策略指明方向。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2608.04651v1",
+      "source": "arxiv",
+      "title": "Active Learning Guided Design Space Refinement for Scalable Multi-Objective Bayesian Optimization in Materials Discovery",
+      "abstract": "Advanced materials discovery increasingly relies on machine learning and Bayesian optimization to explore large discrete design spaces under limited evaluation budgets. However, conventional Bayesian optimization (BO) can become inefficient as candidate spaces grow, often evaluating low-value regions before reaching informative areas. We propose an active-learning (AL)-guided adaptive search-space refinement framework combined with multi-objective BO to accelerate materials optimization while preserving Pareto-relevant regions. We evaluate the approach on CH4/N2 separation in covalent-organic frameworks and pressure-vessel design with material-direction stress components and thickness objectives. Results show that the AL-guided refinement reduces the candidate space by approximately half while preserving more than 99 percent of the original hypervolume. The reduced-space strategy improves early convergence and cumulative Pareto-front discovery from the BO, demonstrating efficient large-scale materials optimization across constrained autonomous materials discovery settings.",
+      "authors": [
+        "Alexandros Ntagiantas",
+        "Panagiotis Tsilimidos",
+        "George Giannakopoulos",
+        "Christoforos Rekatsinas",
+        "Panagiotis Krokidas"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cond-mat.mtrl-sci"
+      ],
+      "published": "2026-08-05T10:10:13+00:00",
+      "link": "https://arxiv.org/pdf/2608.04651v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "active learning guided search-space refinement for multi-objective Bayesian optimization in materials/molecular discovery",
+      "llm_evidence_cn": "主动学习引导的设计空间细化结合多目标贝叶斯优化，用于材料/分子发现与优化",
+      "llm_evidence": "主动学习引导的设计空间细化结合多目标贝叶斯优化，用于材料/分子发现与优化",
+      "canonical_evidence": "主动学习引导的设计空间细化结合多目标贝叶斯优化，用于材料/分子发现与优化",
+      "llm_tldr_en": "Proposes active-learning guided adaptive search-space refinement with multi-objective Bayesian optimization to accelerate materials discovery while preserving Pareto-relevant regions.",
+      "llm_tldr_cn": "传统贝叶斯优化在大规模候选空间中会浪费预算在低价值区域。本文提出主动学习引导的自适应搜索空间细化框架，并与多目标贝叶斯优化结合，在保持Pareto相关区域的同时加速材料优化。在COF气体分离和压力容器设计等任务上的结果表明，该方法能显著提升优化效率，为分子与材料优化提供可扩展的通用范式。",
+      "llm_tldr": "传统贝叶斯优化在大规模候选空间中会浪费预算在低价值区域。本文提出主动学习引导的自适应搜索空间细化框架，并与多目标贝叶斯优化结合，在保持Pareto相关区域的同时加速材料优化。在COF气体分离和压力容器设计等任务上的结果表明，该方法能显著提升优化效率，为分子与材料优化提供可扩展的通用范式。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "molecular generation and optimization with machine learning",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2608.04872v1",
+      "source": "arxiv",
+      "title": "A-SR: Self-Evolving Agentic LLMs for Symbolic Regression via Hierarchical Coordination",
+      "abstract": "Symbolic regression aims to discover closed-form equations from data, but existing LLM-guided methods often rely on a unified proposal loop that compresses heterogeneous search failures into a scalar score and a single prompt. We propose A-SR, a self-evolving agentic framework that shifts the control unit from expression edits to role-conditioned evidence views. A-SR coordinates formula discovery through routing among coordination protocols, an online evaluator-reward role policy, and state-routed process memory. During search, evaluator feedback characterizes reliability and productivity, updates role-level utilities, and routes elite motifs, failure traces, and validity diagnostics to different agents. The framework self-evolves at two timescales: within a run, it adapts the search process without updating LLM parameters; across runs, recorded trajectories can be distilled into open-source LLMs as role-conditioned proposal priors. Averaged over the four LSR-Synth scientific domains in LLM-SRBench, A-SR improves Acc@0.01 over baselines from 25.79% to 48.30% with Llama3.1-8B, while A-SR-LoRA improves the corresponding Qwen3-4B result from 24.58% to 38.29%. On four real-world scientific discovery tasks, A-SR obtains the best in-distribution or out-of-distribution normalized mean squared error on 7 of 8 reported metrics.",
+      "authors": [
+        "Wenxiao Zhao",
+        "Dong Liu",
+        "Kaiyi Xu",
+        "Feng Liu",
+        "Zhen Zhao",
+        "Fei Ben",
+        "Shu Wang",
+        "Wenhao Li",
+        "Yingnian Wu",
+        "Fenghua Ling",
+        "Haobo Li",
+        "Lei Bai"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-08-05T14:01:10+00:00",
+      "link": "https://arxiv.org/pdf/2608.04872v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Symbolic regression method using self-evolving agentic LLMs; transferable to chemical kinetic model inference",
+      "llm_evidence_cn": "使用自演化智能体大语言模型进行符号回归，可迁移至化学动力学模型推理",
+      "llm_evidence": "使用自演化智能体大语言模型进行符号回归，可迁移至化学动力学模型推理",
+      "canonical_evidence": "使用自演化智能体大语言模型进行符号回归，可迁移至化学动力学模型推理",
+      "llm_tldr_en": "A-SR proposes a self-evolving agentic LLM framework for symbolic regression, shifting control from expression edits to role-conditioned evidence views and introducing hierarchical coordination protocols to improve search efficiency.",
+      "llm_tldr_cn": "符号回归旨在从数据中发现闭式方程，但现有大语言模型引导的方法常将多种搜索失败压缩为单一标量，限制了探索效率。本文提出A-SR自演化智能体框架，将控制单元从表达式编辑转为角色化证据视图，并通过协调协议、评估者奖励角色策略与状态路由记忆协同搜索。实验表明该方法在符号回归任务上取得更优的发现效果。该工作为智能体化科学方程发现提供了新范式。",
+      "llm_tldr": "符号回归旨在从数据中发现闭式方程，但现有大语言模型引导的方法常将多种搜索失败压缩为单一标量，限制了探索效率。本文提出A-SR自演化智能体框架，将控制单元从表达式编辑转为角色化证据视图，并通过协调协议、评估者奖励角色策略与状态路由记忆协同搜索。实验表明该方法在符号回归任务上取得更优的发现效果。该工作为智能体化科学方程发现提供了新范式。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "How is deep learning applied to reaction mechanism inference and catalysis design?",
+      "matched_requirement_id": "req-10",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.05336v1",
+      "source": "arxiv",
+      "title": "Physics-Based Molecular Fingerprints from Spectral Graph Theory Provide Efficient Geometry-Aware Measures of Chemical Similarity",
+      "abstract": "Molecular representations are essential for the evaluation of molecular similarity and the development of structure-property relationships. Despite the known importance of 3D structure to determine chemical and physical properties, the most widely used molecular fingerprints encode only two-dimensional connectivity. Such representations fail to distinguish similar but distinct stereoisomers and conformers. Alternative 3D methods are typically defined pairwise, making their application to large chemical spaces prohibitive, while deep learning embeddings are expressive but uninterpretable and limited by their training data diversity. Here, we introduce novel physics-inspired molecular fingerprints based on principles from spectral graph theory. We represent molecules as a complete graph in 3D space, with edge weights encoding heuristic physical interactions. Eigenvalue decomposition of the resulting graph Laplacian matrix results in a computationally efficient fixed-length chemical fingerprint that encodes 3D structure while obeying necessary physical symmetries of permutation and E(3) invariance. Spectral fingerprints differentiate between unique molecular structures with identical 2D connectivity, overcoming a limitation of 2D descriptors, while maintaining the low computational cost needed for efficient screening of vast chemical spaces. We evaluate our fingerprints with community detection algorithms and observe strong performance against representative baselines across datasets from organic, inorganic, biological, reticular, and reaction chemistry. Nearest-neighbor property estimation and applicability domain analyses reveal the utility of our molecular representation in machine learning and cheminformatics. We anticipate that spectral fingerprints will serve as generalizable, interpretable, and efficient measures of chemical similarity that incorporate 3D information at minimal cost.",
+      "authors": [
+        "Jacob W. Toney",
+        "Ayleen Y. Farnood",
+        "Samir Darouich",
+        "Heather J. Kulik"
+      ],
+      "primary_category": "physics.chem-ph",
+      "categories": [
+        "physics.chem-ph",
+        "cs.LG"
+      ],
+      "published": "2026-08-05T18:50:21+00:00",
+      "link": "https://arxiv.org/pdf/2608.05336v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "introduces physics-based molecular fingerprints as geometry-aware similarity measures for molecular representation and evaluation",
+      "llm_evidence_cn": "基于谱图理论的物理分子指纹，提供几何感知的化学相似性度量，用于分子表征与评估",
+      "llm_evidence": "基于谱图理论的物理分子指纹，提供几何感知的化学相似性度量，用于分子表征与评估",
+      "canonical_evidence": "基于谱图理论的物理分子指纹，提供几何感知的化学相似性度量，用于分子表征与评估",
+      "llm_tldr_en": "Introduces efficient geometry-aware molecular fingerprints from spectral graph theory that capture 3D structure, serving as an interpretable similarity measure for large chemical spaces.",
+      "llm_tldr_cn": "现有分子指纹多基于二维连接信息，无法区分立体异构体和构象；三维方法通常成对计算且成本高，深度学习嵌入缺乏可解释性。本文提出基于谱图理论的物理启发分子指纹，以高效且可解释的方式编码三维几何信息，用于化学相似性度量。该方法可在大规模化学空间中应用，并为结构-性质关系建模提供更好的分子表征，从而支持分子性质预测与生成评估。",
+      "llm_tldr": "现有分子指纹多基于二维连接信息，无法区分立体异构体和构象；三维方法通常成对计算且成本高，深度学习嵌入缺乏可解释性。本文提出基于谱图理论的物理启发分子指纹，以高效且可解释的方式编码三维几何信息，用于化学相似性度量。该方法可在大规模化学空间中应用，并为结构-性质关系建模提供更好的分子表征，从而支持分子性质预测与生成评估。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "What benchmark datasets and evaluation metrics are commonly used for molecular property prediction and generation?",
+      "matched_requirement_id": "req-9",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2608.04942v1",
+      "source": "arxiv",
+      "title": "CheMLFlow: An Open-Source Platform for Cheminformatics and Materials Informatics Applications",
+      "abstract": "CheMLFlow is an open-source platform for building and executing end-to-end, high-throughput, and agentic workflows for scientific and technological applications. CheMLFlow targets a common bottleneck in scientific machine learning development, where researchers often need to assemble data acquisition, curation, representation, model training, validation, screening, interpretation, and reporting into a reproducible pipeline, even when their primary research contribution concerns only one stage. CheMLFlow provides modular workflow components, ready-to-run reference pipelines, standardized artifacts, and evaluation outputs that reduce orchestration overhead and support benchmarking across methods and datasets. The platform is designed to be extensible, reproducible, and automation friendly, with pluggable representations and models, deterministic splits, explicit run artifacts, batch execution, and report generation. As scientific software increasingly moves toward agent assisted experimentation, CheMLFlow's configuration driven workflows and structured outputs also provide a practical interface for coding agents to help users construct experiments, inspect results, and summarize findings under human supervision. This article describes the system architecture, core workflows, and benchmarks that reach literature performance for quantum mechanical, physicochemical and bioactivity property prediction, and use cases involving time series datasets demonstrating applications beyond molecular chemistry datasets.",
+      "authors": [
+        "Brendan Smith",
+        "Susana Lopez-Moreno",
+        "Eric Dolores-Cuenca",
+        "Sangil Kim",
+        "Jose L. Mendoza-Cortes",
+        "Nijamudheen Abdulrahiman"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cond-mat.mtrl-sci",
+        "cond-mat.other",
+        "cs.AI",
+        "physics.chem-ph"
+      ],
+      "published": "2026-08-05T15:08:29+00:00",
+      "link": "https://arxiv.org/pdf/2608.04942v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Open-source platform for end-to-end high-throughput and agentic cheminformatics and materials informatics workflows",
+      "llm_evidence_cn": "开源平台，支持端到端高通量与智能体式化学信息学和材料信息学工作流",
+      "llm_evidence": "开源平台，支持端到端高通量与智能体式化学信息学和材料信息学工作流",
+      "canonical_evidence": "开源平台，支持端到端高通量与智能体式化学信息学和材料信息学工作流",
+      "llm_tldr_en": "CheMLFlow is an open-source platform for building end-to-end, high-throughput, and agentic workflows in cheminformatics and materials informatics, providing modular components, reference pipelines, and standardized evaluation outputs to reduce orchestration overhead.",
+      "llm_tldr_cn": "CheMLFlow是一个开源平台，旨在解决科学机器学习开发中数据获取、表示、训练、筛选和报告等流程组装繁琐的瓶颈。它提供模块化工作流组件、可运行参考流程、标准化产物和评估输出，支持高通量与智能体式工作流的构建，并降低调度开销。该平台适用于化学信息学和材料信息学的多种应用，有助于方法间的基准对比与复现。",
+      "llm_tldr": "CheMLFlow是一个开源平台，旨在解决科学机器学习开发中数据获取、表示、训练、筛选和报告等流程组装繁琐的瓶颈。它提供模块化工作流组件、可运行参考流程、标准化产物和评估输出，支持高通量与智能体式工作流的构建，并降低调度开销。该平台适用于化学信息学和材料信息学的多种应用，有助于方法间的基准对比与复现。",
+      "llm_tags": [
+        "query:aichem-map:composite"
+      ],
+      "matched_query_tag": "query:aichem-map:composite",
+      "matched_query_text": "Papers central to AI4Chem领域全景、通用方法与研究方向探索, especially work that connects or combines: chemical foundation model pre-training and transfer learning; molecular generation and optimization with machine learning; chemical reaction prediction using artificial intelligence; retrosynthesis and synthetic route planning with AI; large language models for chemistry applications; machine learning acceleration for quantum chemistry and molecular dynamics; What are the latest advances in retrosynthesis, synthesis planning, and AI agents for chemistry, and how are these systems evaluated?; What are the latest survey papers on AI for chemistry covering multiple subfields?; What benchmark datasets and evaluation metrics are commonly used for molecular property prediction and generation?; How is deep learning applied to reaction mechanism inference and catalysis design?.",
+      "matched_requirement_id": "req-composite-aichem-map",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

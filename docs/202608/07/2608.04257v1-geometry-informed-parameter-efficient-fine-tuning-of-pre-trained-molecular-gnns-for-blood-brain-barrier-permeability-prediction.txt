@@ -1,0 +1,510 @@
+Title: Geometry-Informed Parameter-Efficient Fine-Tuning of Pre-trained Molecular GNNs for Blood-Brain Barrier Permeability Prediction
+
+URL Source: https://arxiv.org/pdf/2608.04257v1
+
+Published Time: Thu, 06 Aug 2026 00:20:20 GMT
+
+Number of Pages: 10
+
+Markdown Content:
+# Geometry-Informed Parameter-Efficient Fine-Tuning of Pre-trained Molecular GNNs for Blood–Brain Barrier Permeability Prediction 
+
+# Marco Vieto Vega ∗
+
+vietomarc@myvuw.ac.nz School of Mathematics and Statistics Victoria University of Wellington Wellington, New Zealand 
+
+# Long D. Nguyen ∗
+
+duylong.nguyen@vuw.ac.nz School of Mathematics and Statistics Victoria University of Wellington Wellington, New Zealand 
+
+# Binh P. Nguyen †
+
+binh.p.nguyen@vuw.ac.nz School of Mathematics and Statistics Victoria University of Wellington Wellington, New Zealand 
+
+## Abstract 
+
+Blood–brain barrier permeability (BBBP) prediction is a critical screening task in central nervous system drug discovery, where candidate molecules must be assessed according to whether they can cross, or should be prevented from crossing the blood–brain barrier. However, this task remains challenging due to limited, class-imbalanced datasets and sensitivity to molecular structure. Recent advances in deep learning have established graph neural networks (GNNs) as a powerful approach for molecular representa-tion learning, and pre-trained molecular GNNs provide transferable knowledge for downstream tasks. However, full fine-tuning of pre-trained models is often parameter-inefficient and prone to overfit-ting, while existing parameter-efficient fine-tuning (PEFT) methods mainly adapt node features or the two-dimensional covalent graph, limiting their ability to capture three-dimensional geometry and second-order interactions. To address these limitations, we pro-pose BBBP-GeoPEFT , a geometry-informed PEFT framework for pre-trained molecular GNNs. BBBP-GeoPEFT constructs distance-based graphs at multiple cutoffs and their corresponding line graphs from molecular conformers to capture spatial atom interactions and second-order edge interactions. Lightweight auxiliary geomet-ric graph encoders produce cutoff-specific representations, which are incorporated into each pre-trained layer through node-wise cutoff attention and gated residual connections. This design pre-serves pre-trained knowledge while incorporating permeability-relevant geometric information with a small trainable-parameter budget. Experiments on a curated BBBP dataset demonstrate that BBBP-GeoPEFT achieves competitive and consistent performance compared with full fine-tuning and representative PEFT baselines. Under both random and scaffold splitting settings, BBBP-GeoPEFT achieves competitive or improved ROC-AUC and Accuracy in most experiments while updating only 10.1% of the model parameters.  
+
+> ∗Both authors contributed equally to this research.
+> †Corresponding author. Permission to make digital or hard copies of all or part of this work for personal or classroom use is granted without fee provided that copies are not made or distributed for profit or commercial advantage and that copies bear this notice and the full citation on the first page. Copyrights for components of this work owned by others than the author(s) must be honored. Abstracting with credit is permitted. To copy otherwise, or republish, to post on servers or to redistribute to lists, requires prior specific permission and/or a fee. Request permissions from permissions@acm.org.
+> BioKDD ’26, Jeju, Korea
+> ©2026 Copyright held by the owner/author(s). Publication rights licensed to ACM. ACM ISBN 978-x-xxxx-xxxx-x/YYYY/MM https://doi.org/XXXXXXX.XXXXXXX
+
+## Keywords 
+
+blood–brain barrier permeability prediction, graph neural networks, parameter-efficient fine-tuning, second-order interactions 
+
+ACM Reference Format: 
+
+Marco Vieto Vega, Long D. Nguyen, and Binh P. Nguyen. 2026. Geometry-Informed Parameter-Efficient Fine-Tuning of Pre-trained Molecular GNNs for Blood–Brain Barrier Permeability Prediction. In Proceedings of the 25th International Workshop on Data Mining in Bioinformatics (BioKDD ’26). ACM, New York, NY, USA, 10 pages. https://doi.org/XXXXXXX.XXXXXXX 
+
+## 1 Introduction 
+
+Molecular property prediction plays a central role in drug discov-ery and materials science [42]. Among these tasks, blood–brain barrier permeability (BBBP) prediction is particularly important for central nervous system drug development, where candidate molecules must be evaluated based on their ability to cross the blood–brain barrier. The blood–brain barrier is a highly selective biological interface that regulates the transport of compounds into the brain, protecting the central nervous system and maintaining homeostasis [2, 31]. Compounds targeting neurological diseases require sufficient permeability to reach their targets, while for many non-central nervous system drugs, low permeability is desirable to avoid unintended side effects. Experimental measurement of BBBP through in vitro [29] or in vivo assays [27] is costly and time-consuming, making computational prediction an essential tool for early-stage screening. However, BBBP prediction remains challenging due to limited and class-imbalanced datasets, as well as the strong dependence of permeability on complex molecular structure. Traditional approaches for BBBP prediction rely on physico-chemical rules or classical machine learning models built on hand-crafted molecular descriptors [39, 13, 15]. While these methods are interpretable and effective in low-data settings, they are limited in their ability to capture complex structural patterns. Recently, graph neural networks (GNNs) have emerged as a powerful framework for molecular representation learning by modeling molecules as graphs of atoms and bonds [46, 25]. Furthermore, self-supervised pre-training enables GNNs to learn transferable representations from large unlabeled molecular datasets, improving performance on downstream molecular property prediction tasks [18, 43, 40]. Despite these advances, adapting pre-trained molecular GNNs to BBBP prediction remains challenging. Fully fine-tuning pre-trained models requires updating a large number of parameters, which can lead to overfitting and catastrophic forgetting, especially when arXiv:2608.04257v1 [cs.LG] 4 Aug 2026 BioKDD ’26, August 09–13, 2026, Jeju, Korea Marco et al. 
+
+labeled data are scarce or imbalanced [44]. Parameter-efficient fine-tuning (PEFT) methods address this issue by introducing light-weight task-specific modules while freezing most pre-trained pa-rameters [22, 28, 9, 20, 11]. However, existing PEFT approaches for molecular graphs are limited in their ability to exploit struc-tural information relevant to BBBP. Prompt-based methods mainly modify input representations and often underperform compared to full fine-tuning [22]. Feature-based adapters operate primarily on node features, while recent structure-aware adapters remain restricted to the original 2D covalent graph. Consequently, these methods do not explicitly incorporate conformer-derived geometry or second-order relations between spatial atom-pair interactions that may be relevant to molecular permeability. To address this limitation, we propose BBBP-GeoPEFT , a geometry-informed parameter-efficient fine-tuning framework for BBBP pre-diction. BBBP-GeoPEFT augments a pre-trained molecular GNN with geometric representations derived from RDKit-generated con-formers. Specifically, we construct distance-based graphs under multiple spatial cutoffs to model atom proximity and derive cor-responding line graphs to represent second-order edge interac-tions. Lightweight auxiliary geometric graph encoders produce a cutoff-specific representation from each graph pair. At every backbone layer, node-wise cutoff attention aggregates these repre-sentations and forms a geometric adaptation residual that is com-bined with the pre-trained state through gated connections. This design incorporates conformer-derived information while preserv-ing pre-trained knowledge and maintaining parameter efficiency. We evaluate BBBP-GeoPEFT on a curated BBBP dataset derived from the Blood–Brain Barrier Database. Experimental results show that BBBP-GeoPEFT achieves strong performance across multiple evaluation metrics, outperforming or remaining competitive with full fine-tuning and representative parameter-efficient baselines while using only a small fraction of trainable parameters. These results demonstrate that incorporating multi-scale conformer ge-ometry into parameter-efficient adaptation is a promising direction for BBBP prediction. 
+
+Contributions. Our main contributions are summarized as follows: 
+
+• We propose BBBP-GeoPEFT, a geometry-informed parameter-efficient fine-tuning framework that augments a largely frozen molecular GNN with representations derived from multi-scale conformer geometry. 
+
+• We introduce a multi-scale graph construction based on dis-tance graphs and their corresponding line graphs, enabling the model to represent spatial atom interactions and second-order edge interactions across multiple cutoffs. 
+
+• We design a node-wise cutoff attention module that ag-gregates cutoff-specific geometric representations and aug-ments each backbone layer through a gated geometric adap-tation residual. 
+
+• We conduct extensive experiments on a curated BBBP dataset, demonstrating that BBBP-GeoPEFT achieves competitive or improved performance while maintaining parameter effi-ciency compared to full fine-tuning and existing parameter-efficient methods. 
+
+## 2 Related Work 2.1 Computational Blood–Brain Barrier Permeability Prediction 
+
+Computational approaches for blood–brain barrier permeability prediction have evolved from rule-based and statistical models to advanced machine learning and deep learning methods. Early stud-ies focused on physicochemical descriptors and statistical modeling techniques. Linear Free Energy Relationship models [30] based on multivariate linear regression were used to correlate permeability with fundamental molecular properties such as hydrogen bonding, polarizability, and molecular size. Similarly, Linear Discriminant Analysis [37] has been applied to construct binary classifiers using simple two-dimensional descriptors, including lipophilicity, topo-logical polar surface area, and counts of acidic and basic atoms. To overcome the limitations of fixed thresholds, multiparam-eter optimization frameworks were introduced to integrate mul-tiple physicochemical properties into unified scoring functions. Representative methods include the CNS MPO score [39], which combines several molecular descriptors through desirability func-tions, and its extensions such as TEMPO [13] and BBB Score [15], which employ optimization techniques and piecewise functions to assign probabilistic permeability scores. While these approaches are interpretable and computationally efficient, they rely heavily on predefined descriptors and may fail to capture complex structural dependencies. With the increasing availability of data and computational re-sources, conventional machine learning methods such as k-Nearest Neighbors (k-NN) [7], Support Vector Machines (SVM) [6], Ran-dom Forests (RF) [3], and XGBoost [5] have been widely adopted for BBBP prediction. These models are typically trained on hand-crafted features such as quantitative structure–activity relationship descriptors or molecular fingerprints. More recently, deep learning methods have demonstrated improved performance by learning representations directly from molecular structure. Ensemble ar-chitectures, such as iBBBP-Ensemble [26], combine Convolutional Neural Networks and Multilayer Perceptrons to integrate multiple feature modalities. In addition, pre-trained graph-based models, such as Masked Graph Transformer Encoders [38], further enhance representation learning by leveraging large-scale unlabeled molec-ular data. Despite these advances, existing BBBP prediction methods ex-hibit two key limitations. First, many approaches rely on fixed fea-ture representations, which restrict their ability to capture complex molecular structure. Second, deep learning models often require training or full fine-tuning, which is challenging under limited and imbalanced datasets. Moreover, most methods focus on 2D molec-ular representations and do not explicitly incorporate conformer-derived spatial relations or second-order dependencies among atom-pair interactions, which may provide complementary information for molecular permeability prediction. These limitations motivate the need for more flexible and structure-aware adaptation strate-gies. Geometry-Informed PEFT for BBBP Prediction BioKDD ’26, August 09–13, 2026, Jeju, Korea 
+
+## 2.2 Efficient Adaptation of Pre-trained Graph Models 
+
+Beyond task-specific modeling, another line of research focuses on improving the adaptation of pre-trained graph neural networks through parameter-efficient fine-tuning. Instead of updating all parameters, PEFT methods introduce a small number of trainable components while keeping the backbone largely frozen, reducing computational cost and mitigating overfitting. Existing approaches can be broadly categorized into graph prompt tuning and adapter-based tuning . Prompt-based methods adapt GNNs by modifying the input graph or task formulation without changing the model architecture. Early approaches, such as GPF and GPF-plus [9], introduce learnable feature-level prompts appended to node representations. Subsequent works extend prompting to structural information: EdgePrompt [11] injects prompts into edges, while GraphTOP [12] and UniPrompt [20] modify graph topology to generate task-specific structural signals. More unified frameworks, such as GPPT [35] and All-in-One [36], reformulate downstream tasks into a common prompting paradigm. Adapter-based methods introduce lightweight trainable mod-ules within pre-trained GNNs. AdapterGNN [22] proposes graph-specific adapter designs with parallel modules and learnable scaling, while G-Adapter [14] and GConv-Adapter [28] incorporate graph convolution into adapters to capture structural information. In ad-dition, low-rank adaptation techniques such as LoRA [17] reduce parameter overhead by factorizing weight updates. While these methods improve adaptation efficiency, most de-rive their trainable corrections from node features or the original local graph connectivity. They therefore rarely exploit conformer-derived spatial relations or second-order edge interactions during adaptation. This limitation motivates a parameter-efficient mech-anism that supplies geometric graph representations to the pre-trained backbone. 
+
+## 2.3 Geometry-Aware and Higher-Order Molecular Learning 
+
+Orthogonal to adaptation efficiency, recent work has explored in-corporating geometric and higher-order structural information into molecular representation learning beyond traditional 2D graphs. Early approaches, such as Mol-GDL [33], construct multiple graphs under different distance thresholds, enabling models to capture both covalent and non-covalent interactions from three-dimensional geometry. A line of research further develops simplicial and spec-tral methods based on Hodge theory. For example, HL-HGAT [19] applies Hodge-Laplacian filtering with efficient polynomial approx-imation, while HLSAD [10] leverages spectral properties of Hodge Laplacians to capture structural evolution in higher-order networks. Other works, such as TorGNN [32], incorporate advanced topo-logical invariants into message passing to model higher-order in-teractions. AGBT [4] combines algebraic graph fingerprints with transformer representations learned from SMILES strings, while topological fusion networks extract simplicial features from three-dimensional structures and integrate them into attention mecha-nisms. In addition, multi-modal and optimization-based approaches [8] integrate 2D, 3D, and topological features, while explicit topologi-cal descriptors provide efficient alternatives based on handcrafted invariants. More recent works, such as ENINet [23], utilize line graphs to explicitly model equivariant many-body interactions, and MatRIS [45] captures three-body interactions through line graph representations, further improving expressiveness in modeling com-plex molecular systems. Despite their effectiveness, these methods typically require train-ing specialized architectures or directly integrating geometric and topological features into the backbone model. As a result, they are not designed for parameter-efficient adaptation of pre-trained graph neural networks, and their computational cost can limit scal-ability in practical settings. This highlights the need for approaches that can leverage geometric and higher-order information while maintaining efficiency. 
+
+Discussion . Existing research on BBBP prediction, parameter-efficient fine-tuning, and geometry-aware molecular learning has made substantial progress along three complementary directions. However, these lines of work remain largely disconnected. BBBP-specific models either rely on handcrafted descriptors or require full model training, without leveraging efficient adaptation of pre-trained representations. Parameter-efficient fine-tuning methods focus on reducing computational cost but are typically limited to 2D graph representations. Meanwhile, geometry-aware and higher-order models capture rich structural interactions but often require specialized architectures and are not designed for adapting pre-trained models. Our contribution is a geometry-aware PEFT design that com-bines established structural and adaptation components. It aug-ments a largely frozen 2D molecular GNN with cutoff-specific rep-resentations obtained from conformer-derived distance and line graphs. 
+
+## 3 Preliminaries 
+
+Molecular Graph and Geometry. We represent a molecule as an attributed graph G = (V , E, A, X), where V = {𝑣 1, . . . , 𝑣 𝑛 } denotes atoms, E ⊆ V × V denotes chemical bonds, and X ∈ R𝑛 ×𝑑 𝑥 is the node feature matrix. The graph structure is encoded by an adjacency matrix A ∈ { 0, 1}𝑛 ×𝑛 , where each node 𝑣 𝑖 is associated with a neighborhood N ( 𝑣 𝑖 ). Edges may further carry attributes 
+
+e𝑖 𝑗 ∈ R𝑑 𝑒 , collectively denoted as E.In addition to the 2D molecular graph, each molecule is associ-ated with 3D atomic coordinates R ∈ R| V | × 3 obtained from con-formers. These coordinates provide geometric information, such as inter-atomic distances and spatial arrangements, which are not captured by the covalent graph. 
+
+BBBP Prediction Task. Given a molecule represented by (A, X, E)
+
+and its corresponding label 𝑦 ∈ { 0, 1}, the goal of blood–brain barrier permeability prediction is to determine whether the mol-ecule can penetrate the blood–brain barrier. We denote 𝑦 = 1 as BBB-permeable and 𝑦 = 0 as non-permeable. The model outputs a prediction ˆ𝑦 ∈ [ 0, 1], which is trained using a supervised loss function L( ˆ𝑦, 𝑦 ) over a dataset D.BioKDD ’26, August 09–13, 2026, Jeju, Korea Marco et al. 
+
+Pre-trained GNN and Downstream Molecular Task. Let 𝑓 𝜽 denote a pre-trained graph neural network encoder operating on the molec-ular graph, and let 𝑔 𝝓 denote a task-specific prediction head. Given an input molecule, the model produces a prediction: 
+
+ˆ𝑦 = 𝑔 𝝓 (𝑓 𝜽 (A, X, E)) , (1) where ˆ𝑦 is the predicted probability. Pre-training enables 𝑓 𝜽 to capture general molecular representations from large unlabeled datasets. 
+
+Parameter-Efficient Adaptation. To adapt pre-trained models un-der limited labeled data, we adopt a parameter-efficient fine-tuning setting. Instead of updating all parameters, we partition the encoder into frozen parameters 𝜽 𝑓 and a small set of tunable parameters 𝜽 𝑡 ,and introduce additional lightweight adaptation parameters 𝝍 . The adapted model ˜𝑓 is defined as: 
+
+ˆ𝑦 = 𝑔 𝝓 
+
+ ˜𝑓 𝜽 𝑓 ,𝜽 𝑡 ,𝝍 (A, X, E, R)
+
+
+
+, (2) and is optimized by: 
+
+min  
+
+> 𝜽 𝑡 ,𝝍 ,𝝓
+
+1
+
+|D| ∑︁ (A,X,E,R,𝑦 ) ∈ D 
+
+L
+
+
+
+𝑔 𝝓 
+
+ ˜𝑓 𝜽 𝑓 ,𝜽 𝑡 ,𝝍 (A, X, E, R)
+
+
+
+, 𝑦 
+
+
+
+, (3) where |𝜽 𝑡 |+| 𝝍 | ≪ | 𝜽 |. This formulation enables efficient adaptation while preserving pre-trained knowledge. 
+
+Conformer-Derived Graph Construction. To incorporate struc-tural information beyond the 2D graph, we utilize the 3D coor-dinates R to construct auxiliary graph representations. Distance-based graphs encode spatial proximity between atoms, while their corresponding line graphs represent relations between atom-pair interactions that share an atom. Constructing these graph pairs at multiple cutoffs provides complementary conformer-derived repre-sentations for adapting the pre-trained GNN. 
+
+## 4 Method 4.1 Overview 
+
+We propose BBBP-GeoPEFT (Figure 1), a parameter-efficient frame-work that augments a pre-trained molecular graph neural network with multi-scale graph representation derived from 3D geometry. Given a molecule, the pre-trained GNN processes the original 2D molecular graph, while the 3D coordinates are used to construct distance-based graphs at multiple cutoffs and their corresponding line graphs. The distance graphs model spatial atom proximity, whereas the line graphs represent second-order edge interactions. Shared auxiliary geometric graph encoders transform these graph pairs into cutoff-specific geometric representations. At each back-bone layer, node-wise cutoff attention aggregates the representa-tions according to the current node state and produces a geometric adaptation residual. The residual is incorporated through a gated update, allowing the model to use conformer-derived information while training only a small subset of parameters. 
+
+## 4.2 Multi-scale Graph Construction 
+
+We construct distance and line graphs from three-dimensional atomic coordinates to capture interactions beyond the covalent graph. 
+
+Distance-based graphs. Given atomic coordinates R ∈ R𝑛 ×3, we define a distance-based graph under cutoff 𝑟 as G𝑟 = (V , E𝑟 , X𝑟 ),where: 
+
+E𝑟 = {( 𝑖, 𝑗 ) | 𝑖 ≠ 𝑗, ∥R𝑖 − R𝑗 ∥2 ≤ 𝑟 }. (4) The node features X𝑟 are initialized using the same atom-level fea-tures as the original 2D molecular graph. This graph captures spatial proximity and includes both bonded and non-covalent interactions. 
+
+Line graphs for second-order edge interactions. To model relations among spatial atom-pair interactions, we construct the line graph 
+
+L𝑟 = (V ℓ𝑟 , Eℓ𝑟 , Xℓ𝑟 ), where each line-graph node corresponds to an edge of G𝑟 :
+
+Vℓ𝑟 = E𝑟 . (5) Two distinct nodes in L𝑟 are connected when their corresponding edges in G𝑟 share an atom: 
+
+Eℓ𝑟 = (𝑒 𝑖 𝑗 , 𝑒 𝑢𝑣 ) 𝑒 𝑖 𝑗 ≠ 𝑒 𝑢𝑣 , {𝑖, 𝑗 } ∩ { 𝑢, 𝑣 } ≠ ∅ . (6) We refer to each such relation between two incident spatial edges as a second-order edge interaction . Each line-graph node associated with an edge 𝑒 𝑖 𝑗 ∈ E 𝑟 is initialized by applying a radial basis func-tion encoding to the corresponding inter-atomic distance: 
+
+xℓ𝑖 𝑗 = RBF 
+
+
+
+R𝑖 − R𝑗 2
+
+
+
+. (7) Message passing over L𝑟 therefore models dependencies between spatial edges that share a common atom. 
+
+Multi-scale construction. We use multiple cutoff values R =
+
+{𝑟 1, . . . , 𝑟 𝐾 } to construct: 
+
+{G 𝑟 𝑘 }𝐾 𝑘 =1, {L 𝑟 𝑘 }𝐾 𝑘 =1. (8) Different cutoffs define geometric neighborhoods over varying spatial ranges. Smaller cutoffs emphasize local atom proximity, whereas larger cutoffs include longer-range spatial relations. The family {G 𝑟 𝑘 }𝐾 𝑘 =1 represents cutoff-dependent atom connectivity, whereas {L 𝑟 𝑘 }𝐾 𝑘 =1 represents second-order edge interactions in-duced by shared atoms. Together, the two graph families provide multi-scale conformer geometry for parameter-efficient adaptation. 
+
+## 4.3 Auxiliary Geometric Graph Encoding 
+
+We encode the multi-scale distance and line graphs using light-weight auxiliary geometric graph encoders. 
+
+Shared graph encoders. Instead of assigning independent en-coders to each cutoff, we use two shared GNN encoders: 𝐹 0 (·) 
+
+for distance-based graphs and 𝐹 1 (·) for line graphs. For each cutoff 
+
+𝑟 𝑘 , the layer-wise updates are: 
+
+S(𝑙 ) 
+
+> 0,𝑘
+
+= 𝐹 (𝑙 ) 
+
+> 0
+
+(S(𝑙 −1) 
+
+> 0,𝑘
+
+), (9) 
+
+S(𝑙 ) 
+
+> 1,𝑘
+
+= 𝐹 (𝑙 ) 
+
+> 1
+
+(S(𝑙 −1) 
+
+> 1,𝑘
+
+). (10) Equivalently, for all scales, the shared encoders produce: 
+
+{{ S(𝑙 ) 
+
+> 0,𝑘
+
+}𝐾 𝑘 =1 }𝐿 𝑙 =1 = 𝐹 (𝑙 )
+
+> 0
+
+
+
+{G 𝑟 𝑘 }𝐾 𝑘 =1
+
+
+
+, (11) 
+
+{{ S(𝑙 ) 
+
+> 1,𝑘
+
+}𝐾 𝑘 =1 }𝐿 𝑙 =1 = 𝐹 (𝑙 )
+
+> 1
+
+
+
+{L 𝑟 𝑘 }𝐾 𝑘 =1
+
+
+
+. (12) The encoders 𝐹 0 and 𝐹 1 are shared across all cutoff values, so the model learns scale-consistent structural transformations while re-ducing the parameter cost from scale-specific encoders to only Geometry-Informed PEFT for BBBP Prediction BioKDD ’26, August 09–13, 2026, Jeju, Korea 2D molecular graph      
+
+> 3D coordinates
+> RDKit
+> ...
+> ...
+> ...
+> ...
+> Multi-scale geometric representation set
+> Feature
+> adapter
+> Node-wise
+> cutoff attention
+> +...  ...
+> 1. Inputs 2. Multi-scale Graph Construction 3. Auxiliary Geometric Graph Encoding 4. Attention-Based Geometric Adaptation
+
+Figure 1: Overview of BBBP-GeoPEFT. Given a molecule, the original 2D molecular graph is processed by a pre-trained GNN, while 3D coordinates R are used to construct multi-scale graph views. Specifically, distance-based graphs {G 𝑟 𝑘 }𝐾 𝑘 =1 are built under multiple cutoffs, and their corresponding line graphs {L 𝑟 𝑘 }𝐾 𝑘 =1 represent second-order edge interactions. A shared distance-graph encoder 𝐹 0 and line-graph encoder 𝐹 1 process the two graph families. At layer 𝑙 , their pooled outputs are concatenated into cutoff-specific geometric representations p(𝑙 ) 
+
+> 𝑘
+
+, yielding the multi-scale geometric representation set P (𝑙 ) .Node-wise cutoff attention assigns node-dependent weights to these representations and produces a geometric adaptation residual. A feature adapter supplies an additional feature-level residual, and gated connections combine both residuals with the pre-trained node state. Graph-level readout and an MLP produce the final prediction ˆ𝑦 .
+
+two encoder families. The distance-graph encoder models cutoff-dependent atom connectivity, whereas the line-graph encoder mod-els second-order relations between spatial edges that share an atom. 
+
+Parameter-efficient design. To reduce the number of trainable parameters, we employ a low-rank factorized parameterization for the MLP layers within the shared auxiliary graph encoders. Specifically, while the message-passing mechanism of the GNN remains unchanged, we apply low-rank decomposition only to the linear transformations inside the MLP blocks. Instead of learning full weight matrices in MLP (𝑙 ) , each linear transformation is repre-sented using a low-rank factorization. Concretely, for a linear layer with weight W(𝑙 ) ∈ R𝑑 ×𝑑 , we parameterize it as: 
+
+W(𝑙 ) = B(𝑙 ) A(𝑙 ) , (13) where A(𝑙 ) ∈ R𝑟 ×𝑑 and B(𝑙 ) ∈ R𝑑 ×𝑟 are trainable low-rank ma-trices with 𝑟 ≪ 𝑑 . This factorized parameterization reduces the number of trainable parameters from O( 𝑑 2) to O( 2𝑟𝑑 ), i.e., O( 𝑟𝑑 ).Importantly, this low-rank design is applied only to the MLP com-ponents of the auxiliary graph encoders, while the neighborhood aggregation operations remain unchanged. Most parameters of the pre-trained backbone are frozen, with only its batch-normalization parameters fine-tuned during downstream adaptation. This pre-serves the capacity of the auxiliary encoders to model the distance and line graphs while improving parameter efficiency. 
+
+Multi-scale geometric representation set. We aggregate distance-graph and line-graph representations using a permutation-invariant pooling function: 
+
+z(𝑙 ) 
+
+> 0,𝑘
+
+= Pool (S(𝑙 ) 
+
+> 0,𝑘
+
+), z(𝑙 ) 
+
+> 1,𝑘
+
+= Pool (S(𝑙 ) 
+
+> 1,𝑘
+
+). (14) For each cutoff 𝑟 𝑘 , we obtain a cutoff-specific geometric represen-tation by concatenating the pooled distance-graph and line-graph representations: 
+
+p(𝑙 ) 
+
+> 𝑘
+
+= [z(𝑙 ) 
+
+> 0,𝑘
+
+∥ z(𝑙 ) 
+
+> 1,𝑘
+
+]. (15) The set P (𝑙 ) = {p(𝑙 ) 
+
+> 𝑘
+
+}𝐾 𝑘 =1 forms a multi-scale geometric representa-tion set that summarizes the conformer across the selected distance cutoffs. In practice, the hidden dimension of each auxiliary graph encoder is set to half the hidden dimension of the pre-trained en-coder. 
+
+## 4.4 Attention-Based Geometric Adaptation 
+
+We integrate multi-scale geometric representation set into the pre-trained GNN through a node-wise cutoff attention module applied at each layer. 
+
+Node-wise cutoff attention. Let h(𝑙 ) 
+
+> 𝑖
+
+denote the representation of node 𝑖 at layer 𝑙 . We compute its similarity to every cutoff-specific geometric representation in P (𝑙 ) . The node state acts as the query, while each element of P (𝑙 ) corresponds to one distance cutoff: 
+
+𝑠 (𝑙 ) 
+
+> 𝑖,𝑗
+
+= ⟨h(𝑙 ) 
+
+> 𝑖
+
+, p(𝑙 ) 
+
+> 𝑗
+
+⟩√𝑑 . (16) The attention weights are computed as: 
+
+𝛼 (𝑙 ) 
+
+> 𝑖,𝑗
+
+= Softmax 𝑗 (𝑠 (𝑙 ) 
+
+> 𝑖,𝑗
+
+), (17) and the geometric adaptation residual is defined as: 
+
+Δh(𝑙 ) 
+
+> 𝑖, geo
+
+=
+
+> 𝐾
+
+∑︁ 
+
+> 𝑗 =1
+
+𝛼 (𝑙 ) 
+
+> 𝑖,𝑗
+
+p(𝑙 ) 
+
+> 𝑗
+
+. (18) BioKDD ’26, August 09–13, 2026, Jeju, Korea Marco et al. 
+
+This mechanism enables each node to selectively retrieve relevant geometric information across multiple spatial scales. 
+
+Feature adapter. In addition to the geometric adaptation residual, we incorporate a feature-level adapter to refine node representa-tions: 
+
+Δh(𝑙 ) 
+
+> 𝑖, feat
+
+= W(𝑙 ) 
+
+> 2
+
+𝜎 (W(𝑙 ) 
+
+> 1
+
+h(𝑙 −1) 
+
+> 𝑖
+
+). (19) The final node update combines the pre-trained representation with the feature-level residual and the geometric adaptation residual: 
+
+˜h(𝑙 ) 
+
+> 𝑖
+
+= h(𝑙 ) 
+
+> 𝑖
+
++ 𝛾 (𝑙 ) 
+
+> 0
+
+Δh(𝑙 ) 
+
+> 𝑖, feat
+
++ 𝛾 (𝑙 ) 
+
+> 1
+
+Δh(𝑙 )
+
+> 𝑖, geo
+
+. (20) This gated formulation combines the pre-trained representation, feature-level adaptation, and multi-scale conformer geometry while allowing their contributions to be learned separately. 
+
+## 5 Experiments 5.1 Dataset 
+
+Dataset collection. In this work, we focus on the blood–brain barrier permeability prediction task and follow the dataset con-struction protocol in [38]. We adopt the BBBP dataset collected from the B3DB database [24], which aggregates molecular records from multiple peer-reviewed publications and public sources. The original dataset consists of 7,807 compounds, including 4,956 BBB-permeable (BBB+) and 2,851 non-permeable (BBB-) molecules. After preprocessing and quality control, the final curated dataset contains 3,832 samples (2,446 BBB+, 1,386 BBB −, ratio 1.76:1). The architec-ture is task-independent, but the empirical evidence in this paper is limited to BBBP. 
+
+Data curation. To ensure data quality and reliability, we apply a standardized chemical data curation pipeline following [38]. The pipeline consists of four stages: (i) validation, (ii) cleaning, (iii) normalization, and (iv) final verification. First, all molecular struc-tures are standardized into canonical SMILES format. During val-idation, invalid samples, such as inorganic compounds, mixtures, and organometallics, are removed. In the cleaning stage, molecules containing metal ions are discarded, and charged molecules are neutralized when appropriate. Next, normalization reduces struc-tural redundancy by transforming stereoisomers and tautomers into canonical forms, mitigating duplication caused by equivalent rep-resentations. Finally, a verification step removes duplicate entries based on molecular identifiers and resolves label inconsistencies. Additional cross-referencing with PubChem and ChEMBL further ensures structural correctness and label reliability. 
+
+Dataset splitting. We evaluate model performance under both random and scaffold splitting strategies. For scaffold splitting, molecules are partitioned according to their Bemis–Murcko scaffolds [1], en-suring mutually exclusive scaffold groups across training, valida-tion, and test sets, thereby providing a more realistic evaluation of generalization to unseen chemical structures. In both settings, 10% of the dataset is reserved for testing, while the remaining samples are split into training and validation sets at a 90:10 ratio. Across five runs, both splitting strategies broadly maintain similar BBB+/BBB-proportions, although scaffold splitting introduces larger variation in class distribution and performance. 
+
+## 5.2 Baselines 
+
+We compare the proposed method against both full fine-tuning and a diverse set of parameter-efficient fine-tuning approaches. Specifically, we consider representative PEFT methods including Adapter [16], LoRA [17], GPF and GPF-plus [9], and AdapterGNN [22]. Following [22], to evaluate robustness across different pre-training objectives, we further incorporate three widely used self-supervised pre-training strategies, all based on a pre-trained Graph Isomor-phism Network (GIN) [41] backbone: SimGRACE [40], EdgePred [18], and ContextPred [18]. We note that the experimental focus is on parameter-efficient adaptation under matched pre-trained back-bones. 
+
+## 5.3 Implementation Details 
+
+All models are trained using the AdamW optimizer with an initial learning rate of 3 × 10 −4 and a batch size of 64 for 150 epochs. To ensure a fair comparison, we apply consistent hyperparameter set-tings across all parameter-efficient fine-tuning methods. We employ the GIN as the backbone for auxiliary geometric graph encoders. Following [22], we freeze the pre-trained backbone except for its batch-normalization parameters, while training BBBP-GeoPEFT and the task-specific prediction head. Unless otherwise specified, the rank of the low-rank factorization is fixed at 𝑟 = 16 . For multi-scale graph construction, we use distance cutoffs {2, 2.5, 3, 3.5, 4} Å,a set also used by Mol-TDL [34] to model covalent and non-covalent interactions across scales. For each canonical SMILES, explicit hy-drogens were added and 10 conformers were generated using RDKit ETKDGv3 [21] with random seed 42. Conformers were optimized using MMFF94 (or UFF when unavailable), and the lowest-energy conformer was selected before removing hydrogens and construct-ing the distance and line graphs. We evaluate model performance using standard classification metrics, including the Area Under the Receiver Operating Charac-teristic Curve (ROC-AUC), Precision-Recall Area Under the Curve (PR-AUC), Accuracy, and F1-score. To assess robustness, each ex-periment is repeated over 5 seeds, and we report the mean and standard deviation. All experiments are conducted on NVIDIA RTX A5000 GPUs with 24GB of memory. 
+
+## 5.4 Model Evaluation 
+
+5.4.1 Comparison with Full Fine-Tuning and PEFT Baselines under Random Split. Table 1 compares BBBP-GeoPEFT with representa-tive PEFT baselines under the random split setting. Overall, BBBP-GeoPEFT achieves the best or second-best performance across most metrics and pre-training objectives. Under SimGRACE and Con-textPred pre-training, BBBP-GeoPEFT consistently achieves the strongest overall performance, reaching up to 88.1% ROC-AUC and 84.0% F1-score, while updating only a small fraction of model parameters compared with full fine-tuning. Under the EdgePred backbone, BBBP-GeoPEFT remains competitive and achieves the highest Accuracy, although AdapterGNN obtains the best average ranking and stronger PR-AUC and F1-score. This may be because EdgePred pre-training already captures informative local bond and edge-level structural patterns, reducing the additional benefit of geometry-informed adaptation. Across all settings, adapter-based methods often outperform prompt-based approaches such as GPF Geometry-Informed PEFT for BBBP Prediction BioKDD ’26, August 09–13, 2026, Jeju, Korea 
+
+Table 1: Comparison with full fine-tuning and representative PEFT methods on the BBBP dataset under random splitting strategy. Results are reported as mean ± standard deviation over 5 runs, in percentage. Best and second-best results within each pre-training group are highlighted in red and blue, respectively. Lower Avg. Rank is better. Pre-training Method ROC-AUC ↑ PR-AUC ↑ Accuracy ↑ F1 ↑ Avg. Rank ↓
+
+SimGRACE Full FT 85.4 ±0.2 91.4 ±0.3 77.0 ±0.6 82.8 ±0.4 4.38 Adapter 85.6 ±0.5 91.7 ±0.5 76.3 ±0.7 82.1 ±0.8 4.63 LoRA 84.9 ±0.8 91.1 ±0.7 76.9 ±1.7 82.6 ±1.4 5.50 GPF 82.5 ±0.6 87.7 ±0.6 77.3 ±0.8 83.3 ±0.5 4.75 GPF-plus 84.0 ±1.0 88.8 ±1.1 77.2 ±1.1 83.2 ±0.9 4.75 AdapterGNN 85.6 ±1.2 91.4 ±1.0 77.4 ±1.1 82.9 ±0.8 3.00 
+
+BBBP-GeoPEFT 87.1 ±1.1 91.8 ±0.8 79.6 ±1.0 83.7 ±0.8 1.00 
+
+EdgePred Full FT 87.3 ±0.5 92.8 ±0.3 77.1 ±0.7 83.3 ±0.4 2.75 Adapter 85.6 ±0.6 91.9 ±0.3 76.2 ±0.6 82.3 ±0.8 5.00 LoRA 86.8 ±0.2 92.4 ±0.2 77.5 ±0.4 83.4 ±0.3 3.00 GPF 72.0 ±1.1 81.4 ±1.1 66.6 ±1.6 77.1 ±1.5 6.75 GPF-plus 72.3 ±4.1 80.4 ±2.9 69.1 ±3.3 80.1 ±1.5 6.25 AdapterGNN 87.4 ±0.6 92.8 ±0.4 77.8 ±1.1 83.9 ±0.5 1.38 BBBP-GeoPEFT 87.3 ±0.3 92.1 ±0.4 78.8 ±1.0 83.2 ±0.7 2.88 ContextPred Full FT 86.8 ±0.7 92.6 ±0.4 77.6 ±1.0 83.1 ±0.6 2.25 Adapter 86.2 ±0.7 92.3 ±0.4 76.9 ±0.9 83.0 ±0.7 4.25 LoRA 86.6 ±0.5 92.4 ±0.4 76.7 ±0.9 83.1 ±0.5 3.38 GPF 78.8 ±0.6 86.3 ±0.6 70.7 ±1.8 80.7 ±0.6 7.00 GPF-plus 79.1 ±1.0 86.7 ±0.8 72.0 ±2.4 81.4 ±1.2 6.00 AdapterGNN 86.5 ±0.4 92.6 ±0.2 76.1 ±0.6 82.6 ±0.3 4.13 
+
+BBBP-GeoPEFT 88.1 ±0.7 92.8 ±0.4 79.9 ±0.9 84.0 ±1.0 1.00 
+
+and GPF-plus. Moreover, incorporating multi-scale geometric infor-mation generally leads to stronger performance than generic PEFT baselines in these settings. 
+
+5.4.2 Comparison with Full Fine-Tuning and PEFT Baselines under Scaffold Split. Table 2 reports the results under the more challeng-ing scaffold split setting. Compared with random split, all methods show lower performance and larger standard deviations, reflect-ing the difficulty of generalizing to unseen molecular scaffolds. Nevertheless, BBBP-GeoPEFT consistently maintains competitive performance across different pre-training objectives. Under Sim-GRACE pre-training, BBBP-GeoPEFT achieves the best average ranking and improves over most baselines. Under ContextPred pre-training, BBBP-GeoPEFT achieves the strongest overall results, reaching 86.2% ROC-AUC, 91.3% PR-AUC, 78.9% Accuracy, and 84.0% F1-score. In contrast, under the EdgePred backbone, BBBP-GeoPEFT remains competitive but does not consistently outper-form Full FT and AdapterGNN across all metrics, suggesting that EdgePred already encodes informative local structural patterns. Similar to the random split setting, prompt-based methods perform substantially worse than adapter-based approaches. Overall, BBBP-GeoPEFT achieves the best average ranking under SimGRACE and ContextPred. Under EdgePred, it remains competitive with full fine-tuning, although it does not consistently outperform AdapterGNN. 
+
+## 5.5 Model Analysis 
+
+5.5.1 Parameter Efficiency Analysis. Table 3 compares the num-ber of trainable parameters across different PEFT methods. As ex-pected, PEFT approaches substantially reduce the parameter cost compared to full fine-tuning. Prompt-based methods, such as GPF and GPF-plus, achieve the smallest parameter footprint, but ex-hibit noticeable performance degradation in Tables 1 and 2. In contrast, adapter-based methods provide a better balance between efficiency and predictive performance. BBBP-GeoPEFT introduces a moderate increase in trainable parameters (10.1%) due to the aux-iliary geometric graph encoders and node-wise cutoff attention module. Despite this overhead, it consistently achieves superior or competitive performance across multiple pre-trained backbones and splitting strategies. These results suggest that incorporating conformer-derived graph representations can significantly improve representation quality while maintaining the efficiency advantages of parameter-efficient adaptation. 
+
+5.5.2 Effect of Low-Rank Factorization Dimension. We analyze the impact of the low-rank factorization dimension 𝑟 on model perfor-mance, as shown in Figure 2. We evaluate BBBP-GeoPEFT with 
+
+𝑟 ∈ { 4, 8, 16 , 32 } using the SimGRACE-pre-trained backbone. Across all evaluation metrics, including ROC-AUC, PR-AUC, Accuracy, and F1-score, the model demonstrates stable performance with only minor variation across different ranks. Specifically, increasing the rank from 𝑟 = 4 to 𝑟 = 16 leads to consistent but marginal im-provements, with the best performance achieved at 𝑟 = 16 (87.1% ROC-AUC, 91.8% PR-AUC, and 83.7% F1). Further increasing the rank to 𝑟 = 32 does not yield additional gains and slightly degrades BioKDD ’26, August 09–13, 2026, Jeju, Korea Marco et al. 
+
+Table 2: Comparison with full fine-tuning and representative PEFT methods on the BBBP dataset under scaffold-based splitting strategy. Results are reported as mean ± standard deviation over 5 runs, in percentage. Best and second-best results within each pre-training group are highlighted in red and blue, respectively. Lower Avg. Rank is better. Pre-training Method ROC-AUC ↑ PR-AUC ↑ Accuracy ↑ F1 ↑ Avg. Rank ↓
+
+SimGRACE Full FT 82.9 ±4.8 89.0 ±4.5 75.6 ±6.2 82.2 ±5.1 4.75 Adapter 84.4 ±4.9 89.7 ±4.4 77.2 ±4.9 82.8 ±4.7 2.25 LoRA 83.1 ±6.1 89.3 ±5.6 76.0 ±5.4 81.8 ±5.1 4.50 GPF 79.8 ±6.3 86.3 ±6.4 75.0 ±6.6 82.0 ±5.6 6.25 GPF-plus 80.8 ±6.5 86.8 ±6.4 74.2 ±6.8 81.4 ±5.8 6.50 AdapterGNN 84.4 ±4.9 90.0 ±5.1 77.0 ±5.1 82.5 ±5.2 2.63 
+
+BBBP-GeoPEFT 85.0 ±5.2 90.2 ±5.1 78.2 ±4.9 82.8 ±5.0 1.13 
+
+EdgePred Full FT 87.7 ±2.3 92.5 ±2.9 79.7 ±4.1 85.4 ±3.7 1.63 
+
+Adapter 86.3 ±3.1 91.5 ±3.7 78.6 ±3.4 84.1 ±3.9 5.00 LoRA 87.4 ±2.3 92.0 ±3.3 79.2 ±3.4 84.9 ±3.3 3.13 GPF 73.1 ±6.6 82.0 ±7.1 68.1 ±6.0 76.4 ±6.8 7.00 GPF-plus 74.8 ±4.8 82.7 ±5.3 72.1 ±5.1 80.7 ±4.1 6.00 AdapterGNN 87.8 ±2.7 92.6 ±3.2 78.7 ±3.5 84.3 ±3.9 2.50 
+
+BBBP-GeoPEFT 87.7 ±2.3 92.1 ±3.2 79.2 ±4.8 84.5 ±4.2 2.75 ContextPred Full FT 84.6 ±5.6 90.6 ±5.2 77.6 ±5.8 83.4 ±5.0 3.75 Adapter 84.6 ±4.2 90.4 ±4.6 77.3 ±4.9 83.4 ±4.5 4.50 LoRA 85.0 ±3.9 90.9 ±3.9 78.1 ±4.2 83.9 ±4.0 2.50 GPF 71.4 ±9.2 81.3 ±8.3 69.7 ±5.9 80.5 ±4.3 7.00 GPF-plus 72.8 ±6.4 81.9 ±7.3 70.7 ±6.7 80.7 ±4.8 6.00 AdapterGNN 85.3 ±4.9 91.2 ±4.5 77.4 ±5.4 83.2 ±5.3 3.25 
+
+BBBP-GeoPEFT 86.2 ±4.6 91.3 ±4.3 78.9 ±5.3 84.0 ±4.9 1.00 Table 3: Trainable parameter comparison on BBBP. The per-centage is computed relative to full fine-tuning. Method Trainable Params % of Full FT 
+
+Full FT 1,858,201 100.00% Adapter 114,471 6.2% LoRA 90,301 4.9% GPF 601 0.03% GPF-plus 3,306 0.18% AdapterGNN 106,961 5.8% BBBP-GeoPEFT 188,515 10.1% performance on some metrics. This suggests that a moderate rank is sufficient to capture the necessary adaptation capacity, while larger ranks may introduce redundancy or overfitting. 
+
+5.5.3 Statistical Significance Analysis. 
+
+Random split. We evaluate the robustness of BBBP-GeoPEFT using paired two-sided 𝑡 -tests across five runs under the random split setting. As shown in Table 4, BBBP-GeoPEFT consistently achieves positive improvements across most pre-training objec-tives and evaluation metrics. Under SimGRACE pre-training, BBBP-GeoPEFT shows statistically significant gains over several PEFT baselines, particularly on ROC-AUC and Accuracy. For example, compared with LoRA, BBBP-GeoPEFT improves ROC-AUC by ROC-AUC PR-AUC Accuracy F1        
+
+> Evaluation Metric
+> 70
+> 75
+> 80
+> 85
+> 90
+> Performance (%)
+> r= 4 r= 8 r= 16 r= 32
+
+Figure 2: Effect of the low-rank factorization dimension 𝑟 on BBBP prediction using the SimGRACE-pre-trained backbone. Results are reported as mean ± standard deviation over 5 runs. BBBP-GeoPEFT achieves stable performance across different ranks, with the best results observed at 𝑟 = 16 .
+
++2.20 (𝑝 = 0.0010 ) and Accuracy by +2.76 (𝑝 = 0.0287 ). Under Con-textPred pre-training, BBBP-GeoPEFT consistently outperforms AdapterGNN, achieving significant improvements on ROC-AUC (+1.60 , 𝑝 = 0.0132 ), Accuracy ( +3.75 , 𝑝 = 0.0033 ), and F1 ( +1.40 ,
+
+𝑝 = 0.0466 ). Although the gains against strong baselines such as Full FT and AdapterGNN under EdgePred are generally smaller and not Geometry-Informed PEFT for BBBP Prediction BioKDD ’26, August 09–13, 2026, Jeju, Korea 
+
+Table 4: Paired significance analysis of BBBP-GeoPEFT against baselines across 5 runs under random splitting strat-egy. Δ denotes the mean difference between BBBP-GeoPEFT and the baseline. 𝑝 𝑡 denotes the two-sided paired 𝑡 -test 𝑝 -value.                                                                                                                                                             
+
+> Pre-training Baseline ROC-AUC PR-AUC Accuracy F1
+> Δ𝑝 𝑡 Δ𝑝 𝑡 Δ𝑝 𝑡 Δ𝑝 𝑡
+> SimGRACE Full FT +1.78 0.0296 +0.35 0.4498 +2.66 0.0145 +0.89 0.1631 Adapter +1.55 0.0056 +0.12 0.7314 +3.34 0.0011 +1.57 0.0326 LoRA +2.20 0.0010 +0.70 0.0397 +2.76 0.0287 +1.13 0.1969 AdapterGNN +1.54 0.2010 +0.43 0.5986 +2.19 0.0724 +0.82 0.3247 GPF +4.69 0.0007 +4.13 0.0011 +2.30 0.0206 +0.37 0.4840 GPF-plus +3.17 0.0006 +3.00 0.0003 +2.40 0.0194 +0.44 0.5110 EdgePred Full FT -0.04 0.8902 -0.76 0.0033 +1.67 0.0896 -0.15 0.7874 Adapter +1.67 0.0108 +0.20 0.4881 +2.61 0.0016 +0.87 0.0136 LoRA +0.50 0.0250 -0.33 0.2492 +1.31 0.0089 -0.23 0.4585 AdapterGNN -0.11 0.5162 -0.75 0.0209 +1.04 0.2177 -0.69 0.0970 GPF +15.30 < 0.0001 +10.71 < 0.0001 +12.19 0.0005 +6.10 0.0009 GPF-plus +14.97 0.0012 +11.73 0.0008 +9.74 0.0037 +3.07 0.0254 ContextPred Full FT +1.35 0.0682 +0.17 0.5973 +2.30 0.0313 +0.88 0.2665 Adapter +1.95 0.0214 +0.52 0.1038 +3.03 0.0076 +0.96 0.1416 LoRA +1.49 0.0384 +0.38 0.2883 +3.18 0.0063 +0.93 0.0999 AdapterGNN +1.60 0.0132 +0.20 0.4246 +3.75 0.0033 +1.40 0.0466 GPF +9.26 < 0.0001 +6.46 < 0.0001 +9.17 0.0007 +3.27 0.0037 GPF-plus +8.97 < 0.0001 +6.13 < 0.0001 +7.87 0.0035 +2.65 0.0313
+
+Table 5: Paired significance analysis of BBBP-GeoPEFT against baselines across 5 runs under scaffold splitting strat-egy. Δ denotes the mean difference between BBBP-GeoPEFT and the baseline. 𝑝 𝑡 denotes the two-sided paired 𝑡 -test 𝑝 -value.                                                                                                                                                             
+
+> Pre-training Baseline ROC-AUC PR-AUC Accuracy F1
+> Δ𝑝 𝑡 Δ𝑝 𝑡 Δ𝑝 𝑡 Δ𝑝 𝑡
+> SimGRACE Full FT +2.05 0.2226 +1.14 0.4010 +2.61 0.1558 +0.61 0.5899 Adapter +0.61 0.1744 +0.48 0.3776 +1.04 0.1477 +0.01 0.9752 LoRA +1.86 0.0315 +0.86 0.2755 +2.25 0.0054 +1.06 0.2480 AdapterGNN +0.57 0.2044 +0.19 0.3274 +1.20 0.0866 +0.31 0.6638 GPF +5.15 0.0017 +3.87 0.0051 +3.24 0.0859 +0.79 0.5598 GPF-plus +4.21 0.0104 +3.34 0.0623 +4.02 0.0343 +1.47 0.2369 EdgePred Full FT +0.01 0.9926 -0.40 0.6743 -0.52 0.7815 -0.90 0.5572 Adapter +1.35 0.0555 +0.59 0.3693 +0.63 0.5796 +0.48 0.6901 LoRA +0.28 0.4398 +0.04 0.9607 +0.05 0.9650 -0.39 0.7450 AdapterGNN -0.08 0.9061 -0.59 0.4518 +0.53 0.6418 +0.21 0.8494 GPF +14.64 0.0027 +10.02 0.0050 +11.12 0.0047 +8.14 0.0164 GPF-plus +12.92 0.0005 +9.34 0.0008 +7.16 0.0055 +3.83 0.0452 ContextPred Full FT +1.60 0.0527 +0.68 0.2089 +1.30 0.0778 +0.56 0.3784 Adapter +1.58 0.0953 +0.93 0.1532 +1.56 0.0582 +0.58 0.3991 LoRA +1.15 0.1443 +0.39 0.5014 +0.83 0.2232 +0.13 0.7882 AdapterGNN +0.92 0.0043 +0.12 0.3596 +1.46 0.0055 +0.81 0.0436 GPF +14.76 0.0317 +10.04 0.0393 +9.19 0.0035 +3.51 0.0377 GPF-plus +13.44 0.0144 +9.36 0.0268 +8.25 0.0122 +3.24 0.0482
+
+always statistically significant, BBBP-GeoPEFT remains competi-tive while substantially outperforming prompt-based methods such as GPF and GPF-plus across all metrics and pre-training objectives. Overall, these comparisons provide evidence that attention-based geometric adaptation can improve parameter-efficient fine-tuning, although the gains depend on the pre-training objective and metric. 
+
+Scaffold split. We further evaluate the robustness of BBBP-GeoPEFT using paired two-sided 𝑡 -tests across five runs under the scaffold splitting strategy. As shown in Table 5, BBBP-GeoPEFT consistently achieves positive improvements across most pre-training objec-tives and evaluation metrics. Under SimGRACE pre-training, BBBP-GeoPEFT shows statistically significant gains over LoRA on ROC-AUC ( +1.86 , 𝑝 = 0.0315 ) and Accuracy ( +2.25 , 𝑝 = 0.0054 ), while also substantially outperforming prompt-based methods such as GPF and GPF-plus. Under ContextPred pre-training, BBBP-GeoPEFT consistently outperforms AdapterGNN, with significant improve-ments on ROC-AUC ( +0.92 , 𝑝 = 0.0043 ), Accuracy ( +1.46 , 𝑝 =
+
+0.0055 ), and F1 ( +0.81 , 𝑝 = 0.0436 ). In contrast, the improvements over strong baselines such as Full FT and AdapterGNN under EdgePred are generally smaller and not always statistically sig-nificant, indicating that the effectiveness of geometry-informed adaptation depends on the pre-training objective. Nevertheless, BBBP-GeoPEFT remains competitive with strong PEFT and full fine-tuning baselines while consistently achieving large gains over prompt-based methods across all settings. 
+
+## 6 Conclusion 
+
+In this work, we propose BBBP-GeoPEFT , a geometry-informed parameter-efficient fine-tuning framework for blood–brain bar-rier permeability prediction. BBBP-GeoPEFT augments pre-trained molecular GNNs with multi-scale conformer geometry represented by distance-based graphs and their corresponding line graphs. The two graph families model spatial atom connectivity and second-order edge interactions, respectively. Shared auxiliary geometric graph encoders produce cutoff-specific representations, and node-wise cutoff attention aggregates them into a geometric adaptation residual at each backbone layer. This formulation incorporates conformer-derived information while updating only a limited sub-set of model parameters. Across both split settings, BBBP-GeoPEFT achieves the best average ranking under SimGRACE and Con-textPred while updating only 10.1% of the model parameters. Under EdgePred, it remains competitive with full fine-tuning, although it does not consistently outperform AdapterGNN. In addition, the rank-sensitivity analysis shows that performance remains stable across the evaluated low-rank factorization dimensions. Overall, this work provides a practical approach for incorporating these geometric signals into pre-trained molecular models. Despite these promising results, several limitations remain. The proposed framework relies on RDKit-generated conformers, which may not fully capture true molecular geometry, particularly for flex-ible molecules. In addition, while parameter-efficient, the method introduces additional computational cost due to multi-scale graph construction and auxiliary graph encoding. Future work will focus on improving geometric representations and extending the model-ing capacity. In particular, incorporating more accurate conformer generation and exploring richer structural features, such as angular or higher-order interactions, may further enhance performance. We also plan to investigate more advanced parameter-efficient adapta-tion strategies to improve efficiency and generalization. 
+
+## 7 Acknowledgments 
+
+This study was supported in part by the Endeavour Fund – Smart Ideas initiative from the New Zealand Ministry of Business, In-novation and Employment (MBIE) under contract RTVU2301, the Royal Society of New Zealand through the Catalyst: Seeding Grant BioKDD ’26, August 09–13, 2026, Jeju, Korea Marco et al. 
+
+(CSG-VUW2503), and the Explorer Grant 25/910/A from the Health Research Council of New Zealand. 
+
+## References 
+
+[1] Guy W Bemis and Mark A Murcko. 1996. The Properties of Known Drugs. 1. Molecular Frameworks. Journal of Medicinal Chemistry , 39, 15, 2887–2893. [2] MW Bradbury. 1993. The blood-brain barrier. Experimental Physiology , 78, 4, (July 1993), 453–472. [3] Leo Breiman. 2001. Random Forests. Machine Learning , 45, 1, (Oct. 2001), 5–32. [4] Dong Chen, Kaifu Gao, Duc Duy Nguyen, Xin Chen, Yi Jiang, Guo-Wei Wei, and Feng Pan. 2021. Algebraic graph-assisted bidirectional transformers for molecular property prediction. Nature Communications , 12, 1, 3521. [5] Tianqi Chen and Carlos Guestrin. 2016. XGBoost: A Scalable Tree Boosting System. In Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining (KDD ’16). ACM, (Aug. 2016), 785–794. [6] Corinna Cortes and Vladimir Vapnik. 1995. Support-vector networks. Machine Learning , 20, 3, (Sept. 1995), 273–297. [7] T. Cover and P. Hart. 1967. Nearest neighbor pattern classification. IEEE Trans-actions on Information Theory , 13, 1, (Jan. 1967), 21–27. [8] Yaguo Dong, Meiling Xu, and Lixin Tang. 2025. Exploring Multi-Modal Repre-sentations Based on an Improved Multi-Objective Optimization Algorithm for Molecular Property Prediction. In Proceedings of the Genetic and Evolutionary Computation Conference Companion , 711–714. [9] Taoran Fang, Yunchao Zhang, Yang Yang, Chunping Wang, and Lei Chen. 2023. Universal Prompt Tuning for Graph Neural Networks. Advances in Neural Information Processing Systems , 36, 52464–52489. [10] Florian Frantzen and Michael T. Schaub. 2025. HLSAD: Hodge Laplacian-based Simplicial Anomaly Detection. In Proceedings of the 31st ACM SIGKDD Con-ference on Knowledge Discovery and Data Mining V.2 (KDD ’25). ACM, (Aug. 2025), 626–636. [11] Xingbo Fu, Yinhan He, and Jundong Li. 2025. Edge Prompt Tuning for Graph Neural Networks. In The Thirteenth International Conference on Learning Rep-resentations .[12] Xingbo Fu, Zhenyu Lei, Zihan Chen, Binchi Zhang, Chuxu Zhang, and Jun-dong Li. 2025. GraphTOP: Graph Topology-Oriented Prompting for Graph Neural Networks. In The Thirty-ninth Annual Conference on Neural Information Processing Systems .[13] Arup K. Ghose, Gregory R. Ott, and Robert L. Hudkins. 2016. Technically Ex-tended MultiParameter Optimization (TEMPO): An Advanced Robust Scoring Scheme To Calculate Central Nervous System Druggability and Monitor Lead Optimization. ACS Chemical Neuroscience , 8, (Oct. 2016), 147–154. [14] Anchun Gui, Jinqiang Ye, and Han Xiao. 2024. G-Adapter: Towards Structure-Aware Parameter-Efficient Transfer Learning for Graph Transformer Networks. 
+
+Proceedings of the AAAI Conference on Artificial Intelligence , 38, 11, (Mar. 2024), 12226–12234. [15] Mayuri Gupta, Hyeok Jun Lee, Christopher J. Barden, and Donald F. Weaver. 2019. The Blood–Brain Barrier (BBB) Score. Journal of Medicinal Chemistry , 62, 21, (Oct. 2019), 9824–9836. [16] Neil Houlsby, Andrei Giurgiu, Stanislaw Jastrzebski, Bruna Morrone, Quentin De Laroussilhe, Andrea Gesmundo, Mona Attariyan, and Sylvain Gelly. 2019. Parameter-efficient transfer learning for NLP. In International Conference on Machine Learning . PMLR, 2790–2799. [17] Edward J Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-Zhu, Yuanzhi Li, Shean Wang, Lu Wang, and Weizhu Chen. 2022. LoRA: Low-Rank Adaptation of Large Language Models. In International Conference on Learning Representations .[18] Weihua Hu, Bowen Liu, Joseph Gomes, Marinka Zitnik, Percy Liang, Vijay Pande, and Jure Leskovec. 2020. Strategies for Pre-training Graph Neural Net-works. In International Conference on Learning Representations .[19] Jinghan Huang, Qiufeng Chen, Pengli Zhu, Yijun Bian, Nanguang Chen, Moo K Chung, and Anqi Qiu. 2025. HL-HGAT: Heterogeneous Graph Attention Network via Hodge-Laplacian Operator. IEEE Transactions on Pattern Analysis and Machine Intelligence .[20] Yongqi Huang, Jitao Zhao, Dongxiao He, Xiaobao Wang, Yawen Li, Yuxiao Huang, Di Jin, and Zhiyong Feng. 2025. One Prompt Fits All: Universal Graph Adaptation for Pretrained Models. In The Thirty-ninth Annual Conference on Neural Information Processing Systems .[21] Greg Landrum, Paolo Tosco, Brian Kelley, Ricardo Rodriguez, David Cosgrove, et al. 2024. RDKit: A software suite for cheminformatics, computational chem-istry, and predictive modeling. (2024). [22] Shengrui Li, Xueting Han, and Jing Bai. 2024. AdapterGNN: Parameter-Efficient Fine-Tuning Improves Generalization in GNNs. Proceedings of the AAAI Con-ference on Artificial Intelligence , 38, 12, (Mar. 2024), 13600–13608. [23] Zetian Mao, Chuan-Shen Hu, Jiawen Li, Chen Liang, Diptesh Das, Masato Sumita, Kelin Xia, and Koji Tsuda. 2025. Molecule Graph Networks with Many-Body Equivariant Interactions. Journal of Chemical Theory and Computation ,21, 16, (Aug. 2025), 7954–7966. [24] Fanwang Meng, Yang Xi, Jinfeng Huang, and Paul W. Ayers. 2021. A curated diverse molecular database of blood-brain barrier permeability with chemical descriptors. Scientific Data , 8, 1, (Oct. 2021). [25] Long D Nguyen, Quang H Nguyen, Quang H Trinh, and Binh P Nguyen. 2024. From SMILES to Enhanced Molecular Property Prediction: A Unified Multi-modal Framework with Predicted 3D Conformers and Contrastive Learning Techniques. Journal of Chemical Information and Modeling , 64, 24, 9173–9195. [26] Thanh-Hoang Nguyen-Vo, Trang T. T. Do, and Binh P. Nguyen. 2024. An Effec-tive Ensemble Deep Learning Framework for Blood-brain Barrier Permeability Prediction. In 2024 IEEE Conference on Artificial Intelligence (CAI) . IEEE, (June 2024), 164–169. [27] Alan M. Palmer and Mohammad S. Alavijeh. 2013. Overview of Experimental Models of the Blood-Brain Barrier in CNS Drug Discovery. Current Protocols in Pharmacology , 62, 1, (Oct. 2013). [28] Pantelis Papageorgiou, Haitz Sáez de Ocáriz Borde, Anastasis Kratsios, and Michael M. Bronstein. 2025. Graph Low-Rank Adapters of High Regularity for Graph Neural Networks and Graph Transformers. In First Workshop on Scalable Optimization for Efficient and Adaptive Foundation Models .[29] W. M. Pardridge. 2003. Blood-brain barrier drug targeting: the future of brain drug development. Molecular Interventions , 3, 2, (Mar. 2003), 90–105. [30] James A. Platts, Michael H. Abraham, Yuan H. Zhao, Anne Hersey, Luke Ijaz, and Darko Butina. 2001. Correlation and prediction of a large blood–brain distribution data set—an LFER study. European Journal of Medicinal Chemistry ,36, 9, (Sept. 2001), 719–730. [31] Marta Segarra, Maria R. Aburto, and Amparo Acker-Palmer. 2021. Blood–Brain Barrier Dynamics to Maintain Brain Homeostasis. Trends in Neurosciences , 44, 5, (May 2021), 393–405. [32] Cong Shen, Xiang Liu, Jiawei Luo, and Kelin Xia. 2025. Torsion Graph Neural Networks. IEEE Transactions on Pattern Analysis and Machine Intelligence , 47, 4, (Apr. 2025), 2946–2956. [33] Cong Shen, Jiawei Luo, and Kelin Xia. 2023. Molecular geometric deep learning. 
+
+Cell Reports Methods , 3, 11. [34] Cong Shen, Yipeng Zhang, Tze Kwang Gerald Er, Fei Han, Atsushi Goto, and Kelin Xia. 2026. Molecular topological deep learning for polymer property prediction. ACS Nano , 20, 1, 288–299. doi:10.1021/acsnano.5c11744. [35] Mingchen Sun, Kaixiong Zhou, Xin He, Ying Wang, and Xin Wang. 2022. GPPT: Graph pre-training and prompt tuning to generalize graph neural networks. In 
+
+Proceedings of the 28th ACM SIGKDD Conference on Knowledge Discovery and Data Mining , 1717–1727. [36] Xiangguo Sun, Hong Cheng, Jia Li, Bo Liu, and Jihong Guan. 2023. All in one: Multi-task prompting for graph neural networks. In Proceedings of the 29th ACM SIGKDD Conference on Knowledge Discovery and Data Mining , 2120–2131. [37] Santiago Vilar, Mayukh Chakrabarti, and Stefano Costanzi. 2010. Prediction of passive blood–brain partitioning: Straightforward and effective classification models based on in silico derived physicochemical descriptors. Journal of Molecular Graphics and Modelling , 28, 8, (June 2010), 899–903. [38] Tuan Vinh, Phuc H. Le, Binh P. Nguyen, and Thanh-Hoang Nguyen-Vo. 2025. Masked graph transformer for blood-brain barrier permeability prediction. 
+
+Journal of Molecular Biology , 437, 6, (Mar. 2025), 168983. [39] Travis T. Wager, Xinjun Hou, Patrick R. Verhoest, and Anabella Villalobos. 2010. Moving beyond Rules: The Development of a Central Nervous System Multiparameter Optimization (CNS MPO) Approach To Enable Alignment of Druglike Properties. ACS Chemical Neuroscience , 1, 6, (Mar. 2010), 435–449. [40] Jun Xia, Lirong Wu, Jintao Chen, Bozhen Hu, and Stan Z Li. 2022. SimGRACE: A simple framework for graph contrastive learning without data augmentation. In Proceedings of the ACM Web Conference 2022 , 1070–1079. [41] Keyulu Xu, Weihua Hu, Jure Leskovec, and Stefanie Jegelka. 2019. How Pow-erful are Graph Neural Networks? In International Conference on Learning Representations .[42] Kevin Yang, Kyle Swanson, Wengong Jin, et al. 2019. Analyzing Learned Molec-ular Representations for Property Prediction. Journal of Chemical Information and Modeling , 59, 8, 3370–3388. [43] Yuning You, Tianlong Chen, Yongduo Sui, Ting Chen, Zhangyang Wang, and Yang Shen. 2020. Graph contrastive learning with augmentations. Advances in Neural Information Processing Systems , 33, 5812–5823. [44] Fan Zhou and Chengtai Cao. 2021. Overcoming catastrophic forgetting in graph neural networks with experience replay. In Proceedings of the AAAI Conference on Artificial Intelligence . Vol. 35, 4714–4722. [45] Yuanchang Zhou, Siyu Hu, Xiangyu Zhang, Hongyu Wang, Guangming Tan, and Weile Jia. 2026. MatRIS: Toward Reliable and Efficient Pretrained Machine Learning Interatomic Potentials. In The Fourteenth International Conference on Learning Representations .[46] Weimin Zhu, Yi Zhang, Duancheng Zhao, Jianrong Xu, and Ling Wang. 2022. HiGNN: A Hierarchical Informative Graph Neural Network for Molecular Property Prediction Equipped with Feature-Wise Attention. Journal of Chemical Information and Modeling , 63, 1, 43–55.

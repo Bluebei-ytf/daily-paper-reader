@@ -41,17 +41,17 @@
 <section class="dpr-home-dashboard-card dpr-home-report-card">
   <div class="dpr-home-dashboard-header">
     <div>
-      <span class="dpr-home-dashboard-kicker">2026-08-05</span>
+      <span class="dpr-home-dashboard-kicker">2026-08-07</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">共 9 篇</strong>
+    <strong class="dpr-home-dashboard-count">共 10 篇</strong>
   </div>
   <dl class="dpr-home-dashboard-stats">
     <div class="dpr-home-dashboard-stat"><dt>累计更新</dt><dd>1 次</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>4</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>5</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>6</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>4</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-08-05 22:49:48 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-08-07 04:51:52 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -62,7 +62,9 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>今日精读聚焦分子动力学与电子密度预训练两大高分工作，均获9.0分。最值得关注：真实分子动力学工作流评测平台MDArena，以及物理引导的电子密度扩散预训练模型ED-DiT。下一步建议：优先精读这两篇论文，并留意溶剂筛选与光谱检索等速读方向作为应用延伸。</p>
+<p>今日精读聚焦分子GNN参数高效微调与LLM符号回归，速读覆盖主动学习、谱图指纹等，共10篇。</p>
+<p>最值得看的是9.0分的《Geometry-Informed Parameter-Efficient Fine-Tuning...》与《DASyR-LLM...》，分别在血脑屏障预测和动力学模型发现上表现突出。</p>
+<p>建议普通读者优先关注几何信息与LLM结合提升科学模型效率的趋势，后续可跟进这两方向的应用案例。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -71,12 +73,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">精读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">4 篇</strong>
+    <strong class="dpr-home-dashboard-count">6 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="MDArena: Evaluating Coding Agents on Realistic Molecular Dynamics Workflows">MDArena: Evaluating Coding Agents on Realistic Molecular Dynamics Workflows</span></li><li><span class="dpr-home-dashboard-paper-title" title="ED-DiT: Physics-Guided Diffusion Pretraining for Transferable Molecular Representations from Electron Density">ED-DiT: Physics-Guided Diffusion Pretraining for Transferable Molecular Representations from Electron Density</span></li><li><span class="dpr-home-dashboard-paper-title" title="Adaptive Inference and Convergence of Free Energy Landscapes Using Non-parametric Bayesian Enhanced Sampling">Adaptive Inference and Convergence of Free Energy Landscapes Using Non-parametric Bayesian Enhanced Sampling</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Geometry-Informed Parameter-Efficient Fine-Tuning of Pre-trained Molecular GNNs for Blood-Brain Barrier Permeability Prediction">Geometry-Informed Parameter-Efficient Fine-Tuning of Pre-trained Molecular GNNs for Blood-Brain Barrier Permeability Prediction</span></li><li><span class="dpr-home-dashboard-paper-title" title="DASyR-LLM: Domain-Aware Symbolic Regression with LLMs for Kinetic Model Discovery">DASyR-LLM: Domain-Aware Symbolic Regression with LLMs for Kinetic Model Discovery</span></li><li><span class="dpr-home-dashboard-paper-title" title="RxnCLF: Contrastive Transformation-Aware Reaction Foundation Model for Improved Reactivity Prediction">RxnCLF: Contrastive Transformation-Aware Reaction Foundation Model for Improved Reactivity Prediction</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>4</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>6</strong></span></div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-skim-card">
   <div class="dpr-home-dashboard-header">
@@ -84,12 +86,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">速读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">5 篇</strong>
+    <strong class="dpr-home-dashboard-count">4 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Learning Molecular Representations from Cellular Phenotypes with Structure Preservation">Learning Molecular Representations from Cellular Phenotypes with Structure Preservation</span></li><li><span class="dpr-home-dashboard-paper-title" title="Machine Learning-Guided Screening of Advantageous Solvents for Solid Polymer Electrolytes in Lithium Metal Batteries">Machine Learning-Guided Screening of Advantageous Solvents for Solid Polymer Electrolytes in Lithium Metal Batteries</span></li><li><span class="dpr-home-dashboard-paper-title" title="End-to-end differentiable retrieval of molecular spectra using hydrodynamics, chemistry, and radiative transfer">End-to-end differentiable retrieval of molecular spectra using hydrodynamics, chemistry, and radiative transfer</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Active Learning Guided Design Space Refinement for Scalable Multi-Objective Bayesian Optimization in Materials Discovery">Active Learning Guided Design Space Refinement for Scalable Multi-Objective Bayesian Optimization in Materials Discovery</span></li><li><span class="dpr-home-dashboard-paper-title" title="Physics-Based Molecular Fingerprints from Spectral Graph Theory Provide Efficient Geometry-Aware Measures of Chemical Similarity">Physics-Based Molecular Fingerprints from Spectral Graph Theory Provide Efficient Geometry-Aware Measures of Chemical Similarity</span></li><li><span class="dpr-home-dashboard-paper-title" title="A-SR: Self-Evolving Agentic LLMs for Symbolic Regression via Hierarchical Coordination">A-SR: Self-Evolving Agentic LLMs for Symbolic Regression via Hierarchical Coordination</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>5</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>4</strong></span></div>
 </section>
 </div>
 
