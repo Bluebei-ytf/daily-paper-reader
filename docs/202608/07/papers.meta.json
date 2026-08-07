@@ -1,8 +1,8 @@
 {
   "label": "2026-08-07",
   "date": "2026-08-07",
-  "generated_at": "2026-08-07T04:51:56",
-  "count": 10,
+  "generated_at": "2026-08-07T21:36:04",
+  "count": 11,
   "papers": [
     {
       "paper_id": "202608/07/2608.04257v1-geometry-informed-parameter-efficient-fine-tuning-of-pre-trained-molecular-gnns-for-blood-brain-barrier-permeability-prediction",
@@ -80,6 +80,21 @@
       "selection_source": "fresh_fetch"
     },
     {
+      "paper_id": "202608/07/2608.04942v1-chemlflow-an-open-source-platform-for-cheminformatics-and-materials-informatics-applications",
+      "section": "deep",
+      "title_en": "CheMLFlow: An Open-Source Platform for Cheminformatics and Materials Informatics Applications",
+      "authors": "Brendan Smith, Susana Lopez-Moreno, Eric Dolores-Cuenca, Sangil Kim, Jose L. Mendoza-Cortes, Nijamudheen Abdulrahiman",
+      "date": "2026-08-05",
+      "pdf": "https://arxiv.org/pdf/2608.04942v1",
+      "score": "6.0",
+      "evidence": "开源平台，支持端到端高通量与智能体式化学信息学和材料信息学工作流",
+      "tldr": "科学机器学习开发常需将数据获取、清洗、表征、训练、筛选等环节整合为可复现流程，但研究者往往只关注其中一环。CheMLFlow作为开源平台，提供模块化组件、现成参考流程、标准化产物和评估输出，支持可扩展、可复现的批处理与报告生成。其配置驱动流程和结构化输出为智能体辅助实验提供接口。平台在量子力学、理化性质与生物活性预测上达到文献水平，并支持时间序列等非分子数据应用。",
+      "tags": "query:aichem-map",
+      "abstract_en": "CheMLFlow is an open-source platform for building and executing end-to-end, high-throughput, and agentic workflows for scientific and technological applications. CheMLFlow targets a common bottleneck in scientific machine learning development, where researchers often need to assemble data acquisition, curation, representation, model training, validation, screening, interpretation, and reporting into a reproducible pipeline, even when their primary research contribution concerns only one stage. CheMLFlow provides modular workflow components, ready-to-run reference pipelines, standardized artifacts, and evaluation outputs that reduce orchestration overhead and support benchmarking across methods and datasets. The platform is designed to be extensible, reproducible, and automation friendly, with pluggable representations and models, deterministic splits, explicit run artifacts, batch execution, and report generation. As scientific software increasingly moves toward agent assisted experimentation, CheMLFlow's configuration driven workflows and structured outputs also provide a practical interface for coding agents to help users construct experiments, inspect results, and summarize findings under human supervision. This article describes the system architecture, core workflows, and benchmarks that reach literature performance for quantum mechanical, physicochemical and bioactivity property prediction, and use cases involving time series datasets demonstrating applications beyond molecular chemistry datasets.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
       "paper_id": "202608/07/2608.05314v1-machine-learning-for-sample-based-quantum-diagonalization-generative-configuration-recovery-and-the-classical-simulability-frontier",
       "section": "deep",
       "title_en": "Machine learning for sample-based quantum diagonalization: generative configuration recovery and the classical-simulability frontier",
@@ -91,21 +106,6 @@
       "tldr": "样本化量子对角化（SQD/QSCI）的精度完全取决于进入子空间的行列式配置选择，存在优惠券收集瓶颈，促使引入生成式与学习型选择器。本文梳理现有方法，指出缺少奖励比例生成流网络用于尾部发现。通过同活性空间对比，发现强经典选择的CI匹配或胜过量子采样子空间，且旗舰单层电路可经典模拟。FCI精确实验证实先验秩相关随多参考特征下降，但噪声扫描显示生成式方法的健壮性增益是普适的。",
       "tags": "query:aichem-map",
       "abstract_en": "Sample-based quantum diagonalization (SQD), equivalently quantum-selected configuration interaction (QSCI), has in two years become a pragmatic centre of gravity of pre-fault-tolerant quantum chemistry: a quantum processor samples electronic configurations, and the many-electron Hamiltonian is diagonalized classically in the resulting determinant subspace. Its accuracy is set entirely by which configurations enter that subspace, a selection problem for machine learning made acute by a coupon-collector bottleneck. We critically review the ecosystem of generative and learned selectors, organizing it by the object each method generates and the importance signal it exploits, and expose one conspicuous gap: a reward-proportional generative-flow-network proposer built for tail discovery. We then confront the field's central question -- whether the quantum sampler beats classical selected configuration interaction -- and report a carefully scoped negative: across published same-active-space comparisons, strong classical selected CI matches or beats the quantum-sampled subspace, and the flagship single-layer circuits now admit polynomial-time classical energy estimation. We distil a benchmarking standard and turn the negative into a regime map, then test it with FCI-exact experiments that confirm one prediction and refute another: the cheap prior's rank correlation with the exact weights declines with multireference character (a usable coordinate), but a controlled single-molecule noise sweep shows the one generative advantage we find, robustness to valid-shot starvation, to be generic rather than the multireference-specific effect a confounded contrast first suggested. Finally, we flag learning from quantum experiments, whose classical sample-complexity lower bound is an unconditional theorem, as the one adjacent frontier where a quantum advantage is provable but not yet bridged to chemistry.",
-      "source": "arxiv",
-      "selection_source": "fresh_fetch"
-    },
-    {
-      "paper_id": "202608/07/2608.04651v1-active-learning-guided-design-space-refinement-for-scalable-multi-objective-bayesian-optimization-in-materials-discovery",
-      "section": "quick",
-      "title_en": "Active Learning Guided Design Space Refinement for Scalable Multi-Objective Bayesian Optimization in Materials Discovery",
-      "authors": "Alexandros Ntagiantas, Panagiotis Tsilimidos, George Giannakopoulos, Christoforos Rekatsinas, Panagiotis Krokidas",
-      "date": "2026-08-05",
-      "pdf": "https://arxiv.org/pdf/2608.04651v1",
-      "score": "7.0",
-      "evidence": "主动学习引导的设计空间细化结合多目标贝叶斯优化，用于材料/分子发现与优化",
-      "tldr": "大规模离散设计空间下传统贝叶斯优化易评估低价值区域，效率低下。提出主动学习引导的自适应空间精炼框架，结合多目标贝叶斯优化，在保留Pareto相关区域前提下缩小候选空间。在COF气体分离和压力容器设计中，候选空间减半而超体积保留99%以上。该方法提升早期收敛与Pareto前沿发现效率，支持大规模材料自主优化。",
-      "tags": "query:aichem-map",
-      "abstract_en": "Advanced materials discovery increasingly relies on machine learning and Bayesian optimization to explore large discrete design spaces under limited evaluation budgets. However, conventional Bayesian optimization (BO) can become inefficient as candidate spaces grow, often evaluating low-value regions before reaching informative areas. We propose an active-learning (AL)-guided adaptive search-space refinement framework combined with multi-objective BO to accelerate materials optimization while preserving Pareto-relevant regions. We evaluate the approach on CH4/N2 separation in covalent-organic frameworks and pressure-vessel design with material-direction stress components and thickness objectives. Results show that the AL-guided refinement reduces the candidate space by approximately half while preserving more than 99 percent of the original hypervolume. The reduced-space strategy improves early convergence and cumulative Pareto-front discovery from the BO, demonstrating efficient large-scale materials optimization across constrained autonomous materials discovery settings.",
       "source": "arxiv",
       "selection_source": "fresh_fetch"
     },
@@ -125,6 +125,36 @@
       "selection_source": "fresh_fetch"
     },
     {
+      "paper_id": "202608/07/2608.02866v1-expanding-protein-structure-prediction-into-conformational-state-space",
+      "section": "quick",
+      "title_en": "Expanding Protein Structure Prediction into Conformational State Space",
+      "authors": "Devlina Chakravarty, Justin J. Miller, Da Teng, Yousuf O. Ramahi, Patrick Bryant, Camila Neira-Mahuzier, César A. Ramírez-Sarmiento, Sarah Rauscher, Gregory R. Bowman, Pratyush Tiwary, Lauren L. Porter",
+      "date": "2026-08-03",
+      "pdf": "https://arxiv.org/pdf/2608.02866v1",
+      "score": "7.0",
+      "evidence": "将结构预测扩展到构象状态空间，结合深度学习和物理模拟",
+      "tldr": "传统蛋白质结构预测以单构象为目标，但许多蛋白通过多构象状态间的动态平衡发挥功能，单一结构无法描述其机制。本文提出将预测问题重构为状态空间推断，即预测可达构象状态、能量与动力学关系及其对环境的响应。综述了深度学习构象生成器、物理模拟和实验约束三类新兴策略，并指出它们需融合才能形成完整的状态空间预测。该视角有望推动结构生物学从静态快照转向动态系统建模。",
+      "tags": "query:aichem-map",
+      "abstract_en": "Recent AI advances have enabled protein structure prediction at near-experimental accuracy, largely solving the problem of identifying a dominant conformation from sequence. Many proteins, however, function as dynamic systems populating multiple conformational states with activity emerging from shifts in relative occupancy--an incomplete picture when reduced to one structure. Here, we argue that structure prediction should be reformulated as a state-space inference problem: recovering not one conformation's coordinates but accessible states, their energetic and kinetic relationships, context dependence, and responses to perturbations. We review emerging strategies--deep learning ensemble generators, physics-based simulations, and experimental constraints--and outline a roadmap toward state-space prediction.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202608/07/2608.04651v1-active-learning-guided-design-space-refinement-for-scalable-multi-objective-bayesian-optimization-in-materials-discovery",
+      "section": "quick",
+      "title_en": "Active Learning Guided Design Space Refinement for Scalable Multi-Objective Bayesian Optimization in Materials Discovery",
+      "authors": "Alexandros Ntagiantas, Panagiotis Tsilimidos, George Giannakopoulos, Christoforos Rekatsinas, Panagiotis Krokidas",
+      "date": "2026-08-05",
+      "pdf": "https://arxiv.org/pdf/2608.04651v1",
+      "score": "7.0",
+      "evidence": "主动学习引导的设计空间细化结合多目标贝叶斯优化，用于材料/分子发现与优化",
+      "tldr": "大规模离散设计空间下传统贝叶斯优化易评估低价值区域，效率低下。提出主动学习引导的自适应空间精炼框架，结合多目标贝叶斯优化，在保留Pareto相关区域前提下缩小候选空间。在COF气体分离和压力容器设计中，候选空间减半而超体积保留99%以上。该方法提升早期收敛与Pareto前沿发现效率，支持大规模材料自主优化。",
+      "tags": "query:aichem-map",
+      "abstract_en": "Advanced materials discovery increasingly relies on machine learning and Bayesian optimization to explore large discrete design spaces under limited evaluation budgets. However, conventional Bayesian optimization (BO) can become inefficient as candidate spaces grow, often evaluating low-value regions before reaching informative areas. We propose an active-learning (AL)-guided adaptive search-space refinement framework combined with multi-objective BO to accelerate materials optimization while preserving Pareto-relevant regions. We evaluate the approach on CH4/N2 separation in covalent-organic frameworks and pressure-vessel design with material-direction stress components and thickness objectives. Results show that the AL-guided refinement reduces the candidate space by approximately half while preserving more than 99 percent of the original hypervolume. The reduced-space strategy improves early convergence and cumulative Pareto-front discovery from the BO, demonstrating efficient large-scale materials optimization across constrained autonomous materials discovery settings.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
       "paper_id": "202608/07/2608.04872v1-a-sr-self-evolving-agentic-llms-for-symbolic-regression-via-hierarchical-coordination",
       "section": "quick",
       "title_en": "A-SR: Self-Evolving Agentic LLMs for Symbolic Regression via Hierarchical Coordination",
@@ -136,21 +166,6 @@
       "tldr": "现有LLM引导的符号回归方法常把异构搜索失败压缩为标量分数和单一提示，存在局限。A-SR提出自进化智能体框架，将控制单元从表达式编辑转向角色条件证据视图，通过协调协议路由、在线角色策略和状态路由记忆协同搜索，并利用评估反馈区分可靠性与生产力，路由精英模因、失败轨迹和诊断信息。运行内自适应与跨运行蒸馏实现双时间尺度进化，在LSR-Synth上将Acc@0.01从25.79%提升至48.30%，并在真实任务中取得7/8最优。",
       "tags": "query:aichem-map",
       "abstract_en": "Symbolic regression aims to discover closed-form equations from data, but existing LLM-guided methods often rely on a unified proposal loop that compresses heterogeneous search failures into a scalar score and a single prompt. We propose A-SR, a self-evolving agentic framework that shifts the control unit from expression edits to role-conditioned evidence views. A-SR coordinates formula discovery through routing among coordination protocols, an online evaluator-reward role policy, and state-routed process memory. During search, evaluator feedback characterizes reliability and productivity, updates role-level utilities, and routes elite motifs, failure traces, and validity diagnostics to different agents. The framework self-evolves at two timescales: within a run, it adapts the search process without updating LLM parameters; across runs, recorded trajectories can be distilled into open-source LLMs as role-conditioned proposal priors. Averaged over the four LSR-Synth scientific domains in LLM-SRBench, A-SR improves Acc@0.01 over baselines from 25.79% to 48.30% with Llama3.1-8B, while A-SR-LoRA improves the corresponding Qwen3-4B result from 24.58% to 38.29%. On four real-world scientific discovery tasks, A-SR obtains the best in-distribution or out-of-distribution normalized mean squared error on 7 of 8 reported metrics.",
-      "source": "arxiv",
-      "selection_source": "fresh_fetch"
-    },
-    {
-      "paper_id": "202608/07/2608.04942v1-chemlflow-an-open-source-platform-for-cheminformatics-and-materials-informatics-applications",
-      "section": "quick",
-      "title_en": "CheMLFlow: An Open-Source Platform for Cheminformatics and Materials Informatics Applications",
-      "authors": "Brendan Smith, Susana Lopez-Moreno, Eric Dolores-Cuenca, Sangil Kim, Jose L. Mendoza-Cortes, Nijamudheen Abdulrahiman",
-      "date": "2026-08-05",
-      "pdf": "https://arxiv.org/pdf/2608.04942v1",
-      "score": "6.0",
-      "evidence": "开源平台，支持端到端高通量与智能体式化学信息学和材料信息学工作流",
-      "tldr": "科学机器学习开发常需将数据获取、清洗、表征、训练、筛选等环节整合为可复现流程，但研究者往往只关注其中一环。CheMLFlow作为开源平台，提供模块化组件、现成参考流程、标准化产物和评估输出，支持可扩展、可复现的批处理与报告生成。其配置驱动流程和结构化输出为智能体辅助实验提供接口。平台在量子力学、理化性质与生物活性预测上达到文献水平，并支持时间序列等非分子数据应用。",
-      "tags": "query:aichem-map",
-      "abstract_en": "CheMLFlow is an open-source platform for building and executing end-to-end, high-throughput, and agentic workflows for scientific and technological applications. CheMLFlow targets a common bottleneck in scientific machine learning development, where researchers often need to assemble data acquisition, curation, representation, model training, validation, screening, interpretation, and reporting into a reproducible pipeline, even when their primary research contribution concerns only one stage. CheMLFlow provides modular workflow components, ready-to-run reference pipelines, standardized artifacts, and evaluation outputs that reduce orchestration overhead and support benchmarking across methods and datasets. The platform is designed to be extensible, reproducible, and automation friendly, with pluggable representations and models, deterministic splits, explicit run artifacts, batch execution, and report generation. As scientific software increasingly moves toward agent assisted experimentation, CheMLFlow's configuration driven workflows and structured outputs also provide a practical interface for coding agents to help users construct experiments, inspect results, and summarize findings under human supervision. This article describes the system architecture, core workflows, and benchmarks that reach literature performance for quantum mechanical, physicochemical and bioactivity property prediction, and use cases involving time series datasets demonstrating applications beyond molecular chemistry datasets.",
       "source": "arxiv",
       "selection_source": "fresh_fetch"
     }

@@ -44,14 +44,14 @@
       <span class="dpr-home-dashboard-kicker">2026-08-07</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">共 10 篇</strong>
+    <strong class="dpr-home-dashboard-count">共 11 篇</strong>
   </div>
   <dl class="dpr-home-dashboard-stats">
-    <div class="dpr-home-dashboard-stat"><dt>累计更新</dt><dd>1 次</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>6</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>累计更新</dt><dd>2 次</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>7</dd></div>
     <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>4</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-08-07 04:51:52 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-08-07 21:36:00 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -62,9 +62,9 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>今日精读聚焦分子GNN参数高效微调与LLM符号回归，速读覆盖主动学习、谱图指纹等，共10篇。</p>
-<p>最值得看的是9.0分的《Geometry-Informed Parameter-Efficient Fine-Tuning...》与《DASyR-LLM...》，分别在血脑屏障预测和动力学模型发现上表现突出。</p>
-<p>建议普通读者优先关注几何信息与LLM结合提升科学模型效率的趋势，后续可跟进这两方向的应用案例。</p>
+<p>今日聚焦分子几何建模与LLM驱动的科学发现，覆盖血脑屏障预测及动力学模型挖掘。</p>
+<p>最值得关注两项高分工作：几何信息增强分子GNN微调用于血脑屏障渗透性预测，以及领域感知符号回归LLM助力动力学模型发现。</p>
+<p>建议深入研读这两篇精读论文，并留意物理感知分子指纹与主动学习优化材料设计等扩展方向。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -73,12 +73,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">精读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">6 篇</strong>
+    <strong class="dpr-home-dashboard-count">7 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
 <ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Geometry-Informed Parameter-Efficient Fine-Tuning of Pre-trained Molecular GNNs for Blood-Brain Barrier Permeability Prediction">Geometry-Informed Parameter-Efficient Fine-Tuning of Pre-trained Molecular GNNs for Blood-Brain Barrier Permeability Prediction</span></li><li><span class="dpr-home-dashboard-paper-title" title="DASyR-LLM: Domain-Aware Symbolic Regression with LLMs for Kinetic Model Discovery">DASyR-LLM: Domain-Aware Symbolic Regression with LLMs for Kinetic Model Discovery</span></li><li><span class="dpr-home-dashboard-paper-title" title="RxnCLF: Contrastive Transformation-Aware Reaction Foundation Model for Improved Reactivity Prediction">RxnCLF: Contrastive Transformation-Aware Reaction Foundation Model for Improved Reactivity Prediction</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>6</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>7</strong></span></div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-skim-card">
   <div class="dpr-home-dashboard-header">
@@ -89,7 +89,7 @@
     <strong class="dpr-home-dashboard-count">4 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Active Learning Guided Design Space Refinement for Scalable Multi-Objective Bayesian Optimization in Materials Discovery">Active Learning Guided Design Space Refinement for Scalable Multi-Objective Bayesian Optimization in Materials Discovery</span></li><li><span class="dpr-home-dashboard-paper-title" title="Physics-Based Molecular Fingerprints from Spectral Graph Theory Provide Efficient Geometry-Aware Measures of Chemical Similarity">Physics-Based Molecular Fingerprints from Spectral Graph Theory Provide Efficient Geometry-Aware Measures of Chemical Similarity</span></li><li><span class="dpr-home-dashboard-paper-title" title="A-SR: Self-Evolving Agentic LLMs for Symbolic Regression via Hierarchical Coordination">A-SR: Self-Evolving Agentic LLMs for Symbolic Regression via Hierarchical Coordination</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Physics-Based Molecular Fingerprints from Spectral Graph Theory Provide Efficient Geometry-Aware Measures of Chemical Similarity">Physics-Based Molecular Fingerprints from Spectral Graph Theory Provide Efficient Geometry-Aware Measures of Chemical Similarity</span></li><li><span class="dpr-home-dashboard-paper-title" title="Expanding Protein Structure Prediction into Conformational State Space">Expanding Protein Structure Prediction into Conformational State Space</span></li><li><span class="dpr-home-dashboard-paper-title" title="Active Learning Guided Design Space Refinement for Scalable Multi-Objective Bayesian Optimization in Materials Discovery">Active Learning Guided Design Space Refinement for Scalable Multi-Objective Bayesian Optimization in Materials Discovery</span></li></ul>
   </div>
   <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>4</strong></span></div>
 </section>
