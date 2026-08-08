@@ -1,0 +1,501 @@
+Title: Neural Quantum States for Nuclear Magnetic Resonance Spectroscopy
+
+URL Source: https://arxiv.org/pdf/2608.00178v1
+
+Published Time: Tue, 04 Aug 2026 00:07:22 GMT
+
+Number of Pages: 12
+
+Markdown Content:
+## Neural Quantum States for Nuclear Magnetic Resonance Spectroscopy 
+
+Bharadwaj Chowdary Mummaneni 1, ∗ and Bo Xing 2, 3 
+
+> 1
+
+Fraunhofer IAO, Nobelstraße 12, 70569 Stuttgart, Germany 
+
+> 2
+
+Research Laboratory of Electronics, Massachusetts Institute of Technology, Cambridge, Massachusetts 02139, USA 
+
+> 3
+
+Institute of Advanced Intelligence and Computing (IAIC), Agency for Science, Technology and Research (A*STAR), Singapore 138632, Republic of Singapore 
+
+(Dated: August 4, 2026) Predicting a nuclear magnetic resonance (NMR) spectrum from first principles requires propagat-ing a quantum state of dimension 2 N for N coupled spins, which becomes intractable beyond larger 
+
+N . We benchmark Neural Quantum States (NQS), a class of variational quantum states expressed as an artificial neural network, as an alternative representation for this problem. Using two propa-gation methods, the Time-Dependent Variational Principle (TDVP) and projected time-dependent Variational Monte Carlo (p-tVMC), we compute the 1H spectra of four (2 → 5 spins) experimentally parameterized molecules. TDVP reproduces all line positions and intensities with average spectral mean squared errors of < 10 −3; p-tVMC reproduces the same features, with accuracy determined by its per-step optimization parameters. One dominant obstacle to larger systems is the steep growth of the number of integration steps with spectral bandwidth, which can be removed by propagating in the interaction frame of the chemical-shifted Hamiltonian. Retaining the same accuracy, this reduces the number of integration steps roughly eightfold for the 3-spin system and by at least an order of magnitude for the 4- and 5-spin systems, and it enables a 14-spin molecule (sucrose) to be accurately propagated via Monte Carlo sampling. 
+
+I. INTRODUCTION 
+
+When a chemist synthesizes a new compound or iso-lates a natural product, one of the first questions is whether the molecule in hand is actually the one in-tended. Nuclear Magnetic Resonance (NMR) spec-troscopy is the standard tool for answering this question. Each chemically distinct nucleus resonates at a charac-teristic frequency, its chemical shift , and nuclei connected through chemical bonds interact via scalar couplings that split resonances into multiplet patterns. Together, these features encode the connectivity, stereochemistry, and conformation of the molecule [1, 2]. A proposed structure is confirmed when its predicted NMR spectrum matches the experimental one. The first half of this prediction is now routine. Quantum-chemical methods, particularly Density Func-tional Theory (DFT), can compute NMR parameters (chemical shifts and J-couplings) from first principles [3– 5], and programs such as Gaussian [6] and ORCA [7] can perform these calculations as a standard part of structure elucidation. However, to obtain the actual spectrum, one must propagate N coupled spin- 12 nu-clei under the effective Hamiltonian and study the fre-quency domain of the time-domain signal: a quantum many-body time evolution in a Hilbert space of dimen-sion 2 N , intractable beyond roughly N = 15–20 [8]. Molecules with extended proton networks (natural prod-ucts, peptides, polycyclic aromatics) routinely exceed this limit. Restricted state-space methods, implemented in the Spinach library, push the boundary considerably  
+
+> ∗bharadwaj.chowdary.mummaneni@iao.fraunhofer.de
+
+by discarding high-order spin correlations that remain es-sentially unpopulated in liquid-state experiments [9, 10], but their accuracy relies on truncation assumptions that must be validated for each coupling topology. Beyond the reach of these techniques, DFT-computed parame-ters cannot be turned into a spectrum, and the structural assignment remains incomplete. Several strategies have been explored to overcome this exponential scaling. Nuclear spins map directly onto qubits [11, 12], but current quantum hardware does not yet provide the gate fidelities and coherence times that are useful for NMR simulation [13–15]. Tensor network methods compress the quantum state when the entan-glement dynamics is not extensive [16–18], but their ef-fectiveness for long-range and higher-dimensional Hamil-tonians has not been systematically assessed. A third, largely unexplored alternative is Neural Quantum States (NQS): variational wavefunctions whose amplitudes are given by a neural network [19]. Initially proposed for finding the ground-state energy, NQS have since been extended to real-time dynamics through the time-dependent variational principle (TDVP) [20, 21] and the projected time-dependent variational Monte Carlo (p-tVMC) method [22, 23]. NQS can represent certain classes of quantum states with only polynomially many parameters [24–27], and their flexibility suits the complex coupling topologies that arise in NMR. NMR poses a stringent test for any variational dynam-ics method. Unlike the ground-state energy, the quantity of interest is a frequency-domain response derived from a time-domain signal over the full simulation window, so even small phase errors accumulated during propagation appear as shifted or artificially broadened lines. Whether NQS can maintain the required accuracy over the hun-dreds to thousands of integration steps needed to resolve arXiv:2608.00178v1 [cond-mat.dis-nn] 31 Jul 2026 2individual peaks can only be settled by direct numerical experiment. In this work, we apply both TDVP and p-tVMC to four experimentally characterized 1H spin systems (2–5 coupled protons) and benchmark the resulting spectra against exact diagonalization. Both methods reproduce the correct line positions and intensities, with spectral mean squared errors of < 10 −3, a proof of principle that NQS dynamics can compare DFT-computed parameters to experimentally obtained spectra. The principal bottle-neck turns out to be the steep growth of the integration steps with system size and not neural network expressiv-ity. We show that an exact transformation to the inter-acting frame can leave the spectrum unchanged reduces the steps needed at fixed accuracy roughly eightfold for the 3-spin system and by at least an order of magnitude for the 4- and 5-spin systems. This improvement in com-putation efficiency allows a 14-spin molecule (sucrose) to be propagated by Monte Carlo sampling.   
+
+> II. THEORETICAL MODEL A. From FID to Spectrum
+
+An NMR experiment records the free induction decay 
+
+(FID): after a short radiofrequency pulse tips the equi-librium spin magnetization into the transverse plane, the sample coil picks up the oscillating voltage induced by the precessing nuclear spins. Each chemically distinct proton precesses at a slightly different frequency, its chemical shift δi (in ppm), set by how strongly the surrounding electron cloud shields it from the applied field. Where two protons are connected by a few bonds, their mag-netic moments interact through bonding electrons via the 
+
+scalar coupling Jij (in Hz), which splits each resonance into a multiplet. Fourier-transforming the FID converts this time-domain oscillation into the familiar spectrum of peaks, whose positions and splittings encode connectivity and conformation [30, 31]. To write the problem in a tractable form, NMR spec-troscopists work in the rotating frame : a reference frame that co-rotates with the spins at the spectrometer fre-quency ν0 = γB 0/(2 π) ( γ is the proton gyromagnetic ratio, B0 the static field). In this frame, the fast Larmor precession is removed, leaving only the slow, chemically informative differential precession between protons. The effective spin Hamiltonian is then [2, 32, 33]: ˆH =
+
+> N
+
+X
+
+> i=1
+
+ωi ˆIz,i + 2 π X
+
+> i<j
+
+Jij ˆIi · ˆIj , (1) where ˆIi = ( ˆIx,i , ˆIy,i , ˆIz,i ) are the spin- 12 operators of proton i (eigenvalues ± 12 , in units of ℏ). The first term shifts each resonance to angular frequency ωi = 2 πν 0(δi −
+
+δref ) × 10 −6 relative to the reference compound. The isotropic scalar coupling 2 πJ ij ˆIi · ˆIj (in rad/s, with Jij 
+
+reported in Hz) is the quantum-mechanical origin of mul-tiplet splitting; its isotropic dot-product form holds for rapidly tumbling molecules in solution, where anisotropic dipolar couplings average to zero. Throughout this work we use B0 = 11 .74 T, giving ν0 = 500 MHz. After a 90 ◦ 
+
+> y
+
+pulse, the spin ensemble starts with all magnetization along x. At high temperature the relevant part of the density matrix is proportional to ˆItot  
+
+> x
+
+, and its time evolution gives the same spectral information as propagating the pure product state |ψ0⟩ = |+x⟩⊗N ,with each proton initialized in the + x eigenstate, up to an overall normalization [2, 32]. The FID signal is the complex transverse magnetization: 
+
+S(t) = ⟨ ˆItot  
+
+> x
+
+(t)⟩ + i ⟨ ˆItot  
+
+> y
+
+(t)⟩, (2) with |Ψ( t)⟩ = e−i ˆHt |ψ0⟩ evolved under ˆH. The spectrum follows from a Fourier transform with an exponential win-dow [1, 34]: 
+
+S(ω) = 
+
+Z T
+
+> 0
+
+S(t) e−λt e−iωt dt. (3) The apodization factor e−λt mimics the T ∗ 
+
+> 2
+
+decay that broadens experimental lines (we use λ = 3 .0 s −1, giving 
+
+∼ 1 Hz Lorentzian linewidth) and damps ringing from the finite acquisition window T . The computational task is therefore to propagate |Ψ( t)⟩ faithfully over T = 1 .0 s and evaluate S(t) at each timestep: a quantum dynam-ics problem whose cost grows as 2 N with the number of coupled protons N . 
+
+> B. Interaction-Frame Propagation
+
+The rotating-frame Hamiltonian of Eq. (1) contains two terms separated by orders of magnitude in energy. The one-body chemical-shift term ˆH0 = P 
+
+> i
+
+ωi ˆIz,i has matrix elements of order 10 2–10 3 rad/s, while the scalar coupling ˆH1 = 2 π P 
+
+> i<j
+
+Jij ˆIi · ˆIj is of order 10 1 rad/s. An explicit integrator must resolve the fastest oscilla-tion present in the propagated state, so the chemical-shift precession (though spectroscopically a trivial single-spin phase e−iω it) sets the usable timestep and is responsible for the steep growth in step count reported in Table I. This is numerical stiffness in the standard sense: the step size is dictated by the fastest frequency present rather than by the slower dynamics of interest. We quantify it by the offset-to-coupling ratio max ij |ωi − ωj |/2πJ ij .This stiffness can be removed analytically by propa-gating in the interaction frame of ˆH0. Writing ˆU0(t) = 
+
+ei ˆH0t and |ΨI (t)⟩ = ˆU0(t) |Ψ( t)⟩, the transformed state obeys i∂ t |ΨI ⟩ = ˆHI (t) |ΨI ⟩ with a generator that retains only the coupling, dressed by phases oscillating at the chemical-shift differences :ˆHI (t) = 2 π X
+
+> i<j
+
+Jij 
+
+h ˆIz,i ˆIz,j + 12
+
+ ei(ωi−ωj )t ˆI(i)+ ˆI(j) 
+
+> −
+
++ h .c.i
+
+.
+
+(4) 3             
+
+> (a) 2-spin: cis -3-Chloroacrylic acid (b) 3-spin: 1,2,4-Trichlorobenzene
+> (c) 4-spin: 3-Methyleneoxetan-2-one (d) 5-spin: Nitrobenzene
+> FIG. 1: Molecular structures of the four spin systems studied in this work. Hydrogen atoms are shown explicitly; heteroatoms are colored (Cl: green, O: red, N: blue). From top-left to bottom-right: cis -3-chloroacrylic acid (2 1H), 1,2,4-trichlorobenzene (3 1H), 3-methyleneoxetan-2-one (4 1H), and nitrobenzene (5 1H). NMR parameters are from experimental databases [28, 29].
+
+The large one-body term has vanished from the genera-tor; what remains has magnitude ∼ 2πJ ij , the slow cou-pling scale. The price is that ˆHI (t) is explicitly time dependent, with off-diagonal elements oscillating at the chemical-shift differences. This is a good trade: the rate at which the state changes is bounded by the norm of the generator, not by how rapidly its phases oscillate, so |ΨI (t)⟩ moves on the slow coupling timescale and the integrator can take correspondingly larger steps. The transformation is the standard interaction (Dirac) picture of quantum mechanics and involves no approxi-mation: |Ψ( t)⟩ = ˆU † 
+
+> 0
+
+(t) |ΨI (t)⟩ reproduces the rotating-frame state exactly at every instant. In particular, the chemical shifts are not discarded; they are applied analytically rather than integrated numerically. The laboratory-frame signal follows by transforming back, 
+
+⟨ ˆItot + (t)⟩ = X
+
+> k
+
+eiω k t ⟨ΨI | ˆI(k)+ |ΨI ⟩ . (5) Each factor eiω k t is precisely the offset precession of spin 
+
+k; in the frequency domain it translates the multiplet of that spin, which the interaction-frame dynamics gener-ates around zero frequency, to its chemical-shift position 
+
+ωk. Peak positions are thus restored exactly by the an-alytic phases, while the multiplet structure is carried by the propagated coupling dynamics. The resulting spec-trum is identical to the rotating-frame one; only the nu-merical cost differs, because the integrator no longer re-solves single-spin precession that is known in closed form.  
+
+> C. Molecular Spin Systems
+
+We study four molecules of increasing spectral com-plexity (Fig. 1), chosen to cover a range of coupling topologies representative of common organic structural motifs: 
+
+• 2-spin: cis -3-Chloroacrylic acid. The two vinyl protons are coupled by a single vicinal 3J constant, producing a simple doublet, the minimal non-trivial NMR pattern. 
+
+• 3-spin: 1,2,4-Trichlorobenzene. Three aromatic protons at the 3-, 5-, and 6-positions are magnet-ically inequivalent and carry different J couplings, giving an ABX-type multiplet structure. 
+
+• 4-spin: 3-Methyleneoxetan-2-one. The exocyclic methylene and ring protons form a tightly coupled four-spin system with several overlapping multi-plets. 4
+
+• 5-spin: Nitrobenzene. The five aromatic protons split into ortho, meta, and para sets by molecular symmetry; their coupling pattern is a textbook ex-ample of monosubstituted-benzene multiplet struc-ture. Hamiltonian parameters (chemical shifts and J-couplings) are taken from experimental databases [28, 29]. For each system, the exact reference spectrum is computed by dense matrix exponentiation of ˆH. For the interaction-frame comparison (Table II) we additionally include sucrose (N = 14), a disaccharide with fourteen inequivalent protons. Its J-coupling network splits into three disconnected groups of 7, 5, and 2 protons, so it is a comparatively benign large system rather than a strongly correlated one; we quantify this in Sec. IV B. Its exact reference is obtained by sparse Krylov propagation (expm multiply ) rather than dense diagonalization, and the NQS never enumerates its 2 14 -dimensional Hilbert space.   
+
+> III. COMPUTATIONAL METHODS A. Neural Quantum State Representation
+
+We represent the instantaneous quantum state using a Restricted Boltzmann Machine (RBM), a two-layer neural network comprising visible units (corresponding to the N physical spins) and M = αN hidden units. The wavefunction amplitude for a spin configuration 
+
+s = ( s1, . . . , s N ) ∈ {− 1, +1 }N takes the form [19, 35]: 
+
+ψ(s) = eP 
+
+> iaisi
+> M
+
+Y
+
+> j=1
+
+2 cosh bj + X
+
+> i
+
+Wji si
+
+!
+
+, (6) where {ai} ∈ CN , {bj } ∈ CM , and W ∈ CM ×N are variational parameters. The hidden unit ratio α controls the network’s expressive capacity. The RBM is attractive here because the hidden units can be summed out analytically, giving ψ(s) in O(αN 2)operations. Complex-valued parameters are needed to capture the phases that develop during unitary evolu-tion [20]. For states with limited entanglement, the re-quired number of hidden units scales polynomially [24], but volume-law entangled states may demand exponen-tially many. It is not known a priori which regime NMR time evolution falls into.  
+
+> B. Time-Dependent Variational Principle
+
+Exact time evolution under ˆH generates a trajectory 
+
+|Ψ( t)⟩ = e−i ˆHt |Ψ(0) ⟩ through the full 2 N -dimensional Hilbert space. The NQS ansatz restricts the state to the variational manifold M = {| Ψ( θ)⟩ : θ ∈ CP }, and TDVP [21, 36, 37] provides the optimal equations of mo-tion for the parameters θ(t) on this manifold. We project the Schr¨ odinger equation ∂t |Ψ⟩ = −i ˆH |Ψ⟩
+
+onto the tangent space Tθ M, spanned by {| ∂μΨ⟩} . The time derivatives ˙θμ are chosen so that the resulting state update, ∂t |Ψ( θ)⟩ = P 
+
+> μ
+
+˙θμ |∂μΨ⟩, is as close as possible, in the Hilbert-space norm, to the exact right-hand side 
+
+−i ˆH |Ψ⟩. This least-squares condition reads: min 
+
+> ˙θ
+
+X
+
+> μ
+
+˙θμ |∂μΨ⟩ + i ˆH |Ψ⟩
+
+> 2
+
+, (7) whose solution is the linear system of equations of mo-tion [20]: 
+
+S ˙θ = −i F. (8) Both S and F are estimated stochastically from 
+
+nsamples configurations drawn from the Born distribution 
+
+|ψ(s)|2. Defining the log-derivative Oμ(s) = ∂θμ ln ψ(s)and the local energy Eloc (s) = P 
+
+> s′
+
+⟨s| ˆH|s′⟩ψ(s′)/ψ (s), the quantum geometric tensor (quantum Fisher informa-tion matrix) [38, 39] and the force vector are the con-nected covariances: 
+
+Sμν = ⟨O∗
+
+> μ
+
+Oν ⟩c, (9) 
+
+Fμ = ⟨O∗
+
+> μ
+
+Eloc ⟩c, (10) where ⟨AB ⟩c ≡ ⟨ AB ⟩ − ⟨ A⟩⟨ B⟩ denotes the connected expectation value. Sμν measures how independently dif-ferent parameters deform the quantum state (it is the Gram matrix of the tangent vectors in the Fubini–Study metric); F measures how much each parameter direc-tion overlaps with the exact Schr¨ odinger drive −i ˆH |Ψ⟩.These equations of motion are reparameterization-covariant: the physical trajectory is independent of how the network is parameterized, and the method reduces to natural gradient descent in the geometry of quantum state space [39, 40].  
+
+> C. Projected Time-Dependent Variational Monte Carlo
+
+The projected time-dependent Variational Monte Carlo (p-tVMC) method [22] takes a different approach from TDVP: rather than integrating a differential equa-tion on M, it advances the state by projecting the exactly evolved quantum state back onto the variational manifold at each discrete timestep. Concretely, after applying the exact propagator for one step, the target state is 
+
+|Φt⟩ = e−i ˆH∆t |Ψ( θt)⟩ , (11) which in general lies outside M. The projection finds the variational state |Ψ( θt+1 )⟩ ∈ M closest to |Φt⟩ by minimizing the quantum infidelity: 
+
+I(θ) = 1 − | ⟨ Ψ( θ)|Φt⟩ | 2
+
+⟨Ψ( θ)|Ψ( θ)⟩ ⟨ Φt|Φt⟩ . (12) 5
+
+I = 0 means perfect overlap (the variational ansatz can represent the propagated state exactly); I = 1 means the two states are orthogonal. In our implementation, the exact propagator e−i ˆH∆t is precomputed once as a dense 2 N × 2N matrix via matrix exponentiation and cached throughout the simulation; this is feasible for N ≤ 12 and eliminates propagator discretization errors from the benchmark. The infidelity 
+
+I and its gradient are estimated by Monte Carlo: config-urations σ are sampled from |ψθ (σ)|2 and independently 
+
+η from |ϕt(η)|2. The key estimator is 
+
+Iloc (σ, η) = ϕt(σ)
+
+ψθ (σ) · ψθ (η)
+
+ϕt(η) , I = 1 − |⟨ Iloc ⟩| 2, (13) where each factor is the amplitude ratio of the two wave-functions at a sampled configuration; together they form an importance-sampled estimator of the squared overlap 
+
+|⟨ Ψ( θ)|Φt⟩| 2. Gradient variance is reduced by the control variate [22] 
+
+ICV loc = Re {Iloc } − c |1 − Iloc |2 − 1 , (14) with c = −1/2 optimal for small infidelities. Gradients are computed by automatic differentiation and passed to the Adam optimizer [41]; optionally, Stochastic Re-configuration (SR) preconditioning can be applied to the updates. Compared with TDVP, p-tVMC sidesteps QGT inver-sion, and the per-step I gives a running diagnostic of how well the variational manifold tracks the true evo-lution. The per-step cost O(niter · nsamples · P ) exceeds the O(nsamples · P 2) of TDVP, but iterative optimization avoids the regularization bias that accumulates in TDVP. For N ≳ 12, the dense propagator must be replaced by a Trotter–Suzuki decomposition; this introduces an 
+
+O(∆ t2) Trotter error per step and is the main scalability bottleneck of the current implementation.  
+
+> D. Implementation
+
+We implement both the NQS-TDVP and p-tVMC methods using NetKet [42], an open-source library built on JAX that provides automatic differentiation, just-in-time compilation, and GPU acceleration. The varia-tional state employs Metropolis-Hastings sampling with local spin-flip proposals, using nsamples = 4096 config-urations per time step. This is admittedly excessive for the N ≤ 5 systems, where exact summation over all basis configurations is possible; we keep Monte Carlo sampling rather than exact summation throughout, to stay true to the larger systems for which the method is meant, where summing over all configurations is out of reach. All benchmarks were run on a single CPU node using 8 threads (Intel Xeon, 2 .4 GHz); the wall times reported in Table I refer to this configuration. For direct method comparison, both TDVP and p-tVMC use the same hid-den unit ratio α = 4. For the TDVP-only scaling results in Table I, we additionally identified α that minimizes the spectral MSE for each system. The MSE is computed over the spectral region containing peaks after normal-izing both the NQS and the exact spectra to the unit maximum. 
+
+TDVP integration: Time propagation uses the Heun method (second-order Runge-Kutta) with timestep ∆ t,and the linear system S · ∆θ = −i F ∆t is solved via sin-gular value decomposition with diagonal regularization 
+
+ϵ = 0 .01 for numerical stability. For each system we vary ∆ t over four to five values, keeping the total sim-ulation time fixed at T = 1 .0 s, and use the value that minimizes the spectral MSE; the scanned ranges run from 0.1–0 .005 s for the 2-spin system down to 10 −3–10 −4 s for the 5-spin system, and the optima are listed in Table I. 
+
+p-tVMC optimization: The exact propagator U (∆ t) = 
+
+e−i ˆH∆t is precomputed once as a dense 2 N × 2N ma-trix via matrix exponentiation and cached throughout the simulation. At each time step, the infidelity I is minimized using the Adam optimizer [41] with learning rate η = 0 .01 and niter = 50 gradient updates per step. The control variate coefficient is c = −0.5. An optional Stochastic Reconfiguration preconditioner (diagonal shift 
+
+ϵ = 0 .01) was tested but not found to improve results consistently. The RBM parameters are initialized with small ran-dom values (scale = 0.01, seed = 42). Because the product state |+x⟩⊗N can be represented exactly by an RBM, convergence to the correct initial state is verified by checking that ⟨ ˆItot  
+
+> x
+
+⟩ = N/ 2 to within statistical er-ror before beginning time propagation. Molecular Hamil-tonian parameters (chemical shifts and J-couplings) are taken from experimental databases [28, 29].   
+
+> IV. RESULTS A. Rotating-Frame Benchmarks
+
+We begin with the 2-spin system, where the dynamics can be visualized directly. Figure 2 shows the transverse magnetization ⟨ ˆIx(t)⟩ over the full T = 1 .0 s window at successive integration timesteps. The beating pattern is the time-domain signature of the doublet: two precess-ing frequencies that alternately reinforce and cancel. At coarse ∆ t = 0 .1 s (10 steps) both TDVP and p-tVMC drift from the exact solution in amplitude and phase. By ∆t = 0 .005 s ( Nt = 200) the TDVP curve is indistin-guishable from the exact, and p-tVMC tracks it closely, though with larger residual error (quantified below). The exponential window e−λt downweights the late-time sig-nal, where errors accumulate most, so the spectral accu-racy is somewhat better than the raw time-domain dis-crepancy suggests. The spectral consequences are shown in Fig. 3 for all four molecules. Each panel stacks the NQS spectra at successive ∆ t values (coarsest at top, finest at bottom), with p-tVMC in green and the exact reference as dashed 602          
+
+> Ix
+> dt=0.1 Exact TDVP
+> 02
+> Ix
+> dt=0.05 Exact TDVP
+> 2
+> 02
+> Ix
+> dt=0.02 Exact TDVP
+> 2
+> 02
+> Ix
+> dt=0.01 Exact TDVP
+> 0.0 0.2 0.4 0.6 0.8 1.0
+> Time (s)
+> 2
+> 02
+> Ix
+> dt=0.005 Exact TDVP p-tVMC
+> 2-spin: cis-3-Chloroacrylic acid
+
+FIG. 2: Transverse magnetization ⟨ ˆIx(t)⟩ for the 2-spin sys-tem at decreasing ∆ t (coarser at top, finest at bottom). Blue shaded: exact evolution; red dashed: NQS-TDVP; green dash-dot: p-tVMC (finest panel only). Both methods con-verge to the exact trajectory as ∆ t decreases. 
+
+black. For the 2-spin doublet of cis -3-chloroacrylic acid, line positions are resolved already at Nt = 20 steps; the fine splitting and clean baseline emerge only at Nt = 200. The ABX multiplet of 1,2,4-trichlorobenzene (6.8–7.8 ppm) sharpens progressively with smaller ∆ t, though low-intensity oscillations between peaks persist at inter-mediate step counts. The four-spin system shows noisier baselines, consistent with the higher initialization sensi-tivity discussed below, but reproduces the correct mul-tiplet pattern at fine ∆ t. Nitrobenzene, with its or-tho/meta/para sub-patterns, requires Nt = 10 ,000 steps, fifty times more than the 2-spin case: much finer spec-tral structure must be resolved over the same 1 s window. In every case, the simulated spectra converge toward the exact reference as ∆ t decreases. Table I and Fig. 4 quantify the computational cost across all four systems (MSE averaged over 5 random seeds). The required ∆ t shrinks with N , tracking the growing spectral bandwidth of larger spin systems. MSE does not increase monotonically: the 4-spin molecule achieves lower mean error than 3-spin, and the 5-spin the lowest of all, reflecting genuine differences in spectral complexity between molecules. Initialization sensitivity tells a different story: the coefficient of variation grows from 3% at N = 2 to 32% at N = 4, so single-seed re-sults can be misleading. In general, we expect spectral MSE to decrease as the network size increases, and this is reflected in the 2 −, 3 −, 5 −spin systems. For the 4-spin system, the best accuracy is at α = 1. This anomaly could have arisen from chance, such as obtaining more favorable initialization seeds, or having specific coupling parameters. Repeating the sweep on a different 4-spin molecule would distinguish the two. 
+
+TABLE I: Scaling of TDVP computational requirements with system size for T = 1 .0 s total simulation time. ∆topt :optimal timestep; Nt: number of integration steps; Twall :mean wall-clock time per seed (8 CPU threads, Intel Xeon, 2.4 GHz). MSE = mean ± std over 5 random seeds at αopt .
+
+N Dim ∆ topt (s) Nt αopt MSE Twall 
+
+2 4 0.005 200 10 (7 .3 ± 0.2) ×10 −4 31 s 3 8 0.002 500 10 (3 .6 ± 0.3) ×10 −3 ∼2 min 4 16 2.5×10 −4 4000 1 (1 .5 ± 0.5) ×10 −3 ∼8 min 5 32 1.0×10 −4 10000 10 (8 .7 ± 1.0) ×10 −5 ∼90 min 
+
+The two methods handle the computation-accuracy tradeoff differently. TDVP solves the linear system 
+
+S ˙θ = −iF once per step at a cost that is fixed for given nsamples and α. p-tVMC instead runs niter gra-dient steps per timestep ( niter = 50 for the spectra in Fig. 3, α = 4). Across the four systems it reaches spec-tral MSEs between 2 .6 × 10 −3 (5-spin, run at niter = 75) and 3 .7×10 −2 (3-spin), with per-step infidelities of 10 −5–10 −2. These errors are higher than the TDVP optima in Table I, though the comparison is not direct since TDVP used the molecule-specific optimal α while p-tVMC used 
+
+α = 4 throughout. Figure 5 shows the iteration sweep for the 2-spin system: as niter increases from 10 to 100, wall time grows from ∼80 s to ∼670 s while MSE drops by nearly four orders of magnitude. The improvement is still monotonic at niter = 100, confirming that accu-racy at these system sizes is limited by optimizer budget rather than network expressivity. 
+
+B. Effect of the Interaction Frame 
+
+Most of the integration steps in Table I are spent resolving the chemical-shift term rather than the cou-plings that carry the spectral information. Since the interaction-frame transformation of Eq. (4) removes that term exactly, we used it to ask how much of the cost it accounts for. Because interaction frame transformation operator ˆU0(t) is diagonal and a product of single-spin z-rotations, applying it costs nothing and leaves the entan-glement structure, and hence the RBM representability, of the state unchanged; for the ansatz of Eq. (6) it is ab-sorbed exactly into a drift of the complex visible biases, 
+
+ai(t) = ai(0) − i(ωi/2) t. We repeated the TDVP propa-gation in both frames under otherwise identical settings: RBM with α = 4 for the N ≤ 5 molecules and α = 2 for the N = 14 sucrose, 4096 samples per step, and the 76.28 6.30 6.32 6.34 6.36 6.38 6.40 
+
+Chemical Shift (ppm) Intensity (stacked) 2-spin: cis-3-Chloroacrylic acid 
+
+> Exact (ref) dt=0.1 dt=0.05 dt=0.02 dt=0.01 dt=0.005 p-tVMC (dt=0.005) 7.15 7.20 7.25 7.30 7.35 7.40 7.45 7.50
+
+Chemical Shift (ppm) Intensity (stacked) 3-spin: 1,2,4-Trichlorobenzene 
+
+> Exact (ref) dt=0.01 dt=0.005 dt=0.004 dt=0.003 dt=0.002 p-tVMC (dt=0.002) 3.25 3.50 3.75 4.00 4.25 4.50 4.75 5.00
+
+Chemical Shift (ppm) Intensity (stacked) 4-spin: 3-Methyleneoxetan-2-one 
+
+> Exact (ref) dt=0.002 dt=0.001 dt=0.00075 dt=0.0005 dt=0.00025 p-tVMC (dt=0.00025) 7.4 7.6 7.8 8.0 8.2 8.4
+
+Chemical Shift (ppm) Intensity (stacked) 5-spin: Nitrobenzene 
+
+> Exact (ref) dt=0.001 dt=0.0005 dt=0.00025 dt=0.000125 dt=0.0001 p-tVMC (dt=0.000125)
+
+FIG. 3: NMR spectra for all four molecular spin systems, stacked by integration timestep ∆ t (coarsest at top, finest at bottom). Colored fills: NQS-TDVP; green: p-tVMC at the finest timestep; dashed black: exact reference. The exact reference is evaluated on the same time grid as the NQS run in each row ( Nt points at the corresponding ∆ t) and Fourier-transformed identically, so its spectral resolution improves down the stack alongside the NQS spectra; rows differ in resolution, not in the underlying spectrum. All four systems show progressive convergence to the exact spectrum as ∆ t decreases; p-tVMC reproduces the same spectral features at the finest level, though with larger residual error than TDVP (see text). 
+
+same Heun integrator, QGT/SVD solver, and sampler. The rotating frame was pushed to Nt as large as 10 4 to follow its convergence. Figure 6 shows the spectral MSE against the number of steps Nt in both frames, and Ta-ble II summarizes the contrast. These runs are a controlled frame comparison at fixed network size, not accuracy-optimized, so their rotating-frame errors exceed the Table I values at the same N ,which used the molecule-specific αopt and timestep aver-aged over five seeds. Repeating the 4- and 5-spin com-parison at α = 2 leaves the picture unchanged (rotating frame at 1–2 × 10 −2 at Nt = 3200, interaction frame at its floor), so the contrast is not an artifact of the network size. The size of the effect depends strongly on the molecule. For the 2-spin system, the two frames are equivalent, as expected: the chemical-shift evolution is a time-linear shift of the RBM visible biases (Sec. II B), which the integrator reproduces exactly, so there is nothing to re-move. For the 3-spin molecule, where the rotating frame still reaches the target accuracy, the interaction frame at-tains MSE < 10 −3 in about 200 steps rather than roughly 1600 (three seeds; one remains marginally above 10 −3
+
+at Nt = 1600), an approximately eightfold reduction at fixed accuracy. For the 4- and 5-spin molecules, the contrast is larger. The interaction frame drops below MSE 10 −3 within a few hundred steps ( Nt ≈ 200 and ≈ 800, respec-tively) and then flattens at an Nt-independent resid-ual of 5 × 10 −6 and 1 .7 × 10 −4, respectively: an error 81 2 4 6 8 10 
+
+Hidden-unit ratio 
+
+10 3
+
+2 × 10 3
+
+> Spectral MSE
+
+(a) 2-spin   
+
+> best = 10
+> mean ±1
+
+1 2 4 6 8 10 
+
+Hidden-unit ratio 
+
+10 3
+
+10 2
+
+> Spectral MSE
+
+(b) 3-spin   
+
+> best = 10
+> mean ±1
+
+1 2 4 6 8 10 
+
+Hidden-unit ratio 
+
+10 3
+
+> Spectral MSE
+
+(c) 4-spin   
+
+> best = 1
+> mean ±1
+
+1 2 4 6 8 10 
+
+Hidden-unit ratio 
+
+10 4
+
+2 × 10 4
+
+3 × 10 4
+
+4 × 10 4
+
+> Spectral MSE
+
+(d) 5-spin   
+
+> best = 10
+> mean ±1
+
+FIG. 4: Spectral MSE as a function of the hidden-unit ratio α for each molecular spin system (5 independent random seeds per point). Filled circles show individual seeds; connected markers show mean ±1σ; dashed vertical lines mark the optimal 
+
+α. The 4-spin molecule is anomalous: it achieves its best accuracy at α = 1, whereas all other systems benefit from larger networks. 
+
+TABLE II: Integration steps needed to reach spectral MSE ≤ 10 −3 in the rotating and interaction frames, under otherwise identical settings. “Stiffness” is the ratio max ij |ωi −ωj |/2πJ ij of Sec. II B. A “ >” entry means the threshold was not reached at the largest step count we ran, so the corresponding gain is a lower bound. “Floor int ” is the interaction frame’s error floor (the 
+
+Nt-independent level at which its error saturates; see text); for N = 2, where the two frames are identical, we quote the error at the largest step count run. Values are three-seed means where available; the seed scatter of the rotating frame is discussed in the text. Sucrose was run only to Nt = 800 in both frames and is a feasibility point rather than a converged comparison. 
+
+Nt to MSE ≤ 10 −3
+
+Molecule N Stiffness rot int Gain Floor int 
+
+cis -chloroacrylic acid 2 4.7 200 200 1× 1.2×10 −4
+
+1,2,4-trichlorobenzene 3 15.5 ∼1600 ∼200 ∼8× 4.8×10 −5
+
+3-methyleneoxetan-2-one 4 36.9 > 8000 ∼200 ≳ 40 × 5.0×10 −6
+
+nitrobenzene 5 39.9 > 10 4 ∼800 ≳ 12 × 1.7×10 −4
+
+sucrose 14 72.5 > 800 ≤ 800 – 6.2×10 −5
+
+floor set by sampling noise and the QGT regularization rather than by the time step. The rotating frame in-9            
+
+> FIG. 5: Speed–accuracy tradeoff for p-tVMC on the 2-spin system ( niter ∈ { 10 ,20 ,30 ,50 ,75 ,100 }gradient steps per timestep). Wall time scales linearly with niter ; MSE drops by four orders of magnitude, showing that accuracy is optimizer-limited rather than expressivity-limited at these system sizes. 10 210 310 4
+
+integration steps Nt                
+
+> 10 5
+> 10 4
+> 10 3
+> 10 2
+> 10 1
+> spectral MSE
+> MSE = 10 3
+> N
+> 34514 rotating interaction
+> FIG. 6: Spectral MSE versus number of integration steps
+> Ntfor TDVP in the rotating frame (solid) and the interac-tion frame (dashed), for the three dense-coupling molecules (N= 3 ,4,5) and sucrose ( N= 14). Curves are means over the available random seeds (up to three; the seed scatter is dis-cussed in the text). The horizontal line marks MSE = 10 −3.The rotating frame needs ∼10 3–10 4steps to approach this target; the interaction frame crosses it within a few hundred steps and then saturates at its error floor.
+
+stead needs of order 10 3–10 4 steps: pushed to the largest step counts we ran, its error keeps decreasing, reach-ing 7 .1 × 10 −3 at Nt = 8000 (4-spin, convergence-run seed) and (1 .7 ± 0.4) × 10 −3 at Nt = 10 4 (5-spin, three seeds) (Fig. 6). This points to slow stiffness rather than a hard error floor: the rotating frame converges toward the same spectrum, but the large chemical-shift term forces a small time step. Individual seeds are not monotonic, however. At intermediate Nt the rotating-frame error scatters strongly across seeds and reruns (at Nt = 3200 for the 4-spin system, four runs span 1 .2–3 .1 × 10 −2); we read this as sampling noise riding on a slowly decreasing signal, not as a plateau. The advantage survives in wall-clock time. For the 4-and 5-spin systems, the interaction frame, whose dressed coupling generator is rebuilt at every step, costs 10–40% more per step. The 4-spin system nevertheless reached MSE ≈ 5 × 10 −6 in ≈ 450 s ( Nt = 1600), whereas the rotating frame was still at 7 × 10 −3 after ≈ 2050 s ( Nt =8000). Removing the large one-body term also reduces the magnitude of the force F = ⟨O∗Eloc ⟩, and with it the bias from the QGT diagonal shift; consistent with this, the interaction-frame results were markedly more reproducible across seeds (spreads below 10%) than the rotating-frame ones. Sucrose ( N = 14) probes a larger system, sampled by Monte Carlo rather than full enumeration. Within the 
+
+Nt ≤ 800 steps we ran, the interaction frame reaches MSE ∼6 × 10 −5 while the rotating frame is still at ∼2 ×
+
+10 −2 (one of three seeds reached 4 × 10 −3); we did not push the rotating frame to convergence and quote sucrose only as a feasibility point. The successful simulation of the 14-proton molecule points works in favor of NQ. The successful run at N = 14 is concrete evidence that the approach extends well be-yond the few-spin benchmarks. We further highlight that a larger molecule is not necessarily a harder one. Fig-ure 7 shows the bipartite von Neumann entanglement entropy of the exact state along the trajectory, maxi-mized (“worst cut”) and minimized (“best cut”) over bal-anced bipartitions. The 4- and 5-spin molecules entangle across every balanced cut, with the worst approaching the maximal 2 bits. Sucrose does not: its J-coupling network splits into three disconnected clusters (7, 5, and 2 protons), so the problem factorizes into independent blocks and becomes easier than its size suggests, its cost set by the largest block of 7 spins rather than by all 14. In this case, the coupling structure can further sim-plify molecules. More broadly, the appeal of NQS for larger systems is that, unlike tensor networks, they are not bounded by connectivity or entanglement across a cut [43]. They can remain efficient as that entanglement grows. Two caveats bound this comparison. First, both frames used the same second-order integrator; a higher-order or adaptive scheme would also shorten the rotating-frame calculation, so the interaction frame is a cheap and exact way to handle the chemical-shift contribution, not the only one. Second, for the N ≤ 5 molecules, the 4096 samples far exceed the Hilbert-space dimen-sion ( ≤ 32), so those comparisons are effectively at the exact-summation limit. Sucrose is the only genuine 10 0.0 0.2 0.4 0.6 0.8 1.0 
+
+time (s)          
+
+> 01234567
+> SvN (t) (bits)
+> max for N= 4, 5 max for N= 14 sucrose cluster bound (3+2+1) sucrose, best cut: exactly 0
+> worst cut (most entangled) best cut (least entangled)
+> N= 4 N= 5 N= 14 (sucrose)
+
+FIG. 7: Bipartite von Neumann entanglement entropy of the exact state during the evolution, maximized (solid, “worst cut”) and minimized (dashed, “best cut”) over balanced bi-partitions, for the 4- and 5-spin molecules and sucrose ( N =14). Dotted gray lines mark the maximal possible values for arbitrary states; the dotted purple line marks sucrose’s clus-ter bound of 3 + 2 + 1 = 6 bits. For sucrose the minimum is exactly zero at all times: its coupling graph consists of three disconnected clusters (7, 5, and 2 protons) and the state stays a product over them, so a balanced 7 | 7 cut can fall on a cluster boundary; a cut crossing all three clusters instead sums their contributions and reaches 4 .8 bits (bounded by 3+2+1 = 6, not 7), while the entanglement within the largest cluster reaches 2 .9 of a maximal 3 bits. Computed by exact Krylov propagation and singular-value decomposition over all balanced bipartitions (2 |2, 2 |3, and 7 |7 for N = 4 , 5, 14). 
+
+test of sparse stochastic sampling (4096 samples in a 214 = 16384-dimensional space); the low MSE reached there is an encouraging first data point rather than a sys-tematic study of how accuracy scales with sample count, and the behaviour of larger, more strongly correlated sys-tems, where entanglement rather than the chemical shift dominates the cost, remains open. 
+
+V. DISCUSSION A. Method Comparison and Error Budget 
+
+TDVP is cheaper per step and works well when the QGT stays well-conditioned; p-tVMC is more expensive but gives a per-step error diagnostic (the infidelity) and avoids QGT inversion entirely. At larger system sizes, the infidelity could serve as an adaptive convergence cri-terion, allocating fewer optimization iterations when the variational manifold tracks the true evolution closely and more when it does not. TDVP has no comparable built-in quality indicator, and its per-step cost is fixed regardless of local approximation quality. The spectral error has four contributions, whose rela-tive importance differs between the two methods. (i) In-tegration/projection error. The Heun integrator used in TDVP has O(∆ t3) local truncation error, giving 
+
+O(T ∆t2) global error; higher-order integrators would re-duce this. In p-tVMC, the analogous quantity is the residual infidelity per step. (ii) Statistical noise. Fi-nite sampling ( nsamples = 4096) introduces fluctuations in the QGT and forces (TDVP) or the infidelity gradi-ent (p-tVMC), with standard errors of ∼ 1.5% of mean values [44]. (iii) QGT regularization (TDVP only). The diagonal shift ϵ = 0 .01 biases the equations of motion; reducing ϵ helps but amplifies sampling noise. p-tVMC avoids this trade-off. (iv) Variational expressivity. If the true state develops entanglement that the RBM cannot efficiently represent, both methods will drift from the ex-act trajectory; this is the most fundamental limitation. 
+
+B. Implications for Practical NMR Simulation 
+
+For 2–5 spins, exact diagonalization is trivially faster (the largest Hilbert space here is 2 5 = 32); the point of the benchmark is to characterize how NQS accuracy and cost scale before reaching sizes where exact methods fail. Exact propagation scales as O(2 N ) in memory and 
+
+O(2 2N ) per matrix-vector product, while NQS-TDVP re-quires O(αN 2) parameters and O(nsamples ·αN 2) per step (p-tVMC multiplies this by niter ). From four data points, the number of required timesteps clearly grows faster than linearly in N , but the functional form cannot be pinned down; if α stays moderate, the crossover should occur around N ≈ 15–20. A head-to-head benchmark against restricted state-space methods [10] on identical molecules would establish where, if anywhere, NQS offer a genuine advantage over the best classical alternatives. Liquid-state NMR spectra of medium-sized organic molecules involve >20 coupled protons; proteins can have 
+
+>100. Our 2–5 spin benchmarks do not reach those scales, but two observations are relevant. The correlation-function route to the spectrum (time-propagate, record ⟨ ˆI+(t)⟩, Fourier-transform) works straightforwardly with NQS dynamics. The MSE values in Table I (10 −4–10 −3) correspond to spectral distortions well below typical experimental linewidths ( ∼ 1 Hz), so the accuracy would be sufficient if it persists at larger N .The bottleneck is cost. The number of integration steps grows steeply with N , and much of it is spent on the chemical-shift term rather than on the couplings. Removing that term by the interaction-frame transfor-mation (Sec. II B) recovers a useful fraction of the cost (about eightfold for the 3-spin molecule) and improves the seed-to-seed reproducibility of the larger cases, with-out changing the spectrum. This addresses only the chemical-shift contribution, however; the cost of repre-senting and integrating strongly entangled states, which we expect to dominate for larger and more densely cou-pled molecules, is unaffected. 11  
+
+> C. Open Questions
+
+The key open question is how entanglement grows with the size of the largest connected coupling cluster. For the molecules studied here, the entanglement within any con-nected cluster stays at a few bits (Fig. 7), but a molecule with 10–20 protons in a single connected network could push the state toward a volume-law regime where ex-ponentially many hidden units are needed. Character-izing that growth would clarify whether RBMs remain the right ansatz or whether transformer-based [45] or au-toregressive [25] architectures, which have outperformed RBMs in some ground-state problems, are needed for dy-namics as well. Real NMR experiments also include T1 and T2 re-laxation, which damp high-frequency oscillations and shorten the effective simulation window. Incorporat-ing Lindblad dynamics [46] might reduce the number of timesteps needed while making the simulation more physically realistic.  
+
+> VI. CONCLUSIONS
+
+For 2–5 spin molecular systems, NQS with an RBM ansatz reproduces 1H NMR spectra to spectral MSE of 10 −4–10 −3 at optimal parameters (Table I), using both TDVP and p-tVMC propagation. Multi-seed statistics show that initialization sensitivity varies strongly be-tween systems (coefficient of variation from 3% at N = 2 to 32% at N = 4), so reporting single-seed results can be misleading. At these system sizes, the main finding is that the bottleneck is not network expressivity or memory, but the steep growth in required integration steps with N .RBMs with α ≤ 10 have sufficient representational ca-pacity; what limits accuracy is the accumulation of vari-ational and integration error over thousands of propaga-tion steps. p-tVMC avoids the ill-conditioning issues of QGT inversion and provides a per-step error diagnostic, but at 10–20 × the wall-clock cost of TDVP. Part of the timestep cost can be removed for free by propagating in the interaction frame of the chemical-shift Hamiltonian, an exact transformation that leaves the spectrum unchanged. In our tests, this cut the steps needed at fixed accuracy roughly eightfold for the 3-spin molecule and by at least an order of magnitude for the 4- and 5-spin systems (Table II), and allowed a 14-spin molecule to be propagated by sampling; the interaction-frame results were reproducible across random seeds, in contrast to the rotating-frame ones. It does not change the underlying scaling: the cost of representing strongly entangled states is untouched and will, we expect, set the practical limit for larger and more densely coupled molecules. Natural next steps are to carry the same idea into p-tVMC, applying the offset evolution exactly and projecting only the coupling, and to replace the dense propagator with a Trotter decomposition. 
+
+> ACKNOWLEDGMENTS
+
+The authors acknowledge computational resources pro-vided by Fraunhofer IAO. This work was supported by the KQCBW25 project, funded by the Ministry of Eco-nomic Affairs, Baden-W¨ urttemberg. The authors thank the NetKet development team for their open-source con-tributions to variational Monte Carlo methods. B. X. is supported by the Agency for Science, Technology and Research (A*STAR) International Fellowship. 
+
+> DATA AVAILABILITY
+
+The simulation scripts and the cached numerical data underlying all figures and tables are available from the corresponding author upon reasonable request.              
+
+> [1] R. R. Ernst, G. Bodenhausen, and A. Wokaun, Prin-ciples of Nuclear Magnetic Resonance in One and Two Dimensions (Clarendon Press, Oxford, 1987). [2] M. H. Levitt, Spin Dynamics: Basics of Nuclear Mag-netic Resonance , 2nd ed. (John Wiley & Sons, 2008). [3] T. Helgaker, M. Jaszu´ nski, and K. Ruud, Ab initio meth-ods for the calculation of NMR shielding and indirect spin–spin coupling constants, Chemical Reviews 99 , 293 (1999). [4] M. W. Lodewyk, M. R. Sieber, and D. J. Tantillo, Com-putational prediction of 1H and 13 C chemical shifts: Auseful tool for natural product, mechanistic, and syn-thetic organic chemistry, Chemical Reviews 112 , 1839 (2012). [5] K. Wolinski, J. F. Hinton, and P. Pulay, Efficient im-plementation of the gauge-independent atomic orbital method for NMR chemical shift calculations, Journal of the American Chemical Society 112 , 8251 (1990). [6] M. J. Frisch, G. W. Trucks, H. B. Schlegel, G. E. Scuseria, M. A. Robb, J. R. Cheeseman, G. Scalmani, V. Barone, G. A. Petersson, H. Nakatsuji, et al. , Gaussian 16, revi-sion C.01 (2016). [7] F. Neese, F. Wennmohs, U. Becker, and C. Riplinger, The ORCA quantum chemistry program package, The Journal of Chemical Physics 152 , 224108 (2020). [8] D. V. Savostyanov, S. V. Dolgov, J. M. Werner, and I. Kuprov, Exact NMR simulation of protein-size spin systems using tensor train formalism, Physical Review B
+> 90 , 085139 (2014). [9] I. Kuprov, N. Wagner-Rundell, and P. J. Hore, Polyno-mially scaling spin dynamics simulation algorithm based on adaptive state-space restriction, Journal of Magnetic Resonance 189 , 241 (2007). [10] H. J. Hogben, M. Krzystyniak, G. T. P. Charnock, P. J. Hore, and I. Kuprov, Spinach – a software library for sim-ulation of spin dynamics in large spin systems, Journal
+
+12 
+
+of Magnetic Resonance 208 , 179 (2011). [11] J. A. Jones, Controlling NMR spin systems for quantum computation, Progress in Nuclear Magnetic Resonance Spectroscopy 140–141 , 49 (2024). [12] S. Lloyd, Universal quantum simulators, Science 273 ,1073 (1996). [13] J. Preskill, Quantum computing in the NISQ era and beyond, Quantum 2, 79 (2018). [14] A. Khedri, P. Stadler, K. Bark, M. Lodi, R. Reiner, N. Vogt, M. Marthaler, and J. Lepp¨ akangas, The im-pact of noise on the simulation of NMR spectroscopy on NISQ devices, arXiv preprint arXiv:2404.18903 10.48550/arXiv.2404.18903 (2024). [15] K. R. Fratus et al. , Can a quantum computer simulate nuclear magnetic resonance spectra better than a classical one?, arXiv preprint arXiv:2508.06448 10.48550/arXiv.2508.06448 (2025). [16] R. Or´ us, A practical introduction to tensor networks: Matrix product states and projected entangled pair states, Annals of Physics 349 , 117 (2014). [17] S. R. White and A. E. Feiguin, Real-time evolution us-ing the density matrix renormalization group, Physical Review Letters 93 , 076401 (2004). [18] G. Vidal, Efficient simulation of one-dimensional quan-tum many-body systems, Physical Review Letters 93 ,040502 (2004). [19] G. Carleo and M. Troyer, Solving the quantum many-body problem with artificial neural networks, Science 
+
+355 , 602 (2017), seminal work introducing Neural Quan-tum States. [20] M. Schmitt and M. Heyl, Quantum many-body dynamics in two dimensions with artificial neural networks, Physi-cal Review Letters 125 , 100503 (2020). [21] X. Yuan, S. Endo, Q. Zhao, Y. Li, and S. C. Benjamin, Theory of variational quantum simulation, Quantum 3,191 (2019). [22] A. Sinibaldi, C. Giuliani, G. Carleo, and F. Vicentini, Un-biasing time-dependent variational monte carlo by pro-jected quantum evolution, Quantum 7, 1131 (2023). [23] W. Zhang, B. Xing, X. Xu, and D. Poletti, Paths to-wards time evolution with larger neural-network quan-tum states, Computer Physics Communications 312 ,109577 (2025). [24] X. Gao and L.-M. Duan, Efficient representation of quan-tum many-body states with deep neural networks, Na-ture Communications 8, 662 (2017). [25] M. Hibat-Allah, M. Ganahl, L. E. Hayward, R. G. Melko, and J. Carrasquilla, Recurrent neural network wave func-tions, Physical Review Research 2, 023358 (2020). [26] D. Pfau, J. S. Spencer, A. G. Matthews, and W. M. C. Foulkes, Ab initio solution of the many-electron Schr¨ odinger equation with deep neural networks, Physi-cal Review Research 2, 033429 (2020). [27] W. Zhang, X. Xu, Z. Wu, V. Balachandran, and D. Po-letti, Ground state search by local and sequential updates of neural network quantum states, Phys. Rev. B 107 ,165149 (2023). [28] H. Dashti, W. M. Westler, M. Tonelli, J. R. Wedell, J. L. Markley, and H. R. Eghbalnia, Spin system modeling of nuclear magnetic resonance spectra for applications in metabolomics and small molecule screening, Analytical Chemistry 89 , 12201 (2017), gISSMO database. [29] HQS Quantum Simulations GmbH, HQS quantum sim-ulations: Struqture and cheshire NMR parameter database (2023), accessed: 2024. [30] F. Bloch, Nuclear induction, Physical Review 70 , 460 (1946). [31] E. L. Hahn, Spin echoes, Physical Review 80 , 580 (1950). [32] A. Abragam, The Principles of Nuclear Magnetism (Ox-ford University Press, Oxford, 1961). [33] C. P. Slichter, Principles of Magnetic Resonance , 3rd ed. (Springer-Verlag, Berlin, 1990). [34] R. Kubo, Statistical-mechanical theory of irreversible processes. I. general theory and simple applications to magnetic and conduction problems, Journal of the Phys-ical Society of Japan 12 , 570 (1957). [35] F. Becca and S. Sorella, Quantum Monte Carlo Ap-proaches for Correlated Systems (Cambridge University Press, Cambridge, 2017). [36] A. D. McLachlan, A variational solution of the time-dependent Schr¨ odinger equation, Molecular Physics 8, 39 (1964). [37] J. Haegeman, J. I. Cirac, T. J. Osborne, I. Piˇ zorn, H. Ver-schelde, and F. Verstraete, Time-dependent variational principle for quantum lattices, Physical Review Letters 
+
+107 , 070601 (2011). [38] S. Sorella, Green function Monte Carlo with stochastic reconfiguration, Physical Review Letters 80 , 4558 (1998). [39] J. Stokes, J. Izaac, N. Killoran, and G. Carleo, Quantum natural gradient, Quantum 4, 269 (2020). [40] L. Hackl, T. Guaita, T. Shi, J. Haegeman, E. Demler, and J. I. Cirac, Geometry of variational methods: dynamics of closed quantum systems, SciPost Physics 9, 48 (2020). [41] D. P. Kingma and J. Ba, Adam: A method for stochas-tic optimization, arXiv preprint arXiv:1412.6980 (2015), presented at ICLR 2015. [42] F. Vicentini, D. Hofmann, A. Szab´ o, D. Wu, C. Roth, C. Giuliani, G. Pescia, J. Nys, V. Vargas-Calder´ on, N. Astrakhantsev, and G. Carleo, NetKet 3: Machine learning toolbox for many-body quantum systems, Sci-Post Physics Codebases , 7 (2022). [43] D.-L. Deng, X. Li, and S. Das Sarma, Quantum entan-glement in neural network states, Physical Review X 7,021021 (2017). [44] A. Chen and M. Heyl, Empowering deep neural quantum states through efficient optimization, Nature Physics 20 ,1476 (2024). [45] L. L. Viteritti, R. Rende, and F. Becca, Transformer vari-ational wave functions for frustrated quantum spin sys-tems, Physical Review Letters 130 , 236401 (2023). [46] H.-P. Breuer and F. Petruccione, The Theory of Open Quantum Systems (Oxford University Press, 2002).

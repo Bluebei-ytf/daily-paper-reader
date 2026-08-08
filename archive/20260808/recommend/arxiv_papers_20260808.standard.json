@@ -1,0 +1,208 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-08-08T21:02:17.738613+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 2,
+    "deep_cap": 6,
+    "deep_selected": 2,
+    "quick_candidates": 3,
+    "quick_skim_target": 11,
+    "quick_selected": 3
+  },
+  "deep_dive": [
+    {
+      "id": "2608.00178v1",
+      "source": "arxiv",
+      "title": "Neural Quantum States for Nuclear Magnetic Resonance Spectroscopy",
+      "abstract": "Predicting a nuclear magnetic resonance (NMR) spectrum from first principles requires propagating a quantum state of dimension $2^N$ for $N$ coupled spins, which becomes intractable beyond larger $N$. We benchmark Neural Quantum States (NQS), a class of variational quantum states expressed as an artificial neural network, as an alternative representation for this problem. Using two propagation methods, the Time-Dependent Variational Principle (TDVP) and projected time-dependent Variational Monte Carlo (p-tVMC), we compute the $^1$H spectra of four ($2 \\to 5$ spins) experimentally parameterized molecules. TDVP reproduces all line positions and intensities with average spectral mean squared errors of $<10^{-3}$; p-tVMC reproduces the same features, with accuracy determined by its per-step optimization parameters. One dominant obstacle to larger systems is the steep growth of the number of integration steps with spectral bandwidth, which can be removed by propagating in the interaction frame of the chemical-shifted Hamiltonian. Retaining the same accuracy, this reduces the number of integration steps roughly eightfold for the 3-spin system and by at least an order of magnitude for the 4- and 5-spin systems, and it enables a 14-spin molecule (sucrose) to be accurately propagated via Monte Carlo sampling.",
+      "authors": [
+        "Bharadwaj Chowdary Mummaneni",
+        "Bo Xing"
+      ],
+      "primary_category": "cond-mat.dis-nn",
+      "categories": [
+        "cond-mat.dis-nn"
+      ],
+      "published": "2026-07-31T18:03:37+00:00",
+      "link": "https://arxiv.org/pdf/2608.00178v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "neural quantum states as machine-learning representation for predicting NMR spectra",
+      "llm_evidence_cn": "将神经量子态作为神经网络变分表示，用于预测核磁共振谱",
+      "llm_evidence": "将神经量子态作为神经网络变分表示，用于预测核磁共振谱",
+      "canonical_evidence": "将神经量子态作为神经网络变分表示，用于预测核磁共振谱",
+      "llm_tldr_en": "Benchmarks Neural Quantum States (NQS) with TDVP and p-tVMC for predicting 1H NMR spectra of molecules with 2 to 5 coupled spins, showing TDVP reproduces peak positions and intensities with spectral mean squared errors below 1e-3.",
+      "llm_tldr_cn": "从头预测NMR谱需要传播随自旋数指数增长的量子态，传统方法难以扩展。本文将神经量子态(NQS)作为变分表示，用时间依赖变分原理(TDVP)和投影tVMC两种传播方法计算4个实验参数化分子的1H谱。结果显示TDVP能以平均谱均方误差小于1e-3复现所有谱线位置和强度，p-tVMC也能准确复现关键特征，展示了神经网络量子态作为光谱模拟工具的有效性。",
+      "llm_tldr": "从头预测NMR谱需要传播随自旋数指数增长的量子态，传统方法难以扩展。本文将神经量子态(NQS)作为变分表示，用时间依赖变分原理(TDVP)和投影tVMC两种传播方法计算4个实验参数化分子的1H谱。结果显示TDVP能以平均谱均方误差小于1e-3复现所有谱线位置和强度，p-tVMC也能准确复现关键特征，展示了神经网络量子态作为光谱模拟工具的有效性。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.03280v1",
+      "source": "arxiv",
+      "title": "AccelNet: Exact backward-compatible acceleration of polynomial angular descriptors through Cartesian moment factorization",
+      "abstract": "We present AccelNet, an exact, backward-compatible method for accelerating existing trained aenet and n2p2 neural-network potentials without retraining. For angular terms with separable one-neighbor weights and a finite polynomial dependence on $\\cos θ$, the method exploits their hidden finite-rank structure to replace explicit neighbor-pair loops by one-neighbor Cartesian moments. AccelNet reads models trained with either package and reproduces their descriptors, energies, and analytic forces to floating-point roundoff. We verified this equivalence for H$_2$O and TiO$_2$ models and tested the resulting potentials in LAMMPS molecular-dynamics simulations. The implementation, model-conversion tools, and LAMMPS interfaces are released as open-source software.",
+      "authors": [
+        "Yuki Nagai"
+      ],
+      "primary_category": "cond-mat.mtrl-sci",
+      "categories": [
+        "cond-mat.mtrl-sci",
+        "physics.comp-ph"
+      ],
+      "published": "2026-08-04T07:56:00+00:00",
+      "link": "https://arxiv.org/pdf/2608.03280v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "exact backward-compatible acceleration of trained neural-network potentials for molecular dynamics",
+      "llm_evidence_cn": "对已训练神经网络势能进行精确向后兼容加速，用于分子动力学",
+      "llm_evidence": "对已训练神经网络势能进行精确向后兼容加速，用于分子动力学",
+      "canonical_evidence": "对已训练神经网络势能进行精确向后兼容加速，用于分子动力学",
+      "llm_tldr_en": "AccelNet exploits finite-rank structure of angular polynomial descriptors to replace neighbor-pair loops with one-neighbor Cartesian moments, reproducing aenet/n2p2 energies and forces to roundoff and enabling faster LAMMPS molecular dynamics.",
+      "llm_tldr_cn": "已训练的神经网络势能计算常受角向描述符显式邻居循环开销限制。AccelNet利用可分单邻居权重和有限多项式结构，将邻居对循环改写为单邻居笛卡尔矩，从而在不重训练的前提下精确加速aenet和n2p2势。对H2O与TiO2模型的验证表明能量和解析力达到浮点舍入精度，并在LAMMPS分子动力学模拟中测试通过，为已有ML势提供了向后兼容的加速工具。",
+      "llm_tldr": "已训练的神经网络势能计算常受角向描述符显式邻居循环开销限制。AccelNet利用可分单邻居权重和有限多项式结构，将邻居对循环改写为单邻居笛卡尔矩，从而在不重训练的前提下精确加速aenet和n2p2势。对H2O与TiO2模型的验证表明能量和解析力达到浮点舍入精度，并在LAMMPS分子动力学模拟中测试通过，为已有ML势提供了向后兼容的加速工具。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2608.06253v1",
+      "source": "arxiv",
+      "title": "MetaboLLM: a metabolomics-specialized large language model for biochemical knowledge integration and predictive metabolite graph construction",
+      "abstract": "Metabolomics knowledge is distributed across heterogeneous resources and remains difficult to translate into predictive representations. We developed MetaboLLM, a metabolomics-specialized large language model adapted through continual pretraining, supervised fine-tuning, and structured retrieval, together with MetaboLLM-GIN, which converts generated biochemical descriptions into metabolite graphs for patient-level prediction using a graph isomorphism network. Across four backbone families, MetaboLLM outperformed corresponding base and medically adapted models on metabolomics knowledge, relational, and description tasks, and transferred to an external public benchmark. MetaboLLM-GIN achieved the highest AUC for stress hyperglycemia prediction after coronary artery bypass grafting (0.8616) and postmenopausal hormone-regimen classification (0.8123), outperforming conventional models, alternative graph constructions, and graphs generated from unadapted or non-retrieval LLM configurations. Model interpretation further produced biologically meaningful findings in both applications. These results show that domain-specialized language models can organize heterogeneous biochemical knowledge into predictive and interpretable metabolite graph representations.",
+      "authors": [
+        "Dohyun Ku",
+        "Min Gu Kwak",
+        "Francisco J. Pasquel",
+        "Jing Li"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-08-06T16:42:34+00:00",
+      "link": "https://arxiv.org/pdf/2608.06253v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "specialized large language model with continual pretraining for metabolomics",
+      "llm_evidence_cn": "用于代谢组学的持续预训练专用大语言模型",
+      "llm_evidence": "用于代谢组学的持续预训练专用大语言模型",
+      "canonical_evidence": "用于代谢组学的持续预训练专用大语言模型",
+      "llm_tldr_en": "Metabolomics knowledge is heterogeneous. MetaboLLM adapts LLMs via continual pretraining, supervised fine-tuning, and structured retrieval, then converts generated biochemical descriptions into metabolite graphs for patient prediction with GIN, outperforming baselines across four backbones and transferring to external benchmarks.",
+      "llm_tldr_cn": "代谢组学知识分散于异构资源，难以转化为可预测表示。该文提出代谢组学专用大语言模型MetaboLLM，通过持续预训练、监督微调与结构化检索适配多个骨干模型；随后将生成生化描述转化为代谢物图，并用图同构网络MetaboLLM-GIN进行患者水平预测。在四类骨干模型上，MetaboLLM在代谢组学知识、关系与描述任务上均超过基线和医学适配模型，并成功迁移到外部基准。这为面向生化领域的LLM预训练与微调提供了实用范例。",
+      "llm_tldr": "代谢组学知识分散于异构资源，难以转化为可预测表示。该文提出代谢组学专用大语言模型MetaboLLM，通过持续预训练、监督微调与结构化检索适配多个骨干模型；随后将生成生化描述转化为代谢物图，并用图同构网络MetaboLLM-GIN进行患者水平预测。在四类骨干模型上，MetaboLLM在代谢组学知识、关系与描述任务上均超过基线和医学适配模型，并成功迁移到外部基准。这为面向生化领域的LLM预训练与微调提供了实用范例。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "large language models for chemistry applications",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2608.00608v1",
+      "source": "arxiv",
+      "title": "From field-scale to large-scale spectral libraries: Tabular foundation models in soil spectroscopy",
+      "abstract": "Visible and near-infrared (vis-NIR) and mid-infrared (MIR) spectroscopy enable rapid, cost-effective prediction of soil properties. Yet, translating high-dimensional, highly collinear spectra into accurate soil property predictions remains challenging, particularly when employing machine learning. We systematically investigated regression models and dimensionality reduction approaches for spectroscopic modeling across 85 regression tasks from open benchmark datasets in pedometrics spanning field-scale digital soil mapping and a global soil spectral library. We compared an in-context learning tabular foundation model (TabPFN), a convolutional neural network (CNN), rule-based regression (Cubist), Random Forest, and partial least squares regression (PLSR) using full spectra as well as features derived from principal component analysis (PCA) and partial least squares (PLS) latent variables. TabPFN consistently delivered the best overall performance across scales, including large spectral library tasks with tens of thousands of soil samples. Notably, TabPFN applied directly to full spectra already surpassed all classical baselines, showing that explicit dimensionality reduction is not strictly required for strong performance. Further improvements were achieved through PLS, which proved to be an effective dimensionality reduction strategy for all models. Combining PLS latent variables with TabPFN yielded the best predictions overall. Our findings provide evidence-based guidance for spectroscopic calibration model selection across operational scales, demonstrating that the long-standing advantages of PLSR and modern tabular foundation models complement each other in chemometrics.",
+      "authors": [
+        "Viacheslav Barkov",
+        "Jonas Schmidinger",
+        "Robin Gebbers",
+        "Martin Atzmueller"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-08-01T11:56:50+00:00",
+      "link": "https://arxiv.org/pdf/2608.00608v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "systematically evaluates tabular foundation models for spectral regression in soil spectroscopy",
+      "llm_evidence_cn": "系统性评估表格基础模型在土壤光谱回归上的表现",
+      "llm_evidence": "系统性评估表格基础模型在土壤光谱回归上的表现",
+      "canonical_evidence": "系统性评估表格基础模型在土壤光谱回归上的表现",
+      "llm_tldr_en": "This paper benchmarks tabular foundation models against CNNs and classical regressors on 85 soil spectroscopy tasks, testing dimensionality reduction and in-context learning across field-scale and global spectral libraries.",
+      "llm_tldr_cn": "土壤近红外/中红外光谱预测面临高维共线和小样本挑战。该论文在85个回归任务、从田间尺度到全球光谱库的多组开放基准上，系统比较了表格基础模型（TabPFN）、卷积神经网络与经典回归/降维方法。结果显示基础模型在多个任务上具有竞争力，也揭示其在谱学数据上的适用边界。这项工作为高维光谱建模中的基础模型选择提供了系统证据。",
+      "llm_tldr": "土壤近红外/中红外光谱预测面临高维共线和小样本挑战。该论文在85个回归任务、从田间尺度到全球光谱库的多组开放基准上，系统比较了表格基础模型（TabPFN）、卷积神经网络与经典回归/降维方法。结果显示基础模型在多个任务上具有竞争力，也揭示其在谱学数据上的适用边界。这项工作为高维光谱建模中的基础模型选择提供了系统证据。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "chemical foundation model pre-training and transfer learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.04942v1",
+      "source": "arxiv",
+      "title": "CheMLFlow: An Open-Source Platform for Cheminformatics and Materials Informatics Applications",
+      "abstract": "CheMLFlow is an open-source platform for building and executing end-to-end, high-throughput, and agentic workflows for scientific and technological applications. CheMLFlow targets a common bottleneck in scientific machine learning development, where researchers often need to assemble data acquisition, curation, representation, model training, validation, screening, interpretation, and reporting into a reproducible pipeline, even when their primary research contribution concerns only one stage. CheMLFlow provides modular workflow components, ready-to-run reference pipelines, standardized artifacts, and evaluation outputs that reduce orchestration overhead and support benchmarking across methods and datasets. The platform is designed to be extensible, reproducible, and automation friendly, with pluggable representations and models, deterministic splits, explicit run artifacts, batch execution, and report generation. As scientific software increasingly moves toward agent assisted experimentation, CheMLFlow's configuration driven workflows and structured outputs also provide a practical interface for coding agents to help users construct experiments, inspect results, and summarize findings under human supervision. This article describes the system architecture, core workflows, and benchmarks that reach literature performance for quantum mechanical, physicochemical and bioactivity property prediction, and use cases involving time series datasets demonstrating applications beyond molecular chemistry datasets.",
+      "authors": [
+        "Brendan Smith",
+        "Susana Lopez-Moreno",
+        "Eric Dolores-Cuenca",
+        "Sangil Kim",
+        "Jose L. Mendoza-Cortes",
+        "Nijamudheen Abdulrahiman"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cond-mat.mtrl-sci",
+        "cond-mat.other",
+        "cs.AI",
+        "physics.chem-ph"
+      ],
+      "published": "2026-08-05T15:08:29+00:00",
+      "link": "https://arxiv.org/pdf/2608.04942v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "open-source platform for agentic cheminformatics workflows with evaluation outputs",
+      "llm_evidence_cn": "面向智能体化学信息学工作流的开源平台，提供评估输出",
+      "llm_evidence": "面向智能体化学信息学工作流的开源平台，提供评估输出",
+      "canonical_evidence": "面向智能体化学信息学工作流的开源平台，提供评估输出",
+      "llm_tldr_en": "CheMLFlow is an open-source platform for building end-to-end high-throughput and agentic workflows in cheminformatics and materials informatics, providing modular components, reference pipelines, standardized artifacts, and evaluation outputs for reproducible benchmarking.",
+      "llm_tldr_cn": "科学家在化学与材料机器学习开发中常被数据获取、清洗、表示、训练、验证、筛选与报告等流水线搭建所累。CheMLFlow是一个开源平台，提供模块化工作流组件、可运行参考流水线、标准化工件与评估输出，便于构建端到端、高通量甚至智能体化的科学工作流。它显著降低编排开销，支持跨方法与数据集的基准测试。对于需要系统评估AI4Chem系统的研究，该平台提供基础设施支撑。",
+      "llm_tldr": "科学家在化学与材料机器学习开发中常被数据获取、清洗、表示、训练、验证、筛选与报告等流水线搭建所累。CheMLFlow是一个开源平台，提供模块化工作流组件、可运行参考流水线、标准化工件与评估输出，便于构建端到端、高通量甚至智能体化的科学工作流。它显著降低编排开销，支持跨方法与数据集的基准测试。对于需要系统评估AI4Chem系统的研究，该平台提供基础设施支撑。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "What are the latest advances in retrosynthesis, synthesis planning, and AI agents for chemistry, and how are these systems evaluated?",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
