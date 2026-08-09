@@ -1,0 +1,865 @@
+Title: 2608.05388v1.pdf
+
+URL Source: https://arxiv.org/pdf/2608.05388v1
+
+Published Time: Fri, 07 Aug 2026 00:12:11 GMT
+
+Number of Pages: 27
+
+Markdown Content:
+1
+
+# Next Generation of Ultra-Coarse-Graining: Self-Consistent Inference of Critical Internal States 
+
+# Weizhi Xue, Xiao Shuai, Gregory A. Voth* 
+
+Department of Chemistry, Chicago Center for Theoretical Chemistry, James Franck Institute, and Institute for Biophysical Dynamics, The University of Chicago, Chicago, IL 60637, USA *Corresponding Author: gavoth@uchicago.edu 
+
+# Abstract 
+
+Bottom-up coarse-graining can systematically expand the length and effective time scales accessible to molecular dynamics (MD) simulations, but the information loss during coarse-graining can prevent an accurate incorporation of the multistate phenomena common in complex biomolecular dynamics. The Ultra-Coarse-Graining (UCG) method projects the influence of discrete “internal states” onto the coarse-grained (CG) mapped molecules. These implicit, “quantum-like” extended degrees of freedom can significantly extend the expressiveness of the CG model. Previous UCG methods relied either on explicit Monte-Carlo-like sampling of such internal states or a mixed ensemble approach in the rapid local equilibrium (RLE) limit. In RLE-UCG, the internal state updates depend on user-defined collective variables (CVs, e.g., local density), and a local approximation that will break down for correlated internal states within and between CG molecules. We present here Self-Consistent UCG (SC-UCG), an integrated methodology that utilizes the underlying UCG interactions directly for internal state designation, without designing collective variables in the CG ensemble. For simulations, the internal state probabilities are self-consistently determined via message-passing in simulation time. We also enhance the RLE Hamiltonian with the Bethe approximation plus AI-based inference to allow explicit internal state correlations between UCG beads. For forcefield training, we develop Multilayer Internal State Consistency (MISC), a machine-learning-based method derived from the relative entropy minimization principle that does not require iterative sampling of the intermediate forcefields. We then apply SC-UCG to a model tetramer system with a second-order symmetry-breaking phase transition from the supercritical racemic fluid into subcritical D-rich and L-rich fluids. We show that SC-UCG can capture collective switching events of internal UCG states in the subcritical region, and it exhibits temperature transferability by recapitulating the phase transition, even if trained from a single-temperature dataset. 
+
+# I. Introduction 
+
+Molecular Dynamics (MD) is a well-established sampling technique for simulation of material, chemical, and biomolecular systems. 1 However, its computational capacity is constrained by the computational resources available. Coarse-grained (CG) forcefields (FFs) provide a systematic way to directly reduce the number of integrable degrees of freedom (DOFs). 2–7 Bottom-up CG methods, including the Multiscale Coarse Graining (MS-CG), 8–10 the Iterative Boltzmann Inversion (IBI), 11,12 and the Relative Entropy Minimization (REM) framework, 13–16 all aim to derive such CG FFs from a rigorous perspective, solely from the microscopic all-atom data. On the other hand, top-down CG methods, such as the Martini approach 6,7 , typically fit CG FFs from experimental data or other observables. An inevitable feature of all 2CG methods is some loss of more detailed information, which can lead to the following problems: (1) CG FFs trained for one species may not apply to another species (molecular transferability); (2) CG FFs trained at one temperature and pressure condition may not apply to other temperatures or pressures (temperature or thermodynamic transferability); (3) a loss of some realistic properties and “missing entropy” 17–21 from the fast DOFs that have been effectively integrated out; and (4) for inherently multistate behavior in a particular system, the CG distribution may lose its ability to correctly sample some states or sample them not at all (tied to the “representability problem”). 4,22 
+
+The Ultra-Coarse-Graining (UCG) approach was introduced to address problem (4) and partly problem (3) by introducing auxiliary variables into the CG forcefield that represent select internal degrees of freedom. 23– 26 Sometimes the CG atomistic system can contain certain key features – such as torsional angles not explicitly resolved in the coarse-grained molecule – then these may in turn give rise to slowly-transitioning DOFs. In these cases, the UCG approach preserves the effects of those DOFs in the form of discrete-valued auxiliary variables, also referred to as “internal states,” having a certain isomorphism with quantum mechanics. UCG particles thus possess a discrete DOF under this setting, and a particle in internal state 𝑠 !
+
+usually interacts with other particles differently when they are in another internal state 𝑠 !" ≠ 𝑠 !. The model distribution for the CG system is no longer a single Boltzmann ensemble under a single CG forcefield, but rather a mixed ensemble from different effective interactions. 24,25 This approach is theoretically connected with mixed-ensemble free energy sampling techniques such as Integrated Hamiltonian Sampling 27 and Integrated Boltzmann Sampling, 28–30 and have been applied in free energy calculations. To date, two limiting cases for UCG modeling have been developed in our group. For the slow or rare state transition limit, 24 Monte-Carlo switching of the discrete internal states has been applied to rare events, e.g., for large biomolecules, such as the ATP/ADP nucleotide state changes in actin filaments 31 and the inactive/active conformational selection of the HIV-1 virus capsid proteins during capsid assembly. 32,33 
+
+The slow transition UCG approach has also been applied to simpler interacting CG liquid systems such as 1,2-dichloromethane to illustrate the approach. 24 In such cases, the transitions between internal UCG states happen as rare events, which correspond to anti-gauche torsional transitions at the all-atom level. The effective UCG state switches happen on a much larger timescale than a CG MD timestep, during which the faster orthogonal DOFs can relax. 23,24 We shall refer to this method as Monte-Carlo UCG (MC-UCG). The UCG internal state fast-transition limit, on the other hand, treats the internal state of a CG site as a fast DOF that exists in local quasi-equilibrium with its neighboring sites. 25,26 In these scenarios, instead of having discrete internal state labels, each UCG particle exists in a mixed state according to some internal state probability (ISP) function. The orthogonal DOFs evolve under a free energy surface of these internal states, conditioned on other DOFs. This method is called UCG with rapid local equilibrium (RLE-UCG). RLE-UCG has been successfully applied in modeling liquid-gas equilibrium and self-assembly of the lipid bilayer of 1,2-dipalmitoyl-sn-glycero-3-phosphocholine (DPPC). The REM approach 13–16 has also been extended to accommodate UCG modeling, especially for RLE-UCG. 26 
+
+As powerful as MC-UCG and RLE-UCG have proven to be so far, they have only been applied to systems in which the internal states have little or no correlation with other internal states in other UCG sites. Correlation-induced cooperativity exists, among other possibilities, for conformational changes, cooperative chemical reactions, and phase transitions, such as the ripple phase behavior in biological membrane systems 34–37 and chiral symmetry breaking in certain organic materials. 38,39 For example, a tetramer model system has been demonstrated to exhibit a chiral-racemic transition in its fluid phase, in which the transition of chiral states of each molecule is highly correlated across the system in the subcritical region. 40–42 This critical transition falls within the 3D Ising universality class. We will show here that such 3phase transitions can be described by the MC-UCG approach if adequately sampled, as it directly samples the internal state as a discrete DOF. The current RLE-UCG approach, however, relies on two premises that prevents it from sampling such phenomena. First, the ISP functions are functions of CG collective variables (CVs) – which means the current RLE-UCG forcefield is geometry-based – and contains its own parameters to optimize. This assumes that the identification of the internal state of a CG site in the atomistic ensemble is inherently dependent on neighboring CG sites, so the internal states are no longer “internal” – they are “external”. The Internal State Regression (ISR) method 26 proposes a systematic way for the optimization of extra parameters in the ISP functions, but it still relies on geometry-based CVs. A more serious problem of such CV selection is that it may break the symmetry of the CG forcefield if the broken symmetry in the configurations arises from an all-atom potential with such symmetry. Second, RLE-UCG introduces a very simple mean-field (MF) approximation to the effective Hamiltonian by decoupling the joint distribution of all internal states in the system into products of individual ISP functions. This eliminates the probabilistic correlation between pairs or cliques of UCG particles. Therefore, although RLE-UCG is good at describing well-defined phase separation systems exhibiting low fluctuations, 43 such as the liquid-gas interface, it is currently unable to handle phase transitions and more highly correlated collective fluctuations in internal UCG state space without special model tuning. In this work, we introduce the Self-Consistent UCG (SC-UCG) method, which aims to address these two limitations in the current RLE-UCG approach and provide a unified framework for UCG modeling in both slow-mixing and fast-mixing limits. In line with MC-UCG, we treat the internal states as discrete-valued degrees of freedom that do not explicitly depend on hand-selected geometric collective variables or descriptors from its neighboring environment. In line with RLE-UCG, we adopt the mixed Hamiltonian formalism and derive, via variational principle, the definition of ISP of a CG site in the CG ensemble, which naturally results in a message-passing form in Graph Neural Networks (GNNs), 44–46 with the UCG forcefield directly acting as trainable weights and the inverse temperature 𝛽 controlling the steepness in internal state assignment. In other words, we let the UCG interactions directly determine the internal state probabilities in the UCG ensemble, so a choice of a CV is no longer required in the CG ensemble. We further enhance the representability of the RLE-UCG Hamiltonian by introducing explicit pairwise internal state correlations with the Bethe-Peierls approximation. 47,48 For forcefield training, we derived the Multilayer Internal State Consistency (MISC) training framework directly from the relative entropy framework on the joint distribution of positions and internal states. MISC is a self-supervised learning method that optimizes forcefields through graph backpropagation on the atomistic data, and it does not require iterative sampling of CG forcefields in each iteration of optimization. We then apply the SC-UCG simulations and the MISC training framework to a chiral-racemic phase transition system. 41 We show that SC-UCG simulation is capable of capturing large-scale, system-wide fluctuations and correlations in internal states near the critical point. We show that, even if the interactions are learned from one temperature only, the SC-UCG model can describe phase transitions in internal state space due to its natural inclusion of temperature and forcefields in the ISP function, and it exhibits temperature transferability even if the forcefield training is only conducted for one temperature. 
+
+# II. Theory and Methodology 
+
+A. Self-Consistent Inference of Internal States in Ultra-Coarse-Graining 
+
+We assume the all-atom (AA) configurations are sampled from the equilibrium Boltzmann distribution 
+
+𝑝 ## (𝑟 $), derived from the all-atom potential 𝑢 ## (𝒓 $), such that 𝑝 ## (𝒓 $) ∝ 𝑒 %&' !! (𝒓 "), where 𝛽 = +,#- .4In bottom-up coarse-graining (CG), we use a mapping operator 𝑀 that maps all-atom coordinates 𝒓 $ to CG coordinates 𝑹 ., and aim to derive, from the obtained AA data, a CG forcefield, 𝑢 /0 (𝑹 .), that acts upon this reduced set of CG coordinates. More generally, we aim to obtain a CG model distribution 𝑝 /0 (𝑹 .), as close to the all-atom distribution, projected onto the CG maps, as possible. Therefore, the most generalized bottom-up CG objective writes as 
+
+𝜽 ∗ = argmin 𝜽 𝐷[𝑝 ## (𝒓 $)||𝑝 /0 (𝑀(𝒓 $)|𝜽)] (1) 
+
+where 𝐷 represents a generalized distance metric. It can be the Kullback-Leibler (KL) divergence used in REM, or the Fisher divergence used in Force-Matching. Usually, when one single CG forcefield 𝑢 /0 (𝑹 .)
+
+is concerned, we also assume Boltzmann sampling with this CG forcefield: 𝑝 /0 (𝑹 .) ∝ 𝑒 %&' $% 3𝑹 &5, so that normal MD simulation with the CG forcefield should recover the all-atom distribution projected onto the CG variables. When the all-atom data is inherently multimodal, the representability given by one single CG forcefield, if that forcefield is approximate, may not suffice. The UCG theory broadly assumes that the CG distribution is a mixed ensemble (or integrated ensemble , or extended ensemble ) along some (possibly abstract) additional degrees of freedom with an index, 𝜎 , such that 
+
+𝑝 /0 (𝑹 .) ∝ = 𝑒 %&' $% 3𝑹 &,75 7
+
+(2) 
+
+These additional degrees of freedom are called “internal states” in the UCG approach. They can either be possessed by each CG particle or by groups of CG particles (such as whole molecules). The effective CG interaction in the RLE limit of UCG theory is now a conditional free energy: 
+
+𝑢 89: (𝑹 .) = − 1𝛽 log = 𝑒 %&' $% 3𝑹 &,75 7
+
+(3) 
+
+In a mixed ensemble, one can define the posterior distribution of these additional degrees of freedom: 
+
+𝑝(𝜎|𝑹 .) = 𝑒 %&' $% 3𝑹 &,75 
+
+∑ 𝑒 %&' $% (𝑹 &,7) 7
+
+(4) 
+
+Using thermodynamic properties, the conditional free energy 𝑢 89: (𝑹 .) can be decomposed into its (conditional) enthalpic and (also conditional) entropic contributions: 
+
+𝑢 89: (𝑹 .) = 〈𝐸(𝑹 .)〉 − 𝑇𝑆(𝑹 .) = = 𝑝(𝜎|𝑹 .)𝑢 /0 (𝑹 ., 𝜎) 
+
+> 7
+
++ 𝑘 ;𝑇 = 𝑝(𝜎|𝑹 .) log 𝑝(𝜎|𝑹 .)
+
+> 7
+
+(5) 
+
+It can be shown that the definition of the posterior in Eq. (4) is a variational optimum for Eq. (5) if we variationally minimize 𝑢 89: (𝑹 .) with the constraint ∑ 𝑝(𝜎|𝑹 .)7 = 1 .For per-particle scenarios in which each UCG particle 𝑖 possesses its own internal state over 𝑞 possible states in total, as the system size increases, the number of configurations of 𝜎 = (𝑠 +, … , 𝑠 .) becomes exponentially large, often prohibiting efficient sampling and leading to extreme computational demands if one were to naively try to explicitly enumerate all of the UCG states. However, in such cases, simplification to the posterior, 𝑝(𝜎|𝑹 .), is needed. In UCG-RLE, it is often assumed that the internal state of each particle is only immediately affected by its neighbors, and they adjust rapidly in response to fluctuations in neighboring environments to maintain local equilibrium. Therefore, a mean-field type decomposition can be used: 5
+
+𝑝(𝜎|𝑹 .) = Q 𝑝(𝑠 !|𝑹 .)
+
+> !
+
+(6) 
+
+Furthermore, assuming pairwise decomposability for the state-specific forcefield, given by 
+
+𝑢 /0 (𝑹 ., 𝜎) = = ℎ !,< '(𝑹 .)
+
+> !
+
++ = 𝑢 !=,< '<(T𝑅 != V
+
+> 〈!,=〉
+
+(7) 
+
+we can write the mixed Hamiltonian in UCG-RLE as 
+
+𝑢 89: (𝑹 .) = = 𝑝 !(𝑠 !|𝑹 .) Xℎ !,< ' + 1𝛽 log 𝑝 !(𝑠 !|𝑹 .)Y 
+
+> !,< '
+
++ = = 𝑝 !(𝑠 !|𝑹 .)𝑝 =T𝑠 =Z𝑹 .V
+
+> <'<(
+
+𝑢 !=,< '<(T𝑅 != V
+
+> 〈!,=〉
+
+(8) 
+
+This expression is a mean-field free energy functional integrated over internal states, conditioned on the system configuration. For more compact notation, for each particle 𝑖 , we represent the single-particle 
+
+internal state probability (ISP) functions with a vector 𝒑 !; likewise, we have the chemical potentials with vector 𝒉 ! and UCG pairwise interaction matrix 𝑼 != . We can therefore write this mixed Hamiltonian in a matrix form 
+
+𝑈 @AB = = 𝒑 !C(𝒉 ! + 1𝛽 log 𝒑 !)
+
+> !
+
++ = 𝒑 !C𝑼 != 𝒑 =〈!,=〉 
+
+(9) 
+
+Up to this point, no new methods have been established. It is useful to point out that in the current UCG-RLE implementations, the ISP functions are designed functions dependent on real space CVs in both AA space and CG space (see Fig. 1a). For any phenomenon of interest, such as liquid-gas phase separation, one needs to first identify the CV in CG space, select a form for the ISP functions, and train, preferably via Internal State Regression (ISR), the additionally introduced parameters in these ISP functions. Such CV dependence may break the desired symmetry implied in the CG model if the selected CV contains noninvariant components to symmetry operations. For example, defining the CG CV in terms of its angle to the 𝑧 -axis direction introduces 𝑧 -axis dependence into the ISP and thus the CG forcefield, which breaks the rotational symmetry of the forcefield (although the induced physical phenomena can and often have broken symmetry). Moreover, because of the CV dependence, the force in such simulations contains additional ISP gradients ∇𝑹 𝒑 !(𝑹) , which adds an additional computational cost. Therefore, removing such CV dependence from the CG model is desired. Hence, following the Lagrange variational method in Equations (4) and (5), we employ variational minimization of 𝑈 @AB with respect to the ISP vector 𝒑 ! with a normalization constraint can be performed with an Lagrangian multiplier L, given by 
+
+𝐿 = 𝑈 @AB − = 𝜆 ! e= 𝑝 !,< '
+
+> <'
+
+− 1f 
+
+> !
+
+(10) 
+
+𝛿𝐿 𝛿𝑝 !,< '
+
+= 𝛿𝐿 𝛿𝜆 !
+
+= 0, ∀𝑖 (11) 
+
+This yields a self-consistent equation (SCE) in a message-passing (MP) form: 
+
+𝒑 ! = 𝜎 & e𝒉 ! + = 𝑼 != 𝒑 ==∈.(!) 
+
+f (12) 6where we define [𝜎 &(𝑥)] ! = E)*+ '
+
+> ∑ E )*+ ((
+
+as the softmax function for an arbitrary vector 𝒙 , with an inverse temperature 𝛽 = 1/𝑘 ;𝑇 , in correspondence with the regular vector-valued softmax function [𝜎(𝑥)] ! =
+
+> E)+ '
+> ∑ E )+ ((
+
+. In two-state scenarios and assuming 𝑝 ! = 𝑝 = = 𝑝̅ , one immediately recovers the classical mean-field solution of the Ising model. Of course, in the UCG scenario, we do not need any further simplifications to this form to prevent limiting its applicability. It is particularly useful to understand this framework in the terms of Graph Neural Networks (GNNs). 49,50 
+
+In fact, each iteration of the self-consistent equation: 
+
+𝒑 !(GH+) ← 𝜎 & e𝒉 !(G) + = 𝑼 != (GH+) T𝑅 != |𝜽V𝒑 =(G) =∈.(!) 
+
+f (13) 
+
+represents a message-passing GNN (MP-GNN) layer. The nodes are particles, the edge connections are given by the neighbor list, and the trainable weights are directly the forcefield parameters. The total energy of the system is given by weighted summation over node and edge features. The message from particle 𝑗 to 
+
+𝑖 is the averaged interaction 𝑼 != 𝒑 = it exerts onto each possible internal state of 𝑖 ; the aggregation method is the summation; the node update function is a temperature-dependent sigmoid activation. We shall denote one such layer as one Internal State Convolution (ISC) layer, and we rewrite the update from 𝑛 iterations as q𝑝 !($) r ← 𝜎 $ sq𝑝 !(I) r t𝜽u , where we denote all parameters to learn as 𝜽 . In ISC layers, each trained UCG forcefield directly acts as scores for node classification. Therefore, we can also call this architecture an 
+
+Internal State Classifier (ISC) . A generalized graphical structure is depicted in Fig. 1a. 7
+
+FIG. 1. Overview of SC-UCG simulation. (a) Message construction in SC-UCG compared with RLE-UCG. RLE-UCG directly uses purely geometric edge attributes {𝑟 != } for message passing, while SC-UCG uses the state-wise interaction matrix q𝒖 != s𝑟 != (G) ur and node probabilities of neighbors q𝒑 =(G) r for message passing. (b) What a timestep of simulation looks like in SC-UCG simulations. Inference of internal states by the ISC layer works in tandem with the integration scheme (e.g. Velocity Verlet here). (c) SC-UCG unifies different internal state update regimes in current UCG methods. For strict SCE convergence, each internal state probability (ISP) update requires multiple ISC passes until SCE convergence, before the simulation can move on to the next timestep. For fast mixing dynamics such as in RLE-UCG, 1 layer of ISC suffices within one MD timestep. For slow mixing dynamics where internal state transitions in individual UCG particles are rare events, one can allow 𝑁 G MD relaxation before next ISC pass. 
+
+During UCG simulation, for perfect self-consistent convergence, one would expect multiple iterations within one MD step for strict self-consistent convergence. Doing so, however, adds an extra burden on processor communication and computation. We instead stack the ISC layers in the arrow of time directly during simulations (see Fig. 1b). In practice, message aggregation is conducted during pairwise force computation, and the node update is performed after force computation. Stacking too many ISC layers for SCE convergence is known to produce “over-smoothing problem” in deep MP-GNNs 49 . Depending on the specific system of interest, the “over-smoothing” problem may not be a problem in realistic systems – but rather it embodies the exact “rapid local equilibrium” the RLE-UCG 8method itself assumes and intends to simulate. Usually, the SCE convergence is typically much faster than significant real space configuration changes in MD, so our use of 1 ISC layer per MD step falls within the fast-mixing RLE category. On the other hand, one can also simulate the slow mixing limit 24 for the internal state updates within the SC-UCG framework, by using one ISC pass after a tunable number 𝑛 G of timesteps (see Fig. 1c ). If one uses the Metropolis algorithm to sample back the discrete space, one returns to the Monte-Carlo based UCG method. This variational framework also allows for constrained inference. It is also convenient to enforce constraints with additional Lagrange multipliers. One common constraint is the material or charge balance, when, for example, simulating proton transport in water and the total number of hydrated protons should be kept fixed. In this case, the Lagrangian objective is 
+
+𝐿 = 𝑈 JKL − = 𝜆 ! e= 𝑝 !,< '
+
+> <'
+
+− 1f 
+
+> !
+
+− = 𝜇 < {= 𝑝 !,< '
+
+> !
+
+− 𝜈 <}
+
+> <
+
+(14) 
+
+The SCE iteration will be a set of coupled equation for {𝒑 !} and 𝝁 :
+
+𝒑 ! = 𝜎 &(𝚽 ! − 𝝁) = 𝜎 &(𝚽 ! − 𝝁) 
+
+> !
+
+= 𝝂 (15) 
+
+where 𝚽 !(G) = 𝒉 !(G) + ∑ 𝑼 != T𝑹 .(𝑡)V 𝒑 =(G) =∈.(!) . We can see that the Lagrange multiplier 𝝁 acts as a varying global chemical potential for the internal states, on top of the individual chemical potentials {𝒉 !}. This gives rise to a three-step SCE iteration scheme: (1) Obtain 𝚽 !(G) during pairwise force calculation; (2) Update 
+
+𝒑 !(GH+) = 𝜎 & s𝚽 !(G) − 𝝁 (G) u after force calculation; (3) solve or determine 𝝁 (GH+) such that ∑ 𝜎 & s𝚽 !(G) −!
+
+𝝁 (GH+) u = 𝝂 after force calculation. 
+
+B. Extending RLE-UCG with Bethe Free Energy Functionals 
+
+Recognizing the mean-field nature of the RLE approximation, we can enhance the UCG-RLE formalism directly with other free energy approximations and also employ variational inference of internal states for them. In this paper, we use the Bethe-Peierls approximation 47,48,51 as an example, to introduce explicit correlation terms in the free energy functional while keeping its pairwise separability. While we note that there exists more accurate free energy approximation and inference methods containing three-body or more probability correlations, such as the Cluster Variation Method (CVM), 52 Adaptive Cluster Expansion (ACE), 53–55 etc., these multi-body correlations come at the cost of simulation speed. We therefore prefer to preserve a computationally inexpensive pairwise summation form. Hence, instead of approximating 𝒑 != =𝒑 !𝒑 =C for ∀〈𝑖, 𝑗〉 , we explicitly consider the pairwise contribution to the conditional entropy. We thus change the entropic contribution to 𝑢 M!N in (8) into the Bethe entropy: 
+
+𝑆 ;EGOE = =(1 − 𝑑 !)𝒑 !- log 𝒑 !!
+
++ = 𝒑 != ∗ log 𝒑 != 〈!,=〉 
+
+(16) 
+
+where we use 𝐴 ∗ 𝐵 = ∑ 𝐴 != 𝐵 != != to represent the Frobenius product of matrices. The resulting CG effective interaction is written as 9
+
+𝑈 PQRSQ%@AB = = 𝒑 !C X𝒉 ! + 1𝛽 (1 − 𝑑 !) log 𝒑 !Y
+
+> !
+
++ = 𝒑 != ∗ 𝑼 != + 1𝛽 log 𝒑 != 
+
+> 〈!,=〉
+
+(17) 
+
+For the generalized 𝑞 -state scenario, the well-known Belief Propagation 48,56 algorithm is used for inference, and can be derived from variational minimization of 𝑈 PQRSQ under these normalization requirements for the matrices 𝑝 != to yield 
+
+𝑝 !(𝑠 !) = = 𝑝 != T𝑠 !, 𝑠 =V
+
+> <(
+
+; 𝑝 =T𝑠 =V = = 𝑝 != T𝑠 !, 𝑠 =V
+
+> <'
+
+= 𝑝 !(𝑠 !)
+
+> !
+
+= 1; = 𝑝 != T𝑠 !, 𝑠 =V
+
+> <'<(
+
+= 1 (18) 
+
+For two-state UCG scenarios, these normalization requirements can be implicitly satisfied by treating 
+
+𝑝 != T𝑠 !, 𝑠 =V as functionals of 𝑝 !(𝑠 !) and 𝑝 =(𝑠 =) and solving for its own variational statement. Let 𝑝 !(1) = 𝑞 !, 𝑝 =(1) = 𝑞 =, 𝑝 != (1,1) = 𝜉 != , and other 𝑝 != T𝑠 !, 𝑠 =V can be derived from them: 
+
+𝒑 != = s 𝑝 !=,II 𝑝 !=,+I 
+
+𝑝 !=,I+ 𝑝 !=,++ u =  1 + 𝜉 != − 𝑞 ! − 𝑞 = 𝑞 = − 𝜉 != 
+
+𝑞 ! − 𝜉 != 𝜉 != 
+
+ (19) 
+
+Then, the variational statement can be expressed as 
+
+𝜕𝑈 Bethe -UCG 
+
+𝜕𝜉 != 
+
+= 𝛽𝐽 != − ln 𝜉 != T1 + 𝜉 != − 𝑞 ! − 𝑞 =VT𝑞 ! − 𝜉 != VT𝑞 = − 𝜉 != V = 0 (20) 
+
+where 𝐽 != = 𝑈 != (0,0) + 𝑈 != (1,1) − 𝑈 != (0,1) − 𝑈 != (0,0) is the effective coupling of the system. This gives a closed functional form for 𝜉 != , dependent on functions 𝑞 !, 𝑞 =, 𝐽 != :
+
+𝜉 != ∗ T𝑞 !, 𝑞 =, 𝐽 != V = 𝑄 != − 𝑄 != X − 4𝛼 != T1 + 𝛼 != V𝑞 !𝑞 =
+
+2𝛼 != 
+
+(21) 
+
+where 𝛼 != = 𝑒 %&Y '( − 1 , 𝑄 != = 1 + 𝛼 != (𝑞 ! + 𝑞 =). This results in the following edge update format: 
+
+𝜉 != (GH+) ← 𝜉 != ∗ s𝑞 !(G) , 𝑞 =(G) , 𝐽 != (GH+) u
+
+𝑝 != (GH+) ← { 1 + 𝜉 != (GH+) − 𝑞 !(G) − 𝑞 =(G) 𝑞 =(G) − 𝜉 != (GH+) 
+
+𝑞 !(G) − 𝜉 != (GH+) 𝜉 != (GH+) } (22) 
+
+With the edge probabilities inserted, we can also perform variational optimization of 𝑞 ! and arrive also at a message-passing form of node update: 
+
+𝑝 !,< ' 
+
+> (GH+)
+
+= 𝜎 &,< ' eℎ !,< ' + = = 𝑢 !=,< '<( 
+
+> (GH+)
+
+𝑝 !=,< '<(
+
+> (GH+)
+
+𝑝 !,< '
+
+> (G) <= =∈.(!)
+
+f (23) 
+
+Therefore, the algorithmic structure is the same with MF except an additional edge update step is needed, in which one should sequentially compute 𝐽 != , 𝛼 != , 𝑄 != , 𝜉 != ∗ , and update 𝒑 != during pairwise force computation before tallying and updating node ISP. In MP-GNNs, this Bethe-UCG approach amounts to assigning and updating edge embeddings and designing new message forms. 10 The above approach provides a generalizable framework for further exploration of probabilistic graph inference layers that uses UCG interaction matrices directly as edge features for internal state inference. For example, one could introduce the attention mechanism 57,58 by writing, from 
+
+𝒑 ! = 𝜎 & eℎ !,< ' + = 𝛼 != 𝒖 != 𝒑 ==∈.(!) 
+
+f (24) 
+
+Or, from the Bethe approximation, 
+
+𝑝 !,< ' = 𝜎 &,< ' eℎ !,< ' + = = 𝛼 != 𝑢 !=,< '<(
+
+𝑝 !=,< '<(
+
+> ∗
+
+𝑝 !,< '<= =∈.(!) 
+
+f (25) 
+
+where the attention score of neighbor 𝑗 to node 𝑖 , 𝛼 != , is calculated via some softmax function over learnable edge score function 𝑒 Z with all neighbors: 
+
+𝛼 != = 𝑒 ZT𝛽, 𝑢 != , 𝑝 != , 𝑅 != … V ∑ 𝑒 Z(𝛽, 𝑢 !, , 𝑝 !, , 𝑅 !, … ) ,∈.(!) 
+
+(26) 
+
+These edge attributes can include edge distance, edge ISP, etc. One can also make use of the multi-head attention mechanism to combine different types of correlation in the dataset. This formalism further appears in a fractional or edge-weighted Bethe approximations. Note that we can also rewrite the original Bethe update in a similar fashion, but with 𝛼 !=,< '<( = ['(,-'-(
+
+> [',-'[(,-(
+
+denoting a “cooperativity score” instead of “attention over neighbors”. 
+
+C. The Internal State Consistency Loss from the Relative Entropy Principle 
+
+Following previous discussions, it is also feasible to approach the inverse problem, i.e., learning the chemical potentials {𝒉 !} and {𝑼 != }, by developing the corresponding relative entropy minimization (REM) statement. The UCG model introduces the internal states as additional degrees of freedom in the model. These internal states can be observables, i.e., CVs of all-atom DOFs, in the all-atom dataset. This CV function can be scaled to the range of (0, 1) and thus acting as ground truth ISP labels 𝒑 !(I) of mapped CG particles. The ISP labels can also be discrete (one-hot encoded internal state labels), representing the discretized internal state assignments in the model. We begin by revisiting the relative entropy principle in UCG (UCG-REM) 26 , which minimizes the relative entropy (KL divergence) between the CG joint distribution in position and internal state space, 
+
+𝑝 /0 (𝑀(𝒓 $), 𝒔 .|𝜽) , dependent on the CG forcefield parameters 𝜽 , and the joint distribution in AA dataset, 
+
+𝑝 ## (𝒓 $, 𝒔 .):
+
+𝑆 \Q] = ∫ d𝒓 $∫ d𝒔 . 𝑝 ## (𝒓 $, 𝒔 .) log 𝑝 ## (𝒓 $, 𝒔 .)𝑝 /0 (𝑴(𝒓), 𝒔 𝑵 ) + 𝑆 8_` (27) 
+
+where the joint distribution in the all-atom data space is defined via 
+
+𝑝 ## (𝒓 $, 𝒔 .) = 𝑝 ## (𝒓 $)𝑝 ## T𝒔 .Z𝑀(𝒓 $)V (28) 
+
+We can decompose the joint relative entropy in two terms: the conventional relative entropy of the marginal distribution over real space, and a conditional term: 11 
+
+𝑆 \Q] = ∫ d𝒓 $𝑝 ## (𝒓 $) log 𝑝 ## (𝒓 $)𝑝 /0 T𝑀(𝒓 $)V + 𝔼 𝒓 "~[(𝒓 ")[𝑆 bcde (𝒓 $)] (29) 
+
+This condition term is written as 
+
+𝑆 bcde (𝒓 $) = ∫ d𝒔 . 𝑝 ## T𝒔 .Z𝑀(𝒓 $)V log 𝑝 ## T𝒔 .Z𝑀(𝒓 $)V 𝑝 /0 T𝒔 .Z𝑀(𝒓 $)V (30) 
+
+Since the UCG forcefield itself acts as a classifier to determine UCG internal state probabilities during simulations, and there is no CV dependence in SC-UCG that is used across AA and CG ensembles, we can no longer neglect the contribution of this term. Because each mapped UCG particle in the all-atom dataset has its own internal state, defined usually with its own internal degrees of freedom, and up to human prior knowledge of the all-atom system of interest, we write the expression 
+
+𝑝 ## T𝒔 .Z𝑀(𝒓 $)V = Q 𝑝 !(I) T𝑠 !|𝑀(𝒓 $)V 
+
+> !
+
+(31) 
+
+In the similar spirit, because the dataset contains only node ISP, we also replace the CG internal state posterior 𝑝 /0 T𝒔 .Z𝑀(𝒓 $)V with only node-level predictions from 𝐾 passes of ISC layers: 
+
+𝑝 /0 T𝒔 .Z𝑀(𝒓 $)V → Q 𝑝 !(f) (𝑠 !|𝑀(𝒓 $), 𝜽) 
+
+> !
+
+(32) 
+
+Therefore, we can simplify 𝑆 bcde (𝒓 $) into the sum of node-level KL divergences such that 
+
+𝑆 bcde (f) (𝒓 $, 𝜽) = = = 𝑝 !(I) T𝑠 !|𝑀(𝒓 $)V log 𝑝 !(I) T𝑠 !|𝑀(𝒓 $)V 𝑝 !(f) (𝑠 !|𝑀(𝒓 $), 𝜽) <'!
+
+(33) 
+
+The ISC layers require initial ISP input in order to make predictions. To ensure self-consistency in the model, this input should be the all-atom labels. The objective of forcefield training is to make the forcefield as close to self-consistency as possible, i.e., making the output as close to the input as possible. Therefore, we call the expectation of the conditional term as the Internal State Consistency (ISC) loss . In practice, only calculating the cross-entropy loss suffices for optimization, so we write the ISC loss as 
+
+𝑆 ghi (f) (𝜽) = 𝔼 𝒓 "~[(𝒓 ") − = 𝒑 !(I) (𝒓 $) ⋅ log 𝒑 !(f) T𝜽Z𝑀(𝒓 $)V 
+
+> !
+
+ (34) 
+
+Note that when 𝐾 = 1 and 𝒑 !(I) is one-hot encoded (i.e., only containing binary integer-valued labels, i.e., if particle 𝑖 is in internal state 𝑎 , then 𝒑 !(I) j = 𝛿 kj for any internal state label 𝑏 ), this is equivalent to the pseudo-likelihood maximization (PLM) algorithm in the inverse Ising problem, 59–62 or the masked likelihood maximization (MLM) in training large language models (LLMs). 63–65 Therefore, for MC-UCG in which discrete internal states are directly sampled, we can also use the ISC framework to optimize its forcefield with the following PLM loss: 
+
+𝑆 lAm (𝜽) = 𝔼 𝒓 "~[(𝒓 ") − = log 𝑝 !,< '(𝜽|𝑀(𝒓 $), {𝑠 %! }) 
+
+> !
+
+ (35) 
+
+with the pseudo-likelihood given by 12 
+
+𝑝 !,< '(𝜽|𝑀(𝒓 $), {𝑠 %! }) = 𝜎 &,< ' eℎ !,< ' + = 𝑢 !=,< '<(
+
+> =∈.(!)
+
+(𝑟 != )f (36) 
+
+We note that the ISC loss is dependent on the number of ISC layers used during inference of all-atom data. During simulation, the inference is done once per MD step; but during postprocessing of simulation frames, which are usually stored with much larger time intervals, multilayer ISC is needed. Furthermore, as each layer of ISC produces its own output, we can also require that different layers of output and require that each intermediate layer also match the original data label in an 𝐾 -layer ISC. We call this training strategy 
+
+Multilayer Internal State Consistency (MISC) . The MISC loss in this case is 
+
+𝑆 mghi (f) (𝜽) = 𝔼 𝒓 "~[(𝒓 ") − = 𝑤 , = 𝒑 !(I) (𝒓 $) ⋅ log 𝒑 !(,) T𝜽Z𝑀(𝒓 $)V 
+
+> !f,n+
+
+ (37) 
+
+with 𝑤 , as a weight for linear combination for the cross entropy out of layer 𝑘 . Although it is also a tunable hyperparameter, we use a naïve initialization: 𝑤 , = +M , ∀𝑘 .
+
+D. Practical training strategy with both UCG-REM and Multilayer Internal State Consistency (MISC) 
+
+Because the UCG-REM loss and the ISC loss represent the two components in the KL divergence of the joint distribution, one should train the model with both UCG-REM loss and MISC loss to fully express the properties in the CG model. However, there are significant differences in the training paradigms of these two loss functions. The UCG-REM loss, just like REM itself, requires UCG sampling at each iteration and thus may suffer from sampling nuances, such as sampling noise, ergodicity breaking, etc. ISC/MISC training, as a regression task, only uses all-atom data samples and does not require UCG sampling at each iteration. These differences inspire different training scheme in forcefield training (Fig 2), including the following: 1. (UCG) Training with only UCG-REM loss, 2. (ISC/MISC) Training with only ISC/MISC loss, 3. (Co-training) Co-training by combining UCG-REM loss and ISC loss, and 4. (PT-FT) Pre-training with ISC/MISC loss, then fine-tuning with UCG-REM loss. From our numerical experiments, PT-FT outperforms other training schemes and is most insensitive to changes in training hyperparameter selection. It comprises of 3 training stages shown in Fig. 2(a): (1) REM without UCG, for initial guess; (2) ISC/MISC training, as the most important training step in recovering coupling in the UCG forcefield; (3) UCG-REM fine-tuning, to calibrate key observables. 13 
+
+FIG. 2. Overview of SC-UCG training methodology. (a) Flowchart for the SC-UCG workflow for constructing an SC-UCG forcefield. Green boxes and arrows denote data construction steps and input direction; blue boxes and arrow denote model optimization. (b) Multilayer Internal State Consistency (MISC) training by concatenating outputs from different layers. (c) UCG-REM fine-tuning and ISC can be understood in terms of optimizing marginal and conditional distributions, respectively, of the joint distribution in the real space and the internal state space. 
+
+# III. Applications 
+
+A. Dataset Preparation 
+
+To test the SC-UCG workflow on an exceptionally challenging system for a one bead CG model to capture, we chose a model tetramer system with chiral-racemic transitions in its fluid phase 41 (Fig. 3). This is a fluid system comprised of model molecules, each containing one dihedral angle subject to the following torsional energy: 
+
+𝑈 Gop< ({𝒓 !}) = 𝑘 q cos X 𝜙({𝒓 !}) (38) 
+
+which has two minima at 𝜙 = ± rX, corresponding to the (D)- and (L)- enantiomers, respectively. The authors defined the chirality parameter for each molecule as following to determine their chiral states: 
+
+𝜁({𝒓 !}) = − 𝒓 !,+X ⋅ T𝒓 !,Xs × 𝒓 !,st VZ𝒓 !,+X Z ⋅ Z𝒓 !,Xs Z ⋅ Z𝒓 !,st Z ∈ [−1, 1] (39) 
+
+In our UCG ensemble (Fig. 3), we map the entire tetramer molecule in a single UCG site. We use {𝒓 !} to denote the collection of 4 all-atom positions that correspond to CG site 𝑖 . For each individual molecule, the sampled chirality parameter peaks sharply around -1 and 1, so we can directly define the dividing surface of L state (UCG state 0) and D state (UCG state 1) at 𝜁 = 0 , and 
+
+𝑝 ## (𝑠 ! = 1|{𝒓 !}) = 1 + 𝜁({𝒓 !}) 2 (40) 14 
+
+𝑝 ## (𝑠 ! = 0|{𝒓 !}) = 1 − 𝜁({𝒓 !}) 2 (41) 
+
+In the all-atom system, the correlation of chirality is introduced by the intermolecular interaction between atoms 𝑖 and 𝑗 of different molecules. The effective Lennard-Jones interaction strength depends on the chirality of two molecules {𝒓 !} and {𝒓 =} respectively. 
+
+𝑢 != T𝑟 != V = 4𝜀 I©1 + 𝜆𝜁({𝒓 !})𝜁Tª𝒓 =«V¬T𝑟 != %+X − 𝑟 != %u V (42) 
+
+For this system, the reduced Lennard-Jones units are used throughout the paper. It has been numerically determined that, given the forcefield parameters, the critical temperature is 𝑘 ;𝑇 v = 4.365𝜀 I (or, in reduced LJ units, 𝑇 v = 4.365 ). The coupling strength was chosen as 𝜆 = 0.5 . Therefore, 𝑇 = 4.3 is in the subcritical region, containing largely of chiral phases but exhibiting large spatial and temporal fluctuations in chirality. With a simulation box of 𝑁 = 1000 , we were able to sample infrequent transitions between L-dominant phases and D-dominant phases across the system. We extracted 500 frames (1 frame every 50 steps) from a 25,000 segment of reference trajectory at 𝑇 = 4.3 , with cubic simulation box length 𝐿 = 20.8𝜎 and molecule number 𝑁 = 1000 as the all-atom dataset. 
+
+FIG. 3. Illustration of the chiral transition system as application. 
+
+B. REM training and CG simulation parameters 
+
+For REM training, the neighbor list cutoff was set at 10𝜎 . The initial guess forcefield was obtained from direct Boltzmann inversion of the total pair distribution function. The repulsive core of the potential was modeled with a Gaussian peak with 𝑥 I = 0 and maximum peak height 𝐴 = 100𝜀 . 3 rd order B-splines were used with 100 coefficients. The Adam optimizer 66 was used with a learning rate of 0.01. The optimization converged within 100 iterations. The first 5 and last 5 knots of the forcefields were fixed with their initial values. During the CG simulations of REM training, reduced Lennard-Jones units were applied, and CG simulation was conducted with timestep Δ𝑡 = 10 %s . Neighbor list radius skin was set to 0.3𝜎 , smaller than the all-atom simulation, because the neighbor list is already large at 10𝜎 . Each REM iteration used 2 × 10 w
+
+timesteps in total. All simulations were conducted in the constant 𝑁𝑉𝑇 ensemble with a Langevin thermostat having a damping timescale of 0.05. 
+
+C. Multilayer ISC training 
+
+The UCG interaction matrix 𝒖 != (𝑟) was constructed as 
+
+𝒖 != (𝑟) =  𝑈 xyd (𝑟) 𝑈 _dR9 (𝑟) 𝑈 _dR9 (𝑟) 𝑈 xyd (𝑟)  (43) 15 With the D-D and L-L interactions identical to preserve the symmetry implied in the all-atom Hamiltonian. Both 𝑈 xyd (𝑟) and 𝑈 _dR9 (𝑟) functions were modeled also by 3 rd order B-spline functions with 100 coefficients to optimize. For Multilayer ISC (MISC) training, the forcefield obtained from REM was used as input unless otherwise noted for both. Cutoff radius for these interactions was varied between 6𝜎 , 8𝜎 and 10𝜎 . The number of ISC layers were varied among 2, 3, 4. 𝐾 -layer ISC training (taking outputs only from the 𝐾 -th layer for the loss function) and were also conducted in a similar manner, with 𝐾 varied among 1, 2, 3, to probe their effects. Separate models were obtained for the mean-field and Bethe methods, and for different cutoff radii. Training was constructed with TorchREM, a PyTorch 67,68 -based package developed in this work that enables auto-differentiation during ISC/MISC training. The number of maximum epochs was 500, at which we already observed stable convergence in the ISC/MISC loss and accuracy. Each training epoch consumed less than 2 minutes on an NVIDIA GeForce 1080Ti graphics card. 
+
+D. UCG-REM fine-tuning and SC-UCG simulation parameters 
+
+For each forcefield obtained from MISC training, a short UCG-REM fine-tuning was conducted from Iteration 400 at which the optimization had already converged. The Adam optimizer was applied with a learning rate of 0.001. The cutoff radii and B-spline coefficient numbers were maintained the same with the upstream MISC training. The SC-UCG simulations were implemented and carried out with a separate UCG package in the LAMMPS MD package 69 . Each SC-UCG iteration used 2 × 10 w steps. Internal state probability updates were conducted once per MD step. All other MD simulation parameters were the same as in the UCG-REM step. 
+
+# IV. Results and Discussion 
+
+Phase transitions are the most prevalent correlation-induced phenomena in condensed phase chemical physics. In our test UCG system, the chiral-racemic phase transition happens in the internal state space. To demonstrate the applicability of SC-UCG with correlated internal states, we were interested to test SC-UCG in the following two scenarios: (a) Near criticality, where large scale fluctuations should appear across the simulation box due to limited size effects. Especially at subcritical temperatures, there should be collective transitions between two chiral phases. Successful implementations of SC-UCG should capture such collective transitions. (b) Changing temperatures near criticality drastically alters the sampled distribution of individual chirality {𝜁 !,G } and system-averaged chirality {〈𝜁〉 G}. Since SC-UCG contains temperature in the message construction, we anticipate that, by training at a subcritical dataset only, the resulting CG model should then be capable of reproducing the phase transition in internal state space (i.e, to be “generative”). Furthermore, a successful UCG training strategy should be easy to control, monitor, and insensitive to hyperparameter changes. We also looked at how the fluctuation and phase transition behavior evolve during the UCG-REM fine-tuning iterations, and whether different hyperparameters in training can reproduce the same phenomena. 
+
+A. SC-UCG captures correlation-induced structural statistics 
+
+We first looked at the obtained UCG forcefield functions, ISC loss and the structural statistics, i.e., the radial distribution function of the system. Figs. 4a and 4b shows the obtained forcefields from each stage of optimization, with both MF and Bethe models. Comparing across different stages of training, the main optimization is undoubtedly done in the MISC stage of training. The UCG-REM fine-tuning with Adam 16 optimizer and learning rate of 0.001 only slightly optimizes the forcefield, resulting in only very minor shifts to the sampled forcefield. Comparing the MISC forcefields and REM forcefields, we see that MISC training is able to capture the near-range cooperative interaction between ISC states; however, we also notice that 𝑈 xyd from roughly 4.5𝜎 to 6.5𝜎 is higher than 𝑈 _dR9 , implying a slight mid-range anti-cooperativity. This arises due to the existence of the minority isomer outside of the cooperative core of the majority isomer at subcriticality, and the cross-over from the cooperative range to the anti-cooperative range corroborates with the correlation length sampled from the all-atom trajectory at 4.8𝜎 . When we change the MISC layer from 𝐾 = 3 to 2 or 4 and the cutoff from 8𝜎 to 6𝜎 or 10𝜎 , these trends are very similar, except that the decrease in cutoff will lead to a slightly more attractive interaction for 𝑈 xyd . This can be interpreted as a way to mitigate the loss of internal state correlation without the contribution of farther neighbors. Comparing the Bethe and MF results, we see that the near-range cooperativity from the forcefields appears more pronounced in the MF model. This is because MF models assume decorrelation of individual ISPs by default; correspondingly, given the same set of correlation-inducing UCG couplings, the 𝒑 != matrices from the Bethe model will exhibit larger pair correlation than the MF model. Therefore, when solving for the inverse problem of trying to fit interactions to data, the coupling deduced from the MF model will tend to be higher than that in the Bethe model. However, both belonging to the mean-field family, the forcefields deduced from MF and Bethe models are qualitatively similar. 
+
+FIG. 4. Forcefields, internal state classification, and state-wise distribution during SC-UCG training. 
+
+(a)-(b) Learned (a) homochiral (D-D and L-L) and (b) heterochiral (D-L) CG interaction 𝑈 xyd after REM phase, MISC training phase (Iteration 400), and UCG-REM fine-tuning phase (Iteration 40), respectively. Inference layers were varied between mean-field (MF) and Bethe. (c) MISC loss, averaged by frame, during MISC training phase. The shaded regions represent (d) Internal state prediction accuracy during MISC training phase. (e) Internal-state-specific radial distribution function (ISS-RDF) for homochiral pairs (D-D 17 plus L-L). (f) ISS-RDF for heterochiral pairs (D-L). This figure is plotted for MISC layer 𝐾 = 3, 𝑟 v = 8𝜎 .For 𝐾 = 2, 4 and 𝑟 v = 6𝜎, 10𝜎 results, see Fig. S4.1-4.3 of Supporting Information. During MISC training, we also monitored the evolution of the MISC loss and accuracy curves. The MISC loss converged beyond 400 iterations, and the training was very stable. To calculate accuracy, one should convert the ISP functions during sampling into discrete state labels. We directly attributed a CG site 𝑖 to be in state 1 if the output 𝑝 !,+ ≥ 0.5 and in state 0 if 𝑝 !,I < 0.5 . The resulting accuracy curve converged cleanly after Iteration 250 without oscillatory behavior, stabilizing at around 0.75. We also looked at the internal-state-specific radial distribution functions (ISS-RDF) during SC-UCG simulations, for syn- (D-D + L-L) and anti- (D-L) pairs. The ISS-RDF is calculated as follows: 
+
+𝑔 kj (𝑟) = 1𝑁 G
+
+= 2𝑉 𝑁(𝑁 − 1) = 𝛿T𝑟 != (𝑡) − 𝑟V𝑝 !=,kj (𝑟) 4𝜋𝑟 X(!,=) ..
+
+> GnI
+
+(44) 
+
+The syn- and anti- ISS-RDFs are defined by 𝑔 xyd = 𝑔 II + 𝑔 ++ and 𝑔 _dR9 = 𝑔 I+ + 𝑔 +I . For the all-atom trajectories, 𝑝 !=,< '<((𝑟) is one-hot encoded. For the sampled CG trajectories, since we already have 
+
+𝑝 !=,< '<((𝑟) sampled from MF or Bethe approximations for each pair during simulation, we directly use them as weights. The ISS-RDF 𝑔 kj (𝑟) does not converge to 1; rather, it converges to the total proportion of pairs (a) and (b) of all pairs. Therefore, it is a stricter metric for than the normalized RDF because large shifts in internal state correlations can drastically alter the relative heights of ISS-RDF. We can see from Figs. 4e and 4f that that the fine-tuned UCG-REM forcefield is able to provide an ISS-RDF that is better matched with the MISC forcefield. The repulsive part of the RDF is less aligned because of certain all-atom configurations that allow closer center-of-mass contacts, while the CG configuration is inherently hard-sphere. The Bethe approximation produces better-aligned ISS-RDFs to all-atom results due to its inclusion of pair correlation in the near distance; the MF potential, with stronger coupling learned and larger accuracy on single-site prediction, shows weaker pair correlation in the RDF. Therefore, without relying on defining any collective variable in the CG space, SC-UCG training and simulation-time inference can directly capture the structural statistics arising from internal state correlations in the all-atom dataset through the optimized forcefield parameters. 
+
+B. SC-UCG captures correlation-induced collective fluctuations in internal states 
+
+To examine the ability of SC-UCG’s to capture collective transitions between two chiral states in the subcritical region, we examined the distribution of enantiomer excess values sampled in the CG MD simulations during the UCG-REM fine-tuning, with different optimization hyperparameters. The enantiomer excess of one UCG particle 𝑖 at time 𝑡 is given directly by 
+
+𝑒𝑒 !,G = 𝑝 !,+ (𝑡) − 𝑝 !,I (𝑡) = 2𝑝 !,+ (𝑡) − 1 (45) 
+
+and we denote the ensemble average of {𝑒𝑒 !,G } at time 𝑡 as 〈𝑒𝑒〉 G. For each UCG-REM fine-tuning iteration, we examined the histogram for the distribution of 〈𝑒𝑒〉 G, 𝐻(〈𝑒𝑒〉 G), and the distribution of all sampled 
+
+{𝑒𝑒 !,G } across the system, 𝐻(𝑒𝑒) . We found that both MF and Bethe models can reproduce the collective fluctuations that are observed in the all-atom dataset, characterized by the bimodal distribution in 𝐻(〈𝑒𝑒〉 G),indicating system-wide chiral interconversion. We also looked at how the MISC forcefields behave in different cutoff radius settings. The MISC forcefield in 𝑟 v = 6 produces a racemic result in which both 𝐻(𝑒𝑒) and 𝐻(〈𝑒𝑒〉 G) are peaked at 𝑒𝑒 = 0 (Figs. 5a and 18 
+
+5b , Iteration 0). The MISC forcefield in 𝑟 v = 8 also had 𝐻(𝑒𝑒) and 𝐻(〈𝑒𝑒〉 G) are peaked at 𝑒𝑒 = 0 , but only 1 iteration of UCG-REM yields significant fluctuation into two energetically symmetric chiral states. The MISC forcefield in 𝑟 v = 10 , however, have frequent fluctuations into the two chiral states ( Fig. 5g ). Although the distribution is still peaked at 𝑒𝑒 = 0 , two chiral states have emerged as two smaller peaks in 
+
+𝐻(〈𝑒𝑒〉 G) at around 𝑒𝑒 = ±0.35 . This reflects that the converged MISC forcefield yields forcefields sufficiently close to the critical point – but from above critical point. The temporal fluctuations in internal state space are enhanced if the neighbor list cutoff radius increases to near half of simulation box length. 
+
+FIG. 5. Emergence of collective chiral transitions during UCG-REM fine-tuning. (a) Time histograms for the system average of enantiomer excess, 𝐻(〈𝑒𝑒〉 G), through UCG-REM iterations, starting from the MISC forcefield. The histogram densities were normalized with 𝑝 MkN = 1 (yellow) and 𝑝 M!$ = 0 (black). The histograms were stacked horizontally to reflect per-iteration changes. The green dashed lines represent the time-averaged absolute value (symmetrized for better comparison) of enantiomer excess in the all-atom ensemble 〈𝑒𝑒〉 zz . The blue dashed lines represent the most probable 〈𝑒𝑒〉 value in the symmetrized histogram from the all-atom data, |𝑒𝑒| [,zz . The green histograms on the right represent from the all-atom dataset at 𝑇 = 4.3 . (b) Histogram for the instantaneously sampled enantiomer excess for all particles at all sampled timesteps, {𝑒𝑒 !,G }, denoted as 𝐻(𝑒𝑒) , through UCG-REM iterations, starting from the MISC forcefield. In subplots (a)-(b), cutoff radius 𝑟 v = 6𝜎 for both MISC training and UCG-REM fine-tuning, and Bethe inference layers are used. (c)(d) Same as (a)-(b), except 𝑟 v = 8𝜎 . (e)(f) Same as (a)-(b) except 
+
+𝑟 v = 10𝜎 . (g) Time evolution of the normalized histogram of 𝑒𝑒 values across system (heatmap), and the system average of enantiomer excess, 〈𝑒𝑒〉 G (blue solid line), during the sampling phase for different UCG-REM iterations. Plotted for 𝑟 v = 10𝜎 . For (a)-(f) mean-field results, see SI Fig. S5.1 . For 𝑟 v = 6𝜎, 8𝜎 and mean-field results, see SI Fig. S5.2 .We then looked at how UCG-REM fine-tuning process trains the system into near-critical regions. For 𝑟 v =6, no large temporal and spatial fluctuations of the sampled enantiomer excess values are observed until around Iteration 35, at which the system undergoes a bifurcation from the racemic state into two chiral states. During 100 steps of the fine-tuning process, most samples from UCG-REM exhibited only one 19 uniform chiral state, although infrequent transitions are observed from Iterations 35 through 45, and some iterations after Iteration 75, as can be seen from the coexistence of two chiral peaks in Fig. 5b in these regions. For 𝑟 v = 8 and 𝑟 v = 10 , it is much easier to obtain bimodal distribution in both 𝐻(〈𝑒𝑒〉 G) and 
+
+𝐻(𝑒𝑒) through the first 50 iterations. Interestingly, we identify two “cross-over” regions around Iterations 20 and 40, respectively, for 𝑟 v = 8 (Fig. 5c ). Transitions become much more frequent in this region, and the chiral peaks in 𝐻(〈𝑒𝑒〉 G) approach the all-atom system average 〈|𝑒𝑒|〉 ## (green line in Figs. 5a, 5c, 5e )most closely. This “cross-over” behavior is the same in 𝑟 v = 10 but happens earlier, around Iterations 10 and 30 ( Fig. 5e ). A minor peak also appears near 𝑒𝑒 = 0 in these two “cross-over” regions, especially in the Bethe model, indicating the coexistence of both chiral states with a racemic state. This minor peak is less pronounced in the MF model (See Supplementary Fig. S5.1 ). In fact, in the subcritical region, the racemic state acts as the intermediate state between two racemic states. This is also echoed by the sampled all-atom distribution of 𝐻(𝑒𝑒) with a minor peak centered around 𝑒𝑒 = 0 . In those iterations between Iteration 0 and the first crossover, and between the two cross-over regions, the forcefield are slightly farther to the critical point as compared to the cross-over regions, with the transitions less frequent in sampling time. For example, in Fig. 5g, Iteration 20 exhibits less frequent transitions than Iterations 10 and 40. The second “cross-over” leads to a new region in training with 𝐻(〈𝑒𝑒〉 G) centered constantly again around 0 (with appearance of chiral peaks in some iterations), but 𝐻(𝑒𝑒) remaining bimodal and peaking closer to 
+
+𝑒𝑒 = ±1 . This indicates a region in which in every frame, the system has close to equal amounts of two chiral molecules, but their transitions are very fast across frames. This behavior is fundamentally different than the racemic behavior in Iteration 0, in which every particle exists in exactly 𝑒𝑒 = +X states and no spatial correlation can be explicitly recovered from the SC-UCG model. After the second cross-over event, the sampled distribution of 𝐻(〈𝑒𝑒〉 G) and 𝐻(𝑒𝑒) from SC-UCG echoes that in a binary mixture, with each frame containing regions with different chirality, but no net chirality across the system. In principle, by directly slowing down the rate of internal state updates and going to the slow-mixing regime, one would recover both temporal and spatial fluctuations in one sampling; but the slow-mixing regime can be directly sampled via MC-UCG without using the mean-field or Bethe approximations. Since our goal is to reproduce the collective transitions in the all-atom dataset by directly sampling the mixed-ensemble forcefield, without relying on tuning additional kinetic parameters, any forcefield in the two “cross-over” regions will already suffice for this purpose. Therefore, we conclude that SC-UCG is capable of capturing collective fluctuations in internal states due to correlations in the system. 
+
+C. SC-UCG captures symmetry-breaking phase transition from single-temperature training 
+
+Since the SC-UCG forcefield is trained solely on the 𝑇 = 4.30 dataset, we are interested in the behavior of the SC-UCG model when temperature is changed. With the forcefields obtained from the MISC training, we conducted simulations under different temperatures from 𝑇 = [4.2, 4.6] , every 0.05 increment, to see if phase transition behavior can emerge. Figure 6 shows the sampled fluctuation of 〈𝑒𝑒〉 G under different temperature settings. We see that at 𝑇 = 4.6 , the system is largely racemic with infrequent fluctuations into two chiral states. At 𝑇 = 4.5 such fluctuations become increasingly frequent and at 𝑇 = 4.3 , symmetry breaking has developed, and we only see the racemic state appear as transient states in between the chiral transitions. At 𝑇 = 4.2 , the chiral transition slows down. This physical picture corroborates with the all-atom physical picture quantitatively, as most iterations inside two “cross-over” regions reproduce a critical transition within the [4.2, 4.6] range. Compared to the all-atom results, such collective fluctuations happen at a faster rate, in line with the RLE premise of SC-UCG. 20 
+
+FIG. 6. Time evolution of the normalized histogram of 𝑒𝑒 values across system (heatmap), and the system average of enantiomer excess, 〈𝑒𝑒〉 G (blue solid line), for UCG-REM Iteration 20 of the Bethe model with 3-layer MISC and 𝑟 v = 8 . For results from other iterations and other cutoff schemes, see SI Figs. S6.1-6.2. Figure 7 shows the sampled histograms 𝐻(〈𝑒𝑒〉 G) and 𝐻(𝑒𝑒) along different temperatures. By following the most probable system-average 𝑒𝑒 value, 〈|𝑒𝑒|〉 [, and the most probable 𝑒𝑒 values from all UCG particle, 
+
+|𝑒𝑒| [, from the two histograms respectively, we can determine the range of critical temperatures. We see that both Bethe and MF models can reproduce the critical temperature around 𝑇 = 4.4 . We note that near critical point, the behavior of the system is very sensitive to forcefield changes, and the shift in critical temperature can be drastic, even when the change in spline forcefield grids only happen in the order of 
+
+10 %s 𝜀 . We also observe that the Bethe and MF methods can predict similar phase transition behavior. An interesting phenomenon is the difference of |𝑒𝑒| [(𝑇) and observed at the end of the second “cross-over” during forcefield training. As the temperature increases, the |𝑒𝑒| [(𝑇) transitions to 𝑒𝑒 = 0 at an earlier 𝑇 .This phenomenon is observed to be more pronounced in the Bethe models: for example, in the UCG-REM Iteration 40 of 3-layer MISC with 𝑟 v = 8𝜎 (Fig. 7), 〈|𝑒𝑒|〉 [(𝑇) goes to zero at 𝑇 = 4.35 while |𝑒𝑒| [(𝑇) 
+
+goes to zero at 𝑇 = 4.55 . In between these two points, beside the two chiral phases, the system takes on the rapid switching “chiral mixture” phase also observed in Fig. 5g, Iterations 40 and 50. 21 
+
+FIG. 7. Phase transition in SC-UCG. The heatmap in columns represent normalized histogram density (maximum density = 1) for each temperature. The forcefield is learned from the 𝑇 = 4.3 dataset by PT-FT with 3-layer MISC at 𝑟 v = 8𝜎 . For results from 𝑟 v = 6𝜎 and 𝑟 v = 10𝜎 , see SI Figs S7.1. For other iterations from 𝑟 v = 8𝜎 , see SI Figs. S7.2-7.3. Iteration 20 and 40 are arbitrarily chosen to represent the first and second “cross-over” regions, respectively. The blue solid line represents the ensemble average of 
+
+|𝑒𝑒| ; The green dashed line represents the most probable 〈𝑒𝑒〉 G or |𝑒𝑒| !,G values from the symmetrized histograms. Figure 8 compares the full-sized all-atom data from reference. Both the Bethe and MF data agree with the all-atom data qualitatively, and both models correctly capture the phase transition behavior similar to the all-atom scenario, but two major discrepancies are still present for future improvements. First, in the low-temperature regime, the extrapolation appears too mild, leading to smaller chirality than the all-atom dataset; second, in the high-temperature regime, the histograms heavily peaked around 𝑒𝑒 = +X, denoting a strong mixed-state behavior and fast interconversion. These limitations mainly arise from single-temperature training. It is also important to note that the SC-UCG model is trained only from a down-sampled dataset, not from the monolithic full-sized all-atom dataset. Future extension of the MISC and UCG-REM training methods to a mixed multi-temperature ensemble is required to achieve full temperature transferability. 
+
+FIG. 8. Comparison between the phase transition behavior in full-sized all-atom data and in SC-UCG. The SC-UCG data is generated from 3-layer MISC training at 𝑟 v = 8𝜎 . (a) Mean chirality in 22 different temperatures from the AA dataset and the Bethe and MF variants of SC-UCG. (b) The enantiomer-excess histogram in different temperatures, compared between AA, Bethe, and MF. 
+
+# V. Conclusions and Outlook 
+
+In this paper, we have presented SC-UCG, a self-consistent inference method of internal states in bottom-up Ultra-Coarse-Graining (UCG). The approach introduces three new aspects of theory into UCG: (a) self-consistent updates to the internal state probability functions during simulation time, without relying on CG collective variables; (b) a generalized framework for including explicit pairwise correlation into the SC-UCG mixed Hamiltonian and the inference method, exemplified by the Bethe approximation; and (c) the Multilayer Internal State Consistency (MISC) training scheme, a systematic forcefield training scheme for SC-UCG, derived from the relative entropy minimization (REM) framework. On the simulation side, SC-UCG relies on the premise of rapid local equilibrium (RLE), i.e., the UCG MD sampling is conducted with the effective Hamiltonian by approximately integrating out all internal states. This method also aligns with the MC-UCG idea that the internal states in are discrete-valued degrees of freedom, and its all-atom representation are collective variables of the mapped-out all-atom coordinates 
+
+within the CG site to which they belong. By adopting a variational inference scheme, we showed that the minimization of the variational free energy naturally leads to a message-passing inference framework, with the UCG interaction matrix acting directly as the weight matrix for message construction. For the two-state UCG particle scenario, the Bethe approximation can also be employed to both the mixed SC-UCG Hamiltonian and the message-passing inference, with an additional edge update step. Additionally, due to its inclusion of temperature in the internal state probability function, both the MF and Bethe models can describe temperature-dependent behavior of internal states for a given UCG forcefield. On the forcefield learning side, the ISC training scheme provides a robust workflow for constructing the SC-UCG forcefield, by employing a self-consistent cross-entropy loss over internal state probabilities across all UCG particles. Multilayer ISC concatenates output from different ISC layers and ensures self-consistency and robustness to training hyperparameters. We applied SC-UCG to coarse-grain a model (but very non-trivial) chiral molecule system. Most importantly, we showed that SC-UCG reproduces the collective chiral transitions from the all-atom dataset, making SC-UCG suitable for simulating collective transitions. We showed that, even trained from a single-temperature dataset, SC-UCG is able to reproduce certain temperature-dependent properties regarding internal states, especially the chiral symmetry breaking phase transition. In terms of structural properties, the Bethe approximation captures the structural properties, such as the internal-state-specific radial distribution functions, better than the naïve MF approximation, although both do not achieve ideal matching of structural properties due to the inherent limitations of the mean-field family of approximations near the critical point, i.e., the lack of multi-body and longer-ranged internal state correlations. The present method can be applied to a wide range of chemically and biochemically relevant systems as well. For example, we envision its further application in studying the difficult ripple phase behavior of lipid membrane bilayers. 26 For the chiral-racemic phase transition, we also expect SC-UCG to play a part in discovering more realistic biochemical systems that exhibit such symmetry breaking behavior, apart from synthesized liquid crystal-like molecules or model systems. With material constraints incorporated, SC-UCG can further be applied to a wide range of proton transport problems at the CG level. 70 
+
+We also note several areas of future improvements and extensions of the current method. First, the SC-UCG workflow relies on pre-labeled internal states or probabilities. For more complex biomolecular systems, an 23 important first step is to correctly discover the internal states from the unlabeled all-atom dataset. And consequently, it is important to design the CG mapping to preserve and effectively differentiate these different internal states. This facilitates the need for an automated internal state discovery and CG mapping scheme using machine-learning. Second, the SC-UCG approach can be interfaced with machine learning potentials (MLPs) or protein folding models. 63,71,72 By viewing atom/residue types as changeable “internal states” and allowing sequence mutation during simulation, we can use the UCG “internal state sampling” to sample sequence space jointly with real-space MD, to guide and evaluate molecule design. Third, the temperature transferability in SC-UCG from single-temperature training is still limited. It may be desirable to couple the SC-UCG method with multi-temperature training and dual-matching formalisms 73,74 to achieve full temperature transferability in UCG models, both in position space and in internal state space. It is also viable to utilize more advanced machine-learning techniques, such as symbolic regression, etc. to learn more complicated energy-related graph convolution operations during the internal state inference. 
+
+# Supplementary Material 
+
+See the supplementary material for comparisons of alternative training schemes (Figs. S1–S3); state-wise radial distribution functions and forcefields for additional MISC layer numbers 𝐾 = 2, 3, 4 and cutoff radii 
+
+𝑟 v = 6𝜎, 8𝜎, 10𝜎 (Figs. S4.1–S4.3); the emergence of collective chiral transitions for the mean-field and Bethe treatments (Figs. S5.1–S5.2); the time evolution of internal-state fluctuation histograms (Figs. S6.1– S6.2); and additional phase-transition heatmaps across iterations and cutoff schemes (Figs. S7.1–S7.3). 
+
+# Acknowledgments 
+
+This material is based upon work supported by the National Science Foundation (NSF grant CHE-2102677). Simulations were performed using computing resources provided by the University of Chicago Research Computing Center (RCC). 
+
+# Author Declarations 
+
+Conflict of Interest 
+
+The authors have no conflicts to disclose. 
+
+Author Contributions 
+
+Weizhi Xue : Conceptualization (equal); Methodology; Software (lead); Numerical Experiments (lead); Writing – original draft. 
+
+Xiao Shuai : Software (preliminary) and Numerical Experiments (preliminary). 
+
+Gregory A. Voth : Conceptualization (equal); Supervision; Funding acquisition (lead); Writing – review & editing. 
+
+# Data Availability 
+
+The software packages used in all numerical experiments: TorchREM and UCG LAMMPS extension, are available on GitHub: https://github.com/KJAdams2000/LAMMPS-UCG-dev and https://github.com/KJAdams2000/TorchREM. Important source data and sample scripts are openly available on Zenodo (https://doi.org/10.5281/zenodo.21285638). 24 
+
+# References  
+
+> 1
+
+M. Karplus and J. A. McCammon, “Molecular dynamics simulations of biomolecules,” Nat. Struct. Biol. 
+
+9, 646–652 (2002).  
+
+> 2
+
+M. G. Saunders and G. A. Voth, “Coarse-Graining Methods for Computational Biology,” Annu. Rev. Biophys. 42 , 73–93 (2013).  
+
+> 3
+
+A. J. Pak and G. A. Voth, “Advances in coarse-grained modeling of macromolecular complexes,” Curr. Opin. Struct. Biol. 52 , 119–126 (2018).  
+
+> 4
+
+J. Jin, A. J. Pak, A. E. P. Durumeric, T. D. Loose, and G. A. Voth, “Bottom-up Coarse-Graining: Principles and Perspectives,” J. Chem. Theory Comput. 18 , 5759–5791 (2022).  
+
+> 5
+
+W. G. Noid, “Perspective: Advances, Challenges, and Insight for Predictive Coarse-Grained Models,” J. Phys. Chem. B 127 , 4174–4207 (2023).  
+
+> 6
+
+S. J. Marrink, H. J. Risselada, S. Yefimov, D. P. Tieleman, and A. H. De Vries, “The MARTINI Force Field: Coarse Grained Model for Biomolecular Simulations,” J. Phys. Chem. B 111 , 7812–7824 (2007).  
+
+> 7
+
+P. C. T. Souza, R. Alessandri, J. Barnoud, S. Thallmair, I. Faustino, F. Grünewald, I. Patmanidis, H. Abdizadeh, B. M. H. Bruininks, T. A. Wassenaar, P. C. Kroon, J. Melcr, V. Nieto, V. Corradi, H. M. Khan, J. Domański, M. Javanainen, H. Martinez-Seara, N. Reuter, R. B. Best, I. Vattulainen, L. Monticelli, X. Periole, D. P. Tieleman, A. H. De Vries, and S. J. Marrink, “Martini 3: a general purpose force field for coarse-grained molecular dynamics,” Nat. Methods 18 , 382–388 (2021).  
+
+> 8
+
+S. Izvekov and G. A. Voth, “A Multiscale Coarse-Graining Method for Biomolecular Systems,” J. Phys. Chem. B 109 , 2469–2473 (2005).  
+
+> 9
+
+W. G. Noid, J.-W. Chu, G. S. Ayton, V. Krishna, S. Izvekov, G. A. Voth, A. Das, and H. C. Andersen, “The multiscale coarse-graining method. I. A rigorous bridge between atomistic and coarse-grained models,” J. Chem. Phys. 128 , 244114 (2008).  
+
+> 10
+
+W. G. Noid, P. Liu, Y. Wang, J.-W. Chu, G. S. Ayton, S. Izvekov, H. C. Andersen, and G. A. Voth, “The multiscale coarse-graining method. II. Numerical implementation for coarse-grained molecular models,” J. Chem. Phys. 128 , 244115 (2008).  
+
+> 11
+
+A. K. Soper, “Empirical potential Monte Carlo simulation of fluid structure,” Chem. Phys. 202 , 295– 306 (1996).  
+
+> 12
+
+T. C. Moore, C. R. Iacovella, and C. McCabe, “Derivation of coarse-grained potentials via multistate iterative Boltzmann inversion,” J. Chem. Phys. 140 , 224104 (2014).  
+
+> 13
+
+M. S. Shell, “The relative entropy is fundamental to multiscale and inverse thermodynamic problems,” J. Chem. Phys. 129 , 144108 (2008).  
+
+> 14
+
+A. Chaimovich and M. S. Shell, “Relative entropy as a universal metric for multiscale errors,” Phys. Rev. E 81 , 060104 (2010).  
+
+> 15
+
+A. Chaimovich and M. S. Shell, “Coarse-graining errors and numerical optimization using a relative entropy framework,” J. Chem. Phys. 134 , 094112 (2011).  
+
+> 16
+
+E. Pretti and M. S. Shell, “A microcanonical approach to temperature-transferable coarse-grained models using the relative entropy,” J. Chem. Phys. 155 , 094102 (2021).  
+
+> 17
+
+J. Jin, A. J. Pak, and G. A. Voth, “Understanding Missing Entropy in Coarse-Grained Systems: Addressing Issues of Representability and Transferability,” J. Phys. Chem. Lett. 10 , 4549–4557 (2019).  
+
+> 18
+
+J. Jin, K. S. Schweizer, and G. A. Voth, “Understanding dynamics in coarse-grained models. I. Universal excess entropy scaling relationship,” J. Chem. Phys. 158 , 034103 (2023).  
+
+> 19
+
+T. T. Foley, M. S. Shell, and W. G. Noid, “The impact of resolution upon entropy and information in coarse-grained models,” J. Chem. Phys. 143 , 243104 (2015).  
+
+> 20
+
+K. M. Kidder and W. G. Noid, “Analysis of mapping atomic models to coarse-grained resolution,” J. Chem. Phys. 161 , 134113 (2024).  
+
+> 21
+
+N. J. H. Dunn, T. T. Foley, and W. G. Noid, “Van der Waals Perspective on Coarse-Graining: Progress toward Solving Representability and Transferability Problems,” Acc. Chem. Res. 49 , 2832–2840 (2016).  
+
+> 22
+
+J. W. Wagner, J. F. Dama, A. E. P. Durumeric, and G. A. Voth, “On the representability problem and the physical meaning of coarse-grained models,” J. Chem. Phys. 145 , 044108 (2016). 25  
+
+> 23
+
+J. F. Dama, A. V. Sinitskiy, M. McCullagh, J. Weare, B. Roux, A. R. Dinner, and G. A. Voth, “The Theory of Ultra-Coarse-Graining. 1. General Principles,” J. Chem. Theory Comput. 9, 2466–2480 (2013).  
+
+> 24
+
+A. Davtyan, J. F. Dama, A. V. Sinitskiy, and G. A. Voth, “The Theory of Ultra-Coarse-Graining. 2. Numerical Implementation,” J. Chem. Theory Comput. 10 , 5265–5275 (2014).  
+
+> 25
+
+J. F. Dama, J. Jin, and G. A. Voth, “The Theory of Ultra-Coarse-Graining. 3. Coarse-Grained Sites with Rapid Local Equilibrium of Internal States,” J. Chem. Theory Comput. 13 , 1010–1022 (2017).  
+
+> 26
+
+P. G. Sahrmann and G. A. Voth, “Entropy-based methods for formulating bottom-up ultra-coarse-grained models,” J. Chem. Phys. 162 , 044102 (2025).  
+
+> 27
+
+T. Mori, R. J. Hamers, J. A. Pedersen, and Q. Cui, “Integrated Hamiltonian Sampling: A Simple and Versatile Method for Free Energy Simulations and Conformational Sampling,” J. Phys. Chem. B 118 ,8210–8220 (2014).  
+
+> 28
+
+Y. Q. Gao, “An integrate-over-temperature approach for enhanced sampling,” J. Chem. Phys. 128 ,064105 (2008).  
+
+> 29
+
+L. Yang and Y. Q. Gao, “A selective integrated tempering method,” J. Chem. Phys. 131 , 214109 (2009).  
+
+> 30
+
+X. Lin, Y. Xia, J. Zhang, and Y. Q. Gao, “Integrated Boltzmann Sampling: A Few-State Approach for Efficient Multistate Free Energy Calculations,” J. Chem. Theory Comput., acs.jctc.5c01240 (2026).  
+
+> 31
+
+S. Mani, H. H. Katkar, and G. A. Voth, “Compressive and Tensile Deformations Alter ATP Hydrolysis and Phosphate Release Rates in Actin Filaments,” J. Chem. Theory Comput. 17 , 1900–1913 (2021).  
+
+> 32
+
+J. M. A. Grime, J. F. Dama, B. K. Ganser-Pornillos, C. L. Woodward, G. J. Jensen, M. Yeager, and G. A. Voth, “Coarse-grained simulation reveals key features of HIV-1 capsid self-assembly,” Nat. Commun. 
+
+7, 11568 (2016).  
+
+> 33
+
+M. Gupta, A. J. Pak, and G. A. Voth, “Critical mechanistic features of HIV-1 viral capsid assembly,” Sci. Adv., eadd7434 (2023).  
+
+> 34
+
+P. A. Pearce and H. L. Scott, “Statistical mechanics of the ripple phase in lipid bilayers,” J. Chem. Phys. 
+
+77 , 951–958 (1982).  
+
+> 35
+
+W. S. McCullough, J. H. H. Perk, and H. L. Scott, “Analysis of a model for the ripple phase of lipid bilayers,” J. Chem. Phys. 93 , 6070–6080 (1990).  
+
+> 36
+
+O. Lenz and F. Schmid, “Structure of Symmetric and Asymmetric ‘Ripple’ Phases in Lipid Bilayers,” Phys. Rev. Lett. 98 , 058104 (2007).  
+
+> 37
+
+M. Davies, A. D. Reyes-Figueroa, A. A. Gurtovenko, D. Frankel, and M. Karttunen, “Elucidating lipid conformations in the ripple phase: Machine learning reveals four lipid populations,” Biophys. J. 122 ,442–450 (2023).  
+
+> 38
+
+C. Dressel, T. Reppe, M. Prehm, M. Brautzsch, and C. Tschierske, “Chiral self-sorting and amplification in isotropic liquids of achiral molecules,” Nat. Chem. 6, 971–977 (2014).  
+
+> 39
+
+T. Reppe, S. Poppe, X. Cai, Y. Cao, F. Liu, and C. Tschierske, “Spontaneous mirror symmetry breaking in benzil-based soft crystalline, cubic liquid crystalline and isotropic liquid phases,” Chem. Sci. 11 , 5902– 5908 (2020).  
+
+> 40
+
+Y. Wang, F. H. Stillinger, and P. G. Debenedetti, “Fluid–fluid phase transitions in a chiral molecular model,” J. Chem. Phys. 157 , 084501 (2022).  
+
+> 41
+
+P. M. Piaggi, R. Car, F. H. Stillinger, and P. G. Debenedetti, “Critical behavior in a chiral molecular model,” J. Chem. Phys. 159 , 114502 (2023).  
+
+> 42
+
+R. Menta, P. G. Debenedetti, R. Car, and P. M. Piaggi, “On the Possibility of Chiral Symmetry Breaking in Liquid Hydrogen Peroxide,” J. Phys. Chem. B 129 , 5335–5342 (2025).  
+
+> 43
+
+J. Jin and G. A. Voth, “Ultra-Coarse-Grained Models Allow for an Accurate and Transferable Treatment of Interfacial Systems,” J. Chem. Theory Comput. 14 , 2180–2197 (2018).  
+
+> 44
+
+K. T. Schütt, P.-J. Kindermans, H. E. Sauceda, S. Chmiela, A. Tkatchenko, and K.-R. Müller, “SchNet: A continuous-filter convolutional neural network for modeling quantum interactions,” arXiv:arXiv:1706.08566 (2017).  
+
+> 45
+
+T. D. Loose, P. G. Sahrmann, T. S. Qu, and G. A. Voth, “Coarse-Graining with Equivariant Neural Networks: A Path Toward Accurate and Data-Efficient Models,” J. Phys. Chem. B 127 , 10564–10572 (2023). 26  
+
+> 46
+
+I. Batatia, D. P. Kovács, G. N. C. Simm, C. Ortner, and G. Csányi, “MACE: Higher Order Equivariant Message Passing Neural Networks for Fast and Accurate Force Fields,” arXiv:arXiv:2206.07697 (2023).  
+
+> 47
+
+B. Cseke and T. Heskes, “Properties of Bethe Free Energies and Message Passing in Gaussian Models,” J. Artif. Intell. Res. 41 , 1–24 (2011).  
+
+> 48
+
+A. Weller, K. Tang, D. Sontag, and T. Jebara, “Understanding the Bethe approximation: when and how can it go wrong?,” in Proc. Thirtieth Conf. Uncertain. Artif. Intell. (AUAI Press, Arlington, Virginia, USA, 2014), pp. 868–877.  
+
+> 49
+
+L. Wu, P. Cui, J. Pei, and L. Zhao, editors , Graph Neural Networks: Foundations, Frontiers, and Applications (Springer Nature Singapore, Singapore, 2022).  
+
+> 50
+
+M. Ahsan, C. Pindi, S. Sinha, A. C. Patel, and G. Palermo, “Graph neural networks for molecular dynamics simulations,” Curr. Opin. Struct. Biol. 97 , 103238 (2026).  
+
+> 51
+
+H. Leisenberger and F. Pernkopf, “Adaptive Variational Inference in Probabilistic Graphical Models: Beyond Bethe, Tree-Reweighted, and Convex Free Energies,” arXiv:arXiv:2502.03341 (2025).  
+
+> 52
+
+A. Pelizzola, “Cluster Variation Method in Statistical Physics and Probabilistic Graphical Models,” J. Phys. Math. Gen. 38 , R309–R339 (2005).  
+
+> 53
+
+S. Cocco and R. Monasson, “Adaptive Cluster Expansion for Inferring Boltzmann Machines with Noisy Data,” Phys. Rev. Lett. 106 , 090601 (2011).  
+
+> 54
+
+S. Cocco and R. Monasson, “Adaptive Cluster Expansion for the Inverse Ising Problem: Convergence, Algorithm and Tests,” J. Stat. Phys. 147 , 252–314 (2012).  
+
+> 55
+
+J. P. Barton, E. De Leonardis, A. Coucke, and S. Cocco, “ACE: adaptive cluster expansion for maximum entropy graphical model inference,” Bioinformatics 32 , 3089–3097 (2016).  
+
+> 56
+
+W. Wiegerinck and T. Heskes, “Fractional belief propagation,” in Proc. 16th Int. Conf. Neural Inf. Process. Syst. (MIT Press, Cambridge, MA, USA, 2002), pp. 438–445.  
+
+> 57
+
+P. Veličković, G. Cucurull, A. Casanova, A. Romero, P. Liò, and Y. Bengio, “Graph Attention Networks,” arXiv:arXiv:1710.10903 (2018).  
+
+> 58
+
+C. Hua, S. Luan, Q. Zhang, and J. Fu, “Graph Neural Networks Intersect Probabilistic Graphical Models: A Survey,” arXiv:arXiv:2206.06089 (2023).  
+
+> 59
+
+A. Decelle and F. Ricci-Tersenghi, “Pseudolikelihood Decimation Algorithm Improving the Inference of the Interaction Network in a General Class of Ising Models,” Phys. Rev. Lett. 112 , 070603 (2014).  
+
+> 60
+
+M. Ekeberg, C. Lövkvist, Y. Lan, M. Weigt, and E. Aurell, “Improved contact prediction in proteins: Using pseudolikelihoods to infer Potts models,” Phys. Rev. E 87 , 012707 (2013).  
+
+> 61
+
+E. Aurell and M. Ekeberg, “Inverse Ising Inference Using All the Data,” Phys. Rev. Lett. 108 , 090201 (2012).  
+
+> 62
+
+S. Cocco, C. Feinauer, M. Figliuzzi, R. Monasson, and M. Weigt, “Inverse statistical physics of protein sequences: a key issues review,” Rep. Prog. Phys. 81 , 032601 (2018).  
+
+> 63
+
+T. Hayes, R. Rao, H. Akin, N. J. Sofroniew, D. Oktay, Z. Lin, R. Verkuil, V. Q. Tran, J. Deaton, M. Wiggert, R. Badkundri, I. Shafkat, J. Gong, A. Derry, R. S. Molina, N. Thomas, Y. A. Khan, C. Mishra, C. Kim, L. J. Bartie, M. Nemeth, P. D. Hsu, T. Sercu, S. Candido, and A. Rives, “Simulating 500 million years of evolution with a language model,” Science 387 , 850–858 (2025).  
+
+> 64
+
+P. Moreno-Muñoz, P. G. Recasens, and S. Hauberg, “On Masked Pre-training and the Marginal Likelihood,” arXiv:arXiv:2306.00520 (2023).  
+
+> 65
+
+R. Rende, F. Gerace, A. Laio, and S. Goldt, “Mapping of attention mechanisms to a generalized Potts model,” Phys. Rev. Res. 6, 023057 (2024).  
+
+> 66
+
+D. P. Kingma and J. Ba, “Adam: A Method for Stochastic Optimization,” arXiv:arXiv:1412.6980 (2017).  
+
+> 67
+
+A. Paszke, S. Gross, F. Massa, A. Lerer, J. Bradbury, G. Chanan, T. Killeen, Z. Lin, N. Gimelshein, L. Antiga, A. Desmaison, A. Köpf, E. Yang, Z. DeVito, M. Raison, A. Tejani, S. Chilamkurthy, B. Steiner, L. Fang, J. Bai, and S. Chintala, “PyTorch: An Imperative Style, High-Performance Deep Learning Library,” arXiv:arXiv:1912.01703 (2019).  
+
+> 68
+
+M. Fey and J. E. Lenssen, “Fast Graph Representation Learning with PyTorch Geometric,” arXiv:arXiv:1903.02428 (2019). 27  
+
+> 69
+
+A. P. Thompson, H. M. Aktulga, R. Berger, D. S. Bolintineanu, W. M. Brown, P. S. Crozier, P. J. In ’T Veld, A. Kohlmeyer, S. G. Moore, T. D. Nguyen, R. Shan, M. J. Stevens, J. Tranchida, C. Trott, and S. J. Plimpton, “LAMMPS - a flexible simulation tool for particle-based materials modeling at the atomic, meso, and continuum scales,” Comput. Phys. Commun. 271 , 108171 (2022).  
+
+> 70
+
+J. Jin, Z. Li, and G. A. Voth, “Systematic bottom-up coarse-graining of hydrated excess proton transport across scales,” Nat. Comput. Sci. (2026).  
+
+> 71
+
+J. B. Ingraham, M. Baranov, Z. Costello, K. W. Barber, W. Wang, A. Ismail, V. Frappier, D. M. Lord, C. Ng-Thow-Hing, E. R. Van Vlack, S. Tie, V. Xue, S. C. Cowles, A. Leung, J. V. Rodrigues, C. L. Morales-Perez, A. M. Ayoub, R. Green, K. Puentes, F. Oplinger, N. V. Panwar, F. Obermeyer, A. R. Root, A. L. Beam, F. J. Poelwijk, and G. Grigoryan, “Illuminating protein space with a programmable generative model,” Nature 623 , 1070–1078 (2023).  
+
+> 72
+
+J. Airas and B. Zhang, “Knowledge Distillation of a Protein Language Model Yields a Foundational Implicit Solvent Model,” arXiv:arXiv:2601.05388 (2026).  
+
+> 73
+
+K. M. Lebold and W. G. Noid, “Dual approach for effective potentials that accurately model structure and energetics,” J. Chem. Phys. 150 , 234107 (2019).  
+
+> 74
+
+E. Pretti and M. S. Shell, “A microcanonical approach to temperature-transferable coarse-grained models using the relative entropy,” J. Chem. Phys. 155 , 094102 (2021).

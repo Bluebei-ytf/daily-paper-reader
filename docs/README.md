@@ -41,7 +41,7 @@
 <section class="dpr-home-dashboard-card dpr-home-report-card">
   <div class="dpr-home-dashboard-header">
     <div>
-      <span class="dpr-home-dashboard-kicker">2026-08-08</span>
+      <span class="dpr-home-dashboard-kicker">2026-08-09</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
     <strong class="dpr-home-dashboard-count">共 5 篇</strong>
@@ -51,7 +51,7 @@
     <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>2</dd></div>
     <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>3</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-08-08 21:07:55 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-08-09 20:55:30 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -62,7 +62,7 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>今日精读2篇、速读3篇，覆盖量子化学、化学信息学与AI应用。最值得关注的是核磁共振的量子态模型，以及角描述符计算的加速方法。建议普通读者先看这两篇，了解AI如何提升化学模拟效率。</p>
+<p>今日精读2篇、速读3篇，聚焦机器学习与材料模拟前沿。最值得关注纳米多孔石墨烯带隙预测（9.0分）及半导体电子关联的符号回归方法（8.0分）。建议普通读者优先浏览这两篇，理解AI如何加速功能材料设计。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -74,7 +74,7 @@
     <strong class="dpr-home-dashboard-count">2 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Neural Quantum States for Nuclear Magnetic Resonance Spectroscopy">Neural Quantum States for Nuclear Magnetic Resonance Spectroscopy</span></li><li><span class="dpr-home-dashboard-paper-title" title="AccelNet: Exact backward-compatible acceleration of polynomial angular descriptors through Cartesian moment factorization">AccelNet: Exact backward-compatible acceleration of polynomial angular descriptors through Cartesian moment factorization</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Machine Learning Bandgap Prediction of Nanoporous Graphenes with Water">Machine Learning Bandgap Prediction of Nanoporous Graphenes with Water</span></li><li><span class="dpr-home-dashboard-paper-title" title="Electron correlation in semiconductors and insulators via symbolic regression">Electron correlation in semiconductors and insulators via symbolic regression</span></li></ul>
   </div>
   <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>2</strong></span></div>
 </section>
@@ -87,7 +87,7 @@
     <strong class="dpr-home-dashboard-count">3 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="MetaboLLM: a metabolomics-specialized large language model for biochemical knowledge integration and predictive metabolite graph construction">MetaboLLM: a metabolomics-specialized large language model for biochemical knowledge integration and predictive metabolite graph construction</span></li><li><span class="dpr-home-dashboard-paper-title" title="From field-scale to large-scale spectral libraries: Tabular foundation models in soil spectroscopy">From field-scale to large-scale spectral libraries: Tabular foundation models in soil spectroscopy</span></li><li><span class="dpr-home-dashboard-paper-title" title="CheMLFlow: An Open-Source Platform for Cheminformatics and Materials Informatics Applications">CheMLFlow: An Open-Source Platform for Cheminformatics and Materials Informatics Applications</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Next Generation of Ultra-Coarse-Graining: Self-Consistent Inference of Critical Internal States">Next Generation of Ultra-Coarse-Graining: Self-Consistent Inference of Critical Internal States</span></li><li><span class="dpr-home-dashboard-paper-title" title="Guided Synthesis of EMT Zeolites by Machine Learning">Guided Synthesis of EMT Zeolites by Machine Learning</span></li><li><span class="dpr-home-dashboard-paper-title" title="Computing Reaction and Activation Energies of Pericyclic Reactions using a Symmetry-Adapted VQE Algorithm">Computing Reaction and Activation Energies of Pericyclic Reactions using a Symmetry-Adapted VQE Algorithm</span></li></ul>
   </div>
   <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>3</strong></span></div>
 </section>
