@@ -1,0 +1,412 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-08-12T21:37:02.986146+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 5,
+    "deep_cap": 6,
+    "deep_selected": 5,
+    "quick_candidates": 5,
+    "quick_skim_target": 11,
+    "quick_selected": 5
+  },
+  "deep_dive": [
+    {
+      "id": "2608.10480v1",
+      "source": "arxiv",
+      "title": "Multi-Granular Rationale-Guided Molecular LLM for Property Prediction",
+      "abstract": "Large language models (LLMs) are widely applied across chemical tasks, such as molecular property prediction, which underpins drug discovery. Molecular LLMs represent a molecule through several modalities, notably a 1D SMILES sequence or a 2D molecular graph. Both encode molecular information implicitly, so the contribution of individual substructures remains opaque. Retrieval and augmentation methods add context, but from external sources. However, the cues chemists reason over are the internal substructures that drive a property up or down. We propose MR-MoL, a multi-granular rationale-guided molecular LLM that supplies this evidence directly. A fine-tuned GNN scores each substructure through masking, and the most influential ones are serialized as a ranked, direction-tagged rationale that the LLM reads alongside the SMILES sequence and molecular graph. The rationale spans three levels of granularity: Murcko scaffolds with their side chains, BRICS fragments, and functional groups. This is, to our knowledge, the first method to expose GNN-derived attributions to an LLM as evidence for property prediction. On eight MoleculeNet tasks, MR-MoL achieves the best overall results among generalist models and narrows the gap to specialist models tuned for each task. Five diagnostics further confirm that the model reads the rationale rather than merely benefiting from its presence. Its direction, rank, and substructure each shape the prediction, and its attributions reproduce known structure-property relationships.",
+      "authors": [
+        "Junwoo Park",
+        "Minyoung Shin",
+        "Cheol Soon Lee",
+        "Sujee Lee"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-08-11T04:50:33+00:00",
+      "link": "https://arxiv.org/pdf/2608.10480v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Molecular LLM for property prediction with internal substructure rationales",
+      "llm_evidence_cn": "分子大语言模型用于性质预测，并提供内部分子子结构依据",
+      "llm_evidence": "分子大语言模型用于性质预测，并提供内部分子子结构依据",
+      "canonical_evidence": "分子大语言模型用于性质预测，并提供内部分子子结构依据",
+      "llm_tldr_en": "Proposes MR-MoL, a multi-granular rationale-guided molecular LLM that combines a fine-tuned GNN to score substructures and serializes influential substructures as evidence for molecular property prediction.",
+      "llm_tldr_cn": "分子性质预测在药物发现中至关重要，但现有分子大语言模型隐式编码分子，难以解释单个子结构的贡献。为此本文提出MR-MoL，用微调的GNN通过掩码给子结构打分，并将最有影响的子结构序列化为依据，为预测提供多粒度证据。实验表明该方法在多个性质预测基准上提升性能，并提供了可解释性。",
+      "llm_tldr": "分子性质预测在药物发现中至关重要，但现有分子大语言模型隐式编码分子，难以解释单个子结构的贡献。为此本文提出MR-MoL，用微调的GNN通过掩码给子结构打分，并将最有影响的子结构序列化为依据，为预测提供多粒度证据。实验表明该方法在多个性质预测基准上提升性能，并提供了可解释性。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "large language models for chemistry applications",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.10483v1",
+      "source": "arxiv",
+      "title": "Predicting Space Groups of Double Perovskites by LLM with Dynamic Few-Shot Learning",
+      "abstract": "Double perovskites (DPs) offer broad compositional tunability, but predicting the space groups (SGs) of stable structures remains difficult because available datasets are often strongly imbalanced toward dominant SG classes. We refer to dominant SG classes as major SGs and underrepresented classes as minor SGs. We introduce Dynamic and Diversity-enhanced Few-shot Retrieval and Rule-Guided Inference for Space-Group Prediction (DyRIS), an LLM-agent-based framework that predicts ranked SG candidates from a given DP composition. DyRIS uses diversity-enhanced dynamic few-shot prompting to retrieve relevant in-context examples while limiting the dominance of frequently represented SGs. It further incorporates rule-guided inference based on B/B' cation ordering, quantitative indicators, and major-SG bias control to refine and rank the final Top-3 SG candidates. We evaluate DyRIS on 3,528 thermodynamically filtered DP entries and compare it with composition-based and descriptor-based baselines. At a training-data ratio of 0.5, DyRIS achieves competitive overall accuracy while obtaining the best Overall Top-1 macro-F1 score and the best performance across all Minor-SG metrics. DyRIS improves Minor-SG Top-1 accuracy by 3.26 percentage points relative to CrabNet and achieves higher Minor-SG Top-3 accuracy than the strongest PyCaret-based baseline. Ablation studies show that diversity-enhanced retrieval, quantitative indicators, major-SG bias control, and B/B' ordering information each contribute to prediction performance. Additional experiments show that the final rule-guided inference step is not easily replaced by conventional classifier- or ranker-based models. These findings demonstrate the potential of combining retrieval-based LLM reasoning with crystallographic domain knowledge for SG prediction in imbalanced materials datasets.",
+      "authors": [
+        "Jongwon Park",
+        "Inhyo Lee",
+        "Junhyeong Lee",
+        "Seunghwa Ryu"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cond-mat.mtrl-sci"
+      ],
+      "published": "2026-08-11T04:53:56+00:00",
+      "link": "https://arxiv.org/pdf/2608.10483v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Uses LLM-agent framework with dynamic few-shot learning for space-group prediction of double perovskites.",
+      "llm_evidence_cn": "利用带动态少样本学习的LLM智能体框架预测双钙钛矿空间群。",
+      "llm_evidence": "利用带动态少样本学习的LLM智能体框架预测双钙钛矿空间群。",
+      "canonical_evidence": "利用带动态少样本学习的LLM智能体框架预测双钙钛矿空间群。",
+      "llm_tldr_en": "DyRIS is an LLM-agent framework for predicting space groups of double perovskites using dynamic few-shot retrieval and rule-guided inference. It addresses class imbalance by ranking candidate space groups and improves prediction of minority classes.",
+      "llm_tldr_cn": "双钙钛矿空间群预测因数据集类别严重不平衡而困难。论文提出DyRIS，一种基于LLM智能体的框架，通过多样性增强的动态少样本检索获取相关示例，并基于B/B'规则进行规则引导推理，预测候选空间群排序。该方法缓解了多数类主导问题，提高了少数类预测能力。该工作展示了LLM在无机材料化学中的有效应用。",
+      "llm_tldr": "双钙钛矿空间群预测因数据集类别严重不平衡而困难。论文提出DyRIS，一种基于LLM智能体的框架，通过多样性增强的动态少样本检索获取相关示例，并基于B/B'规则进行规则引导推理，预测候选空间群排序。该方法缓解了多数类主导问题，提高了少数类预测能力。该工作展示了LLM在无机材料化学中的有效应用。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "large language models for chemistry applications",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.10465v1",
+      "source": "arxiv",
+      "title": "Machine-learning approach for the phase stability and mechanical properties of disordered alloys at finite temperature",
+      "abstract": "The prediction of stable alloys forming solid-state solutions across large portions of the composition space is a serious theoretical challenge, since one has to evaluate the Gibbs free energy, including both configurational and vibrational contributions. This requires an energy theory capable of extremely high throughput. By taking the Ni-Pd system as prototype, we construct an efficient Jacobi-Legendre machine-learning potential based on density-functional-theory data, which provides accurate energies and forces across the entire composition space. Based on a cluster expansion up to three-body terms and only 873 trainable parameters, this allows us to compute the partition function by directly integrating all accessible microstates, differing for composition, atomic configuration and thermal agitation. We confirm that Ni and Pd are fully miscible, forming an $fcc$ solid-state solution. This is only metastable at room temperature, while becomes thermodynamically stable at around 600~K, with the stability achieved first at the Pd-rich end of the composition range. Interestingly, entropy and heat capacity analysis reveal a competition between the solid-state solution and two intermetallic phases with long-period L1$_0$ structure for NiPd and NiPd$_3$. All in all, our approach offers a powerful and high-throughput workflow for the study of disordered alloys, an approach that can be extended to multi-component systems such as high-entropy alloys.",
+      "authors": [
+        "Rutchapon Hunkao",
+        "Urvesh Patil",
+        "Stefano Sanvito"
+      ],
+      "primary_category": "cond-mat.mtrl-sci",
+      "categories": [
+        "cond-mat.mtrl-sci"
+      ],
+      "published": "2026-08-11T04:23:38+00:00",
+      "link": "https://arxiv.org/pdf/2608.10465v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "machine-learned interatomic potential for finite-temperature alloy phase stability",
+      "llm_evidence_cn": "机器学习原子间势用于有限温度合金相稳定性与力学性能预测",
+      "llm_evidence": "机器学习原子间势用于有限温度合金相稳定性与力学性能预测",
+      "canonical_evidence": "机器学习原子间势用于有限温度合金相稳定性与力学性能预测",
+      "llm_tldr_en": "This paper constructs an efficient Jacobi-Legendre machine-learning potential from DFT data for the Ni-Pd system, enabling direct calculation of the partition function and prediction of phase stability and mechanical properties of disordered alloys at finite temperature.",
+      "llm_tldr_cn": "预测无序合金在大范围成分空间中的稳定性需要计算包含构型与振动贡献的Gibbs自由能，对能量理论的通量要求极高。作者以Ni-Pd体系为例，基于DFT数据构建了高效的Jacobi-Legendre机器学习势，并通过至多三体项的簇展开和仅873个可训练参数直接积分配分函数。该方法能准确描述跨成分空间的能量与受力，为有限温度下合金相稳定性和力学性能的高通量计算提供了新途径。",
+      "llm_tldr": "预测无序合金在大范围成分空间中的稳定性需要计算包含构型与振动贡献的Gibbs自由能，对能量理论的通量要求极高。作者以Ni-Pd体系为例，基于DFT数据构建了高效的Jacobi-Legendre机器学习势，并通过至多三体项的簇展开和仅873个可训练参数直接积分配分函数。该方法能准确描述跨成分空间的能量与受力，为有限温度下合金相稳定性和力学性能的高通量计算提供了新途径。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.10792v1",
+      "source": "arxiv",
+      "title": "ChemWorld: Programmable Chemical Worlds for Controlled and Replayable Agent Experimentation",
+      "abstract": "Autonomous chemistry increasingly depends on environments in which agents can repeatedly act, observe, and adapt.Physical laboratories provide essential real-material evidence but are costly to repeat and difficult to use for tightly matched interventions, whereas most digital environments keep the underlying experimental world largely fixed. We introduce ChemWorld, a programmable chemical environment in which reusable process and observation components are compiled into executable worlds. ChemWorld separates the public experimental contract available to an agent from evaluator-owned chemical and material laws. Researchers can therefore vary world composition and operating conditions, or change a single hidden law while holding the public task and interaction conditions fixed. Transactional execution records operations, failures, resource changes, and state transitions, allowing complete environment-action trajectories to be replayed exactly and audited. Full-census qualification covered the reference registry, 52 generated compositions, and module, interface, compilation, and invalid-action tests. Eight deterministic experimental cases demonstrated shared lifecycle semantics, failure recovery, and exact replay, while six parent-child world-fork pairs isolated the effects of single private-law interventions under matched public conditions. An independent agent also completed a full lifecycle in a non-reference world through the same public interface. Within the declared component and model domain, ChemWorld provides a controlled and replayable substrate for studying experimentation across systematically varied chemical worlds, complementary to physical-laboratory evidence and calibration.",
+      "authors": [
+        "Jiangjie Qiu",
+        "Yijun Li",
+        "Xiaonan Wang"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-08-11T10:53:39+00:00",
+      "link": "https://arxiv.org/pdf/2608.10792v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Programmable chemical worlds for controlled and replayable agent experimentation and evaluation",
+      "llm_evidence_cn": "用于可控可回放的智能体化学实验与评估的可编程化学环境",
+      "llm_evidence": "用于可控可回放的智能体化学实验与评估的可编程化学环境",
+      "canonical_evidence": "用于可控可回放的智能体化学实验与评估的可编程化学环境",
+      "llm_tldr_en": "ChemWorld creates programmable chemical environments that separate agent-visible contracts from evaluator-owned chemical/material laws, enabling controlled, replayable experiments for autonomous chemistry agents and systematic evaluation of their behaviors.",
+      "llm_tldr_cn": "自主化学智能体需要在可重复、可控的环境中实验，但现有数字环境大多固定不变，难以支持细粒度干预。ChemWorld 将可复用的过程和观测组件编译为可执行的化学世界，并把智能体可见的实验契约与评估者拥有的化学/材料规律分离。研究者可以改变世界组成、操作条件或隐藏规律，从而对智能体进行受控实验和评估。该环境为化学AI智能体的系统评测与行为研究提供了灵活的基础设施。",
+      "llm_tldr": "自主化学智能体需要在可重复、可控的环境中实验，但现有数字环境大多固定不变，难以支持细粒度干预。ChemWorld 将可复用的过程和观测组件编译为可执行的化学世界，并把智能体可见的实验契约与评估者拥有的化学/材料规律分离。研究者可以改变世界组成、操作条件或隐藏规律，从而对智能体进行受控实验和评估。该环境为化学AI智能体的系统评测与行为研究提供了灵活的基础设施。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "What are the latest advances in retrosynthesis, synthesis planning, and AI agents for chemistry, and how are these systems evaluated?",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.11062v1",
+      "source": "arxiv",
+      "title": "Accelerated Discovery of Materials with Extreme Work Functions through Uncertainty-Aware Multi-Fidelity Screening",
+      "abstract": "Work function plays a pivotal role in technologies ranging from energy conversion and electronics to catalysis. In this work, we integrated machine learning (ML) with multi-fidelity screening to develop a data-driven framework for accelerating the discovery of materials with extreme work functions. We augmented a previously published Random Forest (RF) model for work function to include prediction uncertainty calibration and domain of applicability assessment to enhance prediction robustness. By combining the augmented RF model with universal ML interatomic potential simulations and targeted ab initio calculations, we screened 5.5 million compounds from the GNoME and Alexandria databases. This workflow identified 209 surfaces with extreme low work functions below 2.0 eV and 227 surfaces with extreme high work functions above 6.0 eV, corresponding to 136 and 172 unique materials, respectively. The resulting candidates revealed trends consistent with established chemical principles, including the tendency of alkali- and alkaline-earth-terminated surfaces to exhibit low work functions. While it also uncovered less conventional motifs: lanthanide-rich surface terminations were strongly associated with extremely low work functions, whereas surfaces containing metalloids or phosphorus at the top layer were correlated with exceptionally high work functions. This work demonstrates a scalable strategy that leverages ML models and multi-fidelity computational efforts to accelerate the discovery of materials with extreme work functions for advanced electronic, energy-conversion, and catalytic applications.",
+      "authors": [
+        "Jun Meng",
+        "Ryan Jacobs",
+        "Rehan Kapadia",
+        "John Booske"
+      ],
+      "primary_category": "cond-mat.mtrl-sci",
+      "categories": [
+        "cond-mat.mtrl-sci"
+      ],
+      "published": "2026-08-11T15:29:20+00:00",
+      "link": "https://arxiv.org/pdf/2608.11062v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "ML-accelerated screening with uncertainty calibration and interatomic potentials for materials discovery",
+      "llm_evidence_cn": "利用机器学习和通用原子间势加速筛选极端功函数材料",
+      "llm_evidence": "利用机器学习和通用原子间势加速筛选极端功函数材料",
+      "canonical_evidence": "利用机器学习和通用原子间势加速筛选极端功函数材料",
+      "llm_tldr_en": "This work develops an uncertainty-aware multi-fidelity screening framework combining an augmented random forest model, universal ML interatomic potentials, and ab initio calculations to accelerate discovery of materials with extreme work functions, screening 5.5 million compounds.",
+      "llm_tldr_cn": "功函数对能量转换、电子学和催化等技术至关重要，但传统筛选成本高昂。作者将随机森林模型扩展以支持不确定性校准和适用范围评估，并与通用机器学习原子间势模拟及目标从头计算结合，构建多保真度筛选流程。该流程对GNoME和Alexandria数据库中的550万种化合物进行了筛选，识别出具有极端功函数的候选材料，证明了不确定性感知筛选框架在材料加速发现中的高效性。",
+      "llm_tldr": "功函数对能量转换、电子学和催化等技术至关重要，但传统筛选成本高昂。作者将随机森林模型扩展以支持不确定性校准和适用范围评估，并与通用机器学习原子间势模拟及目标从头计算结合，构建多保真度筛选流程。该流程对GNoME和Alexandria数据库中的550万种化合物进行了筛选，识别出具有极端功函数的候选材料，证明了不确定性感知筛选框架在材料加速发现中的高效性。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2608.08137v1",
+      "source": "arxiv",
+      "title": "Cubic-Equivariant Neural Density Functional Theory for Three-Dimensional Lattice Fluids",
+      "abstract": "We construct a neural classical density functional that acts directly on unrestricted three-dimensional density profiles. As a computationally tractable test bed, we consider parallel hard cubes of side length three on a simple cubic lattice. A fully convolutional network learns the one-body direct-correlation functional $c^{(1)}[ρ]$ from data obtained with grand-canonical Monte Carlo simulations in randomized external potentials. Complete profiles are used during both training and inference; a stochastic Bernoulli mask on the output sites makes full-profile training effective without explicitly extracting and storing overlapping local density windows. Averaging the first-layer kernels over all 48 rotations and reflections of the cubic point group additionally imposes exact cubic equivariance without data augmentation. We compare the learned functional with independent simulation data and with the lattice fundamental-measure functional of Lafuente and Cuesta. The neural functional markedly improves the homogeneous equation of state and the density profile at a planar hard wall. For the anisotropic pair distribution around a fixed particle, both functionals reproduce the principal packing shells, with their relative accuracy depending on crystallographic direction. These results demonstrate neural density-functional calculations on complete three-dimensional profiles while also identifying accurate full-dimensional training data, thermodynamic consistency, and structural correlations as the central challenges for extensions to continuum fluids.",
+      "authors": [
+        "Jens Weimar",
+        "Martin Oettel",
+        "Alessandro Simon"
+      ],
+      "primary_category": "cond-mat.stat-mech",
+      "categories": [
+        "cond-mat.stat-mech"
+      ],
+      "published": "2026-08-08T13:51:27+00:00",
+      "link": "https://arxiv.org/pdf/2608.08137v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "neural density functional for 3D lattice fluids with equivariant convolutions",
+      "llm_evidence_cn": "面向三维晶格流体的神经密度泛函，使用立方等变卷积",
+      "llm_evidence": "面向三维晶格流体的神经密度泛函，使用立方等变卷积",
+      "canonical_evidence": "面向三维晶格流体的神经密度泛函，使用立方等变卷积",
+      "llm_tldr_en": "The paper presents a fully convolutional, cubic-equivariant neural classical density functional that learns the one-body direct-correlation functional from Monte Carlo data, enabling accurate predictions for unrestricted three-dimensional density profiles in lattice fluids.",
+      "llm_tldr_cn": "经典密度泛函理论通常受限于解析近似，难以应对复杂的三维密度分布。作者以简单立方晶格上的平行硬立方体系为测试平台，构建了一个全卷积、立方等变的神经网络密度泛函，直接从巨正则蒙特卡洛模拟数据学习一阶直接关联泛函。通过全轮廓训练和随机Bernoulli掩码，该模型能够在不受限的三维密度分布上给出准确预测，展示了神经网络在学习高维泛函方面的潜力。",
+      "llm_tldr": "经典密度泛函理论通常受限于解析近似，难以应对复杂的三维密度分布。作者以简单立方晶格上的平行硬立方体系为测试平台，构建了一个全卷积、立方等变的神经网络密度泛函，直接从巨正则蒙特卡洛模拟数据学习一阶直接关联泛函。通过全轮廓训练和随机Bernoulli掩码，该模型能够在不受限的三维密度分布上给出准确预测，展示了神经网络在学习高维泛函方面的潜力。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2608.04872v1",
+      "source": "arxiv",
+      "title": "A-SR: Self-Evolving Agentic LLMs for Symbolic Regression via Hierarchical Coordination",
+      "abstract": "Symbolic regression aims to discover closed-form equations from data, but existing LLM-guided methods often rely on a unified proposal loop that compresses heterogeneous search failures into a scalar score and a single prompt. We propose A-SR, a self-evolving agentic framework that shifts the control unit from expression edits to role-conditioned evidence views. A-SR coordinates formula discovery through routing among coordination protocols, an online evaluator-reward role policy, and state-routed process memory. During search, evaluator feedback characterizes reliability and productivity, updates role-level utilities, and routes elite motifs, failure traces, and validity diagnostics to different agents. The framework self-evolves at two timescales: within a run, it adapts the search process without updating LLM parameters; across runs, recorded trajectories can be distilled into open-source LLMs as role-conditioned proposal priors. Averaged over the four LSR-Synth scientific domains in LLM-SRBench, A-SR improves Acc@0.01 over baselines from 25.79% to 48.30% with Llama3.1-8B, while A-SR-LoRA improves the corresponding Qwen3-4B result from 24.58% to 38.29%. On four real-world scientific discovery tasks, A-SR obtains the best in-distribution or out-of-distribution normalized mean squared error on 7 of 8 reported metrics.",
+      "authors": [
+        "Wenxiao Zhao",
+        "Dong Liu",
+        "Kaiyi Xu",
+        "Feng Liu",
+        "Zhen Zhao",
+        "Fei Ben",
+        "Shu Wang",
+        "Wenhao Li",
+        "Yingnian Wu",
+        "Fenghua Ling",
+        "Haobo Li",
+        "Lei Bai"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-08-05T14:01:10+00:00",
+      "link": "https://arxiv.org/pdf/2608.04872v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "LLM agentic framework for symbolic regression applicable to reaction mechanism inference",
+      "llm_evidence_cn": "用于符号回归的LLM智能体框架，可应用于反应机理推断",
+      "llm_evidence": "用于符号回归的LLM智能体框架，可应用于反应机理推断",
+      "canonical_evidence": "用于符号回归的LLM智能体框架，可应用于反应机理推断",
+      "llm_tldr_en": "A-SR coordinates LLM agents via role-conditioned evidence views and self-evolving policies, improving symbolic regression by routing elite motifs and failure traces to different agents.",
+      "llm_tldr_cn": "符号回归旨在从数据中发现闭式方程，但现有LLM引导方法常将异构搜索失败压缩为标量分数和单一提示。A-SR提出自进化智能体框架，将控制单元从表达式编辑转向角色条件证据视图，通过协调协议、在线评估-奖励角色策略和状态路由的过程记忆来引导搜索。评估反馈更新角色级效用，并将精英模板与失败轨迹路由到不同智能体。该方法在符号回归任务上表现出更强的发现能力。",
+      "llm_tldr": "符号回归旨在从数据中发现闭式方程，但现有LLM引导方法常将异构搜索失败压缩为标量分数和单一提示。A-SR提出自进化智能体框架，将控制单元从表达式编辑转向角色条件证据视图，通过协调协议、在线评估-奖励角色策略和状态路由的过程记忆来引导搜索。评估反馈更新角色级效用，并将精英模板与失败轨迹路由到不同智能体。该方法在符号回归任务上表现出更强的发现能力。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "How is deep learning applied to reaction mechanism inference and catalysis design?",
+      "matched_requirement_id": "req-10",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.09099v1",
+      "source": "arxiv",
+      "title": "RAVEN: Frozen Random Graph Reservoirs with Physics-Informed Interaction Fingerprints for Protein-Ligand Binding Affinity Prediction",
+      "abstract": "Quantitative estimation of protein-ligand binding affinity from three-dimensional complex structures is a fundamental task in structure-based computational chemistry and molecular modeling. Reliable prediction remains challenging because available structure-affinity data are limited, experimentally heterogeneous, conformation-dependent, and sensitive to dataset partitioning. RAVEN (Randomized Atomistic Views with Ensemble Neural Reservoirs) utilizes a multihead reservoir of independently initialized and fully frozen atomistic graph encoders to generate diverse structural projections without end-to-end optimization of the graph representation. These projections are integrated with a deterministic physicochemical interaction fingerprint and processed by heterogeneous supervised readers, including neural and tree-based regressors, whose outputs are combined through validation-based nonnegative fusion. The random reservoir expands structural feature coverage across independent encoder realizations, whereas the explicit physicochemical descriptors and heterogeneous readers contribute complementary information and distinct inductive biases. Evaluation on a similarity-isolated PDBbind 2020R1 split reconstructed using GEMS similarity resources, together with the protected CASF-2016 subset, demonstrated strong predictive performance. The results indicate that frozen multi-view graph representations, explicit physicochemical statistics, and heterogeneous model fusion provide a robust and flexible framework for protein-ligand binding-affinity prediction.",
+      "authors": [
+        "Qingyang Zou",
+        "Jiaye Huang",
+        "Hangbo Xie",
+        "Jiayue Yin",
+        "Youyi Song",
+        "Jinfeng Liu"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-08-10T03:58:21+00:00",
+      "link": "https://arxiv.org/pdf/2608.09099v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "ML method for molecular property prediction supporting molecular optimization",
+      "llm_evidence_cn": "用于分子性质预测的机器学习方法，可支持分子优化",
+      "llm_evidence": "用于分子性质预测的机器学习方法，可支持分子优化",
+      "canonical_evidence": "用于分子性质预测的机器学习方法，可支持分子优化",
+      "llm_tldr_en": "RAVEN predicts protein-ligand binding affinity using frozen random atomistic graph encoders plus physics-informed interaction fingerprints, achieving robust performance without end-to-end graph optimization.",
+      "llm_tldr_cn": "蛋白质-配体结合亲和力的可靠预测对结构药物设计至关重要，但现有数据有限且异质。RAVEN使用多个独立初始化且完全冻结的原子图编码器作为多头部储备池，生成多样的结构投影，并结合确定性物理信息相互作用指纹进行整合预测，无需端到端优化图表示。该方法在有限且异质的数据条件下保持稳健，为基于结构的亲和力预测提供了一种高效的替代方案。",
+      "llm_tldr": "蛋白质-配体结合亲和力的可靠预测对结构药物设计至关重要，但现有数据有限且异质。RAVEN使用多个独立初始化且完全冻结的原子图编码器作为多头部储备池，生成多样的结构投影，并结合确定性物理信息相互作用指纹进行整合预测，无需端到端优化图表示。该方法在有限且异质的数据条件下保持稳健，为基于结构的亲和力预测提供了一种高效的替代方案。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "molecular generation and optimization with machine learning",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2608.10435v1",
+      "source": "arxiv",
+      "title": "DynaPPI: A Large-scale Dynamic Protein Dataset for AI-driven Advances in Protein Interactomics",
+      "abstract": "Diffusion models have been widely explored in protein backbone generation due to their powerful generation capabilities.However, in today's AI-driven biological research, predicting the structure of unknown multi-chain protein aggregates (called \"complexes\" in biology) remains an unsolved challenge.This is because existing static or dynamic protein datasets focus solely on static snapshots or single-entity trajectories, neglecting the dynamic process of multiple monomers forming complexes.To alleviate this dilemma, we present DynaPPI, a dynamic protein dataset comprising molecular dynamics (MD) trajectories of protein complex formation from dissociated chains to the bound state, as a pivotal resource to bridge the gap between static structural biology and the inherently temporal nature of dynamic molecular interactions.Benefiting from this dataset, diffusion models can explicitly learn the dynamic binding trajectories of known complexes and accurately predict the structures of unknown complexes based on their diverse generative properties, thereby further catalyzing AI-driven structural biology and protein interactomics.",
+      "authors": [
+        "Jiabao Wei",
+        "Zilong Geng",
+        "Yuze Wang",
+        "Jianjun Li",
+        "Ning Ding",
+        "Bowen Zhou",
+        "Bing Zhang",
+        "Zhiyuan Ma"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-08-11T03:32:32+00:00",
+      "link": "https://arxiv.org/pdf/2608.10435v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Provides large-scale MD trajectories of protein complex formation for training ML models in molecular dynamics.",
+      "llm_evidence_cn": "提供蛋白质复合物形成的MD轨迹，可为分子动力学加速机器学习模型提供训练数据。",
+      "llm_evidence": "提供蛋白质复合物形成的MD轨迹，可为分子动力学加速机器学习模型提供训练数据。",
+      "canonical_evidence": "提供蛋白质复合物形成的MD轨迹，可为分子动力学加速机器学习模型提供训练数据。",
+      "llm_tldr_en": "DynaPPI is a large-scale protein dataset with MD trajectories of complex formation from dissociated chains to bound states. It bridges static snapshots and single-chain trajectories, providing a key resource for AI-driven protein interactomics and dynamics.",
+      "llm_tldr_cn": "现有蛋白数据集只关注静态快照或单实体轨迹，忽略多单体形成复合物的动态过程。论文构建DynaPPI数据集，包含从解离链到结合态的蛋白质复合物形成分子动力学轨迹，弥补了这一空白。该资源可用于训练与评估蛋白质相互作用和动态结构预测模型，支持AI驱动的蛋白质互作组学研究，也为分子动力学加速方法提供训练数据。",
+      "llm_tldr": "现有蛋白数据集只关注静态快照或单实体轨迹，忽略多单体形成复合物的动态过程。论文构建DynaPPI数据集，包含从解离链到结合态的蛋白质复合物形成分子动力学轨迹，弥补了这一空白。该资源可用于训练与评估蛋白质相互作用和动态结构预测模型，支持AI驱动的蛋白质互作组学研究，也为分子动力学加速方法提供训练数据。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.10595v1",
+      "source": "arxiv",
+      "title": "DegradeQuery: Counterfactual Tuple Pretraining for Context-Aware PROTAC Degradation Prediction",
+      "abstract": "Proteolysis-targeting chimeras (PROTACs) induce protein degradation by recruiting a target protein to an E3 ubiquitin ligase, making degradation a joint outcome of the degrader molecule and its biological context. Although public databases contain thousands of structured molecule-target-E3 records, degradation measurements are available for only a small fraction of them. Existing supervised approaches therefore leave most recorded chemical-biological relationships unused. We introduce DegradeQuery, a context-aware prediction framework that converts these label-missing records into a pretraining signal. Its counterfactual tuple pretraining objective contrasts recorded tuples with alternatives formed by replacing the target, the E3 ligase, or both, enabling the model to learn contextual associations without assigning activity pseudo-labels. The resulting representation is then fine-tuned to predict degradation from the complete molecule-target-E3 context. On the official PROTAC-8K benchmark, DegradeQuery achieves an area under the receiver operating characteristic curve of 0.9065 and an accuracy of 0.8500, outperforming the compared methods. Controlled analyses further show that the improvement is primarily attributable to tuple-level pretraining, can be recovered using only label-missing records, and remains complementary to protein language model representations. These findings demonstrate that incompletely labeled PROTAC databases contain useful relational supervision and provide a practical route for learning context-aware degradation predictors from scarce experimental labels.",
+      "authors": [
+        "Dong Xu",
+        "Zhangfan Yang",
+        "Jiantao Wu",
+        "Zexuan Zhu",
+        "Jianqiang Li",
+        "Junkai Ji"
+      ],
+      "primary_category": "q-bio.BM",
+      "categories": [
+        "q-bio.BM",
+        "cs.AI"
+      ],
+      "published": "2026-08-11T07:25:41+00:00",
+      "link": "https://arxiv.org/pdf/2608.10595v1",
+      "tags": [
+        "keyword:aichem-map",
+        "query:aichem-map"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "counterfactual tuple pretraining for context-aware molecular property prediction, a chemical transfer learning method",
+      "llm_evidence_cn": "反事实元组预训练用于上下文感知分子性质预测，属于化学迁移学习方法",
+      "llm_evidence": "反事实元组预训练用于上下文感知分子性质预测，属于化学迁移学习方法",
+      "canonical_evidence": "反事实元组预训练用于上下文感知分子性质预测，属于化学迁移学习方法",
+      "llm_tldr_en": "DegradeQuery converts label-missing PROTAC records into counterfactual pretraining signals, enabling context-aware degradation prediction without full supervision.",
+      "llm_tldr_cn": "PROTAC降解预测中，公开数据库虽有大量分子-靶点-E3记录，但降解标签仅覆盖一小部分，现有监督方法浪费了无标签关系数据。本文提出DegradeQuery框架，将缺失标签的记录转换为反事实元组预训练信号，通过在替换靶点、E3等形成的替代元组上对比学习，实现上下文感知的降解预测。该方法有效利用了大规模未标注化学-生物关系数据，提升了预测能力。这也是一种面向特定分子性质预测的迁移学习/预训练方法。",
+      "llm_tldr": "PROTAC降解预测中，公开数据库虽有大量分子-靶点-E3记录，但降解标签仅覆盖一小部分，现有监督方法浪费了无标签关系数据。本文提出DegradeQuery框架，将缺失标签的记录转换为反事实元组预训练信号，通过在替换靶点、E3等形成的替代元组上对比学习，实现上下文感知的降解预测。该方法有效利用了大规模未标注化学-生物关系数据，提升了预测能力。这也是一种面向特定分子性质预测的迁移学习/预训练方法。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "chemical foundation model pre-training and transfer learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}

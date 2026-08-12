@@ -41,17 +41,17 @@
 <section class="dpr-home-dashboard-card dpr-home-report-card">
   <div class="dpr-home-dashboard-header">
     <div>
-      <span class="dpr-home-dashboard-kicker">2026-08-11</span>
+      <span class="dpr-home-dashboard-kicker">2026-08-12</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">共 9 篇</strong>
+    <strong class="dpr-home-dashboard-count">共 10 篇</strong>
   </div>
   <dl class="dpr-home-dashboard-stats">
     <div class="dpr-home-dashboard-stat"><dt>累计更新</dt><dd>1 次</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>4</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>5</dd></div>
     <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>5</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-08-11 21:50:35 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-08-12 21:45:56 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -62,9 +62,7 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>今日9篇论文聚焦机器学习在材料与化学模拟中的应用，精读重点为大超胞缺陷形成能预测和实时激发态势能面非绝热动力学。</p>
-<p>最值得关注的是两篇9.0分工作：基于小超胞训练机器学习电荷密度模型预测大超胞缺陷形成能，以及机器学习哈密顿量驱动的非绝热分子动力学。</p>
-<p>建议普通读者从这两个方向入手，理解机器学习如何突破传统模拟的规模与精度瓶颈。</p>
+<p>今日10篇论文聚焦AI驱动分子与材料预测，其中两篇高分精读均基于大语言模型。最值得关注LLM在分子性质预测与双钙钛矿空间群动态少样本学习中的突出表现。建议优先阅读9.0分精读文章，深入理解多粒度理由引导的分子建模思路。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -73,12 +71,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">精读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">4 篇</strong>
+    <strong class="dpr-home-dashboard-count">5 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Predicting large-supercell defect formation energies from machine-learning charge density models trained on small supercells">Predicting large-supercell defect formation energies from machine-learning charge density models trained on small supercells</span></li><li><span class="dpr-home-dashboard-paper-title" title="Nonadiabatic Molecular Dynamics on Real-time Excited-State Surfaces via Machine Learning Hamiltonians">Nonadiabatic Molecular Dynamics on Real-time Excited-State Surfaces via Machine Learning Hamiltonians</span></li><li><span class="dpr-home-dashboard-paper-title" title="A Multi-Agent Framework for Automated Coarse-Grained Molecular Dynamics of Polymers">A Multi-Agent Framework for Automated Coarse-Grained Molecular Dynamics of Polymers</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Multi-Granular Rationale-Guided Molecular LLM for Property Prediction">Multi-Granular Rationale-Guided Molecular LLM for Property Prediction</span></li><li><span class="dpr-home-dashboard-paper-title" title="Predicting Space Groups of Double Perovskites by LLM with Dynamic Few-Shot Learning">Predicting Space Groups of Double Perovskites by LLM with Dynamic Few-Shot Learning</span></li><li><span class="dpr-home-dashboard-paper-title" title="Machine-learning approach for the phase stability and mechanical properties of disordered alloys at finite temperature">Machine-learning approach for the phase stability and mechanical properties of disordered alloys at finite temperature</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>4</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>5</strong></span></div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-skim-card">
   <div class="dpr-home-dashboard-header">
@@ -89,7 +87,7 @@
     <strong class="dpr-home-dashboard-count">5 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Denoising Diffusion Monte Carlo Electron Densities with Physically Informed Variance Stabilization: From Fourier Filters to 3D UNETs">Denoising Diffusion Monte Carlo Electron Densities with Physically Informed Variance Stabilization: From Fourier Filters to 3D UNETs</span></li><li><span class="dpr-home-dashboard-paper-title" title="Machine-learning octet $AB$-type binary compounds across chemical space with domain knowledge of the interatomic bond">Machine-learning octet $AB$-type binary compounds across chemical space with domain knowledge of the interatomic bond</span></li><li><span class="dpr-home-dashboard-paper-title" title="SAFE-CHEM: Uncertainty-Aware Policy Switching for Robust Robotic Chemistry">SAFE-CHEM: Uncertainty-Aware Policy Switching for Robust Robotic Chemistry</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Cubic-Equivariant Neural Density Functional Theory for Three-Dimensional Lattice Fluids">Cubic-Equivariant Neural Density Functional Theory for Three-Dimensional Lattice Fluids</span></li><li><span class="dpr-home-dashboard-paper-title" title="RAVEN: Frozen Random Graph Reservoirs with Physics-Informed Interaction Fingerprints for Protein-Ligand Binding Affinity Prediction">RAVEN: Frozen Random Graph Reservoirs with Physics-Informed Interaction Fingerprints for Protein-Ligand Binding Affinity Prediction</span></li><li><span class="dpr-home-dashboard-paper-title" title="DegradeQuery: Counterfactual Tuple Pretraining for Context-Aware PROTAC Degradation Prediction">DegradeQuery: Counterfactual Tuple Pretraining for Context-Aware PROTAC Degradation Prediction</span></li></ul>
   </div>
   <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>5</strong></span></div>
 </section>
