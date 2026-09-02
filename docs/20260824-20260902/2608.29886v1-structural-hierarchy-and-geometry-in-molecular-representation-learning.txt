@@ -1,0 +1,379 @@
+Title: Structural Hierarchy and Geometry in Molecular Representation Learning
+
+URL Source: https://arxiv.org/pdf/2608.29886v1
+
+Published Time: Tue, 01 Sep 2026 01:31:45 GMT
+
+Number of Pages: 13
+
+Markdown Content:
+# Structural Hierarchy and Geometry in Molecular Representation Learning 
+
+David Sulu ∗ Lorenzo Di Fruscia ∗ Jana M. Weber †
+
+Department of Intelligent Systems, Delft University of Technology, Delft, The Netherlands 
+
+{l.difruscia, j.m.weber}@tudelft.nl 
+
+Abstract 
+
+Molecular self-supervised learning uses chemical structures to guide which molec-ular embeddings should be similar. We study whether explicitly encoding a molecule’s Bemis–Murcko scaffold and using it to supervise the molecular embed-ding changes what the model learns. We further test whether this effect depends on the embedding geometry by comparing Euclidean and Lorentz contrastive objec-tives. Across two augmentation strengths, scaffold-supervised models consistently organize molecules according to both identical and structurally related scaffolds. The resulting embeddings also improve molecular property prediction on several tasks, while the exact gains depend on the predicted property. The effect of scaffold supervision on molecular organization is stronger under Lorentz objectives, but neither geometry provides a consistent overall advantage. These results show that explicitly teaching the relation between a molecule and its structural core can reliably shape the organization of molecular embedding space, while the extent of usefulness of this organization remains task dependent. 
+
+1 Introduction 
+
+Functional molecular properties have been measured for only a small fraction of molecules in chemical space. Experimental validation is costly, and this limits the amount of labelled data available for training molecular property prediction models. Self-Supervised Learning (SSL) is a family of strategies that help mitigate this issue: by learning reusable molecular embeddings from large collections of unlabeled structures, it can improve predictive performance on tasks where labelled data are scarce [Kim et al., 2019, Wu et al., 2018]. Contrastive learning is one widely used SSL strategy. By pulling together related views (positives) while separating other instances (negatives), it teaches the model to learn an embedding from a notion of similarity [Chen et al., 2020, van den Oord et al., 2018]. For example, methods such as GraphCL and MolCLR construct two perturbed versions of the same molecular graph by masking atom infor-mation, altering bonds or removing whole subgraphs, and train the model to align their embeddings [You et al., 2020], [Wang et al., 2021]. Subsequent work makes molecular contrastive learning more chemically informed in several ways. Fragment-based approaches decompose molecules into smaller subgraphs: iMolCLR augments molecule-level contrastive learning with a fragment-level contrastive objective and reduces the repulsion of chemically similar molecular negatives [Wang et al., 2022]; GraphFP learns across molecular and fragment resolutions by contrasting fragment embeddings with embeddings of their corresponding atoms [Luong and Singh, 2023]; HiMol uses selected chemically meaningful fragments, termed motifs, and incorporates them as an intermediate level in an atom–motif–molecule hierarchy [Zang et al., 2023]. Scaffold-aware approaches instead use information about the molecular core. [Wan et al., 2025] use scaffold information to construct 
+
+> ∗Equal contribution
+> †Corresponding author Preprint. arXiv:2608.29886v1 [cs.LG] 30 Aug 2026
+
+scaffold-preserving molecular views and to modulate how strongly molecules with different scaffolds are separated during contrastive learning. The geometry of the embedding space may also affect how relations between structural levels are represented. Standard contrastive learning typically compares embeddings in Euclidean space. Hierarchical or branching relationships in data are efficiently, with low distortion, represented in hyperbolic spaces [Nickel and Kiela, 2017, 2018, Sarkar, 2011, Desai et al., 2023]. Molecular structure can be described at multiple levels of abstraction, but this does not imply that molecular space itself must be hierarchical or inherently hyperbolic. Previous molecular work has explored hyperbolic geometry using an externally supplied hierarchy, namely a therapeutic taxonomy, rather than inducing the hierarchy through the pretraining objective itself [Yu et al., 2022]. Molecular cores are used to organize related compound series and can capture chemically meaningful common structures [Bemis and Murcko, 1996, Wan et al., 2025]. They thus provide a natural coarser structural abstraction. The effect of using such a shared abstraction as a direct target for whole-molecule embeddings is worth studying because the same core is a common target for many compounds, so the objective introduces an explicit cross-level, many-to-one relation rather than the one-to-one positive pairing used in standard contrastive learning. This has not been tested in the fragment- and scaffold-based approaches above. Scaffold supervision provides a minimal way of introducing scaffold-level structural organization while leaving the molecular encoder and augmentation scheme unchanged, allowing the effect of the additional supervision to be studied in isolation. This work investigates the effect of using Bemis–Murcko (BM) scaffolds as an explicit many-to-one supervision signal in molecular contrastive learning [Bemis and Murcko, 1996]. Introducing a hierarchical relationship, we thus further test whether the choice of embedding geometry matters. We assess both aspects along two complementary dimensions: molecular neighbourhood organization through molecule–molecule retrieval, and downstream transfer through frozen molecular property prediction. 
+
+2 Methods 
+
+Molecular representation and embedding model. Each molecule is represented as a graph 
+
+G = ( V, E ), with atoms as nodes and bonds as edges. A Graph Isomorphism Network with edge features (GINE) encodes this graph into a molecular embedding h = fθ (G). We use h for molecule retrieval and property prediction. During contrastive pretraining, a projection head maps h to a second embedding z = gϕ(h), where the training loss is applied [Xu et al., 2019, Hu et al., 2020]. The contrastive objective acts on z, so the projection head mediates this objective, while h is retained as the reusable molecular embedding for downstream evaluation, following standard contrastive-learning practice. 
+
+Contrastive pretraining objective. Following MolCLR [Wang et al., 2021], for each molecule 
+
+Gi we create two perturbed views G(1)  
+
+> i
+
+and G(2)  
+
+> i
+
+by randomly masking atoms and deleting bonds at the selected perturbation rate. The model is challenged to place the two versions of the same molecule close together and embeddings of different molecules farther apart. We use perturbation strength of 25%, following MolCLR, and 15% as a milder augmentation setting. For computational reasons, all models are pretrained on a 1M subset of the released MolCLR dataset using a 75/25 training-validation split, and each condition is trained independently with three random seeds. The full loss is given in Appendix Eq. 1. 
+
+Scaffold supervision. We additionally extract the BM scaffold of each molecule, retaining ring systems and their connecting linkers while removing peripheral side chains, and encode it in the same graph encoder. During training, each view is encouraged to be similar to its own scaffold and different from the scaffolds of other molecules in the batch (Appendix Eq. 2). The total loss combines 
+
+Lmol and Lscaff with scaffold weight λs = 0 .1. Scaffold supervision therefore explicitly teaches the model the relation between a molecule and its structural core. Figure 1 summarizes the pretraining design. 
+
+Embedding geometry. The Euclidean and Lorentz variants share the same setup and differ only in how similarity between projected embeddings is computed. In the Euclidean variant, projected vectors 
+
+z are compared using cosine similarity. In the Lorentz variant, z is first mapped from Euclidean space 2Query h
+
+…
+
+1 2 k  
+
+> Top-k Tanimoto Score
+> TS = 0.87 TS = 0.76 TS = 0.52
+> 01
+
+Molecule retrieval by scaffold similarity Training pipeline  
+
+> GNN encoding GNN encoding
+> Scaffold Augmentations
+> Scaffold Augmentations
+> Euclidean Hyperbolic
+
+L=L mol-mol +𝜆L mol-scaffold    
+
+> Align Contrast
+> Backbone space h
+> Backbone space h
+> Alignment space z
+
+Downstream adaptation  
+
+> Classification Regression …
+> h
+> Pretrained encoder Linear probing
+
+Figure 1: Top : Scaffold-aware contrastive pretraining. Augmented molecular views and their unaugmented BM scaffolds share an encoder and projection head. Augmented molecular views are aligned/contrasted with one another, while explicit scaffold supervision aligns each view with its own scaffold and contrasts it against other scaffold embeddings. The contrastive objectives are evaluated under either Euclidean or Lorentz projection geometry. Bottom : After pretraining, the frozen backbone space h is evaluated through molecular retrieval and linear property prediction. onto a Lorentz hyperboloid, and contrastive similarity is defined as the negative geodesic distance between the resulting points. We use a radially bounded Lorentz formulation throughout the main text. Both the bounded and unbounded formulations are defined in Appendix A, and Appendix E reports the diagnostic that motivates this choice. The transformation acts only on z, while the backbone embedding h remains Euclidean. 
+
+Evaluation. We evaluate the frozen molecular embeddings h in two ways: we study how scaffold supervision reorganizes the molecular embedding space, and we test how well the embeddings transfer knowledge to downstream molecular property prediction. To study latent space re-organization, we retrieve molecular neighbours from a fixed cohort of 100,000 unique molecules from the pretraining validation set using cosine similarity in h. Note that this is not a general measure of embedding quality, but simply describes the re-organization. We measure two distinct phenomena: the recovery of molecules sharing the query’s exact BM scaffold using mean average precision at ten (MAP@10) as a model consistency check, and the ECFP4–Tanimoto similarity (Tan@10) of non-identical scaffolds with its normalized discounted cumulative gain at ten (nDCG@10). The latter quantifies similarity and ranking quality and is done either between the corresponding BM scaffolds (BM-Tan@10, BM-nDCG@10) or between the complete molecules (Mol-Tan@10, Mol-nDCG@10). Full metric definitions, cohort construction, and reference baselines are provided in Appendix D. We separately evaluate downstream transfer on seven MoleculeNet tasks, comprising three classifica-tion and four regression problems [Wu et al., 2018]. We report them in Appendix Table 4. For each task, we freeze the encoder fθ and train a linear predictor on h using a fixed 80/10/10 scaffold split. We report mean ± SD across three independently pretrained encoders. This evaluation tests whether the learned embeddings contain useful information for property prediction tasks. 33 Results 
+
+We first study how scaffold supervision changes the organization of the learned molecular embeddings, and then ask whether these changes are useful for selected molecular property prediction tasks. 
+
+Scaffold supervision reorganizes molecular neighbourhoods. As expected, scaffold supervision strongly increases retrieval of molecules sharing the query’s exact BM scaffold (Appendix Table 7). Because exact scaffold identity is used during training, this confirms that the model learns the intended scaffold relation. We next exclude all molecules sharing the query’s exact scaffold. Under this stricter setting, scaffold-supervised models retrieve molecules with more similar, but nonidentical, BM scaffolds than their corresponding MolCLR models (Table 1). The same retrieved neighbours are also more similar when the complete molecules are compared using ECFP4. This effect is positive across all pretraining seeds, geometries, and augmentation settings. Scaffold supervision therefore changes molecular neighbourhoods beyond simply grouping molecules with the exact scaffold used during training. Backbone-space t-SNE visualizations show the same qualitative pattern under both alignment geome-tries (Appendix Figures 4 and 5). The gain from scaffold supervision is larger under Lorentz training than under Euclidean training in every pretraining seed and at both augmentation strengths, but is primarily driven by reduced performance of the matched MolCLR baseline rather than improved scaffold-supervised models, so neither geometry consistently outperforms the other. Table 1: Molecular retrieval in the frozen embedding space h, after excluding molecules with the query’s exact BM scaffold. Values are mean ± sample SD across three independent pretraining seeds. BM-Tan@10 compares the retrieved scaffolds, while Mol-Tan@10 compares the complete molecules. Direct ECFP4 retrieval is included as a deterministic chemical-similarity reference. Boldface marks the best learned-model mean in each column.                                                            
+
+> Model BM-Tan@10 ↑Mol-Tan@10 ↑
+> 25% 15% 25% 15% MolCLR (Euclidean) 0.2749 ±0.0005 0.2848 ±0.0012 0.2118 ±0.0005 0.2212 ±0.0004
+> Scaffold (Euclidean) 0.3015 ±0.0006 0.3195 ±0.0013 0.2262 ±0.0004 0.2341 ±0.0003
+> MolCLR (Lorentz) 0.2619 ±0.0019 0.2581 ±0.0010 0.2228 ±0.0006 0.2037 ±0.0019
+> Scaffold (Lorentz) 0.2959 ±0.0015 0.3233 ±0.0014 0.2374 ±0.0007 0.2340 ±0.0005
+> Direct ECFP4 retrieval 0.3483 0.3483 0.3833 0.3833
+
+Scaffold supervision induces augmentation-dependent radial ordering. The bounded Lorentz alignment space z assigns each embedding a distance from the origin. The relative radial placement of a molecule and its own scaffold is augmentation-dependent: at 15%, the scaffold-supervised bounded Lorentz model places the scaffold closer to the origin than its corresponding molecule for 
+
+92 .0 ± 2.7% of pairs, whereas at 25% this occurs for only 19 .3 ± 8.6% of pairs and the mean radial ordering reverses (Figure 2). Retrieval and property prediction are evaluated on the frozen Euclidean backbone h, so this ordering does not by itself establish improved embedding quality. 
+
+Scaffold supervision often helps property prediction. Under Euclidean training, scaffold super-vision improves the across-seed mean on six of seven tasks at 15% augmentation and five of seven tasks at 25% (Table 2). The effect depends on the property: for example, ESOL improves at both Euclidean settings, whereas QM7 worsens on average. In agreement with the observed effects in the Euclidean setting, the effect of scaffold supervision under Lorentz training also helps in most tested tasks, but remains task-dependent. 
+
+4 Limitations 
+
+Positioning within structure-aware molecular SSL. This study is a controlled analysis of scaffold supervision as an additional hierarchical signal rather than a comprehensive benchmark of all prior structure-aware molecular SSL. Our results establish the effect of BM scaffold supervision relative to matched MolCLR retrainings and do not claim superiority over broader structure-aware approaches. We consider only Bemis–Murcko scaffolds, while alternative scaffold definitions or other shared structural abstractions may induce different organization. Matched comparisons with related approaches remain important future work. 4−3 −2 −1 0 1 2
+
+Paired radial difference Δ r = rmol − rscaff 
+
+0.0 0.5 1.0 1.5 
+
+> Density
+
+15%: 94.3% Δr > 0 
+
+mean Δr = + 0.427 
+
+25%: 29.2% Δr > 0 
+
+mean Δr = − 0.286 Figure 2: Paired radial difference in the bounded Lorentz alignment space z, for scaffold-supervised models at 15% (blue) and 25% (green) augmentation. Positive ∆r indicates that a molecule lies farther from the origin than its own BM scaffold. Annotations give the fraction of pairs with positive 
+
+∆r and the mean ∆r value for a single pretraining seed. Table 2: Frozen linear-probe performance on seven MoleculeNet tasks. Values are mean ± SD across three independently pretrained encoders using the same downstream scaffold split. Boldface marks the best mean within each task and augmentation setting.                                                                                                                                                                                      
+
+> Aug. Model BBBP ↑BACE ↑ClinTox ↑ESOL ↓FreeSolv ↓Lipo. ↓QM7 ↓
+> 15% Euc. MolCLR 0.620 ±0.022 0.635 ±0.008 0.536 ±0.008 1.678 ±0.094 3.571 ±0.131 0.997 ±0.021 75 .9±2.4
+> 15% Euc. Scaffold 0.629 ±0.003 0.671 ±0.034 0.549 ±0.036 1.489 ±0.027 2.940 ±0.132 0.989 ±0.006 81 .8±6.3
+> 15% Lor. MolCLR 0.643 ±0.014 0.598 ±0.008 0.580 ±0.034 1.668 ±0.048 3.486 ±0.083 1.043 ±0.007 98 .4±7.4
+> 15% Lor. Scaffold 0.614 ±0.007 0.655 ±0.068 0.557 ±0.024 1.573 ±0.065 2.621 ±0.066 1.025 ±0.011 96 .5±6.9
+> 25% Euc. MolCLR 0.629 ±0.008 0.574 ±0.044 0.502 ±0.016 1.680 ±0.059 3.229 ±0.049 1.016 ±0.020 76 .4±3.0
+> 25% Euc. Scaffold 0.650 ±0.008 0.612 ±0.024 0.511 ±0.037 1.512 ±0.018 3.252 ±0.066 1.000 ±0.013 77 .5±2.4
+> 25% Lor. MolCLR 0.638 ±0.004 0.658 ±0.015 0.526 ±0.014 1.532 ±0.021 3.425 ±0.187 1.027 ±0.009 86 .3±0.4
+> 25% Lor. Scaffold 0.636 ±0.013 0.664 ±0.029 0 .567 ±0.017 1.565 ±0.059 2.950 ±0.264 1.001 ±0.012 86 .9±7.8
+
+Dataset size and Lorentz ablations. In this study, pretraining is restricted to a 1M-molecule subset. Thus, the magnitude of the observed effects may change at larger scale. Also, no scaffold-frequency balancing or cap is applied. The bounded Lorentz implementation further uses a single rmax , which was not independently swept. 
+
+5 Conclusion 
+
+We studied what happens when molecular scaffolds are used directly to supervise molecular con-trastive learning, and whether our findings are affected by embedding geometry. Scaffold supervision consistently changes how molecules are organized in the learned embedding space: molecules be-come closer not only to others sharing the same BM scaffold, but also to molecules with related, nonidentical scaffolds. The same embeddings improve property prediction on several tasks, although these gains depend on the property being predicted. Embedding geometry changes the strength of the scaffold-supervision effect, but Lorentz training does not provide a consistent advantage over Euclidean training. Together, our results show that explicitly teaching a model the relation between a molecule and its structural core provides a simple way to shape molecular embeddings, while the usefulness of this organization depends on the downstream task. 
+
+6 Acknowledgements 
+
+Research reported in this work was partially or completely facilitated by computational resources and support of the Delft AI Cluster (DAIC) at TU Delft (RRID: SCR_025091), but remains the sole responsibility of the authors, not the DAIC team [Delft AI Cluster (DAIC), 2024]. 5References 
+
+Guy W. Bemis and Mark A. Murcko. The properties of known drugs. 1. molecular frameworks. 
+
+Journal of Medicinal Chemistry , 39(15):2887–2893, 1996. doi: 10.1021/jm9602928. Ting Chen, Simon Kornblith, Mohammad Norouzi, and Geoffrey Hinton. A simple framework for contrastive learning of visual representations. In International Conference on Machine Learning (ICML) , 2020. URL https://arxiv.org/abs/2002.05709 .Delft AI Cluster (DAIC). The delft ai cluster (daic), rrid:scr_025091, 2024. URL https://daic. tudelft.nl/ .Karan Desai, Maximilian Nickel, Tanmay Rajpurohit, Justin Johnson, and Ramakrishna Vedantam. Hyperbolic image-text representations. In International Conference on Machine Learning (ICML) ,2023. URL https://arxiv.org/abs/2304.09172 .Weihua Hu, Bowen Liu, Joseph Gomes, Marinka Zitnik, Percy Liang, Vijay Pande, and Jure Leskovec. Strategies for pre-training graph neural networks. In International Conference on Learning Representations (ICLR) , 2020. URL https://arxiv.org/abs/1905.12265 .Sunghwan Kim, Jie Chen, Tiejun Cheng, Asta Gindulyte, Jia He, Siqian He, Qingliang Li, Benjamin A Shoemaker, Paul A Thiessen, Bo Yu, Leonid Zaslavsky, Jian Zhang, and Evan E Bolton. Pubchem 2019 update: improved access to chemical data. Nucleic Acids Research , 47(D1):D1102–D1109, 01 2019. ISSN 0305-1048. doi: 10.1093/nar/gky1033. URL https://doi.org/10.1093/nar/ gky1033 .Kha-Dinh Luong and Ambuj Singh. Fragment-based pretraining and finetuning on molecular graphs. In Thirty-seventh Conference on Neural Information Processing Systems , 2023. URL 
+
+https://openreview.net/forum?id=77Nq1KjmLl .Maximilian Nickel and Douwe Kiela. Poincaré embeddings for learning hierarchical representations. 
+
+CoRR , abs/1705.08039, 2017. URL http://arxiv.org/abs/1705.08039 .Maximilian Nickel and Douwe Kiela. Learning continuous hierarchies in the lorentz model of hyperbolic geometry. In International Conference on Machine Learning (ICML) , 2018. URL 
+
+https://arxiv.org/abs/1806.03417 .Rik Sarkar. Low distortion delaunay embedding of trees in hyperbolic plane. In International Symposium on Graph Drawing , pages 355–366, 2011. doi: 10.1007/978-3-642-25878-7_34. Aaron van den Oord, Yazhe Li, and Oriol Vinyals. Representation learning with contrastive predictive coding. CoRR , abs/1807.03748, 2018. URL https://arxiv.org/abs/1807.03748 .Y. Wan, J. Wu, T. Hou, C.-Y. Hsieh, and X. Jia. Multi-channel learning for integrating structural hierarchies into context-dependent molecular representation. Nature Communications , 16(1): 413, January 2025. doi: 10.1038/s41467-024-55082-4. URL https://doi.org/10.1038/ s41467-024-55082-4 .Yuyang Wang, Jianren Wang, Zhonglin Cao, and Amir Barati Farimani. Molclr: Molecular contrastive learning of representations via graph neural networks. CoRR , abs/2102.10056, 2021. URL 
+
+https://arxiv.org/abs/2102.10056 .Yuyang Wang, Rishikesh Magar, Chen Liang, and Amir Barati Farimani. Improving molecular contrastive learning via faulty negative mitigation and decomposed fragment contrast. Journal of Chemical Information and Modeling , 62(11):2713–2725, 2022. doi: 10.1021/acs.jcim.2c00495. Zhenqin Wu, Bharath Ramsundar, Evan N. Feinberg, Joseph Gomes, Caleb Geniesse, Aneesh S. Pappu, Karl Leswing, and Vijay Pande. Moleculenet: A benchmark for molecular machine learning. 
+
+Chemical Science , 9(2):513–530, 2018. doi: 10.1039/C7SC02664A. Keyulu Xu, Weihua Hu, Jure Leskovec, and Stefanie Jegelka. How powerful are graph neural networks? In International Conference on Learning Representations (ICLR) , 2019. URL https: //arxiv.org/abs/1810.00826 .6Yuning You, Tianlong Chen, Yongduo Sui, Ting Chen, Zhangyang Wang, and Yang Shen. Graph contrastive learning with augmentations. CoRR , abs/2010.13902, 2020. URL https://arxiv. org/abs/2010.13902 .Ke Yu, Shyam Visweswaran, and Kayhan Batmanghelich. Hyperbolic molecular representation learning for drug repositioning. arXiv preprint arXiv:2208.06361 , 2022. doi: 10.48550/arXiv. 2208.06361. Xuan Zang, Xianbing Zhao, and Buzhou Tang. Hierarchical molecular graph self-supervised learning for property prediction. Communications Chemistry , 6(1):34, 2023. 
+
+A Objectives and Geometry 
+
+For a minibatch of N molecules, two augmented views yield 2N embeddings. For a positive pair 
+
+(zi, z j ) from the same molecule, NT-Xent [Chen et al., 2020] is 
+
+Lmol = − log exp  sim( zi, z j )/τ P2Nk=1 1[k̸ =i] exp  sim( zi, z k)/τ  (1) where sim is the geometry specific score and τ is a temperature parameter. For explicit alignment, let U be the number of distinct nonempty scaffolds in the batch, let zSu be the projection of scaffold u, and let S(G) index the scaffold of molecule G. The loss is 
+
+Lscaff = − 12 EG
+
+X
+
+> v∈{ i,j }
+
+log exp  sim( zG(v) , z S(G))/τ s
+
+PUu=1 exp  sim( zG(v) , z Su )/τ s
+
+ (2) where the expectation is over molecules with nonempty scaffolds. The total objective is L =
+
+Lmol + λsLscaff .
+
+Primer on the Lorentz model of hyperbolic space. Hyperbolic space has constant negative curvature, and the volume available at radius r grows exponentially rather than polynomially. This makes it a natural candidate geometry for tree-like data, but whether that inductive bias helps molecular embeddings is an empirical question [Nickel and Kiela, 2017, Sarkar, 2011, Nickel and Kiela, 2018]. A smooth n-dimensional manifold M is locally parametrized by Rn. A Riemannian metric g assigns to every x ∈ M a positive-definite inner product gx on the tangent space TxM, varying smoothly with x. The pair (M, g) is a Riemannian manifold; its metric defines lengths of tangent vectors and curves, and hence geodesic distance. The Lorentz model represents an n-dimensional hyperbolic space as the upper sheet of a hyperboloid in Rn+1 . Writing x = [ xt, x s] and y = [ yt, y s], with one time coordinate and n spatial coordinates, its inner product is 
+
+⟨x, y ⟩L = −xtyt + x⊤ 
+
+> s
+
+ys
+
+For curvature −c, with c > 0, the manifold is 
+
+Lnc =
+
+
+
+x ∈ Rn+1 : ⟨x, x ⟩L = − 1
+
+c , x t > 0
+
+
+
+and its origin is O = [1 /√c, 0]. The geodesic distance between x, y ∈ L nc is 
+
+dL(x, y ) = 1
+
+√c arccosh( −c⟨x, y ⟩L) (3) The tangent space TxM is the n-dimensional vector space that linearly approximates the manifold in x. For the Lorentz hyperboloid, TxLnc = {w ∈ Rn+1 : ⟨x, w ⟩L = 0 }. At O = [1 /√c, 0],this condition gives wt = 0 , so TO Lnc is naturally identified with Rn through v 7 → [0 , v ]. The implementation scales z in this tangent space and maps it to the hyperboloid with the exponential map. 7The Lorentz model uses −dL as its contrastive score. Following the implementation, a scaled projection v = αz ∈ R256 is lifted from the tangent space at O with 
+
+exp O (v) = 
+
+ cosh( √c∥v∥)
+
+√c , sinh( √c∥v∥)
+
+√c∥v∥ v
+
+
+
+∈ R257 
+
+using the continuous value at v = 0 . Thus the hyperboloid has intrinsic dimension 256 and ambient dimension 257. The Lorentz variant substitutes −dL(exp O (αz ), exp O (αz ′)) for cosine similarity. No manifold map is applied to the backbone embedding h.
+
+Bounded and unbounded Lorentz formulations. We consider two implementations of the Lorentz objective, differing only in how the scaled projection is mapped onto the hyperboloid. The unbounded 
+
+formulation follows the mapping above, lifting v = αz directly with exp O . The bounded formulation instead replaces v before the exponential map by 
+
+ev = rmax tanh 
+
+ ∥v∥
+
+rmax 
+
+ v
+
+∥v∥
+
+with the continuous value at v = 0 .
+
+B Experimental Details and Runtimes 
+
+For downstream evaluation, each pretrained encoder is probed with three linear heads whose scores are first averaged within the encoder, to produce per-seed downstream results. We then report the mean and sample standard deviation across three independently pretrained encoders. The backbone is frozen throughout. Pretraining used one NVIDIA A40 GPU per run. Representative runs required approximately 4.8 minutes per epoch for Euclidean MolCLR and 8.3 minutes per epoch with scaffold alignment, corresponding to approximately 4.0 and 6.9 hours, respectively, for 50 epochs. The corresponding Lorentz runs required approximately 4.5 minutes per epoch for MolCLR and 8.2 minutes per epoch with scaffold alignment, or approximately 3.8 and 6.8 hours for 50 epochs. Downstream linear-probe experiments were also run on NVIDIA A40 GPUs. Configuration details are reported in Table 3. Table 3: Pretraining and frozen-probe configuration.                             
+
+> Component Final specification Architecture Five-layer shared GINE, hidden width 300 and mean pooling; h∈R512 and z∈R256 .Views Random atom-feature masking and bond deletion, at 15% or 25%. Optimization Adam, batch 512, 50 epochs, initial learning rate 5×10 −4, weight decay 10 −5, 10 warm-up epochs followed by cosine decay. Loss and geometry τ=τs= 0 .1,λs= 0 .1, fixed c= 1 , and a learned Lorentz scale α. For bounded Lorentz, rmax = 5 .Frozen probes One deterministic 80/10/10 BM-scaffold split; three independently pretrained encoders per condition and three linear heads per encoder on frozen h, batch 32, 100 epochs, Adam at
+> 10 −3with weight decay 10 −6.
+
+Downstream task definitions. The benchmarks span distinct types of molecular properties. BBBP, BACE, and ClinTox probe biological or physiological outcomes, whereas ESOL, FreeSolv, and Lipophilicity describe physicochemical properties. QM7 instead targets a quantum-mechanical energetic property. Consequently, scaffold information need not be equally predictive across all seven tasks. The selected tasks are reported in Table 4. 
+
+C Complete Downstream Results 
+
+Classification uses ROC–AUC ( ↑); ESOL, FreeSolv, and Lipophilicity use RMSE ( ↓); QM7 uses MAE ( ↓). Here we also provide the unbounded Lorentz rows for comparison. 8Table 4: Downstream MoleculeNet benchmarks used for frozen linear probing. Classification tasks are evaluated by ROC-AUC (higher is better), while regression tasks use RMSE or MAE (lower is better). All experiments use the scaffold splits described in the main text. 
+
+Dataset Prediction target Task Metric BBBP Blood–brain barrier penetration Classification ROC-AUC ↑
+
+BACE BACE-1 inhibitor activity Classification ROC-AUC ↑
+
+ClinTox Clinical toxicity / FDA approval Classification ROC-AUC ↑
+
+ESOL Aqueous solubility Regression RMSE ↓
+
+FreeSolv Hydration free energy in water Regression RMSE ↓
+
+Lipophilicity Octanol/water distribution ( log D, pH 7.4) Regression RMSE ↓
+
+QM7 Atomization energy Regression MAE ↓
+
+Table 5: Downstream results at 15% augmentation, with the same aggregation and metrics as Table 6. Boldface and underlining mark the best and second-best models in each column.                                                        
+
+> Model BBBP ↑BACE ↑ClinTox ↑ESOL ↓FreeSolv ↓Lipo. ↓QM7 ↓
+> MolCLR (Euclidean) 0.620 ±0.022 0.635 ±0.008 0.536 ±0.008 1.678 ±0.094 3.571 ±0.131 0.997 ±0.021 75 .93 ±2.40
+> Scaffold (Euclidean) 0.629 ±0.003 0.671 ±0.034 0.549 ±0.036 1.489 ±0.027 2.940 ±0.132 0.989 ±0.006 81 .83 ±6.32
+> MolCLR (Lorentz–unbounded) 0.627 ±0.020 0.598 ±0.008 0.506 ±0.016 1.715 ±0.025 3.530 ±0.188 1.046 ±0.008 101 .28 ±2.37
+> Scaffold (Lorentz–unbounded) 0.613 ±0.005 0.641 ±0.109 0.550 ±0.028 1.674 ±0.040 3.098 ±0.262 1.010 ±0.017 86 .72 ±8.86
+> MolCLR (Lorentz–bounded) 0.643 ±0.014 0.598 ±0.008 0.580 ±0.034 1.668 ±0.048 3.486 ±0.083 1.043 ±0.007 98 .41 ±7.37
+> Scaffold (Lorentz–bounded) 0.614 ±0.007 0.655 ±0.068 0.557 ±0.024 1.573 ±0.065 2.621 ±0.066 1.025 ±0.011 96 .47 ±6.89
+
+D Structural Evaluation 
+
+We use one fixed cohort of 100,000 randomly selected molecules from the pretraining validation set. Molecules are extracted and retained when they: have a valid stored BM scaffold, can be reconstructed as an RDKit molecule, and are not exact-molecule duplicates; no scaffold-frequency balancing or cap is applied. The same cohort is used for all evaluated encoders. The cohort contains 57,939 exact BM scaffolds. Of the 100,000 queries, 48,762 belong to 6,701 multi-member scaffold groups and therefore have at least one exact-BM match. The remaining 51,238 have singleton exact scaffolds. Each query is removed from its own candidate set. Exact-BM evaluation is restricted to queries with at least one other exact match. Graded BM-scaffold evaluation uses every query, removes all candidates with the query’s exact BM scaffold, and scores the remaining neighbours by ECFP4–Tanimoto similarity between the query and candidate BM scaffolds. For the exact-BM retrieval, MAP@ k averages precision at relevant ranks and normalizes by the smaller number between k and the amount of available positives. BM-Tan@ k is the mean BM-scaffold ECFP4 similarity among the top k, and nDCG@10 uses that similarity as a relevance score. Table 7 reports retrieval in the backbone space h.
+
+E Projection-space geometry diagnostics 
+
+The bounded Lorentz formulation used in the main experiments was adopted after examining the original unbounded implementation. There, every embedding in the alignment space z ends up at essentially the same distance from the origin, as their mapped radii reach the numerical stability limit of the hyperbolic implementation. Because all points share that radius, negative geodesic distance becomes almost perfectly rank-equivalent to raw-z cosine similarity (Spearman correlation ≈ 1.0). Thus these models effectively lose radial variation, although the resulting contrastive objective is not identical to cosine NT-Xent because the transformed logits and gradients still differ. The bounded variant prevents embeddings from reaching this numerical limit and restores variation in distance from the origin. These diagnostics concern z, on which the Lorentz objective operates, while retrieval and downstream evaluation use the frozen Euclidean backbone h.
+
+F Augmentation Diagnostics 
+
+We characterize how augmentation strength affects molecular graph connectivity independently of the learned embeddings. For each operator and perturbation strength, we generate 18,000 stochastic views 9Table 6: Downstream results at 25% augmentation. Boldface and underlining mark the best and second-best models in each column.                                                        
+
+> Model BBBP ↑BACE ↑ClinTox ↑ESOL ↓FreeSolv ↓Lipo. ↓QM7 ↓
+> MolCLR (Euclidean) 0.629 ±0.008 0.574 ±0.044 0.502 ±0.016 1.680 ±0.059 3.229 ±0.049 1.016 ±0.020 76 .37 ±3.04
+> Scaffold (Euclidean) 0.650 ±0.008 0.612 ±0.024 0.511 ±0.037 1.512 ±0.018 3.252 ±0.066 1.000 ±0.013 77 .51 ±2.41
+> MolCLR (Lorentz–unbounded) 0.633 ±0.011 0.651 ±0.012 0.503 ±0.013 1.517 ±0.015 2.708 ±0.131 1.030 ±0.014 96 .20 ±9.88
+> Scaffold (Lorentz–unbounded) 0.620 ±0.030 0.690 ±0.024 0 .592 ±0.035 1.595 ±0.045 2.741 ±0.416 0.993 ±0.018 81 .46 ±3.95
+> MolCLR (Lorentz–bounded) 0.638 ±0.004 0.658 ±0.015 0.526 ±0.014 1.532 ±0.021 3.425 ±0.187 1.027 ±0.009 86 .35 ±0.40
+> Scaffold (Lorentz–bounded) 0.636 ±0.013 0.664 ±0.029 0.567 ±0.017 1.565 ±0.059 2.950 ±0.264 1.001 ±0.012 86 .90 ±7.87
+
+Table 7: Retrieval results in backbone space h. Learned-model values are mean ± sample SD across three independently pretrained encoders. Exact BM is an objective-proximal check; graded metrics exclude every candidate with the query’s exact BM scaffold. Bold and underlining mark the best and second-best learned-model point estimates within each augmentation setting. Full-molecule ECFP4 is a deterministic, chemical-similarity reference. 
+
+Aug. Model Exact MAP@10 ↑ BM-Tan@10 ↑ BM-nDCG@10 ↑
+
+15% MolCLR (Euclidean) 0.2904 ± 0.0025 0.2848 ± 0.0012 0.5169 ± 0.0019 
+
+15% Scaffold (Euclidean) 0.4068 ± 0.0024 0.3195 ± 0.0013 0.5738 ± 0.0021 
+
+15% MolCLR (Lorentz–unbounded) 0.2208 ± 0.0014 0.2492 ± 0.0004 0.4483 ± 0.0011 
+
+15% Scaffold (Lorentz–unbounded) 0.4233 ± 0.0100 0.3223 ± 0.0034 0.5740 ± 0.0068 
+
+15% MolCLR (Lorentz–bounded) 0.2375 ± 0.0026 0.2581 ± 0.0010 0.4629 ± 0.0015 
+
+15% Scaffold (Lorentz–bounded) 0.4407 ± 0.0120 0.3233 ± 0.0014 0.5721 ± 0.0023 
+
+25% MolCLR (Euclidean) 0.2635 ± 0.0025 0.2749 ± 0.0005 0.4994 ± 0.0010 
+
+25% Scaffold (Euclidean) 0.3264 ± 0.0030 0.3015 ± 0.0006 0.5460 ± 0.0007 
+
+25% MolCLR (Lorentz–unbounded) 0.1670 ± 0.0045 0.2516 ± 0.0029 0.4434 ± 0.0053 
+
+25% Scaffold (Lorentz–unbounded) 0.3288 ± 0.0060 0.2992 ± 0.0010 0.5270 ± 0.0018 
+
+25% MolCLR (Lorentz–bounded) 0.2090 ± 0.0085 0.2619 ± 0.0019 0.4613 ± 0.0031 
+
+25% Scaffold (Lorentz–bounded) 0.3150 ± 0.0138 0.2959 ± 0.0015 0.5211 ± 0.0025 
+
+– Full-molecule ECFP4/Tanimoto 0.2601 0.3483 0.6267 
+
+from a fixed set of 3,000 validation molecules. We measure the number of connected components among non-isolated atoms, the fraction of atoms retained in the largest connected component, and the fraction of views that split into at least two multi-atom components. Figure 3 shows these quantities across perturbation strengths from 5% to 30%. For the augmentation used in our reported models, connectivity degrades progressively with increasing perturbation strength: 15% and 25% therefore correspond to milder and stronger points along the same fragmentation regime rather than qualitatively distinct perturbations. We add subgraph removal and feature masking as structural controls. Subgraph removal produces a different fragmentation profile because it removes a localized region instead of randomly dropping bonds. Feature masking preserves graph connectivity by construction, by masking bond information instead of removing it. 5 10 15 20 25 30 
+
+Augmentation strength (%) 
+
+> 1.0 1.5 2.0 2.5 3.0 3.5
+> Connected components
+
+(a)      
+
+> Node + edge deletion Subgraph removal Feature masking 510 15 20 25 30
+
+Augmentation strength (%) 
+
+> 020 40 60 80 100
+> Largest component (% atoms)
+
+(b)      
+
+> 510 15 20 25 30
+
+Augmentation strength (%) 
+
+> 020 40 60 80 100
+> Views split in ≥ 2 pieces (%)
+
+(c) 
+
+Figure 3: Effect of augmentation strength on molecular graph connectivity. Dashed vertical lines indicate the 15% and 25% settings used in the main experiments. (a): Mean number of connected components among non-isolated atoms. (b): Fraction of atoms contained in the largest connected component. (c): Fraction of augmented views split into at least two multi-atom components. Each point aggregates 18,000 stochastic views; feature masking preserves graph topology by construction. 10 Table 8: Full-molecule similarity of neighbours selected in backbone space h, after excluding exact-BM matches. Values are mean ± sample SD across three independently pretrained encoders. Boldface and underlining mark the best and second-best learned-model point estimates within each augmentation setting.                                                                                             
+
+> Aug. Model Mol-Tan@10 ↑Mol-nDCG@10 ↑
+> 15% MolCLR (Euclidean) 0.2212 ±0.0004 0.5680 ±0.0009
+> 15% Scaffold (Euclidean) 0.2341 ±0.0003 0.6015 ±0.0008
+> 15% MolCLR (Lorentz–unbounded) 0.1952 ±0.0006 0.4982 ±0.0017
+> 15% Scaffold (Lorentz–unbounded) 0.2332 ±0.0011 0.5989 ±0.0030
+> 15% MolCLR (Lorentz–bounded) 0.2037 ±0.0019 0.5206 ±0.0050
+> 15% Scaffold (Lorentz–bounded) 0.2340 ±0.0005 0.6007 ±0.0013
+> 25% MolCLR (Euclidean) 0.2118 ±0.0005 0.5418 ±0.0016
+> 25% Scaffold (Euclidean) 0.2262 ±0.0004 0.5808 ±0.0011
+> 25% MolCLR (Lorentz–unbounded) 0.2178 ±0.0028 0.5591 ±0.0075
+> 25% Scaffold (Lorentz–unbounded) 0.2392 ±0.0016 0.6147 ±0.0044
+> 25% MolCLR (Lorentz–bounded) 0.2228 ±0.0006 0.5720 ±0.0016
+> 25% Scaffold (Lorentz–bounded) 0.2374 ±0.0007 0.6097 ±0.0020
+> –Direct ECFP4 0.3833 1.0000
+
+These diagnostics quantify structural fragmentation. Fragmented augmented views are not removed or re-sampled, they are passed to the encoder as disconnected graphs, even though they no longer correspond to a chemically valid single molecule. 
+
+G Backbone-Space Visualization 
+
+To qualitatively illustrate the structural organization measured by retrieval, we visualize the frozen backbone embedding h of matched MolCLR and scaffold-supervised models at 15% augmentation, under both Euclidean and Lorentz training. We use the same molecule subset and t-SNE configuration for all four models, and compute the embedding from cosine distances between L2-normalized backbone embeddings. Figures 4 and 5 show more visibly coherent scaffold-specific groups under scaffold supervision for the Euclidean and Lorentz implementations, respectively, consistent with the quantitative retrieval results in Table 7. In particular, several scaffold groups that overlap under MolCLR become more clearly separated after scaffold supervision, while the corresponding scaffold embeddings tend to lie closer to their associated molecular groups. Figure 6 provides a more comprehensive view of how different scaffold groups are distributed in the scaffold-supervised backbone for the Euclidean model. 11 Other molecules S1 (532) S2 (168) S3 (167) S4 (123) S5 (122) S6 (99) S7 (94) S8 (64) (a) MolCLR - Euclidean Other molecules S1 (532) S2 (168) S3 (167) S4 (123) S5 (122) S6 (99) S7 (94) S8 (64) (b) Scaffold supervision - Euclidean 
+
+Figure 4: Qualitative visualization of backbone-space h organization at 15% augmentation for one Euclidean model. Colors identify molecules belonging to eight frequent Bemis–Murcko scaffolds in that set, while grey points show additional molecules from the shared evaluation subset. Stars indicate the embeddings of the corresponding scaffold graphs. Both panels use the same molecules and t-SNE settings. Other molecules S1 (532) S2 (168) S3 (167) S4 (123) S5 (122) S6 (99) S7 (94) S8 (64) 
+
+(a) MolCLR - Lorentz Other molecules S1 (532) S2 (168) S3 (167) S4 (123) S5 (122) S6 (99) S7 (94) S8 (64) (b) Scaffold supervision - Lorentz 
+
+Figure 5: Qualitative visualization of backbone-space h organization at 15% augmentation for one bounded Lorentz model. Colors identify molecules belonging to eight frequent Bemis–Murcko scaffolds in that set, while grey points show additional molecules from the shared evaluation subset. Stars indicate the embeddings of the corresponding scaffold graphs. Both panels use the same molecules and t-SNE settings. 12 Figure 6: Qualitative visualization of the scaffold supervised backbone space h at 15% augmentation. Here we show 6000 molecules and 14 frequent Bemis–Murcko scaffolds. Colored points denote molecules assigned to each scaffold, grey points provide molecular context, and stars mark the corresponding scaffold embeddings. 13

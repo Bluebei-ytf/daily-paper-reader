@@ -1,0 +1,184 @@
+Title: Structure-Agnostic Prediction of the Electronic Density of States with a Chemical Language Model
+
+URL Source: https://arxiv.org/pdf/2608.24513v1
+
+Published Time: Wed, 26 Aug 2026 01:06:43 GMT
+
+Number of Pages: 8
+
+Markdown Content:
+# Structure-Agnostic Prediction of the Electronic Density of States with a Chemical Language Model 
+
+A Preprint 
+
+Ivan D. Rubtsov 
+
+MSU Institute for Artificial Intelligence Lomonosov Moscow State University Moscow 119192, Russia 
+
+Ivan V. Dudakov 
+
+MSU Institute for Artificial Intelligence Lomonosov Moscow State University Moscow 119192, Russia 
+
+Vadim V. Korolev ∗
+
+MSU Institute for Artificial Intelligence Lomonosov Moscow State University Moscow 119192, Russia August 26, 2026 
+
+## Abstract 
+
+The electronic density of states (DOS) is conventionally computed from a relaxed crystal structure, which is unavailable for compounds that have been neither synthesized nor cataloged. Here we introduce DOSSIER ( Density of States from Sto ichiometry with 
+
+Encoder Representations), a chemical language model that maps elemental composition directly to this spectrum. The encoder is pretrained by cross-modal knowledge distillation from a universal machine-learning interatomic potential; the transfer lowers the error by 11% when only 1,000 training examples are available. On the Mat2Spec benchmark, DOSSIER reaches a mean absolute error of 3.76 states eV −1 against 3.64 for the best structure-aware model; on an extended Materials Project dataset, the predicted spectra yield band gaps and 
+
+d -band descriptors with useful accuracy. Screening 11,977 binary and 13,251 five-component high-entropy alloy compositions for a d -projected DOS resembling that of NiPt 3 places known oxygen reduction electrocatalysts near the top of the ranking. 
+
+## 1 Main text 
+
+Electronic structure governs a broad range of properties of crystalline solids[1]. One of its compact represen-tations is the electronic density of states (DOS): the number of electronic states per unit energy, obtained by integrating over the Brillouin zone[2]. This reduction discards all k -resolved information, yet it retains much of what determines the observable behavior of a material. In particular, the band edges set the magnitude of the band gap, and the d -band center—the first moment of the d -projected DOS—governs trends in adsorption energetics on transition metal surfaces[3]. Experimental access to the DOS is indirect: separate spectroscopic techniques address the occupied and unoccupied states[4], while the measured intensities do not reproduce the spectrum directly. Because a complete DOS profile must be assembled from several complementary and time-consuming measurements, systematic studies across many compounds rely on computed spectra, most often obtained within density functional theory (DFT)[5, 6]. At the same time, the computational expense of a converged DOS calculation places an exhaustive exploration of chemical space out of reach. Machine learning surrogates[7, 8, 9, 10, 11, 12] trained on DFT databases reduce this cost by orders of magnitude and reproduce the DOS from a relaxed crystal structure with an accuracy adequate for screening. However, much of the interest in materials discovery lies in underexplored chemical domains, where candidate compounds 
+
+> ∗
+
+Email address : korolevvv_01@my.msu.ru arXiv:2608.24513v1 [cond-mat.mtrl-sci] 25 Aug 2026 Structure-Agnostic Prediction of the Electronic Density of States A Preprint 
+
+have been neither synthesized nor cataloged and their crystal structures are unknown; predicting those structures is a separate and computationally demanding problem[13]. Mapping composition directly to the DOS circumvents crystal structure prediction altogether. Because a single stoichiometry is compatible with a vast configurational space, such an approach has no access to long-range order and may fail to reproduce features that originate in Bloch periodicity. In contrast, the overall envelope of the spectrum is largely set by the local atomic environment, an expectation that follows from the moments[14] and recursion[15] treatments of tight-binding theory. Composition alone does not fix the local environment, but elemental identity and stoichiometry constrain the accessible coordination numbers and oxidation states[16]. The present study examines whether the DOS can be reproduced quantitatively from the chemical composition alone (i.e., in a structure-agnostic manner), with target spectra taken predominantly from ground-state crystal structures. Two considerations support the feasibility of this task. The first is the nearsightedness of electronic matter[17], which suggests that the spectrum at a given site is insensitive to the arrangement of distant atoms[18]. The second is the current state of composition-only models: scalar properties of inorganic materials are routinely estimated with useful accuracy in the absence of structural input[19]. A stoichiometric formula can be written as an ordered sequence of element symbols and coefficients (SI Section 2.1). This formal analogy with natural language motivates the use of chemical language models[20] (CLMs), transformer architectures that operate on the discrete alphabet of chemical notation rather than on ordinary text. We adopt an encoder–decoder paradigm: the encoder (i.e., CLM) compresses the tokenized composition into a latent vector, and a task-specific head then maps that vector to the target spectrum (SI Section 2.3). Here the encoder is a modernized bidirectional transformer[21] (ModernBERT[22]); the decoder is a stack of transposed convolutions that progressively upsamples the latent vector into a DOS defined on a uniform energy grid. The separation of roles is intentional: the encoder has to identify which compositional patterns reflect short-range structural regularities, whereas the convolutional head supplies an inductive bias toward the local smoothness typical of DOS spectra. Following the representation-learning concept[23], the CLM’s initial representations of chemical formulas are formed via pretraining, before the DOS prediction task is introduced. Specifically, the model is pretrained by means of cross-modal knowledge distillation (SI Section 2.2). The teacher model is a universal machine-learning interatomic potential[24] trained on the potential energy surfaces of a broad range of inorganic compounds; the student CLM learns to predict its structure-derived embeddings from the chemical formula alone. Supplying structural information in this implicit way is intended to improve generalization on the downstream task while keeping inference free of crystal-structure input[25]. We evaluated DOSSIER (Density of States from Stoichiometry with Encoder Representations) on the Mat2Spec dataset[7] (SI Section 1.1), which comprises 38,688 nonmagnetic inorganic compounds with a DOS preprocessed into 128-dimensional vectors spanning an 8 eV energy window (±4 eV relative to the band edges). Performance was quantified using the mean absolute error (MAE), mean squared error (MSE), and coefficient of determination (R 2); all results are summarized in Table 1. For comparison with published results, predicted spectra were rescaled from intensive units (states eV −1 atom −1) to states eV −1 by multiplication by the number of atoms per unit cell; this quantity is available from the crystal structures in the dataset but                                                             
+
+> Table 1: Density of states (DOS) prediction performance on the Mat2Spec benchmark. Mean absolute error (MAE) and mean squared error (MSE) are reported in states eV −1and states 2eV −2, respectively. The Density of States from Stoichiometry with Encoder Representations (DOSSIER) model with a randomly initialized encoder (knowledge distillation stage omitted) is referred to as DOSSIER 0. Numbers in parentheses denote the training subset size (e.g., 3k = 3,000; full = 30,950). MAE MSE R2
+> mean DOS 6.39 138.5 0.15 elemental DOS 5.58 113.9 0.32 E3NN[7] 5.24 105.1 0.39 GATGNN[7] 4.89 120.9 0.30 Mat2Spec[7] 3.64 80.4 0.53 APET[8] 3.73 80.8 –Xtal2DoS[9] 3.78 71.2 0.58 EEM[10] 3.91 86.03 –MAE MSE R2
+> DOSSIER 0(1k) 6.41 132.9 0.19 DOSSIER 0(3k) 4.92 102.4 0.39 DOSSIER 0(10k) 4.38 91.0 0.46 DOSSIER 0(full) 3.94 80.2 0.53 DOSSIER (1k) 5.69 114.5 0.31 DOSSIER (3k) 4.58 92.2 0.46 DOSSIER (10k) 4.06 83.7 0.51 DOSSIER (full) 3.76 75.9 0.56
+
+2Structure-Agnostic Prediction of the Electronic Density of States A Preprint 
+
+was not accessible to the model. Two baselines are included for reference: the training-set mean spectrum and a stoichiometry-weighted combination of per-element mean spectra, where each element’s contribution is the average DOS over all training examples containing that element (SI Section 2.4). These represent successive levels of approximation—a meaningful constant predictor and a simple accounting of elemental contributions—against which the performance of composition-only models can be assessed. Metrics attained by DOSSIER on the full training subset place it on par with the top-performing structure-aware models: only Mat2Spec[7] and APET[8] yield lower MAE values, while Xtal2DoS[9] alone surpasses DOSSIER in both MSE and R 2. The value of pretraining is most apparent in the low-data regime: with 1,000 training examples, knowledge distillation reduced MAE from 6.41 to 5.69 states eV −1 relative to random initialization—an 11% gain that narrows to approximately 5% on the complete training subset (3.94 vs. 3.76 states eV −1). This trend indicates that structure-informed representations acquired during pretraining partially compensate for limited supervised signal. To assess the fidelity of property values extracted from predicted spectra and to enable downstream high-throughput screening, we trained DOSSIER on a more recent version of the Materials Project[26] (SI Section 1.2). This dataset includes both magnetic and nonmagnetic materials, representing broader chemical and magnetic diversity than the Mat2Spec benchmark. All spectra were interpolated onto a uniform energy grid of 401 points from –10 to +10 eV relative to the Fermi level, without removing the zero-DOS gap region. Separate models were trained for the total DOS (50,626 materials) and for the d-projected DOS (42,996 materials); the latter is of particular relevance to heterogeneous catalysis, with the caveat that descriptors of the Hammer–Nørskov type refer to the surface-projected d-states[3], whereas our spectra are those of the bulk. Prediction performance on the extended dataset is comparable to that observed on Mat2Spec: for the total DOS, the model achieves MAE = 3.18 ± 0.03, MSE = 84 ± 6, and R 2 = 0.47 ± 0.01 (mean ± standard deviation from 10-fold cross-validation). The corresponding metrics for the d -projected DOS are MAE = 1.06 ± 0.01, MSE = 18.3 ± 2.2, and R 2 = 0.56 ± 0.04. Figure 1 stratifies prediction accuracy by the per-spectrum mean absolute deviation (MAD): five representative spectra at the 1st, 25th, 50th, 75th, and 99th percentiles 02 P1 (MAD = 0.07) mp-8467 
+
+(A)  
+
+> 04P25 (MAD = 0.15) mp-980059
+
+(B) 
+
+> 04total DOS [states / (eV atom)] P50 (MAD = 0.19) mp-557448
+
+(C)  
+
+> 04P75 (MAD = 0.26) mp-972600
+
+(D)    
+
+> 10 010 energy [eV] 020 P99 (MAD = 0.62) mp-10634
+
+(E) 
+
+> 0.0 0.2 0.4 0.6 0.8 1.0 1.2 1.4 1.6 MAD [states / (eV atom)]
+
+(F) 
+
+> 01P1 (MAD = 0.02) mp-759189
+
+(G) 
+
+> 01P25 (MAD = 0.05) mp-1217593
+
+(H) 
+
+> 05d-projected DOS [states / (eV atom)] P50 (MAD = 0.07) mp-21352
+
+(I) 
+
+> 02P75 (MAD = 0.11) mp-1077418
+
+(J)    
+
+> 10 010 energy [eV] 020 P99 (MAD = 0.30) mp-14207
+
+(K) 
+
+> 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 MAD [states / (eV atom)]
+
+(L) 
+
+Figure 1: Assessment of density of states (DOS) prediction on the extended Materials Project dataset. 
+
+(A–E) Total DOS at the 1st, 25th, 50th, 75th, and 99th percentiles of the per-spectrum mean absolute deviation (MAD). (F) Distribution of per-spectrum MAD for total DOS. (G–K) d-projected DOS at the 1st, 25th, 50th, 75th, and 99th percentiles of the per-spectrum MAD. (L) Distribution of per-spectrum MAD for d-projected DOS. All spectra are normalized per atom (states eV −1 atom −1); energy is referenced to the Fermi level. 
+
+3Structure-Agnostic Prediction of the Electronic Density of States A Preprint 
+
+are shown alongside the full MAD distribution. The predicted spectra closely reproduce the principal peak positions and the overall envelope of the reference up to the 75th percentile. We next assessed the accuracy of DOS-derived property values extracted from the predicted spectra on the extended Materials Project dataset. The band gap was predicted by a dilated convolutional network parameterizing a zero-inflated lognormal distribution over band gap values (SI Section 2.5); the corresponding metrics are MAE = 0.310 ± 0.010 eV, R 2 = 0.769 ± 0.018 (Figure 2A). Metal/nonmetal classification (based on the gating probability of the same model) achieves an area under the receiver operating characteristic curve of 0.949 ± 0.004, with true positive and true negative rates of 0.89 at a metallicity probability threshold of 0.5 (Figure 2B). Analysis of prediction errors across band gap ranges (Figure 2C) shows that metallic systems (<0.05 eV) are identified with negligible error, while for nonmetals the median absolute error remains below 0.55 eV across all ranges, increasing from 0.25 eV (0.05–0.5 eV) to 0.53 eV (>5.0 eV). Four descriptors of spectral shape corresponding to the d -projected DOS are reproduced with varying accuracy (Figure 2D–G). The center (MAE = 0.405 ± 0.009 eV, R 2 = 0.925 ± 0.006) and skewness (MAE = 0.194 ± 0.005, R 2 =0.904 ± 0.006) are captured most precisely. The width is predicted with moderate accuracy (MAE = 0.244 ± 0.005 eV, R 2 = 0.822 ± 0.011), while kurtosis is reproduced with the lowest coefficient of determination (MAE = 0.675 ± 0.023, R 2 = 0.723 ± 0.025). To demonstrate the practical utility of the trained models, we performed high-throughput screening of binary and high-entropy alloy (HEA) candidates, ranking each composition by the similarity of the predicted 
+
+d -projected DOS to that of NiPt 3, a prototypical oxygen reduction reaction (ORR) catalyst[27] (SI Section 3.1). The binary alloy pool comprised 11,977 compositions A mBn (m, n ≤ 3) enumerated from metallic elements (SI Section 3.2). For each candidate, the d -projected DOS was predicted by the 10-model ensemble and scored by a consensus metric combining cosine similarity and the first Wasserstein distance, both computed in the catalytically relevant window from –8 to +2 eV relative to the Fermi level (SI Section 3.3). The top-ranked candidate is NiPt 3 itself, confirming that the model reproduces the reference spectrum with high fidelity. Excluding the reference composition, the three highest-ranked binary candidates are Rh 3Au, NiIr 2, and NiPt 2 (Figure 3). Bang et al.[28] applied an inverse design model to the same catalytic target and reported five binary candidates: NiPt 3, CoPt 3, FePt 3, Mo 3Ni, and Mo 3Co. The two studies differ in spectral representation (total DOS from –7.5 eV to +7.5 eV in ref.[28]), but all five compositions fall within the top 2% of our ranking (1st, 9th, 25th, 174th, and 126th, respectively). This overlap is consistent with the dominance of the d -projected component in the total DOS within the considered energy window (Figure 3). 0 2 4 6 8 10 DFT band gap [eV] 0246810 predicted band gap [eV]  (A)   
+
+> 0.0 0.5 1.0 false positive rate 0.0 0.5 1.0 true positive rate
+
+(B)         
+
+> NM Mpredicted NM Mtrue  0.89 0.11 0.11 0.89 <0.05 0.05 0.5 0.5 1.5 1.5 3.0 3.0 5.0 >5.0 band gap range [eV] 012absolute error [eV]
+
+(C)     
+
+> 84048DFT center [eV] 8
+> 4
+> 048predicted center [eV]
+
+(D)    
+
+> 1357DFT width [eV] 1357predicted width [eV]
+
+(E)    
+
+> 4048DFT skewness 4
+> 048predicted skewness
+
+(F)    
+
+> 020 40 60 DFT kurtosis 020 40 60 predicted kurtosis
+
+(G) 
+
+Figure 2: Accuracy of property values derived from predicted density of states (DOS) on the extended Materials Project dataset. (A) Predicted and density functional theory (DFT) band gap values. (B) Receiver operating characteristic curve for metal/nonmetal (M/NM) classification; inset: confusion matrix at a metallicity probability threshold of 0.5 (values normalized by true class). (C) Distribution of absolute band gap errors across band gap ranges. (D–G) Predicted and DFT values of the first four spectral moments of the d -projected DOS. 
+
+4Structure-Agnostic Prediction of the Electronic Density of States A Preprint 
+
+The same protocol was applied to five-component equiatomic HEAs: 13,251 compositions passed the phase-stability filter (SI Section 3.2) and were ranked by the consensus score. The ten highest-ranked HEA candidates are shown in Figure 3; the most common elements are Au (nine occurrences), Ni (eight), Ir (seven), Pt and Co (five each), and Ru, Rh, and Cu (four each). Among the HEA compositions previously reported as ORR catalysts, RuRhPdIrPt[29] ranks 193rd, CoPdNiCuPt[30] 373rd, and RuCuOsIrPt[31] 455th, all within the top 5% of the pool. This correspondence suggests that d-projected DOS similarity can serve as a screening descriptor for ORR catalyst candidates. Two further reported catalysts are ranked lower: FeCoPdNiPt[32] at 914th and FeCoNiCuPt[33] at 1897th, corresponding to the top 7% and top 14%, respectively. Compositions ranked relatively low are those with electronic structures unlike that of NiPt3, and their activity is presumably governed by factors outside the considered descriptor. A fundamental limitation of the composition-only approach is its inability to distinguish polymorphs: a single stoichiometric formula may correspond to several crystal structures whose electronic spectra differ, yet the absence of structural input restricts the output to one spectrum per composition. On the Mat2Spec benchmark, DOSSIER matches structure-aware models—a result that reflects the properties of the dataset rather than showing that polymorphism has been handled. Specifically, 38,688 structures span 31,873 unique compositions; 27,925 (88%) of these are represented by a single polymorph. Most compounds are located near the convex hull: 41%, 71%, and 81% have energies above the hull not exceeding 0, 50, and 100 meV per atom, respectively. Therefore, the Mat2Spec benchmark affords limited insight into the impact of polymorphism on prediction accuracy. A more detailed analysis was carried out on the extended Materials Project dataset, where 6,958 compositions possess metastable configurations in addition to the ground-state structure, yielding 12,324 metastable polymorphs that were not used for model development. All spectra in this subset were normalized per atom to account for differing unit-cell sizes; all values are in states eV −1 atom −1. The MAE between the NiPt 3 reference NiPt 3 [mp-1186117] Rh 3Au NiIr 2 
+
+> NiPt 2
+> Ni 2Pt 3
+> Ni 2Ir 3
+> CoPt 2
+> RhPt [mp-1219734] CoPt 3[mp-922] Co 2Pt 3
+> RuNiCuIrAu RhNiIrPtAu RuRhNiPtAu CoPdNiOsAu RhCoCuIrAu RuCoCuIrAu CoPdNiIrAu RuNiCuPtAu RhPdNiIrPt CoNiIrPtAu increasing similarity increasing similarity
+
+Figure 3: High-throughput screening for oxygen reduction catalysis: top-ranked binary and high-entropy alloy (HEA) candidates. Compositions are ranked by d-projected density of states (DOS) similarity to the NiPt 3 reference using the consensus score. The gray solid and dashed lines show the NiPt 3 reference d-projected DOS and total DOS, respectively. The ten highest-ranked binary alloys are shown below the reference, and the ten highest-ranked five-component equiatomic HEAs above. In both groups, spectra are ordered by increasing similarity to the reference. Uncertainty envelopes correspond to ±1 standard deviation across the 10-model ensemble. All spectra are normalized per atom (states eV −1 atom −1). 
+
+5Structure-Agnostic Prediction of the Electronic Density of States A Preprint 
+
+model predictions and the DOS spectra of the corresponding stable polymorphs is 0.209 ± 0.007. The MAE between the same predictions and the DOS spectra of the metastable polymorphs increases to 0.233 ± 0.010, as expected given that the model was trained on ground-state structures exclusively. The comparison between the DOS spectra of stable and metastable polymorphs themselves yields a mean absolute deviation of 0.258 ± 0.010; the same quantity between randomly paired materials across the entire collection is 0.526. Polymorphism is therefore a substantial source of variation at fixed composition. For metastable phases, the model’s prediction error is bounded by the intrinsic polymorph-to-polymorph divergence, indicating that further improvement would require structural input. The application of the presented models to HEA screening extends beyond their formal domain of applicability. At the same time, direct DFT screening of HEA candidates is computationally prohibitive; a single equiatomic quinary composition admits numerous surface configurations. The composition-to-DOS mapping, despite its polymorphism limitation, provides one of the few tractable routes to electronic-structure-informed screening across a diverse compositional space. Despite these limitations, our study explicitly demonstrates the practical value of models that directly map chemical composition to the DOS, a compact representation of the electronic structure of inorganic compounds. The presented approach, based on a chemical language model, complements structure-aware methods and DFT calculations that supply their training data, offering a first-level screening tool for identifying promising candidates in underexplored chemical domains. 
+
+## 2 Conflicts of interest 
+
+There are no conflicts of interest to declare. 
+
+## 3 Acknowledgements 
+
+This work was supported by the Ministry of Economic Development of the Russian Federation in accordance with the subsidy agreement (agreement identifier 000000C313925P4H0002; grant No 139-15-2025-012). 
+
+## 4 Data availability statement 
+
+The Mat2Spec benchmark dataset is publicly available from the official repository at https://github. com/gomes-lab/Mat2Spec , while the extended Materials Project dataset was compiled using the official Materials Project API ( https://materialsproject.org/api ). An interactive online predictor for the total density of states (DOS) is freely accessible on HuggingFace Spaces at https://huggingface.co/spaces/ zxcghoul3228/DOSSIER_demo .
+
+## References 
+
+[1] Nicola Marzari, Andrea Ferretti, and Chris Wolverton. Electronic-structure methods for materials design. 
+
+Nature materials , 20(6):736–749, 2021. [2] Richard M Martin. Electronic structure: basic theory and practical methods . Cambridge university press, 2020. [3] Bjørk Hammer and Jens Kehlet Nørskov. Theoretical surface science and catalysis—calculations and concepts. In Advances in catalysis , volume 45, pages 71–129. Elsevier, 2000. [4] Frank De Groot. High-resolution x-ray emission and x-ray absorption spectroscopy. Chemical reviews ,101(6):1779–1808, 2001. [5] Anubhav Jain, Geoffroy Hautier, Charles J Moore, Shyue Ping Ong, Christopher C Fischer, Tim Mueller, Kristin A Persson, and Gerbrand Ceder. A high-throughput infrastructure for density functional theory calculations. Computational Materials Science , 50(8):2295–2310, 2011. [6] Akhil S Nair, Lucas Foppa, and Matthias Scheffler. Materials database from all-electron hybrid functional dft calculations. Scientific Data , 12(1):1518, 2025. [7] Shufeng Kong, Francesco Ricci, Dan Guevarra, Jeffrey B Neaton, Carla P Gomes, and John M Gregoire. Density of states prediction for materials discovery via contrastive learning from probabilistic embeddings. 
+
+Nature communications , 13(1):949, 2022. 6Structure-Agnostic Prediction of the Electronic Density of States A Preprint 
+
+[8] Yaning Cui, Kang Chen, Lingyao Zhang, Haotian Wang, Lei Bai, David Elliston, and Wei Ren. Atomic positional embedding-based transformer model for predicting the density of states of crystalline materials. 
+
+The Journal of Physical Chemistry Letters , 14(35):7924–7930, 2023. [9] Junwen Bai, Yuanqi Du, Yingheng Wang, Shufeng Kong, John Gregoire, and Carla Gomes. Xtal2dos: Attention-based crystal to sequence learning for density of states prediction. arXiv preprint arXiv:2302.01486 , 2023. [10] Shokirbek Shermukhamedov, Dilorom Mamurjonova, Thana Maihom, and Michael Probst. Structure to property: Chemical element embeddings for predicting electronic properties of crystals. Journal of Chemical Information and Modeling , 64(15):5762, 2024. [11] Jiayang Xie, Zhihao Zhang, and Xiao-Ming Cao. Density of states prediction by a metric-optimized equivariant graph neural network. Chemistry of Materials , 37(16):6313–6322, 2025. [12] Wei Bin How, Pol Febrer, Sanggyu Chong, Arslan Mazitov, Filippo Bigi, Matthias Kellner, Sergey Pozdnyakov, and Michele Ceriotti. A universal machine learning model for the electronic density of states. Digital Discovery , 5(4):1635–1649, 2026. [13] Artem R Oganov, Chris J Pickard, Qiang Zhu, and Richard J Needs. Structure prediction drives materials discovery. Nature Reviews Materials , 4(5):331–348, 2019. [14] F Cyrot-Lackmann. On the electronic structure of liquid transitional metals. Advances in Physics ,16(63):393–400, 1967. [15] R Haydock, Volker Heine, and MJ Kelly. Electronic structure based on the local atomic environment for tight-binding bands. Journal of Physics C: Solid State Physics , 5(20):2845–2858, 1972. [16] Ian David Brown. Recent developments in the methods and applications of the bond valence model. 
+
+Chemical reviews , 109(12):6858, 2009. [17] Emil Prodan and Walter Kohn. Nearsightedness of electronic matter. Proceedings of the National Academy of Sciences , 102(33):11635–11638, 2005. [18] A Aryanpour and Ali Sadeghi. Machine learning the local electronic density of states. Physical Review B, 112(11):115101, 2025. [19] Mohammad Alghadeer, Nufida D Aisyah, Mahmoud Hezam, Saad M Alqahtani, Ahmer AB Baloch, and Fahhad H Alharbi. Machine learning prediction of materials properties from chemical composition: Status and prospects. Chemical Physics Reviews , 5(4), 2024. [20] Afnan Sultan, Jochen Sieg, Miriam Mathea, and Andrea Volkamer. Transformers for molecular property prediction: Lessons learned from the past five years. Journal of Chemical Information and Modeling ,64(16):6259–6280, 2024. [21] Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N Gomez, Łukasz Kaiser, and Illia Polosukhin. Attention is all you need. Advances in neural information processing systems , 30, 2017. [22] Benjamin Warner, Antoine Chaffin, Benjamin Clavié, Orion Weller, Oskar Hallström, Said Taghadouini, Alexis Gallagher, Raja Biswas, Faisal Ladhak, Tom Aarsen, et al. Smarter, better, faster, longer: A modern bidirectional encoder for fast, memory efficient, and long context finetuning and inference. In 
+
+Proceedings of the 63rd annual meeting of the association for computational linguistics (volume 1: Long papers) , pages 2526–2547, 2025. [23] Yoshua Bengio, Aaron Courville, and Pascal Vincent. Representation learning: A review and new perspectives. IEEE transactions on pattern analysis and machine intelligence , 35(8):1798–1828, 2013. [24] Ilyes Batatia, Philipp Benner, Yuan Chiang, Alin M Elena, Dávid P Kovács, Janosh Riebesell, Xavier R Advincula, Mark Asta, Matthew Avaylon, William J Baldwin, et al. A foundation model for atomistic materials chemistry. The Journal of chemical physics , 163(18), 2025. [25] Ivan Rubtsov, Ivan Dudakov, Yuri Kuratov, and Vadim Korolev. Enhancing composition-based materials property prediction by cross-modal knowledge transfer. Scientific reports , 16(1):16434, 2026. [26] Anubhav Jain, Shyue Ping Ong, Geoffroy Hautier, Wei Chen, William Davidson Richards, Stephen Dacek, Shreyas Cholia, Dan Gunter, David Skinner, Gerbrand Ceder, et al. Commentary: The materials project: A materials genome approach to accelerating materials innovation. APL materials , 1(1), 2013. [27] Vojislav R Stamenkovic, Ben Fowler, Bongjin Simon Mun, Guofeng Wang, Philip N Ross, Christopher A Lucas, and Nenad M Markovic. Improved oxygen reduction activity on pt3ni (111) via increased surface site availability. science , 315(5811):493–497, 2007. 7Structure-Agnostic Prediction of the Electronic Density of States A Preprint 
+
+[28] Kihoon Bang, Jeongrae Kim, Doosun Hong, Donghun Kim, and Sang Soo Han. Inverse design for materials discovery from the multidimensional electronic density of states. Journal of Materials Chemistry A, 12(10):6004–6013, 2024. [29] Jiahui Chen, Zenan Wu, Guoqiang Cao, Guangxing Yang, Qiao Zhang, Zhiting Liu, and Feng Peng. High-entropy alloy nano-aggregates enable durable and high-efficiency oxygen reduction reaction. 
+
+ChemPlusChem , 91(1):e202500489, 2026. [30] Alina Nevelskaya, Anna Gavrilova, Nikolay Lyanguzov, Mikhail Tolstunov, Ilya Pankov, Anna Kremneva, Evgeny Gerasimov, Andrey Kokhanov, and Sergey Belenov. High-temperature synthesis of high-entropy alloy ptpd_conicu nanoparticles as a catalyst for the oxygen reduction reaction. International Journal of Molecular Sciences , 26(23):11504, 2025. [31] Xiaoting Chen, Conghui Si, Yulai Gao, Jan Frenzel, Junzhe Sun, Gunther Eggeler, and Zhonghua Zhang. Multi-component nanoporous platinum–ruthenium–copper–osmium–iridium alloy with enhanced electrocatalytic activity towards methanol oxidation and oxygen reduction. Journal of Power Sources ,273:324–332, 2015. [32] Yanan Yu, Fanjie Xia, Chengjie Wang, Jinsong Wu, Xianbiao Fu, Dongsheng Ma, Bencai Lin, Jiaao Wang, Qin Yue, and Yijin Kang. High-entropy alloy nanoparticles as a promising electrocatalyst to enhance activity and durability for oxygen reduction. Nano Research , 15(9):7868–7876, 2022. [33] Tao Chen, Fanghua Ning, Jizhen Qi, Guang Feng, Yucheng Wang, Jin Song, Tonghuan Yang, Xi Liu, Liwei Chen, and Dingguo Xia. Ptfeconicu high-entropy solid solution alloy as highly efficient electrocatalyst for the oxygen reduction reaction. Iscience , 26(1), 2023. 8

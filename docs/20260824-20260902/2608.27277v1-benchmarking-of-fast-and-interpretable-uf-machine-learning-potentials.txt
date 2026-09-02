@@ -1,0 +1,289 @@
+Title: Benchmarking of Fast and Interpretable UF Machine Learning Potentials
+
+URL Source: https://arxiv.org/pdf/2608.27277v1
+
+Published Time: Fri, 28 Aug 2026 01:29:14 GMT
+
+Number of Pages: 22
+
+Markdown Content:
+# Benchmarking of Fast and Interpretable UF Machine Learning Potentials 
+
+Pawan Prakash a,b , Sam Dong b,c , Richard Hennig b,c, ∗
+
+> aDepartment of Physics, University of Florida, Gainesville, FL, 32611, USA
+> bQuantum Theory Project, University of Florida, Gainesville, FL, 32611, USA
+> cDepartment of Materials Science and Engineering, University of Florida, Gainesville, FL, 32611, USA
+
+Abstract 
+
+Machine learning interatomic potentials (MLIPs) have emerged as a powerful alternative to density functional theory (DFT) for molecular dynamics simu-lations, offering near-DFT accuracy at a fraction of the computational cost. However, many state-of-the-art MLIPs remain computationally demanding and act as black boxes, limiting physical interpretability. In this work, we evaluate the ultra-fast force field (UF 3) potential, which employs linear re-gression with cubic B-spline basis to represent effective two- and three-body interactions. We show that UF 3 displays accuracy comparable to established models such as GAP, MTP, NNP (Behler Parrinello), and qSNAP MLIPs. We further investigate the transferability of UF 3 by computing melting points for six elemental systems with potentials fitted without any solid–liquid in-terface configurations or explicit thermodynamic information about melting. The model reproduces experimental melting points within ∼6% for simple metals (Ni, Cu, Li), but substantially underestimates them for Mo and Si and fails to yield a stable potential for Ge, reflecting the limitations of a fixed ex-pansion truncated at the three-body term for systems with strong angular or covalent bonding. We further illustrate how UF 3’s spline-based formulation allows direct visualization of the learned interactions, enabling identification of unphysical behavior that black-box approaches often obscure. 
+
+Keywords: machine learning interatomic potentials, UF 3, computational materials science, molecular dynamics, interpretability   
+
+> ∗Corresponding author
+> Email address: rhennig@ufl.edu (Richard Hennig) arXiv:2608.27277v1 [cond-mat.mtrl-sci] 27 Aug 2026
+
+1. Introduction 
+
+Molecular dynamics (MD) simulations play a pivotal role in understand-ing and predicting the behavior of materials at atomic and molecular scales [1]. Density functional theory (DFT) [2, 3], a quantum mechanical modeling method, offers detailed insights and precise predictions about these systems. However, the high computational costs and O(N ) − O(N 3) scaling associated with DFT make it challenging for use in extensive MD simulations spanning long durations [4]. Classical interatomic potentials [5, 6] offer computational efficiency, but lack DFT’s accuracy [7, 8]. The advent of machine learning interatomic potentials (MLIPs) has provided an effective alternative, com-bining the efficiency of classical potentials with near-DFT accuracy in energy, force, and property predictions [9, 10, 11, 12]. MLIPs also play a significant role in accelerating materials discovery [13, 14]. However, a challenge arises with many state-of-the-art MLIPs: while they are more efficient than DFT, they can still be computationally demanding, and many act as a quasi black box, limiting the potential’s physical interpretability. In the landscape of machine learning potentials, several have emerged as prominent contenders in accurately modeling atomic systems. These include the neural network potentials (NNP) [9], Gaussian approximation potential (GAP) [10], moment tensor potential (MTP) [11], spectral neighbor analy-sis potentials (SNAP) [12], and its variant, quadratic SNAP (qSNAP) [15]. Central to the efficacy of these potentials is the concept of ‘fingerprints’ or ‘descriptors’. These are intricate representations of atomic environments with flexible functional form, which are subsequently passed through an embed-ding function to yield the desired predictions. This study builds on previous work comparing machine learning poten-tials in energy and force prediction accuracy using a consistent dataset of single element systems[16]. The primary focus of this study is the ultra-fast force field machine learning interatomic potential (UF 3 - MLIP) [17], where we benchmark UF 3’s predicting capabilities against prevailing MLIPs. Be-yond accuracy benchmarks, we examine the transferability of UF 3 to melting behavior using potentials fitted without any solid–liquid interface configura-tions or explicit thermodynamic information about melting. We find that transferability is element-dependent: it succeeds for simple metallic bonding (Ni, Cu, Li) but degrades for systems with strong directional or covalent 2bonding (Mo, Si, Ge), reflecting the intrinsic limitations of a fixed expansion truncated at the three-body term. We additionally illustrate UF 3’s inher-ent interpretability advantage: its spline basis permits direct visualization of effective interatomic interactions, providing a practical tool for diagnosing unphysical behavior in the fitted potential. 
+
+2. Methods 
+
+2.1. UF 3 Theory 
+
+The UF 3-MLIP is formulated as a function of atomic positions Ri and species σi. It approximates the many-body expansion of the energy of atomic systems. By truncating its expansion to the three-body term, UF 3 strikes a favorable compromise between computational efficiency and predictive accu-racy [17]: 
+
+E = X
+
+> i,j
+
+V2(rij ) + X
+
+> i,j,k
+
+V3(rij , r ik , r jk ) (1) where indices i, j, k of the summation run over all atoms, V2(rij ) is the two-body contribution and V3(rij , r ik , r jk ) is the three-body contribution. Using a spline basis with compact support, UF 3 represents effective two-and three-body interactions. It employs cubic B-splines and tensor product splines for smooth and efficient representation: 
+
+V2(rij ) = 
+
+> K
+
+X
+
+> n=0
+
+cnBn(rij ) (2) 
+
+V3(rij , r ik , r jk ) = 
+
+> Kl
+
+X
+
+> l=0
+> Km
+
+X
+
+> m=0
+> Kn
+
+X
+
+> n=0
+
+clmn Bl(rij )Bm(rik )Bn(rjk ) (3) UF 3’s training uses regularized linear regression to optimize the coeffi-cients cn and clmn of the two-and three-body terms, such that energies and forces are fit to data from ab initio calculations. The loss function incorpo-rates Tikhonov regularization. The ridge regularizer λ1 imposes a penalty on large coefficients to prevent overfitting and mitigate coefficient fluctuation in response to change in data. Meanwhile, the curvature regularizer λ2 ensures 3the smoothness of the learned potential. The loss function for two-body is 
+
+L = κσ2 
+
+> E
+
+|E| 
+
+X
+
+> s∈S
+
+(E(s) − E s)2 + 1 − κσ2 
+
+> F
+
+|F| 
+
+X
+
+> s∈S
+
+(−∇ E(s) − F s)2
+
++ λ1
+
+> K
+
+X
+
+> n
+
+c2 
+
+> n
+
++ λ2
+
+> K
+
+X
+
+> n
+
+(cn − 2cn+1 + cn+2 )2
+
+(4) where κ ∈ [0 , 1] is the effective weight of energy/force residual, E(s) is the predicted energy, and |F| and |E| denote the number of forces and energy observation in training set, respectively. A standout attribute of the UF 3 framework is its interpretability. Given its reliance on tangible physical parameters like inter-atomic distances, it paves the way for straightforward visualization of its model. This allows for easy identification of any anomalies or unphysical behaviors in the fitted potential. 
+
+2.2. Data and Hyperparameter Optimization 
+
+The UF 3 potential adopts a two-tiered hyperparameter system. The ‘outer’ hyperparameters in featurization guide both initialization and the learning of atomic environments, while the ‘inner’ hyperparameters of the loss function direct the least square optimization. Specifically, the outer hyperparameters set the maximum and minimum cutoff distances between atoms and determine the number of basis splines for each spline. In con-trast, the inner hyperparameters address aspects like the effective weight of the energy/force residual in the loss function and the regularization param-eters, namely the two- and three-body ridge and curvature regularizers. It’s important to underline that adjustments to the outer hyperparameters ne-cessitate the generation of new representation vectors, a process that is both time-intensive and computationally demanding, making it the most resource-intensive step in the UF 3 framework. Table 1 summarizes the optimized UF 3 hyperparameters used for each elemental system in this study. We use the pre-defined 90:10 train/test splits published by Ong et al. [16], which makes our test errors directly comparable to the published errors of GAP, MTP, NNP, SNAP, and qSNAP. The inner hyperparameters were selected by grid search with 5-fold cross-validation on the training split only, over per-element grids of 300–7,776 points spanning ridge and curvature regularization strengths from 10 −3 to 10 −8 (plus zero) 4and, where scanned, energy weights κ ∈ { 0.3, 0.5, 0.7}; candidate hyperpa-rameter sets were ranked by a normalized cross-validation cost weighting energy errors at 0.7 and force errors at 0.3, and the final model for each ele-ment was refit on the full training split with the selected values; all reported errors are evaluated on the held-out test split. Because the UF 3 loss function (Eq. 4) is strongly convex and is solved directly via LU decomposition [17], the fit is deterministic: identical training data and hyperparameters yield identical spline coefficients, so reproducibility of the fits is fully captured by the values below. 
+
+Table 1: Optimized UF 3 hyperparameters and training settings per element. r(2) cut is the outer cutoff of the two-body spline (with r(2) min = 0 .001 Å for all elements); r(3) min and r(3) cut 
+
+delimit the equivalent rij and rik axes of the three-body spline (the rjk axis extends to 2 · r(3) cut by triangle inequality). N (2) and N (3) are the numbers of cubic B-spline basis functions, related to the user-specified resolution (number of intervals between unique knot positions) by N = resolution + 3 . λ1 and λ2 are the two-/three-body ridge and curvature regularizers (a ridge of 10 −8 is additionally applied to the one-body offset term); κ is the energy weight of the loss function (Eq. 4) used in the fit — all six elements selected 
+
+κ = 0 .3. Train/test gives the number of structures in the pre-defined 90:10 splits provided by Ong et al. [16].                                                                                               
+
+> Element r(2) cut (Å) N(2) r(3) min (Å) r(3) cut (Å) N(3) λ1(2b/3b) λ2(2b/3b) κTrain/test Ni 4.00 19 1.20 3.70 12 ×12 ×18 0/10 −810 −5/10 −80.3 263/31 Cu 4.10 18 1.50 3.70 11 ×11 ×19 0/10 −810 −5/10 −80.3 262/31 Li 5.10 19 1.10 4.60 12 ×12 ×18 0/10 −410 −5/10 −40.3 241/29 Mo 5.20 20 1.50 4.70 11 ×11 ×19 0/10 −510 −8/10 −80.3 194/23 Si 5.30 19 1.42 4.70 11 ×11 ×19 0/10 −410 −6/10 −80.3 214/25 Ge 5.40 19 1.30 5.00 13 ×13 ×20 0/10 −510 −5/10 −50.3 228/25
+
+3. Results 
+
+Although recent advances in MLIPs are commendable, a meticulous and systematic evaluation of MLIPs on standardized datasets remains largely elusive. It is in this context that the efforts of Ong et al. [16] stand out; they put forth a comprehensive dataset for MLIP comparison, which encompasses a diverse range of atomic local environments associated with six elements: Ni, Cu, Li, Mo, Si, and Ge. Selected for their diverse crystal structures and chemistries, the dataset covers ground-states, strained structures, ab initio MD simulations of bulk supercells at elevated temperatures, and vacancy 5calculations. The AIMD snapshots span 300 K up to approximately twice the melting temperature of each element, and the snapshots from above the melting temperature sample disordered, liquid-like local environments [16]. We use the pre-defined datasets of Ong et al. in full; no structure group or temperature was excluded for any element. We will be using the dataset of Ong et al. [16] for our benchmarking. 
+
+3.1. Energy and Forces 
+
+Ong et al. performed a detailed comparison of state-of-the-art MLIPs in energy and force prediction for elemental metals [16]. To ensure a con-sistent comparison, we optimized our cutoff radius hyperparameter within similar bounds specified in Ong et al. Following the inner-hyperparameter optimization, the resultant energy and force errors are depicted in Fig. 1. These figures underscore that UF 3 offers accuracy on par with GAP, MTP, and qSNAP MLIPs for face-centered cubic (FCC) crystals, while significantly reducing computational cost [17]. The computational cost of UF 3 was charac-terized in detail for bcc tungsten in the genesis paper [17]: UF 2,3 was reported at ∼10.5 × the cost of a Lennard-Jones (LJ) pair potential, compared with MTP at ∼46 ×, qSNAP at ∼145 ×, SNAP at ∼443 ×, and GAP at ∼3070 ×
+
+LJ, corresponding to speed-ups ranging from a factor of ∼4 (MTP) to three orders of magnitude (GAP) at similar accuracy. Because UF 3’s cost scales with the number of basis functions and the cutoff radius — both of which are comparable across the six elements considered here to those used by Xie et al. for tungsten — this cost advantage is expected to transfer. Per-element cost benchmarks for the comparison MLIPs are reported in Ong et al. [16]. For the potentials developed in this work, we measure evaluation costs of 21.6–25.9 μs/(atom ·step) for Ni, Cu, and Li and 55.6–65.6 μs/(atom ·step) for Mo, Si, and Ge in LAMMPS on a single CPU core (AMD EPYC 7702) for bulk supercells of ∼11,000 atoms; the higher cost of the second group reflects their larger three-body cutoffs and denser neighbor environments, since the three-body term loops over pairs of neighbors. On the identical core and with the identical executable, these costs correspond to 15–18 ×
+
+that of EAM for the fcc metals and 34–57 × that of the Stillinger–Weber and Tersoff potentials for the diamond-structure semiconductors — placing UF 3 within one to two orders of magnitude of classical empirical potentials, a regime that MTP, SNAP, qSNAP, and GAP exceed by further factors of 
+
+∼4 to ∼300 in the controlled same-hardware comparison of Xie et al. [17]. In more open geometries like diamond and body-centered cubic (BCC), all 6MLIPs, including UF 3, showed diminished accuracy, with UF 3 ranking third among all MLIPs. Despite this, UF 3 and other MLIPs outperformed spline-based empirical potentials such as s-MEAN [18].   
+
+> Figure 1: Energy errors (left) and Force errors (right) for UF 3compared to other MLIPs. UF 3exhibits comparable accuracy to GAP, MTP, and qSNAP for FCC crystals, high-lighting its efficiency. However, its precision is slightly lower for more open structures like diamond and BCC as well as others, but it still ranks third or fourth in terms of accuracy.
+
+Fig. 2 illustrates the interpretability of UF 3 for nickel: because the po-tential is an explicit sum of two- and three-body splines [17], the learned functions can be plotted directly as functions of physical distances and an-gles, unlike descriptor-based models such as GAP, MTP, NNP, or SNAP. Panel (a) shows the fitted two-body potential V2(rij ) and the underlying B-spline basis (colored curves) whose weighted sum yields the black envelope. The curve exhibits the characteristic features of a metallic pair interaction: a steep short-range repulsion below ∼2 Å, a well minimum of −0.41 eV at 2.3 Å, slightly inside the FCC nearest-neighbor distance (2.49 Å ≈ a/ √2)— as expected, since the equilibrium spacing reflects the balance of the pair attraction with contributions from more distant coordination shells and the three-body term — and a smooth monotonic decay to the cutoff. The ab-sence of spurious oscillations or non-monotonic regions beyond the minimum indicates a well-regularized fit; conversely, such features would directly sig-nal an overfit potential. Panel (b) renders the full three-body contribution 
+
+V3(rij , r ik , θ jik ), with red (positive) and blue (negative) volumes marking un-favorable and favored angular configurations. Panel (c) quantifies this by 7slicing at fixed angles: the dominant unfavorable feature is at θ = 90 ◦
+
+(∼ +0 .40 eV, rjk ≈ 2 Å), with weaker features at 58 ◦ and 114 ◦ (+0 .14 
+
+and +0 .20 eV) and small negative contributions at 45 ◦ and 180 ◦. This mild, smooth angular dependence is consistent with the close-packed geometry of FCC nickel and contrasts with the sharp tetrahedral preference required for covalent diamond-cubic systems (Section 3.3). All learned features — equi-librium distance, well depth, angular preferences, and the presence or absence of unphysical artifacts — are directly readable from the plotted functions, providing a diagnostic tool not available for descriptor-based MLIPs. Read together, the features in Fig. 2 also constitute a diagnostic check on the fitted potential. A V2 that is non-monotonic at short range, fails to de-cay at rcut , or has its minimum displaced from the expected nearest-neighbor distance signals insufficient curvature regularization ( λ2), an under-extended cutoff, or insufficient knot density, respectively; a V3 with jagged angular fea-tures or preferences at unphysical angles signals an over-flexible three-body basis or under-regularization. Knot density should track the radial distribu-tion function of the training data [17]; because UF 3 is linear in localized basis functions, every such feature is attributable to specific coefficients, and the data coverage of each basis function is available directly from the featuriza-tion, so poorly constrained regions of configuration space can be identified explicitly. This visual screening also exposes limitations that no numeri-cal E/F metric can detect: a fixed two- plus three-body expansion lacks the environment-dependent (bond-order) rescaling of the interactions that trans-ferable potentials for tetrahedral semiconductors rely on [19, 20], consistent with our experience for Si and Ge in Section 3.3. Applying this screening across all six elements (Fig. A.6 in Appendix A) makes the diagnostics concrete: the elements with accurate melting points in Section 3.3 (Ni, Cu, Li) exhibit smooth single-minimum pair terms; Mo develops a double-well structure mirroring the bcc first- and second-neighbor shells; and Ge exhibits a spurious repulsive barrier between its coordination shells, larger in magnitude than its own binding minimum, despite competi-tive test errors (8.0 meV/atom, 0.16 eV/Å). The Ge artifact, co-located with the sparsely sampled region between coordination shells, anticipates the in-stability of the Ge melting simulations: the visualization identifies a failure mode that energy and force metrics miss. 8(a) Two-body contribution (b) Three-body contribution 
+
+> (c) Sliced view of three-body contributions at certain angles.
+
+Figure 2: Visualization of the learned UF 3 potential for nickel. (a) Two-body contribution 
+
+V2(rij ) (black) and the underlying B-spline basis (colored), showing a steep short-range repulsion, a well minimum of −0.41 eV at 2.3 Å slightly inside the FCC nearest-neighbor distance (2.49 Å), and smooth decay to the cutoff. (b) Three-dimensional rendering of the three-body contribution V3(rij , r ik , θ jik ), with red and blue volumes marking unfavorable and favored angular configurations. (c) Slices of V3 at fixed angles: strongest unfavor-able contribution at θ = 90 ◦ (rjk ≈ 2 Å), with weaker features at 58 ◦ and 114 ◦. All learned features — well depth, equilibrium distance, angular preferences, and unphysical artifacts — are directly readable from the plots, providing a transparency not available for descriptor-based MLIPs. 
+
+93.2. Property Predictions 
+
+We evaluated property predictions using UF 3 models optimized for en-ergy and force, comparing them with DFT data and other advanced MLIPs. These comparisons, illustrated in spider plots (Fig. 3), show UF 3’s high pre-dictive accuracy for properties like cubic elastic constants, bulk modulus, and lattice constants, particularly for Ni and Cu. Discrepancies notably arise in predicting properties for Li, where UF 3 and other MLIPs diverge from DFT results, partly due to the small magnitude of Li’s properties. This variation in performance across elements highlights the critical role of having diverse and representative training data. Although the dataset used was compre-hensive, the effectiveness of UF 3 and similar models is limited when training data lacks representation for specific properties. Thus, ensuring diverse and representative training data is paramount for consistent and optimal model performance.    
+
+> Figure 3: Spider plots comparing the predictive capabilities of various MLIPs with DFT benchmarks for Ni, Cu, and Li. Properties shown include cubic elastic constants
+> C11 , C 12 , C 44 , bulk modulus ( B), vacancy formation energy ( Ev), and lattice constant ( a). Values are normalized to DFT results.
+
+10 3.3. Melting Point 
+
+We then benchmark UF 3’s ability to predict more physically rich pro-cesses through melting-point predictions via LAMMPS. Here, melting points were estimated through a two-phase co-existence method [21], where the free energies of both liquid and solid phases are calculated within a single simu-lation box, from which the melting point can be accurately evaluated at the solid/liquid interface. This avoids hysteresis effects near the first-order tran-sition, where transition temperatures can be significantly underestimated in simulated crystals. The coexistence simulations used supercells of 22,308 atoms (Ni, Cu), 11,154 atoms (Li, Mo), and 44,616 atoms (Si, Ge), built as 
+
+33 × 13 × 13 replicas of the conventional cell with the long axis normal to the solid–liquid interface. After NPT equilibration and melting/requenching of one half of the box, the production stage evolves the two-phase system for 1.0–1.5 million steps (0.5–1.1 ns) in the NPH ensemble, in which the tem-perature is an outcome rather than a set point and the plateau temperature provides the melting-point estimate. Across the five systems with a con-verged plateau, the coexistence temperature is stable to ±8–13 K and the enthalpy drift is (1 –10) × 10 −8 eV/atom per step, below 0.1 eV/atom over the full production run. Table 2 shows the melting points calculated via UF 3
+
+potentials compared to experimental values. We observe close agreement for Ni, Cu, and Li, with deviations of +6 .0% , +5 .1% , and +0 .2% from experi-ment, whereas the melting point is underestimated by 19.9% for Si and by 41.7% for Mo. Despite achieving relatively faithful energy and force predic-tions for Ge, we were unable to create a stable potential to capture melting dynamics. The transferability of UF 3 is element-dependent and reflects the bond-ing character of each system. For the simple metals Ni, Cu, and Li, where delocalized metallic bonding has weak angular character, UF 3 reproduces ex-perimental melting points within ∼6%. For Mo, a BCC transition metal with d-electron-dominated angular bonding, the predicted melting point deviates substantially, consistent with the difficulty all MLIPs in Ong et al. [16] en-counter with Mo’s migration energetics and with the Cauchy-relation limita-tion of pair-dominated potentials discussed in [17, 22]. For the diamond-cubic semiconductors Si and Ge, melting is accompanied by a semiconductor-to-metal transition: the fourfold covalent network transforms into a metallic liquid with coordination ≈ 6.4 [23, 24], so the effective interactions change character between the two phases — a regime change that a fixed two- plus three-body expansion cannot represent simultaneously, and that transfer-11 able empirical potentials capture only through environment-dependent bond-order rescaling as in Tersoff [19] or parameterizations explicitly tuned to the liquid as in Stillinger–Weber [20]. Ge additionally exhibits small polymorph energy differences that destabilize the fit, preventing us from obtaining a Ge potential stable in MD; consistent with this, its learned pair interaction de-velops a spurious repulsive barrier between the first and second coordination shells (Fig. A.6 in Appendix A), larger in magnitude than its own binding minimum, which anticipates the observed instability. Part of the Si discrep-ancy is furthermore inherited from the DFT reference itself: ab initio melting studies give Tm ≈ 1350 ± 100 K (LDA) [25] and 1590 ± 50 K (GGA) [26] against the experimental 1687 K, so relative to the GGA reference appropri-ate for our PBE training data the UF 3 underestimate is reduced from 20% to approximately 15%.   
+
+> Table 2: Calculated vs experimental melting points. All calculations were performed in LAMMPS with a time step of 0.5 fs (1.0 fs for Cu, for which the coexistence plateau is already converged at this value; timestep convergence was verified for each element). The calculated value and its uncertainty are the mean and standard deviation of the temperature over the coexistence plateau of the production run. The last column gives the relative deviation from experiment.
+
+Element Calculated (K) Experimental (K) Deviation 
+
+Ni 1832 ± 10 1728 +6 .0% 
+
+Cu 1427 ± 8 1358 +5 .1% 
+
+Li 455 ± 12 454 +0 .2% 
+
+Mo 1689 ± 13 2896 −41 .7% 
+
+Si 1352 ± 6 1687 −19 .9% 
+
+Ge − 1211 −
+
+3.4. Phonons, Thermal Expansion, and Dynamical Stability 
+
+To further probe whether the UF 3 potentials are practical for atomistic simulations beyond energy and force metrics, we computed three additional classes of validation properties. First, phonon dispersions for Ni, Cu, and Si obtained with the finite-displacement method (0.01 Å displacements; 256– 1,000-atom supercells, converged to below 0.001 THz against larger cells) ex-hibit no imaginary modes anywhere on the high-symmetry paths, confirming the dynamical stability of the predicted ground-state structures (Fig. 4). The 12 Ni and Cu dispersions reproduce the measured fcc lattice dynamics — includ-ing the TA/LA crossing between X and W and the K-point splittings — with X- and L-point frequencies within 0.7–2.7% of room-temperature inelastic-neutron-scattering data [27, 28], without any vibrational information having entered the fits. For Si, the deviations are larger and uniformly soft [29]: the transverse-acoustic branch at X lies within 3% of experiment, but the soften-ing grows to 14–17% for the L-point acoustic modes and reaches 15% for the zone-center optical frequency (13.2 THz against the measured ≈15.5 THz), consistent with the covalent-bonding limitations discussed above. Second, NPT simulations at zero pressure between 100 and 1300 K yield smooth lattice-parameter curves a(T ) with the expected mild anharmonic curvature and 300 K lattice constants within 0.2% (Ni) and 0.9% (Cu) of experiment (Fig. 5); the mean linear thermal-expansion coefficients over 300–1000 K, 
+
+10 .8 × 10 −6 K−1 for Ni and 15 .3 × 10 −6 K−1 for Cu, underestimate the ex-perimental values [30] by roughly 25–30% and 15–20%, respectively. This shortfall is expected, as no finite-temperature volumetric data constrained the fits, so the anharmonicity of the potential-energy surface is only weakly determined; for Ni, part of the measured expansion below the Curie temper-ature is moreover magnetic in origin and inaccessible to any non-magnetic interatomic potential. Third, 1 ns NVE molecular dynamics runs for all sta-ble potentials ( ≈4,000-atom cells, ∆t = 0 .5 fs, at 300 K and near 0.9 Tm)conserve energy with drifts between 10 −10 and 4 × 10 −7 eV/(atom ·ns) — an accumulated energy change below 10 −6 eV/atom over the full nanosecond — and 1 ns NPT trajectories at 300 K hold the cell volume constant to within 0.02%/ns, with all final configurations remaining crystalline by the Bragg-peak structure factor. The only run that loses its crystal structure is Mo at 0.9 T exp  
+
+> m
+
+= 2606 K, which lies 900 K above the potential’s own melting point, where melting is the correct physical outcome (the Mo crystal is stable at 0.9 of its UF 3 melting point); conversely, defect-free bulk Si re-mains crystalline even above its UF 3 melting point, a superheating effect that illustrates why the melting points above were obtained from two-phase co-existence rather than from heating a bulk crystal. Together with the elastic-property benchmarks of Fig. 3 and the long two-phase coexistence trajectories of the melting-point calculations, these tests support the practicality of UF 3
+
+potentials for production molecular dynamics for the systems that pass the diagnostic screening of the learned interactions in Section 3.1 — while Ge, which fails that screening, is correctly excluded. 13 X W K L02468      
+
+> Frequency (THz) Ni (fcc)
+> XWKL01234567
+> Cu (fcc)
+> XKL0.0 2.5 5.0 7.5 10.0 12.5 15.0
+> Si (diamond)
+> UF3 (this work) Experiment (neutron scattering)
+
+Figure 4: Phonon dispersions of Ni, Cu, and Si computed with the final UF 3 potentials via the finite-displacement method. No imaginary modes appear anywhere on the high-symmetry paths. Open circles: room-temperature inelastic-neutron-scattering data at the high-symmetry points [27, 28, 29]. 200 400 600 800 1000 1200 Temperature (K) 0.9975 1.0000 1.0025 1.0050 1.0075 1.0100 1.0125 1.0150 1.0175 
+
+> a(T) /  a(300 K)
+
+Ni (UF3) Cu (UF3) 
+
+Figure 5: Lattice parameter of Ni and Cu as a function of temperature from zero-pressure NPT simulations with the UF 3 potentials, normalized to a(300 K) . Experimental thermal-expansion data for comparison are tabulated in Ref. [30]. 
+
+14 4. Discussion and Conclusion 
+
+Our study demonstrates that optimizing the UF 3-MLIP for energy and forces results in impressive performance, despite its straightforward physically-inspired structure. Notably, our optimization focused primarily on mini-mizing energy and force errors, which led to the employment of minimal regularization. However, we propose that a slight increase in curvature regu-larization may yield a smoother potential. This adjustment could marginally reduce the model’s accuracy on energy and forces in the testing data, yet potentially enhance its application in property prediction and dynamics sim-ulations. It is also crucial to acknowledge that the UF 3 potentials, as utilized in this study, were specifically tailored for energy and force predictions. Their effectiveness in predicting other properties was not considered during the op-timization process. Moving forward, we aim to incorporate these relevant properties directly into the optimization loop. This approach is intended not only to enhance accuracy but also to yield more functionally optimal poten-tials. Emphasizing the practicality of MLIPs in molecular dynamics simula-tions is essential, as the potential that returns the smallest errors on energies and forces is not always the most applicable or physically relevant [31, 32]. The Ge potential of this work is a concrete example: its test errors are competitive, yet its learned interactions contain a spurious inter-shell barrier and its dynamics are unstable. We therefore advocate a three-stage valida-tion pipeline for spline-based MLIPs — energy/force accuracy, property-level validation (elastic constants, phonons, thermal expansion, melting), and di-rect inspection of the learned interactions — in which the interpretability of UF 3 plays an essential role. A notable result of this study is the element-dependent transferability of UF 3: potentials fitted without any solid–liquid interface configurations or ex-plicit melting information reproduce experimental melting points within ∼6% for the simple metals Ni, Cu, and Li, but transferability degrades systemat-ically with increasing bonding complexity. The substantial deviation for Mo mirrors the difficulty all MLIPs in the Ong et al. [16] benchmark encounter with d-electron systems, while the diamond-cubic semiconductors Si and Ge undergo a change of bonding character upon melting [23, 24] that lies beyond UF 3’s fixed three-body truncation [20, 19]. Combined with UF 3’s inherent interpretability through direct visualization of its spline-based interactions — which anticipates precisely these limits — these results position UF 3 as a 15 transparent framework whose physical scope is now better delineated. Our subsequent steps include evaluating UF 3’s performance in MD simu-lations, especially for targeted applications. Additionally, we emphasize the need for tailored human oversight in MLIP training. For specific uses like elasticity calculations, training data should predominantly consist of bulk structures, which is feasible given UF 3’s reduced computational needs and effective training with less data. In conclusion, we aim to refine UF 3 opti-mizations to balance accuracy with practical utility in molecular dynamics simulations, ensuring the developed potentials are both precise and widely applicable. 
+
+Acknowledgments 
+
+We extend our sincere thanks to Stephen R. Xie, Ajinkya Hire, and Jason Gibson for their invaluable discussions and insights that significantly con-tributed to this research. We are also grateful to the University of Florida for providing computational resources through the HiPerGator computing facility. This work was supported in part by the National Science Founda-tion, Division of Materials Research under Award No. NSF-DMR-2118718 and by the Center for Molecular Magnetic Quantum Materials, an Energy Frontier Research Center funded by the U.S. Department of Energy, Office of Science, Basic Energy Sciences under Award No. DE-SC0019330. 
+
+Data availability 
+
+The data used in this work for training the potentials were obtained from Ref. [16] and are available at https://github.com/materialyzeai/ mlearn/tree/master/data . The UF 3 code is available at https://github. com/uf3/uf3 . The final fitted UF 3 potential files in LAMMPS-ready for-mat and the fitting scripts used in this work are provided with the revised submission and will be deposited in a public repository upon publication. 
+
+Appendix A. Learned pair interactions for all six elements 
+
+Figure A.6 shows the learned two-body terms V2(r) for all six elements, evaluated directly from the final fitted models. These curves underpin the diagnostic screening discussed in Section 3.1 and the analysis of the element-dependent melting-point transferability in Section 3.3. 16 Figure A.6: Learned UF 3 two-body terms V2(r) for all six elements. Dotted vertical lines mark the equilibrium nearest-neighbor distances dN N . Ni, Cu, and Li display smooth, single-minimum pair interactions; Mo develops a double-well structure associated with the first- and second-neighbor shells of the bcc lattice; Ge exhibits a spurious repulsive barrier of +0 .18 eV between its coordination shells — nine times larger than the corresponding feature in Si ( +0 .02 eV) and larger in magnitude than its own binding minimum ( −0.16 eV) — which anticipates the instability of its melting simulations. 
+
+17 References 
+
+[1] A. P. Thompson, H. M. Aktulga, R. Berger, D. S. Bolintineanu, W. M. Brown, P. S. Crozier, P. J. in ’t Veld, A. Kohlmeyer, S. G. Moore, T. D. Nguyen, R. Shan, M. J. Stevens, J. Tranchida, C. Trott, S. J. Plimpton, Lammps - a flexible simulation tool for particle-based materials modeling at the atomic, meso, and contin-uum scales, Computer Physics Communications 271 (2022) 108171. 
+
+doi:https://doi.org/10.1016/j.cpc.2021.108171 .URL https://www.sciencedirect.com/science/article/pii/ S0010465521002836 
+
+[2] W. Kohn, P. Hohenberg, Inhomogeneous electron gas, Physical Review 136 (1964) B864–B871. [3] W. Kohn, L. Sham, Self-consistent equations including exchange and correlation effects, Physical Review 140 (1965) A1133–A1138. [4] A. E. Mattsson, P. A. Schultz, M. P. Desjarlais, T. R. Mattsson, K. Le-ung, Designing meaningful density functional theory calculations in ma-terial science–a primer, Modelling Simul. Mater. Sci. Eng. 13 (2005) R1–R31. [5] J. E. Jones, On the determination of molecular fields. —i. from the variation of the viscosity of a gas with temperature, Proc. R. Soc. Lond. A 106 (1924) 441–462. doi:10.1098/rspa.1924.0081 .URL http://doi.org/10.1098/rspa.1924.0081 
+
+[6] J. E. Lennard-Jones, Cohesion, Proceedings of the Physical Society 43 (5) (1931) 461. doi:10.1088/0959-5309/43/5/301 .URL https://dx.doi.org/10.1088/0959-5309/43/5/301 
+
+[7] A. K. Rappe, C. J. Casewit, K. S. Colwell, W. A. I. Goddard, W. M. Skiff, Uff, a full periodic table force field for molecular mechanics and molecular dynamics simulations, Journal of the American Chemical So-ciety 114 (25) (1992) 10024–10035. arXiv:https://doi.org/10.1021/ ja00051a040 , doi:10.1021/ja00051a040 .URL https://doi.org/10.1021/ja00051a040 
+
+[8] J. Godet, L. Pizzagalli, S. Brochard, P. Beauchamp, Comparison be-tween classical potentials and ab initio methods for silicon under large 18 shear, Journal of Physics: Condensed Matter 15 (41) (2003) 6943. 
+
+doi:10.1088/0953-8984/15/41/004 .URL https://dx.doi.org/10.1088/0953-8984/15/41/004 
+
+[9] J. Behler, M. Parrinello, Generalized neural-network representation of high-dimensional potential-energy surfaces, Phys. Rev. Lett. 98 (2007) 146401. doi:10.1103/PhysRevLett.98.146401 .URL https://link.aps.org/doi/10.1103/PhysRevLett.98.146401 
+
+[10] A. P. Bartók, M. C. Payne, R. Kondor, G. Csányi, Gaussian approximation potentials: The accuracy of quantum mechan-ics, without the electrons, Phys. Rev. Lett. 104 (2010) 136403. 
+
+doi:10.1103/PhysRevLett.104.136403 .URL https://link.aps.org/doi/10.1103/PhysRevLett.104. 136403 
+
+[11] A. V. Shapeev, Moment tensor potentials: A class of systemati-cally improvable interatomic potentials, Multiscale Modeling & Sim-ulation 14 (3) (2016) 1153–1173. arXiv:https://doi.org/10.1137/ 15M1054183 , doi:10.1137/15M1054183 .URL https://doi.org/10.1137/15M1054183 
+
+[12] A. Thompson, L. Swiler, C. Trott, S. Foiles, G. Tucker, Spectral neigh-bor analysis method for automated generation of quantum-accurate interatomic potentials, Journal of Computational Physics 285 (2015) 316–330. doi:https://doi.org/10.1016/j.jcp.2014.12.018 .URL https://www.sciencedirect.com/science/article/pii/ S0021999114008353 
+
+[13] P. Prakash, J. B. Gibson, Z. Li, G. D. Gianluca, J. Esquivel, E. Fuem-meler, B. Geisler, J. S. Kim, A. Roitberg, E. B. Tadmor, M. Liu, S. Martiniani, G. R. Stewart, J. J. Hamlin, P. J. Hirschfeld, R. G. Hen-nig, Guided diffusion for the discovery of new superconductors (2025). 
+
+arXiv:2509.25186 .URL https://arxiv.org/abs/2509.25186 
+
+[14] J. B. Gibson, A. C. Hire, P. Prakash, P. M. Dee, B. Geisler, J. S. Kim, Z. Li, J. J. Hamlin, G. R. Stewart, P. J. Hirschfeld, R. G. Hen-nig, Developing a complete ai-accelerated workflow for superconductor discovery, npj Computational Materials (Jan. 2026). doi:10.1038/ 
+
+19 s41524-026-01964-8 .URL http://dx.doi.org/10.1038/s41524-026-01964-8 
+
+[15] M. A. Wood, A. P. Thompson, Extending the accuracy of the SNAP interatomic potential form, The Journal of Chemical Physics 148 (24) (2018) 241721. arXiv:https://pubs.aip.org/aip/ jcp/article-pdf/doi/10.1063/1.5017641/16655417/241721\ _1\_online.pdf , doi:10.1063/1.5017641 .URL https://doi.org/10.1063/1.5017641 
+
+[16] Y. Zuo, C. Chen, X. Li, Z. Deng, Y. Chen, J. Behler, G. Csányi, A. V. Shapeev, A. P. Thompson, M. A. Wood, S. P. Ong, Performance and cost assessment of machine learning interatomic potentials, The Jour-nal of Physical Chemistry A 124 (4) (2020) 731–745, pMID: 31916773. 
+
+arXiv:https://doi.org/10.1021/acs.jpca.9b08723 , doi:10.1021/ acs.jpca.9b08723 .URL https://doi.org/10.1021/acs.jpca.9b08723 
+
+[17] S. R. Xie, M. Rupp, R. G. Hennig, Ultra-fast interpretable machine-learning potentials, npj Computational Materials 9 (1) (Sep. 2023). doi: 10.1038/s41524-023-01092-7 .URL http://dx.doi.org/10.1038/s41524-023-01092-7 
+
+[18] J. A. Vita, D. R. Trinkle, Exploring the necessary complexity of interatomic potentials, Computational Materials Science 200 (2021) 110752. doi:https://doi.org/10.1016/j.commatsci.2021.110752 .URL https://www.sciencedirect.com/science/article/pii/ S0927025621004791 
+
+[19] J. Tersoff, New empirical approach for the structure and energy of co-valent systems, Physical Review B 37 (12) (1988) 6991. [20] F. H. Stillinger, T. A. Weber, Computer simulation of local order in condensed phases of silicon, Physical Review B 31 (8) (1985) 5262. [21] J. R. Morris, C. Z. Wang, K. M. Ho, C. T. Chan, Melting line of alu-minum from simulations of coexisting phases, Physical Review B 49 (5) (1994) 3109–3115. doi:10.1103/PhysRevB.49.3109 .[22] G. Ziegenhain, A. Hartmaier, H. M. Urbassek, Pair vs many-body po-tentials: Influence on elastic and plastic behavior in nanoindentation of 20 fcc metals, Journal of the Mechanics and Physics of Solids 57 (9) (2009) 1514–1526. [23] I. Štich, R. Car, M. Parrinello, Bonding and disorder in liquid sili-con, Physical Review Letters 63 (20) (1989) 2240–2243. doi:10.1103/ PhysRevLett.63.2240 .[24] G. Kresse, J. Hafner, Ab initio molecular-dynamics simulation of the liquid-metal–amorphous-semiconductor transition in germanium, Phys-ical Review B 49 (20) (1994) 14251–14269. doi:10.1103/PhysRevB. 49.14251 .[25] O. Sugino, R. Car, Ab initio molecular dynamics study of first-order phase transitions: Melting of silicon, Physical Review Letters 74 (10) (1995) 1823. [26] D. Alfè, M. J. Gillan, Exchange-correlation energy and the phase dia-gram of si, Physical Review B 68 (20) (2003) 205212. doi:10.1103/ PhysRevB.68.205212 .[27] R. J. Birgeneau, J. Cordes, G. Dolling, A. D. B. Woods, Normal modes of vibration in nickel, Physical Review 136 (5A) (1964) A1359–A1365. 
+
+doi:10.1103/PhysRev.136.A1359 .[28] E. C. Svensson, B. N. Brockhouse, J. M. Rowe, Crystal dynamics of cop-per, Physical Review 155 (3) (1967) 619–632. doi:10.1103/PhysRev. 155.619 .[29] G. Nilsson, G. Nelin, Study of the homology between silicon and germa-nium by thermal-neutron spectrometry, Physical Review B 6 (10) (1972) 3777–3786. doi:10.1103/PhysRevB.6.3777 .[30] Y. S. Touloukian, R. K. Kirby, R. E. Taylor, P. D. Desai, Thermal Expansion: Metallic Elements and Alloys, Vol. 12 of Thermophysical Properties of Matter, IFI/Plenum, New York, 1975. [31] X. Fu, Z. Wu, W. Wang, T. Xie, S. Keten, R. Gomez-Bombarelli, T. Jaakkola, Forces are not enough: Benchmark and critical evalua-tion for machine learning force fields with molecular simulations (2022). 
+
+arXiv:2210.07237 .21 [32] J. D. Morrow, J. L. A. Gardner, V. L. Deringer, How to validate machine-learned interatomic potentials, The Journal of Chemical Physics 158 (12) (2023) 121501. arXiv:https: //pubs.aip.org/aip/jcp/article-pdf/doi/10.1063/5.0139611/ 16792037/121501\_1\_online.pdf , doi:10.1063/5.0139611 .URL https://doi.org/10.1063/5.0139611 
+
+22

@@ -1,0 +1,458 @@
+Title: Coarse composition suffices: tabular in-context learning for multi-activity antimicrobial peptide profiling
+
+URL Source: https://arxiv.org/pdf/2608.30337v1
+
+Published Time: Tue, 01 Sep 2026 02:06:59 GMT
+
+Number of Pages: 24
+
+Markdown Content:
+# Coarse composition suffices: tabular in-context learning for multi-activity antimicrobial peptide profiling 
+
+Raunak Kumar 1, †, Anuj Pal 1, †, Dhruvi Solanki 2, †, Parikshit Pareek 3, Juhi Singh 2, ∗, and Jitin Singla 4, ∗
+
+> 1
+
+Department of Electronics and Communication Engineering, Indian Institute of Technology Roorkee, Roorkee 247667, Uttarakhand, India 
+
+> 2
+
+Department of Bioengineering, Indian Institute of Science, Bengaluru 560012, Karnataka, India 
+
+> 3
+
+Department of Electrical Engineering, Indian Institute of Technology Roorkee, Roorkee 247667, Uttarakhand, India 
+
+> 4
+
+Department of Biosciences and Bioengineering, Indian Institute of Technology Roorkee, Roorkee 247667, Uttarakhand, India 
+
+> †
+
+These authors contributed equally. 
+
+> ∗
+
+Corresponding authors. 
+
+Abstract 
+
+Antimicrobial peptides (AMPs) often act against multiple pathogen classes, making multi-label activity prediction a more realistic screening target than binary antimicrobial classification. The ESCAPE benchmark formalizes this setting, but leading approaches typically rely on multimodal, structure-conditioned deep models that are costly to train and tune. We show that a simple, sequence-only pipeline can match and surpass these methods by combining 330 interpretable sequence descriptors with TabPFN, a tabular foundation model that performs in-context prediction in a single forward pass without gradient-based training or hyperparameter search. On ESCAPE (82,359 peptides; five labels), a label-powerset TabPFN model achieves 
+
+mAP -5 = 77 .8% , improving on the previously best reported 72.1%. A probabilistic classifier chain is the first method to match or exceed the best published average precision on each of the five labels simultaneously. The gains persist under the prior state-of-the-art single-fold training protocol, indicating they are not a training-set-size artefact, and are largest for remote homologues ( +11 .2 points below 30% sequence identity). Ablations further show that predicted structure is unnecessary at inference and that performance is not driven by any single descriptor family: ten global physicochemical scalars recover 91% of full-feature performance. Finally, explicitly modelling label dependence yields targeted benefits for scarce activities and supports ranking which activity to assay next from partial positive evidence. 
+
+Keywords: antimicrobial peptides; multi-label classification; tabular foundation models; bench-marking; sequence descriptors; assay prioritization 
+
+# 1 Introduction 
+
+Bacterial antimicrobial resistance was associated with an estimated 4.95 million deaths worldwide in 2019, of which 1.27 million were directly attributable [1]. Antimicrobial peptides (AMPs), typically cationic sequences of 10–50 residues, are among the most actively pursued alternatives to conventional antibiotics. Most AMPs act by physically disrupting microbial membranes rather than by engaging a single molecular target, a mechanism against which resistance is thought to evolve comparatively 1arXiv:2608.30337v1 [cs.LG] 31 Aug 2026 slowly [2–4]. A defining property of the class is that a single peptide is frequently active against more than one kind of pathogen: bacteria, fungi, viruses, and parasites [5]. The prediction target that matters for screening is therefore a multi-activity profile, not an isolated binary activity. Computational AMP prediction has nonetheless been dominated by binary antimicrobial-versus-non-antimicrobial classification. Random forests over composition–transition–distribution descriptors [6, 7], attention-augmented recurrent networks [8], and fine-tuned protein language models [9] all address that task, and comparative assessments have repeatedly found them difficult to separate once evaluation is standardized [10]. Multi-activity prediction is a more recent development. Graph neural networks over molecular representations [11], transformer architectures with asymmetric losses for label imbalance [12], and multi-task convolutional networks [13] predict several activities jointly. The ESCAPE benchmark [14] has recently standardized the task by integrating 82,359 peptides from 27 curated repositories under a fixed split and reporting a multimodal transformer baseline that utilizes both sequence and predicted three-dimensional structure. That benchmark is a substantial community resource: it fixes the split, retrains every prior method under a single protocol, and reports per-label as well as macro results. An informative feature of those results is that no method dominates, i.e., the leading method on macro average precision is not the leading method on any of antibacterial, antiviral, or antifungal activity, and different architectures lead on different labels. The prevailing response to this task has been to add capacity and modalities. Structure-conditioned and language-model-conditioned architectures are now standard in peptide property prediction [15–17], and each addition carries real cost, i.e., structure prediction for every candidate, GPU training, architecture search, and hyperparameter tuning that must itself be validated. Recent critical assessments in adjacent domains have shown that apparently large deep-learning advantages can shrink or disappear once simple baselines, homology control, and evaluation protocol are examined [18–20], and the same examination has not been carried out for multi-activity AMP prediction. In this study we ask how far a deliberately simple, sequence-only model can be taken on ESCAPE, and what that performance implies about the benchmark itself. We pair 330 interpretable sequence descriptors with TabPFN,a prior-data fitted network pre-trained on millions of synthetic tabular classification tasks that takes a labelled reference set as in-context samples and returns calibrated posteriors in a single forward pass, with no gradient updates and no hyperparameter search on the target data [21–23]. We (i) evaluate standard multi-label transforms on a fixed descriptor matrix under the ESCAPE split and protocol; (ii) separate model quality from the quantity of labelled data available, by reproducing ESCAPE’s released multimodal baseline and repeating every comparison under its single-fold protocol; (iii) stratify by sequence identity to quantify generalization to remote homologues; (iv) test whether performance is driven by any particular descriptor family and whether structural input contributes at inference; and (v) measure when modelling label dependence helps, including for prioritizing assays from partial positive evidence. Overall, the results favour simplicity. A label-powerset TabPFN model improves five-label macro average precision to 77.8% versus 72.1% for the previously best-performing method, and a probabilistic classifier chain is the first approach to match or exceed the best published average precision on all five labels simultaneously. These gains persist under the matched single-fold protocol, are largest for peptides remote from the peptides supplied in context, are not attributable to any single descriptor family, and remain largely intact with only ten global physicochemical scalars (91% of full-feature performance). 2Table 1: Label structure of the ESCAPE benchmark. Positive counts and prevalence are given for the held-out test fold ( n = 16 ,489 ); the conditional column is the fraction of antimicrobial test peptides carrying each activity.                       
+
+> Label Test positives Prevalence (%) P(label |AM )(%) Antibacterial 3,187 19.33 75.3 Antifungal 1,316 7.98 31.1 Antiviral 946 5.74 22.3 Antiparasitic 77 0.47 1.8 Antimicrobial 4,235 25.68 100.0
+
+# 2 Materials and methods 
+
+2.1 Dataset 
+
+We used the Expanded Standardized Collection for Antimicrobial Peptide Evaluation (ESCAPE) benchmark [14]. ESCAPE contains 82,359 peptides with four activity labels (antibacterial, antifungal, antiviral, antiparasitic) and a deterministic parent Antimicrobial label ( yAM = W 
+
+> j
+
+yj ). We used the predefined split: folds 1–2 (65,870 peptides) supply the in-context samples and the held-out fold (n = 16 ,489 ) is used only for testing. Label counts and prevalence in the test fold are summarized in Table 1; antiparasitic is the rarest label and thus constrains macro-averaged performance (see Section 3.1). 
+
+2.2 Evaluation metrics and statistics 
+
+Three averaging scales are used and are not interchangeable. We report mAP -5 (all five labels) to enable direct comparison against published results. For dependence analyses we use mAP -4,which averages over the four real activities and excludes the deterministic Antimicrobial parent. We also report mAP -3, which averages over antibacterial, antifungal, and antiviral only (excluding both the parent and Antiparasitic), because Antiparasitic has only 77 test positives. Unless stated otherwise, every average precision, macro average, per-label difference, bootstrap interval, and threshold-dependent score is reported on the 0–100 scale. Interval estimates use 2,000 bootstrap resamples of the test peptides. All transforms are scored on identical resamples, and within each resample the macro metric is averaged across the three seeds, treating seeds as repeated measurements of one test set rather than as additional independent data. A difference is called significant when its two-sided 95% percentile interval excludes zero. Point estimates are means over three seeds and ± denotes the sample standard deviation. 
+
+2.3 Feature representation 
+
+Each peptide was encoded as a 330-dimensional numeric vector partitioned into eight interpretable families (Table 2). Feature extraction was identical for every transform compared here, so no difference between transforms can arise from representation. Composition–transition–distribution (CTD) descriptors encode three complementary views of a physicochemical property along the sequence: composition is the fraction of residues in each property class, transition the frequency of switches between classes at adjacent positions, and distribution the sequence positions at which the first, 25%, 50%, 75%, and 100% of a class are reached. A descriptor such as Hydrophobicity_D_3_0 
+
+is therefore spatial rather than compositional. 3Table 2: Feature representation (330 numeric columns).                      
+
+> Family Content n
+> ESM ESM-2 embeddings, mean-pooled and PCA-reduced [17] 128 CTD 7 properties ×21 (composition 3, transition 3, distribution 15) 147 AAC Amino-acid composition 20 AAIndex PCA-reduced AAindex residue-property matrices [24] 15 PhysChem Length, net charge, charge density, p I, instability index, aromaticity, 10 aliphatic index, Boman index, hydrophobic ratio, hydrophobic moment Motif R-X-R, RW repeat, RGD, C-X 3-C, RKKR 5Density Arg, Trp, Cys, Pro residue densities 4Cleavage aBasic-cleavage-pair count 1
+> Total 330
+> aThe basic-cleavage-pair count is held out as its own single-column family rather than folded into PhysChem
+
+2.4 Backbone 
+
+TabPFN is a prior-data fitted network: a transformer pre-trained on millions of synthetic tabular classification tasks that receives an entire labelled reference set as in-context samples and returns test-row posteriors in a single forward pass, with no gradient updates and no hyperparameter search on the target data [21, 22]. Because such networks approximate the Bayesian posterior predictive distribution [23], their probability outputs are calibrated by construction, which is what licenses the conditional analyses in Sections 2.7 and 2.10. Two terms, fit and inference , are used in a TabPFN-specific sense. A fit performs no weight updates, it only loads the labelled reference peptides into the model context, so the “fitted” object is the stored context matrix plus fixed pre-trained weights. Inference is a single forward pass that reads a test peptide with that context and returns a posterior over labels. We therefore treat the 65,870 peptides of folds 1–2 as in-context samples , and reserve training for gradient-based procedures (TabPFN’s one-off synthetic pre-training and the deep-learning baselines). No gradients are computed on peptide data. Reported fit time is context ingestion (not optimisation), hence typically much smaller than inference time. We used TabPFN v3 ( tabpfn 8.2.0) with nestimators = 16 and seeds {42 , 1665 , 8914 }, matching the seed protocol of the published baseline. Ensemble classifier chains use nestimators = 8 to make eight chains affordable. No hyperparameter was tuned on ESCAPE at any stage. Experiments ran on two NVIDIA RTX PRO 5000 Blackwell GPUs (48 GB each) under PyTorch 2.13.0+cu130, scikit-learn 1.7.2, NumPy 2.2.6, and Python 3.10.20. 
+
+2.5 Multi-label transforms 
+
+Five standard transforms were compared on an identical feature matrix, split, and backbone, differing only in how the multi-label target is factorized. A worked out example for the transforms is given in Supplementary Section S1. 
+
+Notation. Let x ∈ R330 denote a peptide’s descriptor vector and y ∈ { 0, 1}L its label vector (with 
+
+L = 5 for the benchmark comparison and L = 4 in the dependence analyses). Labels are ordered frequency-descending, y1 = Antibacterial, y2 = Antifungal, y3 = Antiviral, y4 = Antiparasitic, y5 =
+
+Antimicrobial. ˆP denotes a TabPFN posterior probability. 4Binary relevance (BR) assumes the labels are conditionally independent given the features and factorizes the joint as a product of marginals, 
+
+ˆPBR (y | x) = 
+
+> L
+
+Y
+
+> j=1
+
+ˆP (yj | x), (1) fitting one classifier per label. It encodes no dependence and is the conditional-independence floor against which the others are measured. BR costs L inference passes. 
+
+Label powerset (LP) treats a peptide’s whole activity profile as one category rather than as five separate questions [25]. A peptide active against bacteria and fungi but not against viruses or parasites has the profile (1 , 1, 0, 0, 1) , the last entry being Antimicrobial, which is 1 whenever any of the four activities is. Because that parent is fixed by the other four, only 24 = 16 of the 25
+
+conceivable profiles can occur, from all-negative to active against all four. LP therefore solves a single 16-class problem and returns one probability per profile. A per-label probability is recovered by adding up the profiles that contain the label of interest: 
+
+ˆPLP (yj = 1 | x) = X 
+
+> c∈C :cj=1
+
+ˆP (c | x), (2) where C is the set of profiles seen in context and cj the jth entry of profile c, so the sum runs over every profile in which label j is present. LP can represent any pattern of co-occurrence among the profiles it has seen, at the cost of assigning zero probability to a profile absent from context. LP only cost one inference pass. 
+
+Probabilistic classifier chains (PCC) predict the labels in a fixed order, each one conditioned on the answers already given, i.e., is the peptide antibacterial, then, given that answer, is it antifungal, and so on. Multiplying these conditionals gives the probability of one complete profile, and PCC evaluates all 25 = 32 profiles rather than following a single path [26]: 
+
+ˆPPCC (y | x) = 
+
+> L
+
+Y
+
+> j=1
+
+ˆP (yj | x, y 1, . . . , y j−1) , ˆP (yj = 1 | x) = X 
+
+> y:yj=1
+
+ˆP (y | x). (3) As in LP, a per-label probability is a sum over the profiles containing that label. Enumerating 32 profiles makes PCC the most expensive transform here, but it yields the full joint posterior the conditional analyses require. Unlike LP it is not confined to the 16 profiles the Antimicrobial rule permits, which is why it can return incoherent ones (Section 3.5). Cost: L fits, 2L inference passes, i.e., 4,116 s against 128 s for LP. 
+
+Classifier chains (CC) keep the same label order as PCC, but they follow only one trajectory through the chain. After predicting y1, the model feeds that prediction into the classifier for y2,then feeds the prediction for y2 into the classifier for y3, and so on [27]. This avoids enumerating all profiles, making CC much cheaper than PCC, but it also means mistakes made early can cascade downstream. Formally, 
+
+ˆPCC (y | x) = Y
+
+> j
+
+ˆP (yj | x, y <j ), (4) where y<j are the earlier labels, given as ground truth in the in-context samples and replaced by the chain’s own predictions at inference. How the earlier predictions are encoded is therefore important. 
+
+Hard context appends the binarized indicator 1[ˆ p<j > τ ] ∈ { 0, 1}, matching the 0/1 encoding of the in-context labels, while soft context appends the raw probability ˆp<j ∈ [0 , 1] .5Ensemble classifier chains (ECC) average the per-label probabilities of eight chains under independently sampled label orders, so that no single arbitrary ordering decides the result. ECC run at nestimators = 8 to make eight chains affordable. 
+
+2.6 ESCAPE baseline re-run and matched-protocol evaluation 
+
+Published per-label numbers for the ESCAPE baseline [14] are point estimates from the original authors’ runs, so comparisons to them are unpaired. For a paired comparison, we re-ran the released ESCAPE baseline checkpoints ( Best_model_Fold1.pth , Best_model_Fold2.pth ) on our hardware without any retraining. Structural maps are available for 5,495 of the 16,489 test peptides (33.3%), so paired analyses are restricted to this subset. 
+
+Matched-protocol evaluation: The ESCAPE baseline averages two checkpoints trained on opposite folds, whereas our transforms take both folds as in-context samples. To match protocols, we supplied each fold separately as context (per seed) and averaged the two resulting probability matrices, mirroring the baseline. The gap to the full-context experiment isolates the effect of the additional in-context samples. 
+
+Structural-branch ablation: To test whether the ESCAPE baseline’s structural modality con-tributes at inference, we held the sequence input fixed and replaced only the structural input with (i) an all-zero image, (ii) uniform noise, and (iii) another peptide’s real map, which preserves input statistics while destroying the association between a peptide and its own structure. Changes were quantified both as per-label average precision and as the maximum and mean absolute change in predicted probability over every peptide × label pair, against the same checkpoint’s real-map run. 
+
+2.7 Quantifying label dependence 
+
+Two analyses establish whether conditional dependence between activities exists and what it is worth. Both are restricted to the four real activities, excluding the deterministic Antimicrobial parent, whose inclusion inflates apparent dependence two-to-four fold. 
+
+An oracle conditional-predictability ceiling scores each activity with its three true sibling labels appended to the features, and compares that against features alone. This upper-bounds the gain available to any method that exploits sibling labels. Recovery is reported as (transform −
+
+BR )/(oracle − BR ) on the mAP -4 scale. This measures what dependence is worth for per-label ranking .
+
+A joint-versus-product held-out likelihood comparison asks the complementary question, whether dependence exists at all independently of any ranking metric. We compare the mean held-out log-likelihood of the true four-activity test vectors under the BR product of marginals against the PCC joint, computed in log space with log-sum-exp normalization, in nats per peptide. Log-likelihood is a strictly proper scoring rule, so a joint-model advantage on it constitutes exploitable dependence by construction, whether or not that dependence is recoverable as average precision. 
+
+2.8 Homology stratification 
+
+Test peptides were searched against the in-context set (folds 1–2) with MMseqs2 [28] 18.8cc5c 
+
+easy-search (-s 7.5 -e 10000 –max-seqs 4000 –alignment-mode 3 ) and each test peptide la-belled with the maximum sequence identity among hits with query coverage ≥ 0.5. Peptides with no qualifying hit were assigned zero. There are no exactly duplicated sequences within or across splits. 62.9 Feature-group attribution 
+
+Three analyses answer different questions and are expected to disagree where features are redundant. 
+
+Group-only refits on each family alone and measures standalone sufficiency. Leave-one-group-out refits without each family and measures what is lost when it is unavailable from the start. Permutation 
+
+shuffles the family’s columns in the test matrix and re-infers, measuring the model’s reliance on it. All arms run on a stratified 4,000-peptide test subsample drawn once and shared across three analyses, retaining all 77 antiparasitic positives. Label prevalence in the subsample is consequently higher than in the full test set, so its absolute values are not comparable to Section 3.1 and are used only for within-experiment contrasts. 
+
+2.10 Positive-unlabelled assay prioritization 
+
+Curated activity repositories record what was found positive. An activity a peptide was never assayed for is unlabelled rather than known-negative [29, 30]. We therefore treated confirmed positives as reliable and all zeros as unlabelled, and scored the task a screening campaign actually faces: given a peptide already confirmed positive for m activities, rank the remaining activities by which to assay next. For each test peptide with at least m confirmed positives and at least one remaining candidate, the m highest-prevalence positives were revealed and every unobserved activity scored by the joint posterior ˆP (a = 1 | x, observed positives ). Rankers compared were BR (which cannot use the revealed positives and is therefore the do-nothing baseline) and the LP and PCC joint posteriors. Performance is reported as Hit@1, mean reciprocal rank, and a pooled positive-unlabelled AP, which is a lower bound because the unlabelled set contains an unknown number of true positives. As a negative control the conditioning was permuted across peptides, supplying the same quantity of label information while severing its link to the specific peptide. This control is a single donor assignment per m, reused across seeds, not a distribution over permutations. It is therefore a point comparison and yields no permutation p-value. Hit@1 is additionally reported decomposed by which activity is held out, because the pooled figure is dominated by the commonest target. 
+
+# 3 Results 
+
+3.1 Improved average precision across all activity labels 
+
+Table 3 places the five transforms against every published result on the ESCAPE benchmark. The label powerset transform reaches a five-label macro average precision of 77 .79 ± 0.23 and the probabilistic classifier chain 77 .76 ± 0.12 , against 72.12 for the previously best-performing method, a margin of 5.67 and 5.64 percentage points respectively. Binary relevance, which encodes no dependence between activities at all, reaches 77 .01 ± 0.17 and is already ahead of every published method (Figure 1a). All five transforms use the same 65,870 peptides as in-context samples and involve no gradient training (Section 2.4). Supplementary Section S4 records what each published method’s own publication set out to predict, since several were binary or single-activity, classifiers were adapted to the five-label output by ESCAPE’s benchmark authors. The per-label picture is more informative than the macro. Among published methods no single architecture leads on more than three labels. PEP-Net leads on Antibacterial, Antifungal, and Antimicrobial, AVP-IFT on Antiviral, and ESCAPE on Antiparasitic only, despite ranking first overall. Every transform reported here exceeds the best published value on Antibacterial, Antifungal, Antiviral, and Antimicrobial, and PCC additionally matches it on Antiparasitic ( 37 .68 against 37 .6). PCC is therefore the first model to match or exceed the best published average precision on all 7Table 3: Average precision (%) on the ESCAPE test set ( n = 16 ,489 ), averaged over seeds 
+
+{42 , 1665 , 8914 }. Per-label published values are as reported by the benchmark authors. Bold marks the best value in each column. Powered macro averages Antibacterial, Antifungal, and Antiviral only. mAP -5 and Powered are recomputed here from the per-label columns so that every row is on the same footing. Per-seed values in Supplementary Section S2. 
+
+Method Antibact. Antifung. Antiviral Antiparas. Antimicrob. mAP -5 Powered 
+
+Published 
+
+AMPs-Net [11] 82.5 53.1 51.2 5.3 82.1 54.8 62.3 TransImbAMP [12] 92.5 56.3 65.0 16.7 94.0 64.9 71.3 AMP-BERT [9] 92.3 61.5 65.9 21.4 93.6 66.9 73.2 PEP-Net [31] 95.2 72.6 61.2 16.2 96.7 68.4 76.3 amPEPpy [7] 93.9 62.2 67.7 23.8 95.2 68.6 74.6 AVP-IFT [32] 94.3 63.3 71.1 20.0 95.5 68.8 76.2 AMPlify [8] 94.0 68.3 66.1 27.7 95.3 70.3 76.1 ESCAPE [14] 94.2 63.4 69.8 37.6 95.6 72.12 75.8 
+
+This work 
+
+CC 97.27 73.69 78.93 28.93 97.53 75.27 83.30 ECC 97.21 74.73 79.85 34.84 97.81 76.89 83.93 BR 97.27 74.98 79.95 34.76 98.10 77.01 84.07 PCC 97.27 75.37 80.41 37.68 98.06 77.76 84.35 LP 97.51 75.65 81.29 36.41 98.11 77.79 84.82 0 20 40 60 80      
+
+> Average precision (%)
+> AMPs-Net TransImbAMP AMP-BERT PEP-Net amPEPpy AVP-IFT AMPlify ESCAPE
+> CC ECC BR PCC LP
+> 54.8 64.9 66.9 68.4 68.6 68.8 70.3 72.1 75.3 76.9 77.0 77.8 77.8
+> (a) Five-label macro (mAP-5)
+> 020 40 60 80
+> Average precision (%)
+> AMPs-Net TransImbAMP AMP-BERT amPEPpy ESCAPE AMPlify AVP-IFT PEP-Net
+> CC ECC BR PCC LP
+> 62.3 71.3 73.2 74.6 75.8 76.1 76.2 76.3 83.3 83.9 84.1 84.3 84.8 ESCAPE falls from 1st to 4th among published
+> (b) Powered macro (AB, AF, AV only)
+> Published This work
+
+Figure 1: Each transform leads the published benchmarks on both macro scales. (a) Five-label macro average precision, (b) The macro restricted to the three adequately powered activities (antibacterial, antifungal, antiviral). Values are recomputed from the per-label average precisions in Table 3. 8Published This work 85 90 95          
+
+> Average precision (%)
+> Antibacterial (3,187 test positives) best published: PEP-Net 95.2
+> Published This work 55 60 65 70 75 80
+> Antifungal (1,316 test positives) best published: PEP-Net 72.6
+> Published This work 50 60 70 80
+> Antiviral (946 test positives) best published: AVP-IFT 71.1
+> Published This work 010 20 30 40 50
+> Average precision (%)
+> Antiparasitic (77 test positives) best published: ESCAPE 37.6
+> Published This work 85 90 95 100
+> Antimicrobial (4,235 test positives) best published: PEP-Net 96.7
+> Published method Best published value 95% bootstrap CI CC ECC BR PCC LP
+
+Figure 2: Per-label average precision, all eight published methods against all five proposed transforms. Each panel is one activity label, annotated with its test-positive count. The dashed line is the best published value for that label. Every transform exceeds the best published value on antibacterial, antifungal, antiviral and antimicrobial activity. Error bars are 95% bootstrap percentile intervals, shown for LP in every panel and additionally for PCC on Antiparasitic. They are narrower than the plotting symbol on Antibacterial and Antimicrobial. Note the differing y-axis range in each panel. 9Table 4: Computational cost of each transform on the full benchmark, single GPU, nestimators = 16 
+
+(8 for ECC). Times exclude feature extraction, which is shared across all transforms. A fit is the ingestion of the 65,870 in-context samples and involves no gradient update; an inference pass is the forward pass that returns posteriors for the test peptides (Section 2.4). Counts are given as a function of the number of labels L = 5 . Times are means over seeds {42 , 1665 , 8914 }                              
+
+> Transform Fits Inference passes Fit (s) Inference (s) mAP -5
+> LP 1118 128 77.79
+> BR LL85 646 77.01 CC LL124 907 75.27 ECC 8L8L255 3,791 76.89 PCC L2L82 4,116 77.76
+
+five labels simultaneously. The Antiparasitic comparison should be read with its power in mind: with 77 test positives, PCC’s 95% interval is [26 .26 , 48 .50] , so the correct statement is parity rather than superiority. Because published per-label values are point estimates from the original authors’ runs, they support only the question of whether each falls inside our 95% confidence interval. On Antibacterial, Antifungal, Antiviral, and Antimicrobial, every published value lies strictly below the lower bound of every transform’s interval. On Antiparasitic all published values lie inside our intervals for all five transforms (Figure 2). Building on the per-label results, we focus on the “powered” macro (averaging only adequately powered labels) because Antiparasitic is so rare (77 positives) that its wide uncertainty can dominate the equal-weight five-label metric (Figure 1b). These results were obtained by forward passes through the pre-trained TabPFN network alone, with no gradient training and no hyperparameter search. The labelled peptides supplied as in-context samples are read in the same forward pass as the test query and directly yield its predicted labels. Because the transforms differ only in how the label is presented, their costs differ by orders of magnitude: LP is both the most accurate transform and the cheapest, 5.0 times cheaper at inference than BR, the next-cheapest, and 32 times cheaper than PCC (Table 4). 
+
+3.2 Separating Data-Size Effects from Model Gains 
+
+Our transforms take both non-test folds (65,870 peptides) as in-context samples, whereas ESCAPE, the previous state of the art, trains on one fold ( ≈32 ,900 peptides) at a time and averages the test metric. A margin measured that way therefore confounds model quality with twice as much labelled data. One observation motivated testing this directly: halving the number of in-context samples (a random half of folds 1–2) costs 5.01 points of mAP -5 for BR (4.71 for LP, 4.43 for CC; Supplementary Section S3), the same magnitude as BR’s full-context margin of +5 .57 over the reproduced baseline. That subset was drawn at random across both folds, however, and is therefore not like-for-like with the baseline’s single-fold protocol, which the fold-matched experiment below supplies. Running the released ESCAPE checkpoints over the 5,495 test peptides for which structural maps were released gives macro AP 72 .18 against the published 72 .12 , a difference of 0.06 points, with every per-label value within 1.7 points of its published counterpart. The released checkpoints and evaluation code therefore reproduce the publication closely, and the comparison below (Table 5) is against a faithfully reproduced baseline. Under the matched protocol LP retains a significant advantage of +3 .69 [+1 .04 , +6 .46] points, which also holds on mAP -4 (+4 .09 [+0 .81 , +7 .53] ). BR retains +2 .86 , significant on mAP -5 but marginally so, and not significant on mAP -4. CC is indistinguishable from the baseline on the macro. 10 Table 5: Paired comparison against ESCAPE on the 5,495 test peptides with released structural maps, 2,000 shared bootstrap resamples. Fold-matched supplies one fold at a time as in-context samples and averages the two probability matrices, mirroring the ESCAPE’s own protocol. All entries are differences in mAP -5, in percentage points.                           
+
+> Transform ∆full-data ∆fold-matched 95% CI (matched) Significant LP +6 .08 +3 .69 [+1 .04 ,+6 .46] yes BR +5 .57 +2 .86 [+0 .04 ,+5 .87] yes (marginal) CC +3 .32 −0.13 [−3.21 ,+3 .60] no PCC +6 .01 +3 .26 [+0 .65 ,+6 .03] yes
+
+PCC retains +3 .26 [+0 .65 , +6 .03] on mAP -5 and +3 .56 [+0 .29 , +7 .00] on mAP -4. Direct paired measurement of the confound (full-data minus fold-matched, on identical test rows, n = 16 ,489 )gives +2 .40 [+1 .80 , +3 .02] for LP, +3 .08 [+2 .16 , +3 .85] for BR, +2 .96 [+1 .89 , +3 .88] for CC, and 
+
++3 .05 [+2 .15 , +3 .85] for PCC; all four intervals exclude zero. Roughly half of the full-data margin is therefore attributable to the number of in-context samples, and the remainder to the model. One secondary observation bears on architecture choice. The baseline gains +5 .86 points of 
+
+mAP -5 from averaging its two checkpoints, more than twice what any of our transforms gain from the same operation (LP +2 .32 , BR +2 .27 , CC +1 .61 ), and its individual checkpoints are weak in isolation (65.03 and 67.62 against 72.18 ensembled). For an in-context learner the reverse holds: one model on 65,870 rows outperforms two on ≈32 ,900 each (LP 77.79 against 75.40), which is the expected behaviour when additional labelled rows are additional evidence at inference rather than additional gradient steps. 
+
+3.3 Remote-homologue peptides show strongest gains 
+
+A margin obtained on a benchmark in which a third of the test set is nearly identical to sequences the model has seen in context invites the objection that it reflects memorization. The predefined fold split does place 5,342 test peptides (32.4%) out of 16,489 at ≥ 90% identity to an in-context sequence. Paired per-peptide comparison of 5,495 test peptides against the previous state of the art, by identity band, shows the margin growing as similarity falls. Below 30% identity it is +9 .65 points (BR), +11 .23 (LP), and +10 .03 (PCC), against +3 .8 (LP) and several non-significant values in the ≥ 90% band (Table 6). Pooled over the whole covered subset the paired margins are +6 .08 [+3 .13 , +9 .10] for LP, +6 .01 [+3 .78 , +8 .15] for PCC, and +5 .57 [+3 .15 , +7 .86] for BR, so the remote-homologue margin is close to twice the pooled one. The advantage is therefore largest exactly where the benchmark is hardest and where a screening campaign would actually operate. 
+
+3.4 Sequence-only information is sufficient 
+
+To determine which parts of our 330 -dimensional descriptor set actually carry predictive signal (and thus whether the gains come from rich representations or from coarse composition), we ran an ablation-style attribution study on a stratified 4,000-peptide random subsample retaining all 77 antiparasitic positives (baseline mAP -5 80 .41 on this subsample; its absolute values are not comparable to Section 3.1). Because rerunning TabPFN is computationally expensive, we restrict these refits to this smaller test subset. Table 7 summarizes the three attribution experiments (group-only refits, leave-one-family-out refits, and test-time permutation within each family). 11 Table 6: Homology stratification of the predefined test split. Margin is the paired per-peptide difference in mAP -5 against the previous state of the art, in percentage points, restricted within each band to labels with at least five positives in that band.                     
+
+> Identity band Test peptides Margin over previous SOTA (points)
+> n(% of test) BR LP PCC
+> <30% 3,708 (22.5%) +9 .65 +11 .23 +10 .03
+> ≥90% 5,342 (32.4%) n.s. +3 .8n.s. All (paired) 5,495 (100%) +5 .57 +6 .08 +6 .01
+
+Refitting on each descriptor family alone shows that the signal is broadly distributed and largely redundant. Ten global physicochemical scalars reach 73 .52 , recovering 91.4% of full-feature performance; 20 amino-acid-composition features reach 77 .06 (95.8%); 15 AAindex components reach 76 .05 (94.6%); the 147 CTD descriptors reach 77 .30 (96.1%); and the 128-dimensional ESM-2 protein language model block [17] reaches 79 .19 (98.5%), within 1.22 points of the full model. A learned embedding and a hand-crafted descriptor set are thus near-substitutable here. Only the three smallest families fall away: residue densities reach 51 .12 and the motif and cleavage features, which are near-binary indicators, reach 16 .26 and 16 .48 .Leave-one-family-out shows that no single feature family is essential. Removing ESM gives the biggest drop ( −0.74 points), followed by CTD ( −0.67 ) and every other family changes mAP -5 by at most 0.21 . Dropping motif ( +0 .51 ) or cleavage ( +0 .12 ) even gives a tiny increase . Permutation importance, however, makes CTD and ESM look much more important ( −45 .19 and −19 .17 
+
+points). This happens because permuting a large, highly correlated block creates unrealistic (out-of-distribution) inputs, so the score drop can be exaggerated. For CTD, the permutation and refit results differ by a factor of 67, so we trust the refit results more. The small gains from removing motif and cleavage are within noise for a 4,000-peptide subsample, and should not be taken as evidence that these features are harmful. This redundancy is the most direct explanation of why a simple model suffices on this benchmark. The accessible signal is coarse composition, and it is close to saturated by the time a few dozen descriptors have been supplied. The same conclusion is reached independently from the released multimodal checkpoints. Holding the sequence input fixed and replacing only the structural input with an all-zero image, with uniform noise, or with another peptide’s map moves ensemble macro AP by at most 0.056 points across all 5,495 covered peptides. Essentially, all of that comes from Antiparasitic, whose own per-label spread is 0.298 points and which therefore contributes up to 0.060 points to the macro. The other four labels contribute at most 0.005 points each. For the Fold-2 checkpoint, deleting the structural input entirely moves none of the predicted probability by more than 2.1 × 10 −5. We emphasize that an inference-level measurement does not establish what the structural branch contributed during training, where it may well have acted as a useful regularizer, nor does it speak to architectures other than the one examined here. Taken with the feature-attribution results, it indicates that sequence-derived descriptors are sufficient for this task at present. 
+
+3.5 Dependence helps mainly for scarce activities 
+
+In this section we test whether the four activity labels are statistically dependent in a way that a model can use, and we measure (i) how much better a joint model scores complete multi-label outcomes than an independent-label baseline, and (ii) how much that dependence can improve 12 Table 7: Feature-group attribution on the stratified 4,000-peptide subsample (full-feature mAP -580 .41 ; absolute values are not comparable to Table 3). Group-only is a refit on that family alone, 
+
+leave-one-out is a refit without it, reported as the loss relative to the full model, and permutation 
+
+shuffles the family’s columns at test time and re-infers with the same fitted model. Negative leave-one-out and permutation values denote a loss relative to the full model and positive values an improvement. All values in percentage points. The cleavage feature is a single column held out from PhysChem (Table 2).                                                    
+
+> Family ncols Group-only % of full Leave-one-out Permutation ESM 128 79.19 98.5 −0.74 −19 .17
+> CTD 147 77.30 96.1 −0.67 −45 .19
+> AAC 20 77.06 95.8 −0.02 −2.43
+> AAIndex 15 76.05 94.6 −0.21 −1.70
+> PhysChem 10 73.52 91.4 −0.07 −6.45
+> Density 451.12 63.6 −0.06 −0.52
+> Cleavage 116.48 20.5 +0 .12 −0.04
+> Motif 516.26 20.2 +0 .51 −0.03
+> All 330 80.41 100.0 ——
+
+ranking each activity. Dependence is present and measurable. On held-out test data, the joint posterior gives the true four-activity label vectors a mean log-likelihood of −0.28266 , compared with −0.30271 for the product of binary-relevance (independent) marginals, a gain of +0 .0200 nats per peptide. This is dependence that can be exploited by construction. For per-label ranking, however, the upside is limited. An oracle that is told each peptide’s three true sibling activities reaches mAP -4 76 .73 , while the binary-relevance floor is 71 .74 , so the total headroom available to any method that uses sibling labels is only 4.99 points. LP captures 19.5% of this headroom and PCC 18.9%. CC captures none in its default form (CC-soft), but this is an encoding mismatch rather than a failure of the factorization. If we supply hard-thresholded labels as chain context (matching the 0/1 encoding of the in-context labels), CC-hard rises from 69 .70 to 
+
+72 .43 and recovers 13.7% of the ceiling (Figure 3a). The benefit is not evenly spread across activities, and that distribution is the main practical takeaway. The oracle lift is +0 .82 points for Antibacterial, +4 .47 for Antiviral, +5 .02 for Antifungal, and +9 .66 for Antiparasitic (Figure 3b). Dependence tends to help most where marginal evidence is scarcest (antifungal and antiviral are effectively tied). Consistent with this, PCC’s only per-label gain over BR that is individually resolvable is on Antiparasitic ( +2 .91 , [+0 .81 , +5 .29] ), and this is what brings PCC to parity on the one label where the previous state of the art led (Table 3). One property of LP is worth noting for practitioners independent of accuracy. LP exactly respects the deterministic parent relation, i.e., it produced zero violations of the Antimicrobial OR-gate in 246,000 predictions across all seeds and both splits, versus violation rates of 11.3% (PCC), 34.8% (BR), 39.5% (ECC), and 44.9% (CC). A peptide called antifungal but not antimicrobial is not interpretable to a screening biologist (Table 8). 
+
+3.6 Ranking Activities from Partial Positive Evidence 
+
+Curated repositories record confirmed positives and an activity a peptide was never assayed for is unlabelled rather than known-negative. The question a screening campaign actually asks is therefore not "is this peptide antifungal?" but "given what we have already confirmed, which assay should we 13 CC (soft) CC (hard) PCC LP 70 72 74 76 78 
+
+> mAP-4 (%)  4.99 points of headroom
+> BR floor (conditional independence), 71.74 oracle ceiling (true sibling labels), 76.73
+> 69.70 -40.8% 72.43 +13.7% 72.68 +18.9% 72.71 +19.5%
+
+(a) Headroom from label dependence is 4.99 points      
+
+> 10 010 1
+> Test-set prevalence (%, log scale)
+> −2 0246810 12
+> Oracle lift over BR
+> Antibacterial +0.82 (BR 97.27) Antifungal +5.02 (BR 74.98) Antiviral +4.47 (BR 79.95) Antiparasitic +9.66 (BR 34.76)
+> (b) Dependence is worth most where evidence is scarcest
+
+Figure 3: Conditional dependence between activities is real but bounded. (a) An oracle supplied with each peptide’s three true sibling activities gains 4.99 points of mAP -4 over the binary-relevance floor; the best transforms recover about a fifth of that. CC recovers nothing under soft chain context and 
+
++13 .7% once the context encoding matches the 0/1 encoding of the in-context labels. Percentages are the fraction of the oracle headroom recovered. (b) The oracle lift per activity, against that activity’s test-set prevalence. Dependence is worth most on the rarest activities; antifungal and antiviral, whose prevalences differ by less than a factor of two, are effectively tied. Table 8: OR-gate violations is the fraction of predictions at the honest threshold in which the predicted Antimicrobial call contradicts W
+
+j yj over the four activities, across 246,000 predictions spanning all seeds and both splits. 
+
+Transform mAP -5 (points) OR-gate violations (%) LP 77.79 0.00 
+
+PCC 77.76 11.33 BR 77.01 34.75 ECC 76.89 39.51 CC 75.27 44.85 
+
+14 run next?" Scored that way the model is directly useful. The task is defined by concealing one confirmed activity and asking the model to rank it against the activities the peptide has not been confirmed for. Say, m is the number of other confirmed activities revealed to the model before it ranks. A peptide is therefore eligible only if it carries at least m+1 confirmed activities (m to reveal and one to conceal), so eligibility shrinks as m grows. 4,235 of the 16,489 test peptides carry at least one confirmed activity, 1,035 carry at least two, and 250 carry at least three. The remaining 12,254 test peptides have no confirmed activity at all, so there is nothing to conceal and no ranking to make. At m = 0, with nothing revealed, the concealed activity is ranked first for 70.89% of the 4,235 eligible peptides against a chance rate of 25%, one of four candidate activities (mean reciprocal rank 0.840 on the 0–1 scale). Because nothing has been revealed, no ranker can exploit conditioning information at m = 0, and BR, LP and PCC accordingly agree to within 0.16 points; this figure measures what the sequence descriptors alone support, not what the joint model adds. Revealing one confirmed positive raises the PCC joint posterior to 74 .65% [71 .95 , 77 .26] against a 33.3% chance rate, and revealing two raises it to 89 .73% against 50% (Table 9). A permuted-label control, in which a peptide is conditioned on another peptide’s confirmed activity, drops to 61 .45% 
+
+at m = 1 , indicating that the gain comes from the peptide-specific co-occurrence structure rather than from the generic presence of an additional input. The joint posterior only marginally improves on binary relevance (and not consistently across 
+
+m), consistent with the bounded ceiling in Section 3.5. The permuted control separates clearly at 
+
+m = 1 and, on pooled positive-unlabelled average precision, remains well below the true-conditioning setting at both m = 1 (92 .58 vs 68 .88 ) and m = 2 (93 .78 vs 87 .59 ). The pooled Hit@1 also conceals a strong dependence on which activity is concealed. At m = 0 
+
+the LP joint posterior ranks the held-out activity first for 97 .77% of peptides when that activity is antibacterial ( n = 2 ,157 ) but 64 .11% when antiviral ( n = 938 ), 26 .59% when antifungal ( n = 1 ,063 ), and 3.03% when antiparasitic ( n = 77 ). The pooled figure is therefore dominated by the commonest target, and is the same averaging problem described in Section 3.1 in a different guise. The practical point is that for the three well-populated activities the ranking is far above chance in the regime where screening budgets are actually allocated. 
+
+# 4 Discussion 
+
+Because a single antimicrobial peptide can be active against multiple pathogen classes, screening needs to predict an activity profile , not a single label. Most work tackles this by building customized multi-output models (e.g., GNNs [11], imbalance-aware transformers [12], multi-task CNNs [13], or the ESCAPE multimodal transformer [14]). A smaller line instead keeps a single-label learner and changes the target via problem transformations: binary relevance, label powerset, and (de-terministic/ensembled/probabilistic) classifier chains [25–27]. Although these transforms are well studied in general [33–35], they have not been compared head-to-head on a fixed multi-activity AMP benchmark with representation and split held constant. We take that controlled route: one 330-dimensional interpretable descriptor matrix, one protocol and split, five transforms, and TabPFN as a shared backbone. Because TabPFN returns its posterior in a single forward pass over the in-context samples, each arm runs in seconds with no gradient training, which is what makes the five-way comparison practical at all. Across every metric we report, label powerset (LP) transform is the most accurate (77.79 mAP -5,ahead of every published method and the other four transforms). It is also the cheapest by a wide margin (one fit and one inference pass: 18 s and 128 s; ×5 faster at inference than the next-cheapest 15 Table 9: Assay prioritization: rank the activities a peptide has not yet been assayed for, given m
+
+already-confirmed positives. Hit@1 and pooled positive-unlabelled average precision (PU-AP) are in percentage points; mean reciprocal rank (MRR) is dimensionless and reported on the 0–1 scale. Chance rises with m because fewer candidate activities remain. BR cannot use the revealed positives and is the do-nothing baseline; PCC-perm is the permuted-label control, which is undefined at m = 0 
+
+because nothing has been revealed.                                                                       
+
+> Metric m(neligible) Chance BR LP-joint PCC-joint PCC-perm Hit@1 (%) 0 (4,235) 25.0 70.89 70.73 70.80 —1 (1,035) 33.3 73.33 71.56 74.65 61.45 2 (250) 50.0 90.00 89.87 89.73 88.40 MRR (0–1) 0—0.8395 0.8383 0.8389 —1—0.8601 0.8513 0.8669 0.8002 2—0.9500 0.9493 0.9487 0.9420 PU-AP (%) 0—92.75 93.17 92.86 —1—91.36 92.78 92.58 68.88 2—92.65 93.85 93.78 87.59
+> 95% bootstrap intervals over eligible peptides for the Hit@1 rows: at m= 1 , BR [70 .66 ,76 .01] , LP-joint
+> [68 .73 ,74 .30] , PCC-joint [71 .95 ,77 .26] , PCC-perm [58 .42 ,64 .35] . The LP permuted control gives 58.90 at m= 1
+> and 88.27 at m= 2 .
+
+transform and ×32 faster than probabilistic classifier chains). Finally, it recovers the largest share of the oracle ceiling on label dependence (19.5% vs 18.9% for PCC and 13.7% for the best chain), so the speed is not bought by discarding structure. LP flips the usual approach, rather than explicitly modelling label relations, it collapses each peptide’s full activity profile into a single class, so dependence is encoded as class identity. This has two practical consequences that macro metrics obscure. First, any co-occurrence pattern observed among the in-context samples is represented exactly, which is why the simplest arm leads the oracle-recovery comparison. Second, incoherent predictions are impossible because Antimicrobial is the logical OR of the four activities. More peptide predictors now ship a predicted 3D structure alongside sequence [14–16], on the reasonable premise that membrane disruption is fundamentally structural. Our results indicate that, for the released checkpoints examined here, that modality contributes little at the point of prediction. First, a sequence-only descriptor set is already state of the art, and its signal is highly redundant: ten global physicochemical scalars recover 91.4% of full-feature performance, and dropping any one feature family costs at most 0.74 mAP. Second, for released ESCAPE checkpoints, ablating the structural branch at inference (zero/noise/swapped maps with sequence fixed) changes ensemble macro average precision by at most 0.056, and for one checkpoint removing structure entirely changes no predicted probability by more than 2.1 × 10 −5. As distributed, these checkpoints behave as sequence-only at inference, which does not preclude the structural branch having helped during optimisation. The practical suggestion is procedural rather than critical: inference-time ablations of this kind are inexpensive, and reporting one alongside a multimodal architecture would settle the question directly, which matters most when a structure must be predicted for every screened candidate. For experimental use, the more natural question is not per-label classification but which assay to run next . In curated repositories, a missing test is recorded as 0 but is better treated as unknown. With that reading, a model that outputs a posterior over full activity profiles can prioritize hidden activities. In our setting, the concealed activity is ranked first for 70.89% of eligible peptides 16 (25% by chance), improving as more positives are revealed. The caveats are that joint inference adds little beyond calibrated marginals, and performance depends strongly on which activity is concealed (97.77% antibacterial vs 3.03% antiparasitic). To make this a laboratory tool would require prospective “freeze-and-test” validation, cost-aware ranking, and an explicit positive–unlabelled treatment [29, 30]. The same workflow should generalize to richer label sets (e.g., species-level panels or activity–liability profiles) without changing the architecture, it needs only a feature matrix, a transform matched to the label structure, and an in-context learner. Key limitations suggest clear next steps. Antiparasitic activity is too sparse (77 test positives) to support firm conclusions. Homology is handled by stratification on the predefined split rather than by holding out entire identity clusters. Finally, the prioritization analysis treats all zeros as unlabelled (so PU-AP is a lower bound) and uses a single donor assignment as a negative control rather than a permutation distribution. 
+
+# 5 Conclusion 
+
+A tabular foundation model sets a new state of the art on the ESCAPE multi-activity AMP benchmark (five-label macro AP 77.8% vs 72.1%) using standard sequence descriptors, and is the first to meet or exceed the best published AP on all five labels at once. It requires neither task-specific training nor structural input, and its gains over published methods are largest for remote homologues. Ablations suggest the benchmark signal is largely coarse composition, and the resulting calibrated profile probabilities enable practical next-assay ranking. 
+
+# References 
+
+[1] Christopher J. L. Murray, Kevin Shunji Ikuta, Fablina Sharara, et al. Global burden of bacterial antimicrobial resistance in 2019: a systematic analysis. The Lancet , 399(10325):629–655, 2022. doi: 10.1016/S0140-6736(21)02724-0. [2] Michael Zasloff. Antimicrobial peptides of multicellular organisms. Nature , 415(6870):389–395, 2002. doi: 10.1038/415389a. [3] Kim A. Brogden. Antimicrobial peptides: pore formers or metabolic inhibitors in bacteria? 
+
+Nature Reviews Microbiology , 3(3):238–250, 2005. doi: 10.1038/nrmicro1098. [4] Robert E. W. Hancock and Hans-Georg Sahl. Antimicrobial and host-defense peptides as new anti-infective therapeutic strategies. Nature Biotechnology , 24(12):1551–1557, 2006. doi: 10.1038/nbt1267. [5] Michael R. Yeaman and Nannette Y. Yount. Mechanisms of antimicrobial peptide action and resistance. Pharmacological Reviews , 55(1):27–55, 2003. doi: 10.1124/pr.55.1.2. [6] Pratiti Bhadra, Jielu Yan, Jinyan Li, et al. AmPEP: sequence-based prediction of antimicrobial peptides using distribution patterns of amino acid properties and random forest. Scientific Reports , 8:1697, 2018. doi: 10.1038/s41598-018-19752-w. [7] Travis J. Lawrence, Dana L. Carper, Margaret K. Spangler, et al. amPEPpy 1.0: a portable and accurate antimicrobial peptide prediction tool. Bioinformatics , 37(14):2058–2060, 2021. doi: 10.1093/bioinformatics/btaa917. 17 [8] Chenkai Li, Darcy Sutherland, S. Austin Hammond, et al. AMPlify: attentive deep learning model for discovery of novel antimicrobial peptides effective against WHO priority pathogens. 
+
+BMC Genomics , 23(1):77, 2022. doi: 10.1186/s12864-022-08310-4. [9] Hansol Lee, Songyeon Lee, Ingoo Lee, et al. AMP-BERT: prediction of antimicrobial peptide function based on a BERT model. Protein Science , 32(1):e4529, 2023. doi: 10.1002/pro.4529. [10] Jing Xu, Fuyi Li, André Leier, et al. Comprehensive assessment of machine learning-based methods for predicting antimicrobial peptides. Briefings in Bioinformatics , 22(5):bbab083, 2021. doi: 10.1093/bib/bbab083. [11] Paola Ruiz Puentes, Maria C. Henao, Javier Cifuentes, et al. Rational discovery of an-timicrobial peptides by means of artificial intelligence. Membranes , 12(7):708, 2022. doi: 10.3390/membranes12070708. [12] Yuxuan Pang, Lantian Yao, Jingyi Xu, et al. Integrating transformer and imbalanced multi-label learning to identify antimicrobial peptides and their functional activities. Bioinformatics , 38 (24):5368–5374, 2022. doi: 10.1093/bioinformatics/btac711. [13] Jing Xu, Fuyi Li, Chen Li, et al. iAMPCN: a deep-learning approach for identifying antimicrobial peptides and their functional activities. Briefings in Bioinformatics , 24(4):bbad240, 2023. doi: 10.1093/bib/bbad240. [14] Sebastian Ojeda, Rafael Velasquez, Nicolás Aparicio, et al. A standardized benchmark for multilabel antimicrobial peptide classification. In Advances in Neural Information Processing Systems 38 (NeurIPS 2025), Datasets and Benchmarks Track , 2025. arXiv:2511.04814. [15] Zehua Sun, Jing Xu, Yumeng Zhang, et al. Multimodal geometric learning for antimicrobial pep-tide identification by leveraging AlphaFold2-predicted structures and surface features. Briefings in Bioinformatics , 26(3):bbaf261, 2025. doi: 10.1093/bib/bbaf261. [16] Qiule Yu, Zhixing Zhang, Guixia Liu, et al. ToxGIN: an in silico prediction model for peptide toxicity via graph isomorphism networks integrating peptide sequence and structure information. 
+
+Briefings in Bioinformatics , 25(6):bbae583, 2024. doi: 10.1093/bib/bbae583. [17] Alexander Rives, Joshua Meier, Tom Sercu, et al. Biological structure and function emerge from scaling unsupervised learning to 250 million protein sequences. Proceedings of the National Academy of Sciences , 118(15):e2016239118, 2021. doi: 10.1073/pnas.2016239118. [18] Judith Bernett, David B. Blumenthal, and Markus List. Cracking the black box of deep sequence-based protein–protein interaction prediction. Briefings in Bioinformatics , 25(2):bbae076, 2024. doi: 10.1093/bib/bbae076. [19] Katarzyna Sidorczuk, Przemysław Gagat, Filip Pietluch, et al. Benchmarks in antimicrobial peptide prediction are biased due to the selection of negative data. Briefings in Bioinformatics ,23(5):bbac343, 2022. doi: 10.1093/bib/bbac343. [20] Raúl Fernández-Díaz, Rodrigo Cossio-Pérez, Clement Agoni, et al. AutoPeptideML: a study on how to build more trustworthy peptide bioactivity predictors. Bioinformatics , 40(9):btae555, 2024. doi: 10.1093/bioinformatics/btae555. 18 [21] Noah Hollmann, Samuel Müller, Katharina Eggensperger, et al. TabPFN: a transformer that solves small tabular classification problems in a second. In International Conference on Learning Representations (ICLR) , 2023. [22] Noah Hollmann, Samuel Müller, Lennart Purucker, et al. Accurate predictions on small data with a tabular foundation model. Nature , 637:319–326, 2025. doi: 10.1038/s41586-024-08328-6. [23] Samuel Müller, Noah Hollmann, Sebastian Pineda Arango, et al. Transformers can do Bayesian inference. In International Conference on Learning Representations (ICLR) , 2022. [24] Shuichi Kawashima, Piotr Pokarowski, Maria Pokarowska, et al. AAindex: amino acid index database, progress report 2008. Nucleic Acids Research , 36(suppl_1):D202–D205, 2008. doi: 10.1093/nar/gkm998. [25] Grigorios Tsoumakas and Ioannis Katakis. Multi-label classification: an overview. International Journal of Data Warehousing and Mining , 3(3):1–13, 2007. doi: 10.4018/jdwm.2007070101. [26] Krzysztof Dembczyński, Weiwei Cheng, and Eyke Hüllermeier. Bayes optimal multilabel classi-fication via probabilistic classifier chains. In Proceedings of the 27th International Conference on Machine Learning (ICML) , pages 279–286, 2010. [27] Jesse Read, Bernhard Pfahringer, Geoff Holmes, et al. Classifier chains for multi-label classifica-tion. Machine Learning , 85(3):333–359, 2011. doi: 10.1007/s10994-011-5256-5. [28] Martin Steinegger and Johannes Söding. MMseqs2 enables sensitive protein sequence searching for the analysis of massive data sets. Nature Biotechnology , 35(11):1026–1028, 2017. doi: 10.1038/nbt.3988. [29] Charles Elkan and Keith Noto. Learning classifiers from only positive and unlabeled data. In 
+
+Proceedings of the 14th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining , pages 213–220, 2008. doi: 10.1145/1401890.1401920. [30] Jessa Bekker and Jesse Davis. Learning from positive and unlabeled data: a survey. Machine Learning , 109(4):719–760, 2020. doi: 10.1007/s10994-020-05877-5. [31] Jiyun Han, Tongxin Kong, and Juntao Liu. PepNet: an interpretable neural network for anti-inflammatory and antimicrobial peptides prediction using a pre-trained protein language model. Communications Biology , 7(1):1198, 2024. doi: 10.1038/s42003-024-06911-1. [32] Jiahui Guan, Lantian Yao, Peilin Xie, et al. A two-stage computational framework for identifying antiviral peptides and their functional types based on contrastive learning and multi-feature fusion strategy. Briefings in Bioinformatics , 25(3):bbae208, 2024. doi: 10.1093/bib/bbae208. [33] Krzysztof Dembczyński, Willem Waegeman, Weiwei Cheng, et al. On label dependence and loss minimization in multi-label classification. Machine Learning , 88(1–2):5–45, 2012. doi: 10.1007/s10994-012-5285-8. [34] Oscar Luaces, Jorge Díez, José Barranquero, et al. Binary relevance efficacy for multilabel classi-fication. Progress in Artificial Intelligence , 1(4):303–313, 2012. doi: 10.1007/s13748-012-0030-x. [35] Min-Ling Zhang and Zhi-Hua Zhou. A review on multi-label learning algorithms. IEEE Transactions on Knowledge and Data Engineering , 26(8):1819–1837, 2014. doi: 10.1109/TKDE. 2013.39. 19 Supplementary Material S1 The multi-label transforms, with a worked example 
+
+S1.1 Notation 
+
+Let x ∈ R330 denote a peptide’s descriptor vector and y ∈ { 0, 1}L its label vector, with L = 5 
+
+in the benchmark comparison and L = 4 in every dependence analysis. Labels are ordered y1 =
+
+Antibacterial, y2 = Antifungal, y3 = Antiviral, y4 = Antiparasitic, y5 = Antimicrobial, and we call a complete assignment y a profile . ˆP denotes a TabPFN posterior and 1[·] an indicator. All five transforms wrap the same backbone on the same features and the same split. They differ only in how the five-label target is broken into problems TabPFN can solve, and therefore in what they can say about how activities co-occur. 
+
+S1.2 A worked example 
+
+The differences are easiest to see on two labels. Consider one peptide x and the first two links of the chain order used throughout, Antibacterial (AB) then Antifungal (AF), and suppose the fitted models give 
+
+ˆP (AB = 1 | x) = 0 .6, ˆP (AF = 1 | x, AB = 1) = 0 .7, ˆP (AF = 1 | x, AB = 0) = 0 .1. (5) The peptide is moderately likely to be antibacterial, and antifungal activity is far more plausible if it is. Chaining these gives a probability for each of the four profiles:                                  
+
+> Profile ˆP(y|x)(AB = 1 ,AF = 1) 0.42 = 0 .6×0.7(AB = 1 ,AF = 0) 0.18 = 0 .6×0.3(AB = 0 ,AF = 1) 0.04 = 0 .4×0.1(AB = 0 ,AF = 0) 0.36 = 0 .4×0.9
+> Total 1.00
+
+so the correct marginals are ˆP (AB = 1) = 0 .42 + 0 .18 = 0 .60 and ˆP (AF = 1) = 0 .42 + 0 .04 = 0 .46 .Each subsection below states what each transform does with this peptide. The numbers are for illustration purpose only. 
+
+S1.3 Binary relevance (BR) 
+
+L independent classifiers, one per label, each seeing only x:
+
+ˆPBR (y | x) = 
+
+> L
+
+Y
+
+> j=1
+
+ˆP (yj | x) (6) A well-fitted BR recovers both marginals exactly, 0.60 and 0.46, because each classifier is estimating a marginal and nothing else. What it cannot represent is the joint : BR assigns the doubly-active profile 0.60 × 0.46 = 0 .276 against the 0.42 above, understating co-occurrence by 0.14. Per-label ranking metrics such as average precision are blind to this, which is why BR is competitive on 
+
+mAP -5 (Table 3) yet loses to the joint models on held-out log-likelihood (Section 3.5). 20 S1.4 Label powerset (LP) 
+
+Each observed profile is relabelled as one class of a multiclass problem over the set C = {11 , 10 , 01 , 00 }
+
+of profiles present among the in-context samples, and marginals are recovered by summation (Equation 2). On the example LP predicts the four-way distribution (0 .42 , 0.18 , 0.04 , 0.36) directly and returns ˆP (AF = 1) = 0 .42 + 0 .04 = 0 .46 , the same answer as the joint models, reached in one fit instead of a chain. The cost of this is that C is closed. Had the profile (AB = 0 , AF = 1) never occurred among the in-context samples, LP could not assign it any probability, and its 0.04 would be redistributed over the profiles that were observed. On the benchmark this is harmless: the Antimicrobial parent is a deterministic OR, so only 24 = 16 profiles are realizable and all 16 occur, well inside TabPFN’s class ceiling. It is also why LP cannot violate the parent constraint, as no illegal profile is in its output space at all. 
+
+S1.5 Probabilistic classifier chains (PCC) 
+
+At inference every profile is evaluated and the marginals recovered by summation. On the example this is the enumeration in Section S1.2, giving ˆP (AF = 1) = 0 .46 . PCC is the only transform here that returns a full joint posterior over profiles, which the oracle-ceiling, joint-likelihood and assay-prioritization analyses require. Unlike LP where we only use four primary activities and compute deterministic antimicrobial activity using OR gate, PCC’s output space is all 25 profiles, so it can place probability mass on contradictory profiles, for example, a peptide called antifungal but not antimicrobial. This is the mechanical origin of the violation rates in Section 3.5. 
+
+S1.6 Classifier chains (CC) 
+
+The same chain-rule factorization as PCC above, but a single path is followed rather than every branch: ˆPCC (y | x) = Y
+
+> j
+
+ˆP (yj | x, y <j ), (7) with y<j supplied as ground truth in the in-context samples and replaced at inference by the chain’s own prediction. On the example, CC thresholds AB at 0.5, commits to AB = 1 , and reports link 2’s answer for that branch alone, ˆP (AF = 1) = 0 .70 against the correct 0.46. The 40% of probability mass in which the peptide is not antibacterial, and in which antifungal activity was unlikely, has been discarded. The error grows with depth, which is consistent with CC’s worst per-label result falling on Antiparasitic, the fourth link (Section 3.1). What is appended to the next link’s features also matters. Every link sees true 0/1 labels in its context. Hard context appends 1[ˆ p<j > τ ] and so matches that encoding. Soft context appends the raw probability ˆp<j ∈ [0 , 1] , here 0.6, a value the second link never saw in context, which presents the model with an out-of-distribution input. The distinction moves CC’s recovery of the oracle ceiling from −40 .8% to +13 .7% (Section 3.5). 
+
+S1.7 Ensemble classifier chains (ECC) 
+
+CC’s 0.70 above is partly an artefact of putting AB first, under the order AF → AB the first link estimates ˆP (AF = 1 | x) with no conditioning at all, and returns something different. ECC runs eight chains under independently sampled label orders and averages each label’s marginal across them, so that no single arbitrary ordering determines the result. It does not fix the committed-path 21 problem, only spreads it over orderings. Run at TabPFN parameter nestimators = 8 to make eight chains affordable. 
+
+# S2 Per-seed results 
+
+Table S1 reports a per-seed benchmark of all five multi-label transforms. Every transform uses the same TabPFN v3 base classifier ( tabpfn 8.2.0) on the same 330 sequence descriptors. We use all 65,870 peptides as in-context samples and evaluate on the held-out test set of 16,489 peptides. Three seeds ( 42 , 1665 , 8914 ) are reported individually together with their mean ± standard deviation. 
+
+Bold marks the best transform mean in each column. 
+
+Average precision: mAP -5 macro-averages step-wise AP over all five labels. mAP -4 excludes 
+
+Antimicrobial , which is the deterministic OR of the other four and is therefore trivially predictable. 
+
+mAP -3 further excludes Antiparasitic (n = 77 test positives), leaving the three labels for which the test set is adequately powered. 
+
+Threshold metrics: Max-F1 macro-averages the per-label maximum F1 over thresholds chosen on the test set . It is reported only as an optimistic upper bound. Honest F1 uses per-label thresholds selected on 5-fold out-of-fold predictions over the in-context set and frozen before the test set is touched. The Max-F1 minus honest-F1 gap is the cost of not knowing the threshold in advance. Subset accuracy is the exact-match rate over the full five-label vector at a fixed 0.5 cut on every label. It understates performance on the low-prevalence labels and should be read as a conservative floor rather than a tuned operating point. 
+
+Wall-clock: OOF is the 5-fold out-of-fold (OOF) pass over the in-context set used to fix the honest thresholds. Fit is the final fit with all 65,870 in-context samples. Infer is chunked inference over the 16,489 test peptides. All times are seconds on a single GPU. TabPFN performs in-context learning with no gradient updates, so the fit time is dominated by ingesting the context matrix rather than by optimisation. This is why it is one to two orders of magnitude smaller than inference. Timings come from a shared machine and include contention. The CC OOF spread ( ±427 s) reflects competing jobs, not a property of the transform. ECC uses 8 chains with n_estimators = 8 . CC and PCC use the default label order. All metric values are percentage points. The PCC subset-accuracy lead over LP is 0.01 points, well inside the seed-to-seed spread, so it should not be read as a separation. 
+
+# S3 Scaling with the number of in-context samples 
+
+BR, LP, and CC were refitted on nested random subsets of the in-context set drawn from both folds, on the geometric ladder n ∈ { 250 , 1,250 , 6,250 , 31 ,250 , 65 ,870 }. Between the top two rungs mAP -5
+
+falls by 5.01 points for BR (76.94 to 71.93), 4.71 for LP (77.79 to 73.07), and 4.43 for CC (75.25 to 70.82). This motivated the matched-protocol experiment in Section 3.2, but is not the same ablation because a random subset spans both folds, whereas the fold-matched analysis uses one fold at a time as context, and the fold-matched confound in Section 3.2 is correspondingly about half as large. Table S2 uses the same held-out test set of 16,489 peptides. Each cell is the mean over three seeds ( 42 , 1665 , 8914 ). mAP -5, Max-F1, and subset accuracy are reported in percentage points. Subset accuracy is the exact-match rate over the five-label vector at a fixed 0.5 cut, while Max-F1 uses test-tuned thresholds (an optimistic upper bound). The 65 ,870 rows are an independent re-run of the full-data configuration and differ from Table ?? 
+
+by at most 0.07 points, bounding run-to-run variation at fixed seed. 22 Table S1:  Per-seed benchmark of all five multi-label transforms. 
+
+> Average precision  Threshold metrics  Wall-clock (s) Seed  mAP -5 mAP -4 mAP -3 Max-F1  Honest  F1 Subset acc.  OOF  Train  Infer
+> Binary relevance (BR)
+> 42  76.93  71.64  84.07  74.17  72.43  90.56  1,599  85  647 1665  76.90  71.60  84.07  73.84  73.04  90.37  1,595  84  640 8914  77.20  71.98  84.06  74.09  72.48  90.46  1,596  85  652
+> mean  77.01  ± 0.17  71.74  ± 0.21  84.07  ± 0.00  74.03  ± 0.17  72.65  ± 0.34  90.46  ± 0.10  1,597  ± 2 85  ± 1 646  ± 6
+> Label powerset (LP)
+> 42  78.05  73.03  84.73  74.26  73.74  90.75  321  18  128 1665  77.60  72.47  84.95  74.19  73.40  90.82  319  18  128 8914  77.74  72.64  84.77  74.18  73.91  90.70  328  18  128
+> mean  77.79  ± 0.23  72.71  ± 0.29  84.82  ± 0.11  74.21  ± 0.05  73.69  ± 0.26  90.76  ± 0.06  323  ± 5 18  ± 0 128  ± 0
+> Classifier chain (CC)
+> 42  74.73  69.08  83.21  71.30  70.13  89.94  1,626  96  896 1665  75.36  69.79  83.26  72.19  70.31  90.04  2,296  115  907 8914  75.72  70.24  83.42  72.15  69.78  90.18  2,419  160  918
+> mean  75.27  ± 0.50  69.70  ± 0.58  83.30  ± 0.11  71.88  ± 0.50  70.07  ± 0.27  90.06  ± 0.12  2,114  ± 427  124  ± 33  907  ± 11
+> Ensemble of classifier chains (ECC)
+> 42  76.90  71.66  83.98  73.31  71.53  90.39  8,678  235  3,805 1665  76.97  71.76  83.81  73.27  73.01  90.11  8,523  267  3,779 8914  76.80  71.56  84.00  73.44  72.50  90.41  8,576  264  3,788
+> mean  76.89  ± 0.09  71.66  ± 0.10  83.93  ± 0.11  73.34  ± 0.09  72.34  ± 0.75  90.30  ± 0.17  8,592  ± 79  255  ± 18  3,791  ± 13
+> Probabilistic classifier chain (PCC)
+> 42  77.73  72.65  84.31  74.08  73.43  90.80  8,694  88  4,127 1665  77.66  72.56  84.35  74.00  73.35  90.72  8,690  81  4,092 8914  77.89  72.84  84.40  74.17  72.72  90.78  8,709  77  4,129
+> mean  77.76  ± 0.12  72.68  ± 0.14  84.35  ± 0.04  74.08  ± 0.09  73.16  ± 0.39  90.76  ± 0.04  8,698  ± 10  82  ± 6 4,116  ± 21
+
+23 Table S2: Context-size scaling sweep. Macro metrics versus the number of in-context samples for BR, LP and CC. 
+
+mAP -5 Max-F1 Subset acc. Context size BR LP CC BR LP CC BR LP CC 250 44.18 46.15 43.89 44.84 47.08 44.69 79.04 79.39 80.29 1,250 53.93 54.73 53.93 53.27 53.55 53.08 82.26 82.80 83.25 6,250 62.05 62.23 61.52 60.27 59.45 60.01 84.75 85.23 85.12 31,250 71.93 73.07 70.82 69.17 69.69 67.59 88.73 89.15 88.51 65,870 76.94 77.79 75.25 74.16 74.29 71.71 90.46 90.75 90.03 
+
+# S4 Provenance of the published baselines 
+
+ESCAPE authors retrained all seven prior methods from scratch on the benchmark’s training folds and adapted each to emit five sigmoid outputs. Therefore no cross-dataset leakage in the published comparison. However, only two of the seven were natively designed for multi-activity prediction over these labels, and Table S3 documents what each method’s original publication actually addressed. A low row in the main-text frontier table should not be read as a verdict on the corresponding published method. Table S3: What each published baseline’s original paper addressed. ✓ denotes an activity the original method predicted; × denotes one it did not. Sample counts are as reported in the original publication, not on the benchmark.                                                                                  
+
+> Method Original dataset n(original) AB AV AF AP AM Native task AMPs-Net [11] 19 public repositories 23,967 ✓✓✓✓✓binary + 4-label TransImbAMP [12] dbAMP/DRAMP/DBAASP, CD-HIT 40% 22,381 ✓✓✓✓✓binary + 7-label AMP-BERT [9] Veltri benchmark (APD3 + UniProt) 3,556 ××××✓binary PEP-Net [31] AMP and AIP benchmarks multiple ✓a✓a✓a×✓binary (separate tasks) amPEPpy [7] APD3/CAMPR3/LAMP + UniProt 3,268 pos. ××××✓binary AVP-IFT [32] AVPdb/dbAMP/DRAMP/DBAASP/HPIdb + Uniprot 5,324 ×✓×××antiviral specialist AMPlify [8] APD3 + DADP + UniProt 8,346 ××××✓binary ESCAPE [14] 26 repositories + UniProt 82,359 ✓✓✓✓✓5-label multimodal This work ESCAPE (unmodified) 82,359 ✓✓✓✓✓5-label, sequence only
+
+AB, antibacterial; AV, antiviral; AF, antifungal; AP, antiparasitic; AM, antimicrobial (binary AMP vs non-AMP).  
+
+> a
+
+As separate single-activity binary datasets, not a joint multi-label head. 
+
+24

@@ -1,16 +1,1400 @@
 {
   "mode": "standard",
-  "generated_at": "2026-09-02T08:38:06.677051+00:00",
+  "generated_at": "2026-09-02T09:45:20.725767+00:00",
   "stats": {
     "mode": "standard",
     "tag_count": 2,
-    "deep_divecandidates": 0,
-    "deep_cap": null,
-    "deep_selected": 0,
-    "quick_candidates": 0,
+    "deep_divecandidates": 32,
+    "deep_cap": 7,
+    "deep_selected": 21,
+    "quick_candidates": 24,
     "quick_skim_target": 12,
-    "quick_selected": 0
+    "quick_selected": 12
   },
-  "deep_dive": [],
-  "quick_skim": []
+  "deep_dive": [
+    {
+      "id": "2608.22933v2",
+      "source": "arxiv",
+      "title": "Generalizing Abell-Tersoff bond-order potential with explicit high-order many-body correlations for robust extrapolation of potential energy surfaces",
+      "abstract": "Machine-learning interatomic potentials enable accurate and efficient atomistic simulations, but their reliability for out-of-distribution configurations far beyond the training domain remains a significant challenge. Here, to tackle this challenge, we introduce a semiparametric interatomic potential based on a generalization of the Abell--Tersoff bond-order potential, with a chemically informed functional form and explicit high-order many-body correlations. The model is trained and evaluated on various datasets, including silicon, carbon, water, and small molecules, achieving interpolation accuracy comparable to that of existing MLIP models while demonstrating better extrapolation to unseen configurations, including those under high-pressure and high-temperature conditions. These results demonstrate that physically motivated constraints incorporated into the functional form can improve the extrapolation behavior of interatomic potentials, providing insights into the inductive biases that can be used to control extrapolation in machine-learning interatomic potentials.",
+      "authors": [
+        "Ikuma Kohata"
+      ],
+      "primary_category": "physics.chem-ph",
+      "categories": [
+        "physics.chem-ph",
+        "cond-mat.dis-nn",
+        "cond-mat.mtrl-sci"
+      ],
+      "published": "2026-08-24T08:07:22+00:00",
+      "link": "https://arxiv.org/pdf/2608.22933v2",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "semiparametric machine-learning interatomic potential improves potential energy surface extrapolation for molecular dynamics",
+      "llm_evidence_cn": "半参数机器学习原子间势，以显式多体关联改善势能面外推，用于分子动力学模拟",
+      "llm_evidence": "半参数机器学习原子间势，以显式多体关联改善势能面外推，用于分子动力学模拟",
+      "canonical_evidence": "半参数机器学习原子间势，以显式多体关联改善势能面外推，用于分子动力学模拟",
+      "llm_tldr_en": "Semiparametric MLIP using generalized Abell-Tersoff form with explicit high-order many-body correlations improves extrapolation of potential energy surfaces beyond training domain.",
+      "llm_tldr_cn": "针对机器学习原子间势在训练域外势能面上外推不可靠的问题，作者提出一种推广的Abell-Tersoff键序势半参数机器学习势，显式引入高阶多体关联。在硅、碳、水和小分子等数据集上的实验表明，其插值精度与现有MLIP相当，同时外推能力明显更强。该工作为需要稳健外推的势能面建模与分子动力学模拟提供了新的势函数设计思路。",
+      "llm_tldr": "针对机器学习原子间势在训练域外势能面上外推不可靠的问题，作者提出一种推广的Abell-Tersoff键序势半参数机器学习势，显式引入高阶多体关联。在硅、碳、水和小分子等数据集上的实验表明，其插值精度与现有MLIP相当，同时外推能力明显更强。该工作为需要稳健外推的势能面建模与分子动力学模拟提供了新的势函数设计思路。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.22967v1",
+      "source": "arxiv",
+      "title": "Closed-Loop Bayesian Molecular Inverse Design with Semantic LLM Surrogates",
+      "abstract": "Practical molecular inverse design is rarely a one-shot generation problem; it often takes the form of closed-loop candidate-pool enrichment, where under a limited oracle budget the goal is to \\emph{increase the fraction of generated molecules that match a desired property profile}. Bayesian optimization (BO) offers a natural framework for this setting, yet standard Gaussian-process surrogates typically operate in compressed continuous embeddings, which discard the substructural and reference-similarity signals that chemists naturally use to decide where to look next. We propose \\textbf{\\method}, a closed-loop framework in which the surrogate, rather than the generator, is treated as the locus of design choice, and instantiate it with a frozen large language model that reasons directly over the task instruction, SMILES-level optimization history, and oracle feedback in their native textual form. At each iteration, the surrogate returns a structured decision signal that selects informative reference molecules under an exploration and exploitation principle, optionally with a concise guidance sentence. This signal is converted into next-round conditioning text for a frozen molecular generator, yielding an inspectable optimization trace in natural language. Experiments on MolQA drug and material design tasks show that \\method improves over one-shot prompting, is competitive with or stronger than GP-based BO baselines, and reveals a domain-dependent interface: reference-only transfer works best for binary drug targets, while adding a concise surrogate summary is more beneficial for continuous material",
+      "authors": [
+        "Yaoyao Xu",
+        "Xinjian Zhao",
+        "Xiaozhuang Song",
+        "Lei Bai",
+        "Tianshu Yu"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-08-24T08:30:01+00:00",
+      "link": "https://arxiv.org/pdf/2608.22967v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Closed-loop Bayesian optimization with an LLM surrogate for property-guided molecular inverse design.",
+      "llm_evidence_cn": "使用语义LLM代理与贝叶斯优化，在闭环中按期望性质优化分子候选池。",
+      "llm_evidence": "使用语义LLM代理与贝叶斯优化，在闭环中按期望性质优化分子候选池。",
+      "canonical_evidence": "使用语义LLM代理与贝叶斯优化，在闭环中按期望性质优化分子候选池。",
+      "llm_tldr_en": "Proposes a closed-loop Bayesian optimization framework for molecular inverse design where the surrogate, not the generator, is the key design choice, using a frozen LLM as a semantic surrogate that retains structural and reference-similarity clues to enrich candidates under limited oracle budget.",
+      "llm_tldr_cn": "实际分子逆向设计通常是在有限oracle预算下进行闭环候选池富集，而不是一次性生成，但标准贝叶斯优化代理在压缩嵌入中会丢失化学家所依赖的子结构和参考相似性信号。该文提出把代理而非生成器作为设计核心，并用冻结的大语言模型实例化语义LLM代理，在闭环优化中保留这些化学语义线索。该方法在预算受限条件下为面向期望性质分布的候选分子筛选提供了新的设计思路。",
+      "llm_tldr": "实际分子逆向设计通常是在有限oracle预算下进行闭环候选池富集，而不是一次性生成，但标准贝叶斯优化代理在压缩嵌入中会丢失化学家所依赖的子结构和参考相似性信号。该文提出把代理而非生成器作为设计核心，并用冻结的大语言模型实例化语义LLM代理，在闭环优化中保留这些化学语义线索。该方法在预算受限条件下为面向期望性质分布的候选分子筛选提供了新的设计思路。",
+      "llm_tags": [
+        "query:smc"
+      ],
+      "matched_query_tag": "query:smc",
+      "matched_query_text": "AI methods for molecular optimization, multi objective optimization, lead optimization, and property guided molecular design.",
+      "matched_requirement_id": "req-18",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.23104v2",
+      "source": "arxiv",
+      "title": "Molecular LLM Agents: From Architectural Design to Scientific Autonomy",
+      "abstract": "Molecular science represents an important frontier for LLM-based agents. Unlike general agents that mainly operate over natural language, code, or web environments, molecular LLM agents must perceive, reason about, and act upon chemical objects across symbolic strings, molecular graphs, 3D conformations, spectra, simulations, and wet-lab measurements. Their capabilities depend on chemically faithful molecular perception, an LLM-centered agent framework, domain-specific tool grounding, and computational or experimental feedback, in addition to planning and tool use. This work develops a conceptual framework for molecular LLM agents from two complementary perspectives. First, we introduce an architectural view of molecular-agent design, covering molecular representation and perception, the agent framework, domain-specific toolboxes, and learning and optimization. Second, we propose a scientific autonomy ladder inspired by staged autonomy in engineering systems, categorizing agents into four levels: L1 assistive or fixed workflows, L2 adaptive computational agents, L3 feedback-aware physical experiment agents, and L4 scientific-agenda agents. Together, these two perspectives establish a comprehensive framework for comparing existing molecular LLM agents, identifying missing capabilities and deployment risks, and guiding the design, evaluation, and deployment of future agents in molecular discovery workflows.",
+      "authors": [
+        "Jiatong Li",
+        "Wengyu Zhang",
+        "Weida Wang",
+        "Yuxuan Ren",
+        "Wei Liu",
+        "Chenyang Mao",
+        "Yuqiang Li",
+        "Yatao Bian",
+        "Changmeng Zheng",
+        "Xiaoyong Wei",
+        "Qing Li"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI"
+      ],
+      "published": "2026-08-24T11:09:25+00:00",
+      "link": "https://arxiv.org/pdf/2608.23104v2",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Provides a conceptual framework for LLM-based agents specialized in molecular/chemical tasks, covering architecture and scientific autonomy.",
+      "llm_evidence_cn": "针对化学与分子科学中的大语言模型智能体，系统提出架构设计与科学自主性框架。",
+      "llm_evidence": "针对化学与分子科学中的大语言模型智能体，系统提出架构设计与科学自主性框架。",
+      "canonical_evidence": "针对化学与分子科学中的大语言模型智能体，系统提出架构设计与科学自主性框架。",
+      "llm_tldr_en": "Molecular LLM agents need chemically faithful perception across strings, graphs, conformations, spectra, simulation, and wet-lab data, plus domain tools and feedback. This paper develops a conceptual framework from architectural and scientific autonomy perspectives, giving a blueprint for autonomous chemistry agents.",
+      "llm_tldr_cn": "分子LLM智能体需要在符号字符串、分子图、三维构象、谱图、模拟和湿实验等多类型化学对象上感知和推理，因此比通用Agent更需要化学保真的感知与反馈设计。该文从架构设计与科学自主性两个视角建立分子LLM Agent概念框架，系统讨论化学感知、LLM中心架构、领域工具接入与反馈回路。它为构建能够自主完成化学发现闭环的Agent提供了结构和能力蓝图，对该领域的评估与发展具有指导意义。",
+      "llm_tldr": "分子LLM智能体需要在符号字符串、分子图、三维构象、谱图、模拟和湿实验等多类型化学对象上感知和推理，因此比通用Agent更需要化学保真的感知与反馈设计。该文从架构设计与科学自主性两个视角建立分子LLM Agent概念框架，系统讨论化学感知、LLM中心架构、领域工具接入与反馈回路。它为构建能够自主完成化学发现闭环的Agent提供了结构和能力蓝图，对该领域的评估与发展具有指导意义。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "large language models for chemistry applications",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.23646v1",
+      "source": "arxiv",
+      "title": "MolEmb: Multimodal Large Language Models Can Be Strong Molecular Embedding Models",
+      "abstract": "Molecular embedding models can serve as foundational infrastructure for computational chemistry and drug discovery, where reusable vector representations support property prediction, virtual screening, and retrieval. Most molecular encoders are specialist models built around a single molecular view, producing unconditional vectors with no language interface for varying the representation. We ask whether multimodal large language models (MLLMs), which natively process images, text, and symbolic inputs, can instead serve as \\emph{general molecular embedding models} that produce embeddings conditioned on both a molecular profile and a natural-language semantic context. We introduce \\textbf{MolEmb}, a lightweight framework that adapts MLLMs by aligning molecular profiles with textual descriptions in a shared embedding space using a bidirectional contrastive objective. The resulting embedding model is competitive on molecular property prediction and supports cross-modal molecule--text retrieval in the same space. We further introduce \\textbf{MolCAR}, a diagnostic benchmark for context-aware retrieval, and find that context-aware molecular embedding is primarily a data property of the supervision. These results suggest that MLLMs are not merely chemistry assistants or generators, but a viable and extensible route to general molecular embedding models.",
+      "authors": [
+        "Xinjian Zhao",
+        "Xiangru Jian",
+        "Yaoyao Xu",
+        "Xiaozhuang Song",
+        "Wei Pang",
+        "Lei Bai",
+        "Tianshu Yu"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-08-24T09:21:04+00:00",
+      "link": "https://arxiv.org/pdf/2608.23646v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "MLLMs as general molecular embedding foundation models supporting property prediction and virtual screening",
+      "llm_evidence_cn": "多模态LLM用作通用分子嵌入基础模型，支撑性质预测与虚拟筛选",
+      "llm_evidence": "多模态LLM用作通用分子嵌入基础模型，支撑性质预测与虚拟筛选",
+      "canonical_evidence": "多模态LLM用作通用分子嵌入基础模型，支撑性质预测与虚拟筛选",
+      "llm_tldr_en": "MolEmb adapts multimodal LLMs to output transferable molecular embeddings conditioned on text descriptions and molecular profiles, outperforming specialist encoders on property and screening tasks.",
+      "llm_tldr_cn": "大多数分子编码器只围绕单一分子视图，无法根据自然语言调整表征，难以作为通用基础基础设施。MolEmb提出用多模态大语言模型适配分子，以分子画像与语义上下文共同产生可复用嵌入。实验表明该嵌入模型在性质预测、虚拟筛选和检索等下游任务上表现出强基础能力。这项工作说明多模态LLM可成为通用分子嵌入基础模型。",
+      "llm_tldr": "大多数分子编码器只围绕单一分子视图，无法根据自然语言调整表征，难以作为通用基础基础设施。MolEmb提出用多模态大语言模型适配分子，以分子画像与语义上下文共同产生可复用嵌入。实验表明该嵌入模型在性质预测、虚拟筛选和检索等下游任务上表现出强基础能力。这项工作说明多模态LLM可成为通用分子嵌入基础模型。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "chemical foundation model pre-training and transfer learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.23821v1",
+      "source": "arxiv",
+      "title": "Finch: Toxicity Dose Response Curve Prediction of Chemical Compounds and Mixtures",
+      "abstract": "A holistic approach to chemical mixtures is reshaping risk assessment emphasizing mixture testing over single compounds eliminating animal testing and advancing modeling methods. Most computational models still focus on individual chemicals and conventional mixture models like concentration addition and independent action are limited they struggle with multiple Modes of Action and often miss synergistic or antagonistic effects. Regulatory agencies need faster more efficient models that go beyond these constraints. Finch addresses these challenges with a novel workflow. It integrates molecular descriptor based frameworks and deep learning embeddings in multi task quantitative structure activity relationship models for improved chemical exposure prediction. DL embeddings preserve information from diverse inputs molecular descriptors physicochemical properties and large language model embeddings from SMILES by distilling key features into a latent space enhancing machine learning predictions. Finch multi task learning optimizes multiple loss functions simultaneously leveraging all available data to learn generalized representations. This enables effective modeling of complex ingredient interactions within mixtures offering a significant advancement for regulatory safety assessment.",
+      "authors": [
+        "Abdullah Shouaib",
+        "John Zapanta",
+        "Sean P. Davern",
+        "Samuel Dixon",
+        "Zachary R. Stromberg",
+        "Becky Hess",
+        "Sydney Schwartz",
+        "C Mark Maupin"
+      ],
+      "primary_category": "q-bio.QM",
+      "categories": [
+        "q-bio.QM"
+      ],
+      "published": "2026-08-24T20:59:19+00:00",
+      "link": "https://arxiv.org/pdf/2608.23821v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Toxicity dose-response curve prediction for compounds and mixtures with multitask QSAR and deep embeddings",
+      "llm_evidence_cn": "化合物及混合物毒性剂量反应曲线预测，结合多任务QSAR与深度嵌入",
+      "llm_evidence": "化合物及混合物毒性剂量反应曲线预测，结合多任务QSAR与深度嵌入",
+      "canonical_evidence": "化合物及混合物毒性剂量反应曲线预测，结合多任务QSAR与深度嵌入",
+      "llm_tldr_en": "Finch predicts toxicity dose-response curves of chemical compounds and mixtures by integrating molecular descriptors and deep learning embeddings in multitask QSAR models.",
+      "llm_tldr_cn": "风险评估正从单化合物测试转向混合物测试，传统浓度加和与独立作用模型难以处理多种作用方式，常遗漏协同或拮抗效应。Finch提出一套多任务定量构效关系工作流，融合分子描述符框架与深度学习嵌入，预测化合物和混合物的毒性剂量反应曲线。该方法相比传统混合物模型更高效，也更能适应监管化学品评估的复杂场景。该工作为毒性终点预测与化学品风险评价提供了新的建模框架。",
+      "llm_tldr": "风险评估正从单化合物测试转向混合物测试，传统浓度加和与独立作用模型难以处理多种作用方式，常遗漏协同或拮抗效应。Finch提出一套多任务定量构效关系工作流，融合分子描述符框架与深度学习嵌入，预测化合物和混合物的毒性剂量反应曲线。该方法相比传统混合物模型更高效，也更能适应监管化学品评估的复杂场景。该工作为毒性终点预测与化学品风险评价提供了新的建模框架。",
+      "llm_tags": [
+        "query:smc"
+      ],
+      "matched_query_tag": "query:smc",
+      "matched_query_text": "toxicity ADMET prediction",
+      "matched_requirement_id": "req-14",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.23874v1",
+      "source": "arxiv",
+      "title": "Differential Learning for Robust Prediction of Thermal Stability with Application to Energetic Materials",
+      "abstract": "Predicting thermal stability during handling and storage is essential for the design of safe and reliable energetic materials. However, experimental measurements vary significantly across laboratories due to differences in protocols and analysis methods, making it difficult to train reliable predictive models. We address this challenge through differential learning. Rather than predicting absolute decomposition temperatures, we instead train message passing neural networks to predict relative differences between pairs of molecules. This approach reduces sensitivity to systematic experimental errors and achieves >85% accuracy in ranking compounds by thermal stability, outperforming conventional regression methods on the same heterogeneous dataset. To understand what drives these predictions, we compare neural network models with interpretable alternatives built from descriptors derived from ab initio calculations and cheminformatics software. This analysis identifies bond dissociation enthalpy as a key determinant of thermal stability rankings, providing further insight into the complex chemistry of thermal decomposition. The differential learning framework generalizes across model architectures, from graph neural networks to classical descriptor-based approaches. Our results demonstrate that learning relative properties rather than absolute values offers a practical solution for modeling noisy experimental data, with direct applications in materials design where thermal stability predictions inform safety protocols.",
+      "authors": [
+        "Megan C. Davis",
+        "R. Seaton Ullberg",
+        "Jeremy N. Schroeder",
+        "Andrew H. Salij",
+        "Marc J. Cawkwell",
+        "Christopher J. Snyder",
+        "Ivana Matanovic",
+        "Wilton J. M. Kort-Kamp"
+      ],
+      "primary_category": "physics.chem-ph",
+      "categories": [
+        "physics.chem-ph",
+        "cond-mat.mtrl-sci",
+        "cs.LG"
+      ],
+      "published": "2026-08-24T22:28:56+00:00",
+      "link": "https://arxiv.org/pdf/2608.23874v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "graph neural network based molecular property prediction of thermal stability ranking",
+      "llm_evidence_cn": "基于消息传递神经网络的分子性质预测（热稳定性排序）",
+      "llm_evidence": "基于消息传递神经网络的分子性质预测（热稳定性排序）",
+      "canonical_evidence": "基于消息传递神经网络的分子性质预测（热稳定性排序）",
+      "llm_tldr_en": "Trains message passing neural networks with differential learning to predict relative thermal-stability differences between molecules instead of absolute decomposition temperatures, reducing systematic error and achieving over 85% ranking accuracy on energetic materials.",
+      "llm_tldr_cn": "针对不同实验室间热稳定性测量存在系统性差异、直接预测分解温度难以可靠的问题，该文提出差分学习：用消息传递神经网络预测分子对之间的相对稳定性差异而非绝对分解温度。该方法有效降低实验系统误差，在含能材料排序任务上的准确率超过85%，优于常规回归方法。研究为实验噪声下的分子性质预测提供了通用而稳健的学习策略。",
+      "llm_tldr": "针对不同实验室间热稳定性测量存在系统性差异、直接预测分解温度难以可靠的问题，该文提出差分学习：用消息传递神经网络预测分子对之间的相对稳定性差异而非绝对分解温度。该方法有效降低实验系统误差，在含能材料排序任务上的准确率超过85%，优于常规回归方法。研究为实验噪声下的分子性质预测提供了通用而稳健的学习策略。",
+      "llm_tags": [
+        "query:smc"
+      ],
+      "matched_query_tag": "query:smc",
+      "matched_query_text": "molecular property prediction",
+      "matched_requirement_id": "req-15",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.25392v1",
+      "source": "arxiv",
+      "title": "Interpretable physics-informed retrieval-augmented generation language model for end-to-end inorganic crystal synthesis planning",
+      "abstract": "Synthesis planning for inorganic materials requires predicting both synthesizability and viable routes by linking microscopic thermodynamic stability with macroscopic synthesis methods, precursors, and processing conditions. Here, we develop an interpretable Physics-Informed Retrieval-Augmented Generation Language Model (PIRAG-LM) for end-to-end inorganic crystal synthesis planning. We construct a material-centered Structured Synthesis Knowledge Base (SSKB) containing route-level records for 13,820 experimentally synthesized inorganic crystals. PIRAG-LM retrieves historical precedents using chemical, structural, and thermodynamic similarity, then employs a structured LLM reasoning module to propose routes, precursors, and processing conditions and assess thermodynamic feasibility, kinetics, and accessibility. It achieves 91.4% accuracy in synthesis-method prediction, compared with 72.1% for the LLM alone, and generalizes to materials reported after the knowledge cutoff. Because the framework relies on retrieval rather than parametric memorization, its performance can be improved by expanding the SSKB without retraining the language model. Guided by PIRAG-LM, we experimentally synthesize five new compounds: BaMo0.3In0.7O2.95, BaNb0.4In0.6O2.9, Hg[B(CN)4]2, CoCo(CN)6, and SrNb2Fe2(PO4)6, via solid-state and solution routes. These results demonstrate an interpretable machine-learning approach that helps bridge computational materials discovery and experimental realization.",
+      "authors": [
+        "Wei-Jian Jiang",
+        "Ye-Nan Sha",
+        "Hui Guo",
+        "Jie Chen",
+        "Yu-Cai Liang",
+        "Ke Zhou",
+        "Qi-Long Gao",
+        "Dong-Lin Han",
+        "Xin-Gao Gong",
+        "Wan-Jian Yin"
+      ],
+      "primary_category": "cond-mat.mtrl-sci",
+      "categories": [
+        "cond-mat.mtrl-sci"
+      ],
+      "published": "2026-08-26T05:39:29+00:00",
+      "link": "https://arxiv.org/pdf/2608.25392v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "interpretable physics-informed retrieval-augmented language model for end-to-end inorganic crystal synthesis planning",
+      "llm_evidence_cn": "用物理信息检索增强语言模型进行端到端无机晶体合成路线规划",
+      "llm_evidence": "用物理信息检索增强语言模型进行端到端无机晶体合成路线规划",
+      "canonical_evidence": "用物理信息检索增强语言模型进行端到端无机晶体合成路线规划",
+      "llm_tldr_en": "PIRAG-LM is an interpretable physics-informed retrieval-augmented LLM that builds a structured knowledge base of 13820 experimentally synthesized inorganic crystals and retrieves historical precedents by chemical, structural and thermodynamic similarity for end-to-end synthesis planning.",
+      "llm_tldr_cn": "针对无机晶体合成规划需要同时评估可合成性与可行路线的问题，作者提出PIRAG-LM。该方法构建了包含13820条实验晶体合成记录的材料中心结构化知识库，利用化学、结构与热力学相似性检索历史先例，再结合结构化LLM推理实现端到端且可解释的无机晶体合成路线规划，为AI驱动的合成规划提供了物理约束与知识检索相融合的新范式。",
+      "llm_tldr": "针对无机晶体合成规划需要同时评估可合成性与可行路线的问题，作者提出PIRAG-LM。该方法构建了包含13820条实验晶体合成记录的材料中心结构化知识库，利用化学、结构与热力学相似性检索历史先例，再结合结构化LLM推理实现端到端且可解释的无机晶体合成路线规划，为AI驱动的合成规划提供了物理约束与知识检索相融合的新范式。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "retrosynthesis and synthetic route planning with AI",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.25893v1",
+      "source": "arxiv",
+      "title": "A General-Purpose Molecular Foundation Model Transfers Across Diverse Olfactory Tasks",
+      "abstract": "Foundation models have transformed molecular property prediction, yet it remains unclear whether a molecular foundation model, fine-tuned on a single canonical olfactory prediction task, can learn representations that transfer across diverse machine olfaction problems. We investigate this question by fine-tuning Uni-Mol2 on the GS-LF benchmark for multi-label odor descriptor prediction and evaluating the resulting model, without additional deep-learning training, on four complementary downstream settings: cross-dataset odor descriptor prediction, odorous-versus-odorless classification, enantiomer evaluation, and odor mixture discriminability. The fine-tuned model matches or exceeds the performance of the state-of-the-art olfaction-specific baseline on the primary GS-LF benchmark and consistently transfers across these downstream evaluations. The enantiomer analysis further shows that three-dimensional molecular representations distinguish mirror-image molecules in a way that two-dimensional graph models fundamentally cannot, although accurately predicting the perceptual consequences of stereochemistry remains an open challenge. Together, these results support a train-once, transfer-across-tasks paradigm for machine olfaction and suggest that chemically pretrained molecular representations provide a strong foundation for transferable olfactory prediction.",
+      "authors": [
+        "Yikun Han",
+        "Yi Wang",
+        "Neil Mankodi",
+        "Stephen Yang",
+        "Ambuj Tewari"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-08-26T15:11:15+00:00",
+      "link": "https://arxiv.org/pdf/2608.25893v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Uni-Mol2 molecular foundation model fine-tuned on one olfactory task transfers across diverse olfactory tasks, directly demonstrating chemical foundation model pretraining and transfer learning",
+      "llm_evidence_cn": "微调后的分子基础模型Uni-Mol2可迁移到多个嗅觉预测任务，契合化学基础模型预训练和迁移学习需求",
+      "llm_evidence": "微调后的分子基础模型Uni-Mol2可迁移到多个嗅觉预测任务，契合化学基础模型预训练和迁移学习需求",
+      "canonical_evidence": "微调后的分子基础模型Uni-Mol2可迁移到多个嗅觉预测任务，契合化学基础模型预训练和迁移学习需求",
+      "llm_tldr_en": "After fine-tuning Uni-Mol2 on the GS-LF multi-label odor benchmark, the molecular foundation model transfers without retraining to cross-dataset odor descriptors, odor classification, enantiomer evaluation, and mixture discriminability, matching or exceeding task-specific models.",
+      "llm_tldr_cn": "分子基础模型虽已全面进入性质预测研究，但其在单一嗅觉任务上微调后能否泛化到其他嗅觉问题仍不明确。作者将通用分子基础模型Uni-Mol2在GS-LF多标签气味描述符基准上微调，然后在跨数据集气味描述符预测、气味有无分类、对映体评估和气味混合物判别四个下游场景中不做额外深度训练直接评估。结果显示微调模型匹配或超过嗅觉专用模型，证明通用分子基础模型可提供跨任务可迁移表征。该结果支持了化学基础模型在少样本迁移应用中的价值。",
+      "llm_tldr": "分子基础模型虽已全面进入性质预测研究，但其在单一嗅觉任务上微调后能否泛化到其他嗅觉问题仍不明确。作者将通用分子基础模型Uni-Mol2在GS-LF多标签气味描述符基准上微调，然后在跨数据集气味描述符预测、气味有无分类、对映体评估和气味混合物判别四个下游场景中不做额外深度训练直接评估。结果显示微调模型匹配或超过嗅觉专用模型，证明通用分子基础模型可提供跨任务可迁移表征。该结果支持了化学基础模型在少样本迁移应用中的价值。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "chemical foundation model pre-training and transfer learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.27277v1",
+      "source": "arxiv",
+      "title": "Benchmarking of Fast and Interpretable UF Machine Learning Potentials",
+      "abstract": "Machine learning interatomic potentials (MLIPs) have emerged as a powerful alternative to density functional theory (DFT) for molecular dynamics simulations, offering near-DFT accuracy at a fraction of the computational cost. However, many state-of-the-art MLIPs remain computationally demanding and act as black boxes, limiting physical interpretability. In this work, we evaluate the ultra-fast force field (UF$^3$) potential, which employs linear regression with cubic B-spline basis to represent effective two- and three-body interactions. We show that UF$^3$ displays accuracy comparable to established models such as GAP, MTP, NNP (Behler Parrinello), and qSNAP MLIPs. We further investigate the transferability of UF$^3$ by computing melting points for six elemental systems with potentials fitted without any solid-liquid interface configurations or explicit thermodynamic information about melting. The model reproduces experimental melting points within $\\sim$6% for simple metals (Ni, Cu, Li), but substantially underestimates them for Mo and Si and fails to yield a stable potential for Ge, reflecting the limitations of a fixed expansion truncated at the three-body term for systems with strong angular or covalent bonding. We further illustrate how UF$^3$'s spline-based formulation allows direct visualization of the learned interactions, enabling identification of unphysical behavior that black-box approaches often obscure.",
+      "authors": [
+        "Pawan Prakash",
+        "Sam Dong",
+        "Richard G. Hennig"
+      ],
+      "primary_category": "cond-mat.mtrl-sci",
+      "categories": [
+        "cond-mat.mtrl-sci",
+        "physics.comp-ph"
+      ],
+      "published": "2026-08-27T15:53:11+00:00",
+      "link": "https://arxiv.org/pdf/2608.27277v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Fast interpretable ML interatomic potentials benchmarked to accelerate molecular dynamics near DFT accuracy",
+      "llm_evidence_cn": "评测可加速分子动力学的快速可解释机器学习势函数UF3，并与主流模型比较精度与迁移性",
+      "llm_evidence": "评测可加速分子动力学的快速可解释机器学习势函数UF3，并与主流模型比较精度与迁移性",
+      "canonical_evidence": "评测可加速分子动力学的快速可解释机器学习势函数UF3，并与主流模型比较精度与迁移性",
+      "llm_tldr_en": "Benchmarks the fast interpretable UF3 ML interatomic potential against GAP, MTP, NNP and qSNAP for molecular dynamics, finding comparable accuracy and transferability in melting point tests. It provides a cheap near-DFT alternative for large simulations.",
+      "llm_tldr_cn": "机器学习原子间势函数能以远低于DFT的成本进行分子动力学模拟，但许多模型计算繁重且解释性差。本文对采用三次B样条线性回归的超快速UF3势函数进行系统基准测试，将其与GAP、MTP、NNP和qSNAP等主流模型比较，发现其精度相当，同时更快速且可解释。通过计算六种物质的熔点考察了可迁移性。结果表明，UF3有望成为近DFT精度、低成本的大规模分子动力学模拟工具。",
+      "llm_tldr": "机器学习原子间势函数能以远低于DFT的成本进行分子动力学模拟，但许多模型计算繁重且解释性差。本文对采用三次B样条线性回归的超快速UF3势函数进行系统基准测试，将其与GAP、MTP、NNP和qSNAP等主流模型比较，发现其精度相当，同时更快速且可解释。通过计算六种物质的熔点考察了可迁移性。结果表明，UF3有望成为近DFT精度、低成本的大规模分子动力学模拟工具。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.27429v2",
+      "source": "arxiv",
+      "title": "Mechanistic Reaction Prediction via Discrete Flow Matching on Graph-Structured Electron Occupation",
+      "abstract": "Chemical reactions are fundamentally transformations in electron space, yet most machine learning approaches model them either through de novo generation of product molecules or through heuristic graph edits that operate directly on molecular topology. We introduce MAELLE (MechAnistic Edit fLow-matching on eLectron rEarrangements), which instead models reactions as discrete flow matching over electron occupation vectors. Concretely, we formulate the reactant-to-product mapping as a Continuous-time Markov Chain (CTMC) over the graph-structured integer-valued electron occupation space defined on all bonding, non-bonding, and hydrogen sites. To construct the interpolants between the reactants and products, we generalize the discrete flow matching mixture path to an edit-based formulation, where the electron moves are interpolated using Optimal Transport, yielding a mechanism-like set of moves without elementary step annotations. MAELLE achieves competitive performance on the USPTO-480K benchmark compared with leading reaction prediction models. Beyond in-distribution learning, we evaluate robustness across two out-of-distribution settings - structural complexity and reaction type - and find that MAELLE maintains strong performance where existing methods degrade. Finally, because the learned flow operates over the full electron redistribution, MAELLE naturally recovers mechanistic trajectories that align with known chemistry and can predict side products of a reaction.",
+      "authors": [
+        "Nguyen Xuan-Vu",
+        "Octavian Susanu",
+        "Daniel Armstrong",
+        "Philippe Schwaller"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-08-27T17:50:44+00:00",
+      "link": "https://arxiv.org/pdf/2608.27429v2",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Machine learning reaction prediction by modeling electron rearrangement with discrete flow matching",
+      "llm_evidence_cn": "用离散流匹配建模电子重排实现机器学习反应预测",
+      "llm_evidence": "用离散流匹配建模电子重排实现机器学习反应预测",
+      "canonical_evidence": "用离散流匹配建模电子重排实现机器学习反应预测",
+      "llm_tldr_en": "MAELLE frames reaction prediction as discrete flow matching over electron occupation on graph-structured sites, modeling mechanistic electron rearrangement instead of heuristic graph edits.",
+      "llm_tldr_cn": "化学反应实质是电子空间中的转变，但多数机器学习方法依赖从头生成产物或启发式拓扑编辑。作者提出MAELLE，将反应物到产物的映射建模为图结构电子占据向量上的连续时间马尔可夫链，并通过离散流匹配学习电子重排。该方法直接以机理性的电子占据变化为建模对象，而非启发式规则或端到端产物生成。MAELLE为机理性反应预测和电子结构感知的化学AI提供了统一框架。",
+      "llm_tldr": "化学反应实质是电子空间中的转变，但多数机器学习方法依赖从头生成产物或启发式拓扑编辑。作者提出MAELLE，将反应物到产物的映射建模为图结构电子占据向量上的连续时间马尔可夫链，并通过离散流匹配学习电子重排。该方法直接以机理性的电子占据变化为建模对象，而非启发式规则或端到端产物生成。MAELLE为机理性反应预测和电子结构感知的化学AI提供了统一框架。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "chemical reaction prediction using artificial intelligence",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.27806v1",
+      "source": "arxiv",
+      "title": "OrbGNN: A Wave function-based Machine Learning Interelectronic Representation",
+      "abstract": "Machine learning interatomic potentials (MLIPs) have become emerging tools in molecular modeling and computational chemistry. By learning high-dimensional potential energy surfaces from quantum chemical data, MLIPs enable accurate and efficient predictions of structural, thermodynamic, and dynamical properties. However, such models have limitations in predictions of electronic properties and the effects of static electron correlation due to their lack of electronic structure information. This work presents OrbGNN, an electronic structure graph architecture analogous to molecular graph and MLIP frameworks, where pair-orbital interactions constitute the graph representation, while orbital entanglement encodes the connectivity between them. By embedding information derived from orbital correlation metrics directly into the graph topology, OrbGNN provides a compact representation of a molecule s orbital landscape and electron correlation patterns. Analysis of the behavior of the feature space in an orbital graph are shown to demonstrate model robustness. The model is evaluated for the dissociation of nitrogen and for a larger dataset of diatomic molecules. Finally, the OrbGNN model is applied to a set of octahedral iron(II) complexes to predict spin-state energy gaps.",
+      "authors": [
+        "Brody Quebedeaux",
+        "Shahzad Akram",
+        "Markus Reiher",
+        "Konstantinos D. Vogiatzis"
+      ],
+      "primary_category": "physics.chem-ph",
+      "categories": [
+        "physics.chem-ph"
+      ],
+      "published": "2026-08-28T00:47:42+00:00",
+      "link": "https://arxiv.org/pdf/2608.27806v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Machine learning interatomic potentials with wavefunction-based electronic structure graphs for quantum chemistry and molecular dynamics",
+      "llm_evidence_cn": "基于波函数的电子结构图机器学习势，用于量子化学与分子动力学加速",
+      "llm_evidence": "基于波函数的电子结构图机器学习势，用于量子化学与分子动力学加速",
+      "canonical_evidence": "基于波函数的电子结构图机器学习势，用于量子化学与分子动力学加速",
+      "llm_tldr_en": "OrbGNN is an electronic-structure graph network that represents pair-orbital interactions and orbital entanglement, extending MLIPs to electronic properties and static correlation.",
+      "llm_tldr_cn": "机器学习原子间势MLIP已成为分子模拟的重要手段，可从量子化学数据预测结构、热力学和动力学性质，但缺少电子结构信息，难以预测电子性质与静态电子相关效应。作者提出OrbGNN，将轨道作为基本单元，轨道对相互作用构成图关系，轨道纠缠编码节点间连接，从而形成类似分子图和MLIP框架的电子结构图架构。通过嵌入波函数级信息，OrbGNN在保持MLIP效率的同时拓展到电子性质预测。该工作推动机器学习势建模向电子结构层面发展。",
+      "llm_tldr": "机器学习原子间势MLIP已成为分子模拟的重要手段，可从量子化学数据预测结构、热力学和动力学性质，但缺少电子结构信息，难以预测电子性质与静态电子相关效应。作者提出OrbGNN，将轨道作为基本单元，轨道对相互作用构成图关系，轨道纠缠编码节点间连接，从而形成类似分子图和MLIP框架的电子结构图架构。通过嵌入波函数级信息，OrbGNN在保持MLIP效率的同时拓展到电子性质预测。该工作推动机器学习势建模向电子结构层面发展。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.29886v1",
+      "source": "arxiv",
+      "title": "Structural Hierarchy and Geometry in Molecular Representation Learning",
+      "abstract": "Molecular self-supervised learning uses chemical structures to guide which molecular embeddings should be similar. We study whether explicitly encoding a molecule's Bemis-Murcko scaffold and using it to supervise the molecular embedding changes what the model learns. We further test whether this effect depends on the embedding geometry by comparing Euclidean and Lorentz contrastive objectives. Across two augmentation strengths, scaffold-supervised models consistently organize molecules according to both identical and structurally related scaffolds. The resulting embeddings also improve molecular property prediction on several tasks, while the exact gains depend on the predicted property. The effect of scaffold supervision on molecular organization is stronger under Lorentz objectives, but neither geometry provides a consistent overall advantage. These results show that explicitly teaching the relation between a molecule and its structural core can reliably shape the organization of molecular embedding space, while the extent of usefulness of this organization remains task dependent.",
+      "authors": [
+        "David Sulu",
+        "Lorenzo Di Fruscia",
+        "Jana M. Weber"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "q-bio.BM"
+      ],
+      "published": "2026-08-30T16:34:17+00:00",
+      "link": "https://arxiv.org/pdf/2608.29886v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "molecular self-supervised pretraining with scaffold supervision and transfer to property prediction",
+      "llm_evidence_cn": "分子自监督预训练与到性质预测任务的迁移学习",
+      "llm_evidence": "分子自监督预训练与到性质预测任务的迁移学习",
+      "canonical_evidence": "分子自监督预训练与到性质预测任务的迁移学习",
+      "llm_tldr_en": "Supervises molecular self-supervised embeddings with Bemis-Murcko scaffolds under Euclidean and Lorentz contrastive objectives, showing scaffold-organized representations that improve molecular property prediction on several tasks.",
+      "llm_tldr_cn": "分子自监督学习通常由化学结构决定嵌入相似性，但结构层级和嵌入几何的影响尚不清楚。该工作以Bemis-Murcko骨架显式监督分子嵌入，并比较欧氏与Lorentz对比目标。实验显示骨架监督使模型按相同和相关骨架组织分子，并在多个分子性质预测任务上获得提升，增益大小随预测性质而变化。该研究表明结构层级监督与几何选择可为化学分子预训练和迁移学习提供更优策略。",
+      "llm_tldr": "分子自监督学习通常由化学结构决定嵌入相似性，但结构层级和嵌入几何的影响尚不清楚。该工作以Bemis-Murcko骨架显式监督分子嵌入，并比较欧氏与Lorentz对比目标。实验显示骨架监督使模型按相同和相关骨架组织分子，并在多个分子性质预测任务上获得提升，增益大小随预测性质而变化。该研究表明结构层级监督与几何选择可为化学分子预训练和迁移学习提供更优策略。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "chemical foundation model pre-training and transfer learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.30472v1",
+      "source": "arxiv",
+      "title": "ToxLens: A Reproducible Graph-Learning Framework for Leakage-Aware, Uncertainty-Calibrated Molecular Toxicity Prediction",
+      "abstract": "Molecular toxicity prediction is increasingly used to prioritise compounds before experimental testing, but conventional benchmark performance can overstate practical utility when structurally related molecules occur across training and test folds. We introduce ToxLens, a reproducible multi-task graph-learning framework for 11 toxicity endpoints spanning Ames mutagenicity, acute oral toxicity, hERG inhibition, and Tox21 nuclear-receptor and stress-response assays. The workflow combines conservative chemical curation, sphere-exclusion filtering, a leakage-aware UMAP-HDBSCAN split, parallel graph and global-feature encoders joined by late concatenation, temperature-scaled Monte Carlo dropout with conformal-style prediction sets, applicability-domain analysis, and SHAP-guided toxicophore discovery with occlusion controls. On the leakage-controlled test fold, a five-seed soft-voting ensemble achieved a Matthews correlation coefficient score of 0.44, an area under the receiver operating characteristic curve score of 0.83, and an area under the precision-recall curve score of 0.58. It exceeded four ECFP4-based shallow baselines on all 11 endpoints under the same split and validation-based threshold-selection protocol. Controlled ablations showed that the global pathway was important, whereas late concatenation outperformed the tested gated and feature-wise linear modulation fusion variants. Conformal-style prediction sets revealed substantial endpoint-specific variation in set efficiency, and discrimination and calibration improved with similarity to the training domain. Retraining on fixed published Tox21 Challenge and TDA folds produced competitive, but not uniformly state-of-the-art, performance. SHAP-guided occlusion and consensus subgraph mining yielded model-derived structural hypotheses, 44 of which contained at least one occurrence that passed the predefined counterfactual criteria.",
+      "authors": [
+        "Magnus H. Strømme",
+        "Alex G. C. de Sá",
+        "David B. Ascher"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-08-31T08:58:51+00:00",
+      "link": "https://arxiv.org/pdf/2608.30472v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "ToxLens targets molecular toxicity endpoint prediction with leakage-aware graph learning, directly matching toxicity/ADMET prediction needs",
+      "llm_evidence_cn": "ToxLens聚焦分子毒性终点预测，与毒性/ADMET预测需求直接吻合",
+      "llm_evidence": "ToxLens聚焦分子毒性终点预测，与毒性/ADMET预测需求直接吻合",
+      "canonical_evidence": "ToxLens聚焦分子毒性终点预测，与毒性/ADMET预测需求直接吻合",
+      "llm_tldr_en": "ToxLens is a reproducible multi-task graph learning framework for 11 toxicity endpoints with leakage-aware dataset splitting, graph and global feature encoders, and temperature-scaled Monte Carlo dropout, enabling trustworthy uncertainty-calibrated toxicity prediction.",
+      "llm_tldr_cn": "传统分子毒性预测基准会把结构相似的分子分到训练和测试两侧，导致评估性能高估实际可用性。为此作者提出ToxLens，一个可复现的多任务图学习框架，覆盖Ames致突变性、急性口服毒性、hERG抑制和Tox21核受体/应激反应等11个毒性终点。框架结合保守化学清洗、球排除过滤、泄漏感知的UMAP-HDBSCAN划分，以及图与全局特征并联编码器和温度校准的Monte Carlo Dropout，提供带不确定性校准的毒性预测。该方法为实验前化合物毒理优先级排序提供了更可信的基准工作流。",
+      "llm_tldr": "传统分子毒性预测基准会把结构相似的分子分到训练和测试两侧，导致评估性能高估实际可用性。为此作者提出ToxLens，一个可复现的多任务图学习框架，覆盖Ames致突变性、急性口服毒性、hERG抑制和Tox21核受体/应激反应等11个毒性终点。框架结合保守化学清洗、球排除过滤、泄漏感知的UMAP-HDBSCAN划分，以及图与全局特征并联编码器和温度校准的Monte Carlo Dropout，提供带不确定性校准的毒性预测。该方法为实验前化合物毒理优先级排序提供了更可信的基准工作流。",
+      "llm_tags": [
+        "query:smc"
+      ],
+      "matched_query_tag": "query:smc",
+      "matched_query_text": "toxicity ADMET prediction",
+      "matched_requirement_id": "req-14",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.30636v1",
+      "source": "arxiv",
+      "title": "MolLedger: An Additive Graph Neural Network with Chemically Grounded ADME Attributions",
+      "abstract": "Optimizing absorption, distribution, metabolism, and excretion (ADME) is an important part of small molecule drug discovery. Many machine learning models have been built to predict ADME properties to facilitate this optimization process, but explaining model predictions is challenging. We propose a new graph neural network architecture with built-in meaningful per-atom attributions. Our model MolLedger outputs predictions that are the sum of per-atom scores. MolLedger's additive framework obtains exact interpretability at no cost to performance because the global context vector gives the additive head enough context to produce good per-atom scores. Furthermore, MolLedger produces attributions that are more faithful to chemical properties than other interpretability methods because the auxiliary loss in MolLedger anchors the atom scores to chemical properties. Our case studies comparing interpretations from multiple methods on molecular pairs reveal that MolLedger is much better at producing sensible explanations for predicted property changes.",
+      "authors": [
+        "Christina X. Ji"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-08-31T11:44:27+00:00",
+      "link": "https://arxiv.org/pdf/2608.30636v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Graph neural network for ADME property prediction with chemically grounded per-atom attributions",
+      "llm_evidence_cn": "图神经网络预测ADME性质并提供化学可解释的逐原子归因",
+      "llm_evidence": "图神经网络预测ADME性质并提供化学可解释的逐原子归因",
+      "canonical_evidence": "图神经网络预测ADME性质并提供化学可解释的逐原子归因",
+      "llm_tldr_en": "MolLedger is a graph neural network that predicts ADME properties as additive per-atom scores, yielding exact interpretability without hurting prediction performance.",
+      "llm_tldr_cn": "ADME优化是小分子药物发现的重要环节，现有机器学习模型预测表现好但难以解释。作者提出可加性图神经网络MolLedger，将预测输出为各原子分数之和，依靠全局上下文向量使可加性聚合头获得充分语境，从而在不损失性能的前提下实现完全可解释的逐原子归因。实验表明MolLedger产生的归因比现有方法更符合化学性质。该模型为ADME性质预测提供了既可靠又具有化学解释性的建模方案。",
+      "llm_tldr": "ADME优化是小分子药物发现的重要环节，现有机器学习模型预测表现好但难以解释。作者提出可加性图神经网络MolLedger，将预测输出为各原子分数之和，依靠全局上下文向量使可加性聚合头获得充分语境，从而在不损失性能的前提下实现完全可解释的逐原子归因。实验表明MolLedger产生的归因比现有方法更符合化学性质。该模型为ADME性质预测提供了既可靠又具有化学解释性的建模方案。",
+      "llm_tags": [
+        "query:smc"
+      ],
+      "matched_query_tag": "query:smc",
+      "matched_query_text": "toxicity ADMET prediction",
+      "matched_requirement_id": "req-14",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.30674v1",
+      "source": "arxiv",
+      "title": "CoMPASS: Collaborative Molecular Property Prediction via Adaptive Small-Large Model Synergy",
+      "abstract": "Accurate molecular property prediction requires both statistical reliability and chemical reasoning. Graph neural networks can be calibrated directly on labeled assays but remain limited by the coverage of their training data. Large language models (LLMs) can compare molecular evidence and articulate chemical rationales, yet are unreliable as standalone quantitative predictors. The central challenge is therefore to determine when an LLM should influence a calibrated model and by how much. Here we present CoMPASS, a retrieval-calibrated framework for small-large model collaboration. CoMPASS retains a graph attention network (GAT) as the predictive anchor, retrieves locally relevant training molecules, provides attention-grounded evidence to an LLM, and converts its proposal into a bounded correction through an agreement-aware gate. Across six classification and two regression benchmarks, CoMPASS improves the GAT anchor in regions of correctable uncertainty while limiting LLM intervention in high-confidence regimes. Ablations show that the gains arise from validation-calibrated retrieval and bounded fusion rather than prompting alone. These results suggest that generative reasoning should augment calibrated prediction through evidence-grounded, controlled corrections rather than direct output replacement. Code is available at https://github.com/littlepeachs/CoMPASS.",
+      "authors": [
+        "Wentao Li",
+        "Jiangjie Qiu",
+        "Yijun Li",
+        "Leyi Zhao",
+        "Xiaonan Wang"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-08-31T12:14:01+00:00",
+      "link": "https://arxiv.org/pdf/2608.30674v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Directly targets molecular property prediction via combined graph neural network and large language model framework.",
+      "llm_evidence_cn": "直接面向分子性质预测，提出图神经网络与大语言模型的自适应协同框架。",
+      "llm_evidence": "直接面向分子性质预测，提出图神经网络与大语言模型的自适应协同框架。",
+      "canonical_evidence": "直接面向分子性质预测，提出图神经网络与大语言模型的自适应协同框架。",
+      "llm_tldr_en": "CoMPASS combines a calibrated graph attention network with an LLM via retrieval and attention-grounded evidence, adaptively letting the LLM influence molecular property predictions when needed, thereby improving reliability and interpretability.",
+      "llm_tldr_cn": "分子性质预测既需要统计可靠性也需要化学推理，但图神经网络受训练数据覆盖限制，大语言模型单独作为定量预测器又不可靠。CoMPASS以图注意力网络为预测主体，在需要时检索局部相关的训练分子并提供注意力可解释证据，自适应地让大语言模型影响预测结果。该框架在保持校准能力的同时引入化学推理，使分子性质预测更加可靠而且可解释。",
+      "llm_tldr": "分子性质预测既需要统计可靠性也需要化学推理，但图神经网络受训练数据覆盖限制，大语言模型单独作为定量预测器又不可靠。CoMPASS以图注意力网络为预测主体，在需要时检索局部相关的训练分子并提供注意力可解释证据，自适应地让大语言模型影响预测结果。该框架在保持校准能力的同时引入化学推理，使分子性质预测更加可靠而且可解释。",
+      "llm_tags": [
+        "query:smc"
+      ],
+      "matched_query_tag": "query:smc",
+      "matched_query_text": "molecular property prediction",
+      "matched_requirement_id": "req-15",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.30702v1",
+      "source": "arxiv",
+      "title": "An Agentic Retrobiosynthesis Framework with Learned Frontier Selection",
+      "abstract": "Large language models are increasingly used as agents for multistep retrosynthesis, raising the question of how much their search policy contributes independently of the underlying reaction model. We investigate this question in a biological setting through rule-based retrobiosynthesis: a deterministic biochemical engine generates the same validated transitions for every method, searching for routes that terminate in metabolites available to an \\emph{Escherichia coli} chassis, while the policy only selects which frontier molecule to expand next. Prompted and LoRA-tuned Qwen2.5-7B policies use a strict choice-only interface. The fine-tuned policy reaches $65\\pm1$\\% solve rate at 10 expansions on LASER versus 59\\% for MCTS, and at 200 expansions reaches $78\\pm1$\\% versus 75\\% on LASER, $88\\pm3$\\% versus 80\\% on the RetroPath RL Golden benchmark, and $63\\pm2$\\% versus 45\\% on the BioNavi-NP benchmark. Fine-tuning also consistently outperforms direct prompting. These results show that route-supervised frontier selection can improve budgeted search without altering biochemical generation, although performance remains dependent on frontier construction and reaction ranking.",
+      "authors": [
+        "Philippe Meyer",
+        "Guillaume Gricourt",
+        "Thomas Duigou",
+        "Joan Hérisson",
+        "Jean-Loup Faulon"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-08-31T12:40:42+00:00",
+      "link": "https://arxiv.org/pdf/2608.30702v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Agentic LLM retrobiosynthesis framework with learned frontier selection, evaluated via solve rates against MCTS",
+      "llm_evidence_cn": "基于LLM策略的智能体逆生物合成框架，用学习式前沿选择提升路线规划，并以解决率对比MCTS进行评估",
+      "llm_evidence": "基于LLM策略的智能体逆生物合成框架，用学习式前沿选择提升路线规划，并以解决率对比MCTS进行评估",
+      "canonical_evidence": "基于LLM策略的智能体逆生物合成框架，用学习式前沿选择提升路线规划，并以解决率对比MCTS进行评估",
+      "llm_tldr_en": "In an agentic retrobiosynthesis setup a deterministic reaction engine is fixed while Qwen2.5-7B selects which frontier to expand. The LoRA-tuned policy reaches 65% solve rate at 10 expansions on LASER versus 59% for MCTS, isolating search-policy value.",
+      "llm_tldr_cn": "多步逆合成中大型语言模型智能体常与反应引擎耦合，难以判断搜索策略的独立贡献。本文在逆生物合成环境下将规则引擎的输出固定，仅让Qwen2.5-7B策略选择下一待扩展前沿分子，并比较提示与LoRA微调两种方式。结果显示，微调策略在LASER上10次扩展时解决率达65%±1%，优于MCTS的59%。这项研究为评估LLM驱动的合成规划智能体提供了可控基准，并展示了学习式前沿选择的价值。",
+      "llm_tldr": "多步逆合成中大型语言模型智能体常与反应引擎耦合，难以判断搜索策略的独立贡献。本文在逆生物合成环境下将规则引擎的输出固定，仅让Qwen2.5-7B策略选择下一待扩展前沿分子，并比较提示与LoRA微调两种方式。结果显示，微调策略在LASER上10次扩展时解决率达65%±1%，优于MCTS的59%。这项研究为评估LLM驱动的合成规划智能体提供了可控基准，并展示了学习式前沿选择的价值。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "What are the latest advances in retrosynthesis, synthesis planning, and AI agents for chemistry, and how are these systems evaluated?",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.30910v1",
+      "source": "arxiv",
+      "title": "S3C-LLM: Skill-Code Guided Agentic Language Models for Spectrum-to-Structure Elucidation",
+      "abstract": "Spectroscopic structure elucidation is central to molecular analysis, but recent Large Language Model (LLM)-based methods mostly formulate it as direct spectrum-to-SMILES generation. Although this paradigm can leverage paired spectral data, it does not explicitly model the analytical workflow used by spectroscopists, such as diagnostic peak interpretation, fragment reasoning, formula constraints, and chemical consistency checking. In this paper, we introduce S3C-LLM, a skill-guided and code-grounded agentic LLM for spectrum-to-structure elucidation. Rather than directly predicting a molecule, S3C-LLM retrieves modality-specific spectroscopy skills, executes analysis code to instantiate these skills on the input spectra, and integrates the resulting peak-level evidence and formula constraints before generating SMILES. Specifically, we contribute a self-evolving spectroscopy skill library, a thinking-augmented skill-code trajectory construction pipeline, and a two-stage training strategy that teaches Qwen3-4B through supervised fine-tuning (SFT) followed by our proposed step-level reinforcement learning (RL). Experiments on diverse benchmarks show that S3C-LLM consistently outperforms current general LLMs and spectrum-specific models across spectra, while using less than 1/10th of SpectraLLM's training corpus.",
+      "authors": [
+        "Xuanle Zhao",
+        "Xinyuan Cai",
+        "Xiang Cheng",
+        "Bo Xu"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.CL"
+      ],
+      "published": "2026-08-31T14:55:32+00:00",
+      "link": "https://arxiv.org/pdf/2608.30910v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Agentic code-grounded LLM for spectrum-to-structure elucidation in chemistry",
+      "llm_evidence_cn": "以智能体LLM执行谱图解析技能与代码分析，属于化学应用的领域大语言模型",
+      "llm_evidence": "以智能体LLM执行谱图解析技能与代码分析，属于化学应用的领域大语言模型",
+      "canonical_evidence": "以智能体LLM执行谱图解析技能与代码分析，属于化学应用的领域大语言模型",
+      "llm_tldr_en": "S3C-LLM turns spectrum-to-structure elucidation into an agentic LLM workflow that retrieves spectroscopy skills and executes code, integrating fragment reasoning and chemical consistency checks.",
+      "llm_tldr_cn": "现有LLM从谱图直接生成SMILES，缺乏对解析专家工作流的显式建模，难以保证结构解析可解释性与可靠性。S3C-LLM以技能检索和代码执行为核心，先检索谱学模态技能，再运行分析代码实例化到输入光谱，并整合碎片推理、分子式约束和化学一致性检查。该方法将分析知识嵌入智能体，而不是直接端到端生成分子。实验结果表明它能够提升谱图到结构的解析能力，代表化学LLM的一种智能体式新路径。",
+      "llm_tldr": "现有LLM从谱图直接生成SMILES，缺乏对解析专家工作流的显式建模，难以保证结构解析可解释性与可靠性。S3C-LLM以技能检索和代码执行为核心，先检索谱学模态技能，再运行分析代码实例化到输入光谱，并整合碎片推理、分子式约束和化学一致性检查。该方法将分析知识嵌入智能体，而不是直接端到端生成分子。实验结果表明它能够提升谱图到结构的解析能力，代表化学LLM的一种智能体式新路径。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "large language models for chemistry applications",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.30952v1",
+      "source": "arxiv",
+      "title": "One Policy Is Enough: Single-Agent Reinforcement Learning Outperforms Tree Search for Chemistry Tool Learning",
+      "abstract": "Chemistry questions often demand exact computation and database lookups that a language model cannot supply from its parameters, so it must reach for external tools. Tool use here is a three-part problem: select the right tool from a large pool, fill it with correctly typed arguments, and chain calls so that each consumes the outputs of the last. CheMatAgent, a previously published system, addresses this with hierarchical evolutionary MCTS: separate policy and execution models searching tool-call trees under two learned critics, one regressed partly onto GPT-assigned scores. We show that a single policy suffices. Our model interleaves reasoning, tool calls, and returns in one left-to-right generation, trained by a supervised warm-up and then outcome-level reinforcement learning against a programmatic reward read directly off the gold call chain, which leaves no learned critic and no judge in the training loop. On ChemToolBench multiple-tool comprehensive chemistry, on both backbones CheMatAgent use, we improve Tool F1 by 5.5% and Return F1 by 9.6% on Qwen-2.5-7B, and by 3.7% and 3.9% on Llama-3.1-8B, compared with their strongest search configuration, at one model invocation per question, against a search whose cost grows with the tree; we also lead answer Pass Rate on Qwen-2.5-7B.",
+      "authors": [
+        "Armin Dariani",
+        "Sifan Wu",
+        "Bang Liu",
+        "Entao Yang"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.CL"
+      ],
+      "published": "2026-08-31T15:22:19+00:00",
+      "link": "https://arxiv.org/pdf/2608.30952v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "single-policy reinforcement learning for chemistry tool selection and chaining outperforms MCTS-based AI agent",
+      "llm_evidence_cn": "用单一策略强化学习完成化学工具的选择、参数填充与链式调用，性能优于MCTS智能体",
+      "llm_evidence": "用单一策略强化学习完成化学工具的选择、参数填充与链式调用，性能优于MCTS智能体",
+      "canonical_evidence": "用单一策略强化学习完成化学工具的选择、参数填充与链式调用，性能优于MCTS智能体",
+      "llm_tldr_en": "A single policy interleaving reasoning and tool calls, trained left-to-right, outperforms the hierarchical evolutionary MCTS with two critics used by CheMatAgent for chemistry tool use.",
+      "llm_tldr_cn": "化学任务常需语言模型结合外部工具进行精确计算与数据库查询，现有CheMatAgent依赖分层进化MCTS和两个评论网络来搜索工具调用树。作者提出只需一个从左到右生成的策略，同时完成推理、工具调用与结果整合，并通过强化学习统一训练。实验显示该单策略方法在工具选择、参数填充和调用链上均优于分层树搜索方案，大幅简化了化学AI智能体设计，为化学工具学习提供了更高效、可靠的新范式。",
+      "llm_tldr": "化学任务常需语言模型结合外部工具进行精确计算与数据库查询，现有CheMatAgent依赖分层进化MCTS和两个评论网络来搜索工具调用树。作者提出只需一个从左到右生成的策略，同时完成推理、工具调用与结果整合，并通过强化学习统一训练。实验显示该单策略方法在工具选择、参数填充和调用链上均优于分层树搜索方案，大幅简化了化学AI智能体设计，为化学工具学习提供了更高效、可靠的新范式。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "What are the latest advances in retrosynthesis, synthesis planning, and AI agents for chemistry, and how are these systems evaluated?",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.31009v1",
+      "source": "arxiv",
+      "title": "Language-Informed Flow Matching for Trend-Guided Structure-Based 3D Molecular Generation",
+      "abstract": "Structure-based drug design (SBDD) requires ligands that satisfy both 3D target affinity and 1D chemical validity. Existing controllable generation methods often rely on task-specific fine-tuning or externally imposed sampling-time guidance, adding cost and potentially conflicting with evolving 3D geometric constraints. We propose LiFT, a language-informed cross-modal framework built on Flow Matching for trend-guided 3D molecular generation across both de novo design and scaffold hopping. LiFT uses a \"Sense-Evolve-Assemble\" agent to generate target-aware SMILES as intermediate chemical conditions, from which a pre-trained chemical foundation model extracts continuous semantic priors. These priors are integrated into geometric generation through a lightweight semantic projector with zero-initialized adaptive normalization for stable cross-modal conditioning. We further introduce a Self-Conditioned Decoupled Router (SCDR), which modulates the velocity field according to intermediate structural states during ODE integration. Experiments on Cross-Docked2020 show that LiFT achieves competitive distribution matching while improving medicinal chemistry metrics and maintaining competitive structural validity under task-steering settings without additional generator fine-tuning. Our results suggest that language-derived chemical priors provide effective trend-level guidance for 3D molecular generation. Code and released artifacts are available at https://github.com/kasurl/LiFT.",
+      "authors": [
+        "Tianyu Gao",
+        "Zhikai Su",
+        "Jiashu Li",
+        "Wenjun Gao",
+        "Zichuan Ying",
+        "Zhe Zhao",
+        "Fei Zhang",
+        "Ye Wei"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-08-31T15:57:09+00:00",
+      "link": "https://arxiv.org/pdf/2608.31009v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Directly addresses 3D molecular generation conditioned on target structures with flow matching and language-derived semantic priors.",
+      "llm_evidence_cn": "直接面向基于结构的3D分子生成，使用流匹配与语言语义先验引导生成。",
+      "llm_evidence": "直接面向基于结构的3D分子生成，使用流匹配与语言语义先验引导生成。",
+      "canonical_evidence": "直接面向基于结构的3D分子生成，使用流匹配与语言语义先验引导生成。",
+      "llm_tldr_en": "LiFT is a language-informed flow matching framework for structure-based 3D molecular generation. It uses a Sense-Evolve-Assemble agent to create target-aware SMILES, converts them into semantic priors with a pretrained chemical foundation model, and injects these priors into geometric generation for de novo design and scaffold hopping.",
+      "llm_tldr_cn": "基于结构的药物设计需要同时满足三维靶标亲和力与一维化学有效性，而现有可控生成方法常依赖任务专用微调或外加采样引导，成本高且易与几何约束冲突。LiFT基于流匹配构建跨模态框架，先通过Sense-Evolve-Assemble智能体生成靶标感知SMILES作为中间化学条件，再由预训练化学基础模型提取连续语义先验注入几何生成过程。该方法无需对任务进行额外微调便支持全新设计和骨架跃迁，为趋势引导的三维分子生成提供了一条有效路径。",
+      "llm_tldr": "基于结构的药物设计需要同时满足三维靶标亲和力与一维化学有效性，而现有可控生成方法常依赖任务专用微调或外加采样引导，成本高且易与几何约束冲突。LiFT基于流匹配构建跨模态框架，先通过Sense-Evolve-Assemble智能体生成靶标感知SMILES作为中间化学条件，再由预训练化学基础模型提取连续语义先验注入几何生成过程。该方法无需对任务进行额外微调便支持全新设计和骨架跃迁，为趋势引导的三维分子生成提供了一条有效路径。",
+      "llm_tags": [
+        "query:smc"
+      ],
+      "matched_query_tag": "query:smc",
+      "matched_query_text": "3D molecular generation",
+      "matched_requirement_id": "req-12",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2609.00189v1",
+      "source": "arxiv",
+      "title": "Elite-Weighted Supervised Fine-tuning for Goal-Directed Molecular Optimization",
+      "abstract": "Goal-directed optimization is essential for steering molecular generators to propose candidates with desired properties. However, it is often implemented with policy-gradient reinforcement learning, which requires a generation-trajectory log-probability whose form depends on the model architecture and generation procedure. This makes an optimizer difficult to reuse across architectures and conditional generative designs. Supervised fine-tuning needs none of that machinery, but its update is driven by a fixed dataset, so the reward never enters the update. We introduce Elite-Weighted Supervised Fine-tuning (EW-SFT), which uses reward to guide elite selection of high-scoring molecules, and updates the model by its own pretraining loss on that set. Ablations show that reward information is passed primarily through elite selection, rather than through continuous weighting within the selected set. Because the update consumes only scored molecules and the model's native loss, the same rule applies across autoregressive, masked-diffusion, and discrete-flow generators, and across de novo, motif-extension, and linker-design tasks. Under a fixed budget of 3D shape alignment oracle calls on two kinase reference compounds, EW-SFT consistently outperforms the corresponding native optimizers. It further improves goal-directed optimization under a 2D similarity oracle on four held-out references and achieves comparable performance on a sample-efficiency benchmark without a trajectory-level RL formulation. These results demonstrate that EW-SFT is a unified and effective optimizer across molecular generators, design constraints, references, and oracles.",
+      "authors": [
+        "Shiyun Wa",
+        "Yifei Wang",
+        "Anna G. Green",
+        "Simone Sciabola",
+        "Ye Wang"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-08-31T18:10:51+00:00",
+      "link": "https://arxiv.org/pdf/2609.00189v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Reward-guided elite selection plus supervised fine-tuning for goal-directed molecular optimization",
+      "llm_evidence_cn": "基于奖励精英选择与监督微调的目标导向分子优化",
+      "llm_evidence": "基于奖励精英选择与监督微调的目标导向分子优化",
+      "canonical_evidence": "基于奖励精英选择与监督微调的目标导向分子优化",
+      "llm_tldr_en": "EW-SFT replaces policy-gradient RL in goal-directed molecular optimization with reward-guided elite selection plus standard supervised fine-tuning, making optimizers architecture-agnostic.",
+      "llm_tldr_cn": "目标导向优化对分子生成至关重要，但常用策略梯度强化学习依赖生成轨迹对数概率，难以在不同架构和条件生成设计中复用。带固定数据的监督微调虽然无需该机制，但奖励信号不进入更新。作者提出精英加权监督微调EW-SFT，用奖励选择高分分子组成精英集，再以模型自身预训练损失在这些精英分子上微调。该方法兼顾监督微调的简洁性和奖励引导性，呈现出跨架构的目标导向分子优化能力。",
+      "llm_tldr": "目标导向优化对分子生成至关重要，但常用策略梯度强化学习依赖生成轨迹对数概率，难以在不同架构和条件生成设计中复用。带固定数据的监督微调虽然无需该机制，但奖励信号不进入更新。作者提出精英加权监督微调EW-SFT，用奖励选择高分分子组成精英集，再以模型自身预训练损失在这些精英分子上微调。该方法兼顾监督微调的简洁性和奖励引导性，呈现出跨架构的目标导向分子优化能力。",
+      "llm_tags": [
+        "query:smc"
+      ],
+      "matched_query_tag": "query:smc",
+      "matched_query_text": "molecular optimization",
+      "matched_requirement_id": "req-13",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2609.00488v1",
+      "source": "arxiv",
+      "title": "AdaptNTK: Adaptive Uncertainty Quantification and Active Learning for Neural Network Potentials",
+      "abstract": "Machine learning interatomic potentials bridge the gap between quantum chemical precision and classical computational speed, enabling molecular dynamics simulations with first-principles accuracy. Their reliability is often improved through active learning, which iteratively expands the training set by identifying uncertain, out-of-distribution configurations. Existing uncertainty-quantification methods often involve a trade-off between computational cost and reliability, and generally cannot account for redundancy as an acquisition batch is assembled. Here, we introduce AdaptNTK, a single-model framework that measures uncertainty as a regularized Mahalanobis distance in empirical neural tangent kernel (NTK) feature space. With the NTK features fixed during acquisition, the uncertainty depends on the acquired configurations but not their reference labels. This allows the uncertainty to be updated recursively after each selection without retraining, reducing redundancy within an acquisition batch. On held-out rMD17 data, AdaptNTK achieves the highest mean correlations with force errors (Spearman 0.68, Pearson 0.71) and matches a three-member ensemble in error retention. In active learning experiments, AdaptNTK achieves the lowest force errors across rMD17 and Transition-1X, with particularly strong performance on transition-state configurations in Transition-1X. AdaptNTK provides a 2.6-fold speedup per Transition-1X cycle relative to the ensemble, providing efficient single-model uncertainty estimation with sequential updates for data-efficient active learning.",
+      "authors": [
+        "Prajwal Ananth",
+        "Shuwen Yue"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "physics.chem-ph"
+      ],
+      "published": "2026-08-31T23:34:29+00:00",
+      "link": "https://arxiv.org/pdf/2609.00488v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "active learning and uncertainty quantification for neural network potentials improve reliability of molecular dynamics",
+      "llm_evidence_cn": "面向神经网络原子间势的自适应不确定性量化与主动学习，提升分子动力学模拟可靠性",
+      "llm_evidence": "面向神经网络原子间势的自适应不确定性量化与主动学习，提升分子动力学模拟可靠性",
+      "canonical_evidence": "面向神经网络原子间势的自适应不确定性量化与主动学习，提升分子动力学模拟可靠性",
+      "llm_tldr_en": "AdaptNTK measures uncertainty as a regularized Mahalanobis distance in empirical neural tangent kernel space within a single model, enabling redundancy-aware active learning for reliable neural network potentials.",
+      "llm_tldr_cn": "机器学习原子间势使分子动力学模拟具有第一性原理精度，但需要主动学习不断挑选不确定构型来扩充训练集。现有不确定性量化方法在计算成本与可靠性间难以平衡，且批量采样时未能消除冗余。AdaptNTK采用单模型方案，在经验神经正切核(NTK)特征空间中以正则化马氏距离度量不确定性，同时兼顾批量样本的冗余性评估。实验表明，该方法能以较低计算开销持续提升势函数的可靠性，为大规模神经网络势训练提供了高效的自适应主动学习框架。",
+      "llm_tldr": "机器学习原子间势使分子动力学模拟具有第一性原理精度，但需要主动学习不断挑选不确定构型来扩充训练集。现有不确定性量化方法在计算成本与可靠性间难以平衡，且批量采样时未能消除冗余。AdaptNTK采用单模型方案，在经验神经正切核(NTK)特征空间中以正则化马氏距离度量不确定性，同时兼顾批量样本的冗余性评估。实验表明，该方法能以较低计算开销持续提升势函数的可靠性，为大规模神经网络势训练提供了高效的自适应主动学习框架。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2608.24513v1",
+      "source": "arxiv",
+      "title": "Structure-Agnostic Prediction of the Electronic Density of States with a Chemical Language Model",
+      "abstract": "The electronic density of states (DOS) is conventionally computed from a relaxed crystal structure, which is unavailable for compounds that have been neither synthesized nor cataloged. Here we introduce DOSSIER ($\\textbf{D}$ensity $\\textbf{o}$f $\\textbf{S}$tates from $\\textbf{S}$to$\\textbf{i}$chiometry with $\\textbf{E}$ncoder $\\textbf{R}$epresentations), a chemical language model that maps elemental composition directly to this spectrum. The encoder is pretrained by cross-modal knowledge distillation from a universal machine-learning interatomic potential; the transfer lowers the error by 11% when only 1,000 training examples are available. On the Mat2Spec benchmark, DOSSIER reaches a mean absolute error of 3.76 states eV$^{-1}$ against 3.64 for the best structure-aware model; on an extended Materials Project dataset, the predicted spectra yield band gaps and $\\textit{d}$-band descriptors with useful accuracy. Screening 11,977 binary and 13,251 five-component high-entropy alloy compositions for a $\\textit{d}$-projected DOS resembling that of NiPt$_{3}$ places known oxygen reduction electrocatalysts near the top of the ranking.",
+      "authors": [
+        "Ivan D. Rubtsov",
+        "Ivan V. Dudakov",
+        "Vadim V. Korolev"
+      ],
+      "primary_category": "cond-mat.mtrl-sci",
+      "categories": [
+        "cond-mat.mtrl-sci"
+      ],
+      "published": "2026-08-25T13:03:59+00:00",
+      "link": "https://arxiv.org/pdf/2608.24513v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Chemical language model predicts electronic density of states directly from composition, pretrained by distillation from ML interatomic potential, accelerating structure-dependent quantum chemistry calculations",
+      "llm_evidence_cn": "化学语言模型从化学组成直接预测电子态密度，并用机器学习原子间势蒸馏预训练，加速依赖结构的量子化学计算",
+      "llm_evidence": "化学语言模型从化学组成直接预测电子态密度，并用机器学习原子间势蒸馏预训练，加速依赖结构的量子化学计算",
+      "canonical_evidence": "化学语言模型从化学组成直接预测电子态密度，并用机器学习原子间势蒸馏预训练，加速依赖结构的量子化学计算",
+      "llm_tldr_en": "DOSSIER is a chemical language model mapping elemental composition to the electronic density of states. Distillation pretraining from a universal ML interatomic potential cuts error by 11% with only 1,000 examples and reaches 3.76 states/eV MAE on Mat2Spec, enabling structure-free spectral prediction.",
+      "llm_tldr_cn": "传统电子态密度(DOS)需要弛豫晶体结构，导致未合成或未收录化合物的谱学性质难以预测。本文提出DOSSIER，一种直接用元素组成预测电子态密度的化学语言模型，编码器通过跨模态知识蒸馏从通用机器学习原子间势获得预训练，再完成组成到光谱的映射。实验表明，在仅1000个训练样本时该预训练迁移可将误差降低11%，并在Mat2Spec基准上取得3.76态/eV的平均绝对误差。该工作使无需结构计算的量子谱学性质预测成为可能，拓展了化学语言模型在量子化学加速中的应用。",
+      "llm_tldr": "传统电子态密度(DOS)需要弛豫晶体结构，导致未合成或未收录化合物的谱学性质难以预测。本文提出DOSSIER，一种直接用元素组成预测电子态密度的化学语言模型，编码器通过跨模态知识蒸馏从通用机器学习原子间势获得预训练，再完成组成到光谱的映射。实验表明，在仅1000个训练样本时该预训练迁移可将误差降低11%，并在Mat2Spec基准上取得3.76态/eV的平均绝对误差。该工作使无需结构计算的量子谱学性质预测成为可能，拓展了化学语言模型在量子化学加速中的应用。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2608.24979v1",
+      "source": "arxiv",
+      "title": "FrontierChallenge: Evaluating Scientific Workflow Completion",
+      "abstract": "Scientific agents increasingly analyze data, execute code, and produce research artifacts, yet most benchmarks emphasize final answers, isolated programs, or a single domain. We introduce FrontierChallenge, a cross-domain benchmark comprising 300 end-to-end scientific workflows. In this paper, we release and evaluate 97 of these tasks, spanning quantum chemistry, molecular dynamics, materials characterization, analytical chemistry, life science, and electrochemistry/environment. Each task provides fixed inputs and specifies a bundle of required scientific deliverables. We evaluate twelve frontier models with three agent scaffolds. Pass Rate measures the fraction of tasks satisfying the full-completion criterion, while Avg. Score captures partial progress. Each of the best-performing configurations completed only 20 of the 97 released tasks, yielding a Pass Rate of 20.6%. Partial progress translated especially poorly into complete delivery in analytical chemistry and electrochemistry/environment: Avg. Scores reached 87.6 and 94.9, but the highest Pass Rates were only 4% and 0%. Among non-passing Claude Code trajectories, 75.5% still ended with language claiming completion. These findings show that neither high partial scores nor confident claims of completion reliably indicate that a scientific task has been fully delivered, highlighting the need to evaluate end-to-end workflow execution and the completeness of scientific deliverables together.",
+      "authors": [
+        "Liangcai Su",
+        "Zhaopeng Feng",
+        "Zhuo Chen",
+        "Zhen Zhang",
+        "Xiang Lin",
+        "Ruilin Li",
+        "Handuo Zhang",
+        "Ning Wang",
+        "Kailong Wen",
+        "Yueqi Guo",
+        "Feng Xing",
+        "Yiling Guo",
+        "Chenxiong Qian",
+        "Simon Shaolei Du",
+        "Lidong Bing",
+        "Xinyu Wang"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.CL",
+        "cs.SE"
+      ],
+      "published": "2026-08-25T16:50:58+00:00",
+      "link": "https://arxiv.org/pdf/2608.24979v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Benchmark evaluates AI agents on end-to-end scientific workflows spanning chemistry domains, relevant to AI agents for chemistry and evaluation",
+      "llm_evidence_cn": "提出跨化学领域的科学智能体工作流基准，直接关联化学AI智能体评估",
+      "llm_evidence": "提出跨化学领域的科学智能体工作流基准，直接关联化学AI智能体评估",
+      "canonical_evidence": "提出跨化学领域的科学智能体工作流基准，直接关联化学AI智能体评估",
+      "llm_tldr_en": "FrontierChallenge proposes 300 end-to-end scientific workflow tasks spanning chemistry and materials, evaluating twelve frontier models with pass-rate and partial-score metrics.",
+      "llm_tldr_cn": "现有科学智能体基准往往只关注最终答案、孤立程序或单一领域，难以反映真实科研流程。作者建立FrontierChallenge跨学科基准，包含300多个端到端科学工作流，覆盖量子化学、分子动力学、材料表征、分析化学、生命科学等领域；当前发布97个任务，并用三个智能体脚手架评估12个前沿模型。通过完整完成率Pass Rate和部分进展评分Avg. Score，为评估化学领域AI智能体提供了统一测试平台。该基准对合成规划及智能体系统的测评具有直接参考价值。",
+      "llm_tldr": "现有科学智能体基准往往只关注最终答案、孤立程序或单一领域，难以反映真实科研流程。作者建立FrontierChallenge跨学科基准，包含300多个端到端科学工作流，覆盖量子化学、分子动力学、材料表征、分析化学、生命科学等领域；当前发布97个任务，并用三个智能体脚手架评估12个前沿模型。通过完整完成率Pass Rate和部分进展评分Avg. Score，为评估化学领域AI智能体提供了统一测试平台。该基准对合成规划及智能体系统的测评具有直接参考价值。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "What are the latest advances in retrosynthesis, synthesis planning, and AI agents for chemistry, and how are these systems evaluated?",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2608.23381v1",
+      "source": "arxiv",
+      "title": "FUCrIMODo: structure recovery from atomistic descriptors via multi-stage genetic algorithms",
+      "abstract": "Data-driven approaches to materials discovery rely on numerical representations of atomic structures as input for machine learning models. Inverting these descriptors - recovering atomic structures from their representations - is essential for most generative material design pipelines, yet it remains challenging, particularly for periodic systems. Existing inversion methods are either tailored to specific invertible descriptors or require candidate structures with similar atomic arrangements and compositions, limiting the exploration of novel regions in chemical and configurational space. Here, we propose a generalizable, similarity-driven sampling approach, powered by a novel stage-wise optimization strategy, to recover atom types, atomic positions, and unit cell shapes directly from a descriptor. Our approach requires only descriptor features and parameters as input without any prior structural knowledge. The capability of our method is demonstrated by the averaged Smooth Overlap of Atomic Positions (SOAP) descriptor.",
+      "authors": [
+        "Louis Boehm",
+        "Martin Kuban",
+        "Claudia Draxl"
+      ],
+      "primary_category": "cond-mat.mtrl-sci",
+      "categories": [
+        "cond-mat.mtrl-sci"
+      ],
+      "published": "2026-08-24T15:29:31+00:00",
+      "link": "https://arxiv.org/pdf/2608.23381v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "structure recovery from atomistic descriptors via multi-stage genetic algorithms supporting generative material design",
+      "llm_evidence_cn": "从原子描述子经多阶段遗传算法恢复结构，为生成式三维材料/分子设计提供关键逆向工具",
+      "llm_evidence": "从原子描述子经多阶段遗传算法恢复结构，为生成式三维材料/分子设计提供关键逆向工具",
+      "canonical_evidence": "从原子描述子经多阶段遗传算法恢复结构，为生成式三维材料/分子设计提供关键逆向工具",
+      "llm_tldr_en": "The paper presents FUCrIMODo, a stage-wise genetic algorithm approach that inverts atomistic descriptors into periodic atomic structures without requiring invertible descriptors or close structural candidates, thus enabling broader exploration in generative material design.",
+      "llm_tldr_cn": "从数值描述子反解出原子结构是大多数生成式材料设计管线中不可或缺的一步，但周期性体系的结构反演一直缺乏通用方法。作者提出FUCrIMODo，采用新颖的分阶段优化和相似度驱动采样策略来同时恢复原子类型与三维排布，无需特定可逆描述子或相近候选结构。该方法帮助生成模型在化学与构型空间中探索全新区域，为三维晶体和分子结构的逆向生成提供了通用基础工具。",
+      "llm_tldr": "从数值描述子反解出原子结构是大多数生成式材料设计管线中不可或缺的一步，但周期性体系的结构反演一直缺乏通用方法。作者提出FUCrIMODo，采用新颖的分阶段优化和相似度驱动采样策略来同时恢复原子类型与三维排布，无需特定可逆描述子或相近候选结构。该方法帮助生成模型在化学与构型空间中探索全新区域，为三维晶体和分子结构的逆向生成提供了通用基础工具。",
+      "llm_tags": [
+        "query:smc"
+      ],
+      "matched_query_tag": "query:smc",
+      "matched_query_text": "3D molecular generation",
+      "matched_requirement_id": "req-12",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.24610v1",
+      "source": "arxiv",
+      "title": "Conditional GraphGANFed: Optimizing Graph-Structured Molecule Generation in Federated Generative Adversarial Networks",
+      "abstract": "Generative adversarial networks (GANs) have garnered considerable attention in molecular discovery for their ability to generate novel and high-quality molecules. To efficiently train a GAN model while preserving data privacy, GraphGANFed has been proposed to incorporate federated learning and graph convolutional networks into GAN. Yet, GraphGANFed cannot produce synthetic molecules that only optimize a user-defined metric(s) to facilitate the new drug discovery process. To address this issue, we introduce a novel extension to GraphGANFed, namely conditional GraphGANFed (cGraphGANFed), by incorporating the critic network to assess generated molecules using user-defined metric(s). The evaluation results from both the critic network and discriminator are integrated into the loss function of the generator, guiding it to generate novel molecules that maintain similar chemical properties to real ones while optimizing user-defined metrics. Extensive simulations are conducted in two scenarios. First, cGraphGANFed endeavors to optimize all seven commonly used metrics, and the results show that cGraphGANFed significantly outperforms GraphGANFed in Validity and LogP, with a slight advantage in QED, across different settings. Second, cGraphGANFed focuses solely on optimizing QED, and the results show that the synthetic molecules produced by cGraphGANFed can achieve more than 10% improvement in QED than GraphGANFed. Also, the results demonstrate cGraphGANFed has enhanced resilience against mode collapses and performance reduction caused by non-IID data.",
+      "authors": [
+        "Daniel Manu",
+        "Abee Alazzwi"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.DC"
+      ],
+      "published": "2026-08-24T15:17:30+00:00",
+      "link": "https://arxiv.org/pdf/2608.24610v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Conditional federated graph GAN with critic scoring of user-defined metrics for goal-directed molecular generation",
+      "llm_evidence_cn": "以critic评估用户指定指标的条件化联邦GAN实现目标导向分子生成",
+      "llm_evidence": "以critic评估用户指定指标的条件化联邦GAN实现目标导向分子生成",
+      "canonical_evidence": "以critic评估用户指定指标的条件化联邦GAN实现目标导向分子生成",
+      "llm_tldr_en": "Extends federated graph GAN with a conditional critic so synthesized molecules can be optimized toward user-defined metrics while preserving privacy through federated training.",
+      "llm_tldr_cn": "联邦生成对抗网络能保护隐私地生成分子，但已有的GraphGANFed无法针对用户定义指标进行优化。Conditional GraphGANFed通过引入critic网络来评估生成分子是否符合指定指标，实现条件化目标驱动生成。评测表明该扩展可在不共享原始数据的前提下生成优化用户指标的新分子。它为隐私保护下的目标导向分子生成提供了一条新途径。",
+      "llm_tldr": "联邦生成对抗网络能保护隐私地生成分子，但已有的GraphGANFed无法针对用户定义指标进行优化。Conditional GraphGANFed通过引入critic网络来评估生成分子是否符合指定指标，实现条件化目标驱动生成。评测表明该扩展可在不共享原始数据的前提下生成优化用户指标的新分子。它为隐私保护下的目标导向分子生成提供了一条新途径。",
+      "llm_tags": [
+        "query:smc"
+      ],
+      "matched_query_tag": "query:smc",
+      "matched_query_text": "Latest machine learning and generative modeling methods for small molecule generation, de novo molecular design, and goal directed molecular generation.",
+      "matched_requirement_id": "req-20",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2608.27587v1",
+      "source": "arxiv",
+      "title": "Compiling Chemical Knowledge into Executable Descriptors for Materials Prediction",
+      "abstract": "Materials prediction depends critically on how scientific knowledge is represented, yet many governing considerations exist only as natural-language heuristics that conventional learners cannot use. We introduce CRISP, a large language model-assisted framework that treats representation construction as a rule-space exploration and compilation problem: it repeatedly samples target-relevant chemical rules without access to structures, labels or data splits, consolidates related concepts, and compiles each into an executable scalar descriptor supplied to a conventional learner. For positive-unlabeled inorganic-crystal synthesizability, CRISP outperformed expert-curated and generic structural representations under a shared learner and surpassed purpose-built synthesizability models, with its advantage most pronounced under structural-size and chemical-family shifts. Infrequently generated rules contributed complementary predictive information, showing that generation frequency does not determine utility. The same workflow yielded competitive representations for formation energy and ionic conductivity while revealing task-dependent limits for shear modulus, establishing a dataset-blind, auditable route from broad chemical knowledge to transferable computational representations.",
+      "authors": [
+        "Jaehwan Choi",
+        "Kunik Jang",
+        "Seongmin Kim",
+        "Shuan Chen",
+        "Kyungju Nam",
+        "Seung Hyo Noh",
+        "Donghwi Kim",
+        "Yousung Jung"
+      ],
+      "primary_category": "cond-mat.mtrl-sci",
+      "categories": [
+        "cond-mat.mtrl-sci"
+      ],
+      "published": "2026-08-27T18:11:43+00:00",
+      "link": "https://arxiv.org/pdf/2608.27587v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "LLM-assisted framework compiles natural-language chemical rules into descriptors for materials synthesis prediction",
+      "llm_evidence_cn": "用LLM将自然语言化学知识编译成可执行描述子以支持材料可合成性预测",
+      "llm_evidence": "用LLM将自然语言化学知识编译成可执行描述子以支持材料可合成性预测",
+      "canonical_evidence": "用LLM将自然语言化学知识编译成可执行描述子以支持材料可合成性预测",
+      "llm_tldr_en": "CRISP is an LLM-assisted framework that treats representation construction as rule-space exploration, repeatedly sampling and compiling target-relevant chemical rules into executable scalar descriptors for conventional learners, and outperforms expert-curated and generic structural representations for inorganic crystal synthesizability.",
+      "llm_tldr_cn": "许多材料预测规律以自然语言经验形式存在，无法被常规机器学习器直接使用。作者提出CRISP框架，将特征构建看作规则空间搜索与编译问题：在不依赖结构、标签或数据划分的前提下，反复采样目标相关化学规则、归纳相关概念并编译为可执行标量描述子，交给传统学习器使用。在无机晶体可合成性正负未标注数据上，CRISP的效果超越专家特征与通用结构特征。该研究展示了LLM辅助化学特征工程的可行路径。",
+      "llm_tldr": "许多材料预测规律以自然语言经验形式存在，无法被常规机器学习器直接使用。作者提出CRISP框架，将特征构建看作规则空间搜索与编译问题：在不依赖结构、标签或数据划分的前提下，反复采样目标相关化学规则、归纳相关概念并编译为可执行标量描述子，交给传统学习器使用。在无机晶体可合成性正负未标注数据上，CRISP的效果超越专家特征与通用结构特征。该研究展示了LLM辅助化学特征工程的可行路径。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "large language models for chemistry applications",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2608.23490v1",
+      "source": "arxiv",
+      "title": "PHASE: encoding global protein ensembles with local Hamiltonians and all-atom backmapping",
+      "abstract": "Protein function is governed by conformational ensembles, which can be viewed as high-dimensional probability distributions over molecular conformations. Yet the statistical organization of these distributions is often represented only implicitly, either through collections of simulation trajectories or within high-capacity generative models. Here, we introduce PHASE (Protein Hamiltonians for Sampling of Ensembles), a system-specific framework that converts atomistic conformational ensembles into an explicit and interpretable statistical model. Applied to ten conformational ensembles derived from approximately 37$μ$s of atomistic simulations of the adenosine A2A receptor, Hamiltonians containing only local residue couplings within 6$\\mathring{A}$ reproduce residue-wise and pairwise microstate statistics, including correlations between residues that are not directly coupled in the model. Moreover, independently fitted inactive and active reference Hamiltonians define an endpoint preference coordinate that organizes newly sampled ligand-, effector- and conformation-dependent ensembles along the A2A activation landscape without receiving these biochemical labels as model inputs. Finally, a cluster-conditioned all-atom reconstruction model preserves the prescribed residue microstate patterns of newly sampled configurations, closing the coarse-graining-sampling-backmapping cycle. The resulting discrete representation additionally admits direct QUBO encoding, enabling classical annealing and providing a route toward future quantum-annealing implementations. PHASE therefore provides a protein-general procedure for constructing compact, interpretable and atomistically realizable statistical models of protein conformational ensembles.",
+      "authors": [
+        "Daniele Angioletti",
+        "Marco Nobile",
+        "Matteo Carli",
+        "Vittorio Limongelli"
+      ],
+      "primary_category": "q-bio.BM",
+      "categories": [
+        "q-bio.BM"
+      ],
+      "published": "2026-08-24T16:54:24+00:00",
+      "link": "https://arxiv.org/pdf/2608.23490v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "interpretable statistical modeling and all-atom backmapping for molecular dynamics ensembles",
+      "llm_evidence_cn": "为分子动力学构象采样提供显式统计建模与全原子回映射",
+      "llm_evidence": "为分子动力学构象采样提供显式统计建模与全原子回映射",
+      "canonical_evidence": "为分子动力学构象采样提供显式统计建模与全原子回映射",
+      "llm_tldr_en": "Converts atomistic protein conformational ensembles into explicit interpretable statistical models with local Hamiltonians and all-atom backmapping, validated on A2A receptor ensembles from roughly 37 microseconds of simulation.",
+      "llm_tldr_cn": "蛋白质功能由构象系综决定，但当前统计组织往往只隐式存在于轨迹或生成模型里。PHASE把原子模拟得到的构象系综编码为显式且可解释的统计模型，哈密顿量仅含局域残基耦合，并支持全原子回映射。在腺苷A2A受体约37微秒模拟产生的十个系综上，该方法给出了可用的显式系综建模方案，为构象采样和分子动力学分析提供了新工具。",
+      "llm_tldr": "蛋白质功能由构象系综决定，但当前统计组织往往只隐式存在于轨迹或生成模型里。PHASE把原子模拟得到的构象系综编码为显式且可解释的统计模型，哈密顿量仅含局域残基耦合，并支持全原子回映射。在腺苷A2A受体约37微秒模拟产生的十个系综上，该方法给出了可用的显式系综建模方案，为构象采样和分子动力学分析提供了新工具。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.26701v1",
+      "source": "arxiv",
+      "title": "Accelerating Scientific Research with Gemini in the Real-World",
+      "abstract": "We present an extension and comprehensive real-world validation of Co-Scientist, a Gemini-based multi-agent system designed to accelerate end-to-end scientific research across hypothesis generation, experimentation, and manuscript generation. Moving beyond in silico hypothesis generation, this specialized configuration transitions Co-Scientist into an execution-grounded research partner advancing closed-loop scientific workflows across materials science, biology, and computer science. In materials science, Co-Scientist interfaced with a semi-automated chemical vapor deposition reactor to design a safe precursor route for MXenes; experimental execution produced a lamellar 2D material sharing key structural similarities with the Ti3C2Tx MXene lattice, although further experiments are needed to confirm the atomic structure. Leveraging Gemini 3 Deep Think for rapid, lab-in-the-loop execution, it also tailored growth recipes to laboratory constraints in minutes, enabling single-attempt growth of monolayer MoS2, MoSe2, and WS2 semiconductors. In biology, Co-Scientist predicted emergent swarming phenotypes of engineered E. coli across inducer (IPTG) gradients from sparse imaging data, quantitatively matching unpublished wet-lab morphological measurements. In computer science, Co-Scientist autonomously discovered an inference-time scaling architecture that outperformed six frontier models on HealthBench (Hard and Professional) while reducing potential clinical harm under blinded physician evaluation. Finally, a double-blind study of end-to-end generated papers with 30 domain experts across 450 reviews demonstrates that Co-Scientist's reliability modules reduce hallucination and plagiarism while improving research safety. Together, these results demonstrate progress toward closed-loop multi-agent scientific AI systems capable of accelerating real-world scientific discovery.",
+      "authors": [
+        "Samuel Schmidgall",
+        "Xiaokai Zhu",
+        "Marian Shaw",
+        "Lin Yang",
+        "Valentin Liévin",
+        "Jingyun Yang",
+        "Yuchen Zhuang",
+        "Tim Strother",
+        "Alex Bijamov",
+        "Min Woo Sun",
+        "Anil Palepu",
+        "Justin Chen",
+        "David Steiner",
+        "Jacqueline Shreibati",
+        "Wei-Hung Weng",
+        "Yilin Zhao",
+        "Xingjian Hu",
+        "Nicholas Zahn",
+        "Sadhya Garg",
+        "Julia Kirby",
+        "Yuxiang Gan",
+        "Jiaoli Li",
+        "Divy Thakkar",
+        "Shekoofeh Azizi",
+        "David Racz",
+        "Juraj Gottweis",
+        "Vivek Natarajan",
+        "Chenglin Wu",
+        "Tal Danino",
+        "Keran Rong",
+        "Haozhe Wang",
+        "Benoit Schillings",
+        "Yong Cheng",
+        "Quoc V. Le",
+        "Tao Tu"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-08-27T06:58:13+00:00",
+      "link": "https://arxiv.org/pdf/2608.26701v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Gemini-based multi-agent co-scientist executes real-world synthesis route design for MXene materials",
+      "llm_evidence_cn": "Gemini多智能体科研助手在真实世界中设计并执行MXene材料合成路线",
+      "llm_evidence": "Gemini多智能体科研助手在真实世界中设计并执行MXene材料合成路线",
+      "canonical_evidence": "Gemini多智能体科研助手在真实世界中设计并执行MXene材料合成路线",
+      "llm_tldr_en": "Co-Scientist is extended from hypothesis generation to execution-grounded closed-loop research, interfacing with a semi-automated CVD reactor in materials science to design a safe precursor route for MXenes and experimentally produce a lamellar 2D material similar to the Ti3C2Tx lattice.",
+      "llm_tldr_cn": "Co-Scientist作为基于Gemini的多智能体系统，原先主要进行离线的假设生成，作者将其扩展为可执行真实实验的闭环科研助手。在材料科学验证中，系统与半自动化学气相沉积反应器对接，设计了MXene的安全前驱体路线，并通过实验生成了与Ti3C2Tx晶格结构相似的层状二维材料。该工作展示了LLM智能体不仅在文本层面辅助科研，还能参与仪器耦合的端到端真实发现流程。",
+      "llm_tldr": "Co-Scientist作为基于Gemini的多智能体系统，原先主要进行离线的假设生成，作者将其扩展为可执行真实实验的闭环科研助手。在材料科学验证中，系统与半自动化学气相沉积反应器对接，设计了MXene的安全前驱体路线，并通过实验生成了与Ti3C2Tx晶格结构相似的层状二维材料。该工作展示了LLM智能体不仅在文本层面辅助科研，还能参与仪器耦合的端到端真实发现流程。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "What are the latest advances in retrosynthesis, synthesis planning, and AI agents for chemistry, and how are these systems evaluated?",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2608.30337v1",
+      "source": "arxiv",
+      "title": "Coarse composition suffices: tabular in-context learning for multi-activity antimicrobial peptide profiling",
+      "abstract": "Antimicrobial peptides (AMPs) often act against multiple pathogen classes, making multi-label activity prediction a more realistic screening target than binary antimicrobial classification. The ESCAPE benchmark formalizes this setting, but leading approaches typically rely on multimodal, structure-conditioned deep models that are costly to train and tune. We show that a simple, sequence-only pipeline can match and surpass these methods by combining 330 interpretable sequence descriptors with TabPFN, a tabular foundation model that performs in-context prediction in a single forward pass without gradient-based training or hyperparameter search. On ESCAPE (82,359 peptides; five labels), a label-powerset TabPFN model achieves mAP-5 = 77.8%, improving on the previously best reported 72.1%. A probabilistic classifier chain is the first method to match or exceed the best published average precision on each of the five labels simultaneously. The gains persist under the prior state-of-the-art single-fold training protocol, indicating they are not a training-set-size artefact, and are largest for remote homologues (+11.2 points below 30% sequence identity). Ablations further show that predicted structure is unnecessary at inference and that performance is not driven by any single descriptor family: ten global physicochemical scalars recover 91% of full-feature performance. Finally, explicitly modelling label dependence yields targeted benefits for scarce activities and supports ranking which activity to assay next from partial positive evidence.",
+      "authors": [
+        "Raunak Kumar",
+        "Anuj Pal",
+        "Dhruvi Solanki",
+        "Parikshit Pareek",
+        "Juhi Singh",
+        "Jitin Singla"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "q-bio.BM"
+      ],
+      "published": "2026-08-31T06:50:09+00:00",
+      "link": "https://arxiv.org/pdf/2608.30337v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Multi-label antimicrobial peptide activity prediction is molecular bioactivity property prediction solved by a tabular foundation model",
+      "llm_evidence_cn": "将多标签抗菌肽活性预测作为分子生物活性属性预测，并使用表格基础模型完成",
+      "llm_evidence": "将多标签抗菌肽活性预测作为分子生物活性属性预测，并使用表格基础模型完成",
+      "canonical_evidence": "将多标签抗菌肽活性预测作为分子生物活性属性预测，并使用表格基础模型完成",
+      "llm_tldr_en": "A sequence-only TabPFN pipeline with interpretable descriptors matches or exceeds multimodal deep models on the ESCAPE multi-label AMP benchmark without gradient training or hyperparameter tuning.",
+      "llm_tldr_cn": "抗菌肽的多重活性预测更贴近真实筛选，但主流方法依赖昂贵多模态结构模型。该文证明仅用330个可解释序列描述符与TabPFN制表基础模型即可在ESCAPE基准上匹配甚至超越这些方法，且无需梯度训练或超参搜索。标签幂集TabPFN在八万多肽样本的多标签预测上效果显著。这说明简单的组成式上下文学习也能胜任分子级生物活性属性预测，为低成本分子性质预测提供新思路。",
+      "llm_tldr": "抗菌肽的多重活性预测更贴近真实筛选，但主流方法依赖昂贵多模态结构模型。该文证明仅用330个可解释序列描述符与TabPFN制表基础模型即可在ESCAPE基准上匹配甚至超越这些方法，且无需梯度训练或超参搜索。标签幂集TabPFN在八万多肽样本的多标签预测上效果显著。这说明简单的组成式上下文学习也能胜任分子级生物活性属性预测，为低成本分子性质预测提供新思路。",
+      "llm_tags": [
+        "query:smc"
+      ],
+      "matched_query_tag": "query:smc",
+      "matched_query_text": "molecular property prediction",
+      "matched_requirement_id": "req-15",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2608.25116v1",
+      "source": "arxiv",
+      "title": "GRAPE: Gradient Refinement and Progress-Aware Exploitation for Query-Efficient High-Dimensional Bayesian Optimization",
+      "abstract": "Optimizing expensive, high-dimensional black-box functions remains a central challenge in modern machine learning and scientific discovery. While local Bayesian optimization mitigates the curse of dimensionality, existing techniques often prioritize the probability of descent over the magnitude of progress. This leads to overly conservative steps that yield negligible improvement, wasting queries on directions that are nearly certain to descend but offer little decrease. We introduce Gradient Refinement and Progress-Aware Exploitation (GRAPE), a two-stage framework that first sharpens the local gradient posterior via a closed-form acquisition function, then selects update directions by maximizing the expected decrease conditional on descent. Theoretical analysis proves that this gradient refinement stage monotonically minimizes local uncertainty and that the progress-aware direction converges to true steepest descent as the posterior sharpens. Empirically, GRAPE demonstrates superior query efficiency across high-dimensional tasks: in black-box adversarial attacks, it achieves an average 5.4$\\times$ speedup over baselines, and on large language model prompt optimization tasks, it outperforms the second best method by a reduction of 3.8 log-units in the final average regret.",
+      "authors": [
+        "Richard Cornelius Suwandi",
+        "Feng Yin"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI",
+        "stat.ML"
+      ],
+      "published": "2026-08-25T20:12:12+00:00",
+      "link": "https://arxiv.org/pdf/2608.25116v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "General high-dimensional Bayesian optimization method usable for molecular optimization pipelines",
+      "llm_evidence_cn": "通用高维贝叶斯优化方法，可用于分子优化流程",
+      "llm_evidence": "通用高维贝叶斯优化方法，可用于分子优化流程",
+      "canonical_evidence": "通用高维贝叶斯优化方法，可用于分子优化流程",
+      "llm_tldr_en": "GRAPE is a two-stage high-dimensional Bayesian optimization framework that sharpens the gradient posterior and maximizes expected progress to improve query efficiency.",
+      "llm_tldr_cn": "昂贵高维黑箱函数优化是科学发现中的重要挑战，局部贝叶斯优化常因优先保证下降概率而步长保守、提升有限。作者提出GRAPE两阶段框架，先用闭式采集函数锐化局部梯度后验，再选择最大化期望下降量而非仅仅下降概率的更新方向，避免在无实质改善的方向上浪费查询。在高维优化问题中GRAPE能减少查询次数并保持稳健进展。虽然论文没有分子案例，但其方法可迁移到分子和材料的多目标性质优化。",
+      "llm_tldr": "昂贵高维黑箱函数优化是科学发现中的重要挑战，局部贝叶斯优化常因优先保证下降概率而步长保守、提升有限。作者提出GRAPE两阶段框架，先用闭式采集函数锐化局部梯度后验，再选择最大化期望下降量而非仅仅下降概率的更新方向，避免在无实质改善的方向上浪费查询。在高维优化问题中GRAPE能减少查询次数并保持稳健进展。虽然论文没有分子案例，但其方法可迁移到分子和材料的多目标性质优化。",
+      "llm_tags": [
+        "query:smc"
+      ],
+      "matched_query_tag": "query:smc",
+      "matched_query_text": "molecular optimization",
+      "matched_requirement_id": "req-13",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.26962v1",
+      "source": "arxiv",
+      "title": "Packora: Systematic Design for Generative Molecular Crystal Structure Prediction",
+      "abstract": "Molecular crystal structure prediction (CSP) is important in pharmaceuticals, agrochemicals, and organic electronics, where subtle differences in molecular conformation and packing can strongly affect material properties. We present Packora, a flow-based generative model for molecular CSP that jointly predicts atomic coordinates and the lattice from molecular graphs. Packora supports multi-component and organometallic crystals and can condition on any subset of molecular conformers, stereochemical labels, and space-group information within a single model. Inspired by the CCDC CSP blind test, we evaluate generation and ranking separately, using generation to isolate generator quality and ranking to measure end-to-end performance under a common relaxation and ranking pipeline. We also systematically study architecture, training, conditioning, inference, and scaling, identifying an effective design based on cacheable pairwise reasoning, training objective and numerical solver choices, conditioning dropout, and balanced scaling of pairwise and single representations. Packora outperforms the baselines on both structure generation and ranking benchmarks, achieving the best matched-budget coverage across all six generation benchmarks, as well as higher experimental-form recovery, lower experimental-form ranks, and faster convergence in ranking.",
+      "authors": [
+        "Nayoung Kim",
+        "Kiyoung Seong",
+        "Sungsoo Ahn"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cond-mat.mtrl-sci"
+      ],
+      "published": "2026-08-27T11:01:18+00:00",
+      "link": "https://arxiv.org/pdf/2608.26962v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Flow-based generative model producing full 3D molecular crystal structures (atomic coordinates and lattice) from molecular graphs",
+      "llm_evidence_cn": "基于流的生成模型从分子图联合生成三维晶体原子坐标与晶格，属于三维分子生成",
+      "llm_evidence": "基于流的生成模型从分子图联合生成三维晶体原子坐标与晶格，属于三维分子生成",
+      "canonical_evidence": "基于流的生成模型从分子图联合生成三维晶体原子坐标与晶格，属于三维分子生成",
+      "llm_tldr_en": "Packora is a flow-based generative model that outputs full molecular crystal structures, atomic coordinates and lattice, from molecular graphs, with flexible conditioning and separate generation and ranking evaluation.",
+      "llm_tldr_cn": "分子晶体结构预测对药物、农化和有机电子材料至关重要。Packora提出基于流的生成模型，从分子图联合预测原子坐标与晶格，支持多组分和有机金属晶体，并能以任意的分子构象、立体化学标签和空间群信息为条件。受CCDC盲测启发，该工作将生成与排序分开评估，以分别衡量生成器质量和端到端排序性能。它为三维分子或晶体结构的系统化生成提供了一种通用且可扩展的建模框架。",
+      "llm_tldr": "分子晶体结构预测对药物、农化和有机电子材料至关重要。Packora提出基于流的生成模型，从分子图联合预测原子坐标与晶格，支持多组分和有机金属晶体，并能以任意的分子构象、立体化学标签和空间群信息为条件。受CCDC盲测启发，该工作将生成与排序分开评估，以分别衡量生成器质量和端到端排序性能。它为三维分子或晶体结构的系统化生成提供了一种通用且可扩展的建模框架。",
+      "llm_tags": [
+        "query:smc"
+      ],
+      "matched_query_tag": "query:smc",
+      "matched_query_text": "3D molecular generation",
+      "matched_requirement_id": "req-12",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2609.00518v1",
+      "source": "arxiv",
+      "title": "Learning Task-Specific Antibody Representations via Function-Aware Masking",
+      "abstract": "Antibody-specific language models pretrained via masked language modeling (MLM) learn representations that are critical for downstream sequence design and property prediction tasks. Yet, the corruption process itself is rarely leveraged as a source of inductive bias during pretraining. While preferentially masking complementarity-determining regions (CDRs) improves binding-related predictions, antibodies possess diverse biological priors over a variety of functions. Herein, we introduce function-aware masking, a family of pretraining algorithms that align mask placement with specific functional priors (e.g., from IMGT annotations or structure predictions) to shape the learned representation space. We show that these specialist masking strategies significantly improve performance on their respective objectives, yielding up to a 14% gain on structure-related tasks and up to a 5.9x improvement on CDR-related tasks. To further improve performance across multiple functional axes, we develop hybrid masking strategies that integrate multiple priors, balancing reconstruction over binding, structural, and biophysical objectives. Our results demonstrate that informed mask placement provides a parameter-free mechanism for imposing functional inductive biases in antibody language model training.",
+      "authors": [
+        "Ayan Goel",
+        "Thomas A. Walton",
+        "Amirali Aghazadeh"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "q-bio.BM"
+      ],
+      "published": "2026-09-01T00:37:56+00:00",
+      "link": "https://arxiv.org/pdf/2609.00518v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Function-aware masking pretraining for task-specific antibody representations; directly relevant to foundation model pretraining and transfer learning",
+      "llm_evidence_cn": "面向抗体表示的功能感知掩码预训练，与基础模型预训练和迁移学习直接相关",
+      "llm_evidence": "面向抗体表示的功能感知掩码预训练，与基础模型预训练和迁移学习直接相关",
+      "canonical_evidence": "面向抗体表示的功能感知掩码预训练，与基础模型预训练和迁移学习直接相关",
+      "llm_tldr_en": "Function-aware masking aligns MLM mask placement with functional priors such as IMGT annotations or structure predictions, producing task-specific antibody representations that improve downstream sequence design and property prediction.",
+      "llm_tldr_cn": "抗体语言模型通常通过掩码语言建模预训练，但掩码过程本身很少被当作任务相关的归纳偏置。作者提出功能感知掩码预训练算法族，不再只优先掩码CDR区域，而是让掩码位置与IMGT注释、结构预测等不同功能先验对齐，从而塑造任务特异的抗体表示空间。实验表明此类特化掩码策略能显著改进下游抗体性质预测和序列设计任务。该方法为功能先验驱动的预训练提供了可迁移的通用设计范式，也可扩展到化学和其他生物分子基础模型。",
+      "llm_tldr": "抗体语言模型通常通过掩码语言建模预训练，但掩码过程本身很少被当作任务相关的归纳偏置。作者提出功能感知掩码预训练算法族，不再只优先掩码CDR区域，而是让掩码位置与IMGT注释、结构预测等不同功能先验对齐，从而塑造任务特异的抗体表示空间。实验表明此类特化掩码策略能显著改进下游抗体性质预测和序列设计任务。该方法为功能先验驱动的预训练提供了可迁移的通用设计范式，也可扩展到化学和其他生物分子基础模型。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "chemical foundation model pre-training and transfer learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2608.26016v1",
+      "source": "arxiv",
+      "title": "Bayesian Optimization for Self-Driving Materials Laboratories: From Algorithms to Physics-Informed Workflows",
+      "abstract": "Self-driving laboratories (SDLs) are transforming materials research by closing the loop among synthesis, characterization, data analysis and experimental decision making. Bayesian optimization (BO) is a decision engine for these loops because it can select experiments from scarce and noisy data while balancing exploitation and exploration. Yet real materials campaigns often depart from the standard black-box setting, involving failed or missing experiments, noise and drift, mixed variables, constraints, multiple objectives, variable cost and fidelity, transfer from historical data, batch or asynchronous operation, and prior physics knowledge. This review presents BO for materials SDLs through the lens of these practical challenges. We summarize Gaussian-process-based BO and the formulation of materials goals as quantitative objectives, then discuss major choices in surrogate modelling and acquisition. Particular emphasis is placed on physics-informed Bayesian optimization (PIBO), in which domain knowledge enters through representations, priors, kernels, acquisition functions, and constraints. We survey achievements enabled by BO and related active-learning approaches across semiconductors, catalysis, chemical reactions, batteries, alloys, functional materials and quantum materials, highlighting advances beyond parameter optimization, including new materials and synthesis routes, improved functional performance, and reusable scientific knowledge. We conclude by outlining open problems for BO-driven materials SDLs, including nonstationarity, multimodal observations, adaptive problem formulation, and scientific reasoning by humans, large language models and research agents. Addressing these challenges may advance SDLs beyond efficient optimization toward interpretable and knowledge-generating experimentation.",
+      "authors": [
+        "Yuki K. Wakabayashi",
+        "Takuma Otsuka"
+      ],
+      "primary_category": "cond-mat.mtrl-sci",
+      "categories": [
+        "cond-mat.mtrl-sci"
+      ],
+      "published": "2026-08-26T16:59:49+00:00",
+      "link": "https://arxiv.org/pdf/2608.26016v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Bayesian optimization review covers multi-objective, constrained, transferable workloads transferable to molecular optimization",
+      "llm_evidence_cn": "贝叶斯优化处理多目标、约束与迁移等场景，方法可用于分子优化与反应条件优化",
+      "llm_evidence": "贝叶斯优化处理多目标、约束与迁移等场景，方法可用于分子优化与反应条件优化",
+      "canonical_evidence": "贝叶斯优化处理多目标、约束与迁移等场景，方法可用于分子优化与反应条件优化",
+      "llm_tldr_en": "A review of Bayesian optimization as a decision engine in self-driving materials laboratories, covering multi-objective, constrained, transferable, batch, and physics-informed workflows.",
+      "llm_tldr_cn": "自驱动实验室通过闭环合成、表征和实验决策提升材料研发效率，贝叶斯优化(BO)是其中关键的实验选择引擎。该综述聚焦真实材料实验中常见的失败或缺失数据、噪声漂移、混合变量、约束、多目标、成本与保真度差异、历史数据迁移、批量和异步操作以及先验物理知识等非理想条件，总结相应BO算法与物理信息工作流。尽管面向材料体系，其多目标优化和迁移学习框架对分子优化中的性质导向实验设计或反应条件优化同样有借鉴价值。",
+      "llm_tldr": "自驱动实验室通过闭环合成、表征和实验决策提升材料研发效率，贝叶斯优化(BO)是其中关键的实验选择引擎。该综述聚焦真实材料实验中常见的失败或缺失数据、噪声漂移、混合变量、约束、多目标、成本与保真度差异、历史数据迁移、批量和异步操作以及先验物理知识等非理想条件，总结相应BO算法与物理信息工作流。尽管面向材料体系，其多目标优化和迁移学习框架对分子优化中的性质导向实验设计或反应条件优化同样有借鉴价值。",
+      "llm_tags": [
+        "query:smc"
+      ],
+      "matched_query_tag": "query:smc",
+      "matched_query_text": "molecular optimization",
+      "matched_requirement_id": "req-13",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
 }

@@ -1,0 +1,1746 @@
+Title: Language-Informed Flow Matching for Trend-Guided Structure-Based 3D Molecular Generation
+
+URL Source: https://arxiv.org/pdf/2608.31009v1
+
+Published Time: Tue, 01 Sep 2026 03:11:37 GMT
+
+Number of Pages: 39
+
+Markdown Content:
+## Language-Informed Flow Matching for Trend-Guided Structure-Based 3D Molecular Generation 
+
+Tianyu Gao 1,* Zhikai Su 1,* Jiashu Li 1 Wenjun Gao 1
+
+Zichuan Ying 2 Zhe Zhao 3 Fei Zhang 1,† Ye Wei 1,† 1City University of Hong Kong 2The University of Hong Kong 3Stanford University   
+
+> *Equal contribution. †Corresponding authors.
+> feizhang010518@gmail.com ye.wei@cityu.edu.hk
+
+Abstract 
+
+Structure-based drug design (SBDD) requires ligands that satisfy both 3D target affinity and 1D chemical validity. Existing controllable gen-eration methods often rely on task-specific fine-tuning or externally imposed sampling-time guidance, adding cost and potentially conflict-ing with evolving 3D geometric constraints. We propose LiFT, a language-informed cross-modal framework built on Flow Matching for trend-guided 3D molecular generation across both de novo design and scaffold hopping. LiFT uses a “Sense-Evolve-Assemble” agent to generate target-aware SMILES as interme-diate chemical conditions, from which a pre-trained chemical foundation model extracts continuous semantic priors. These priors are integrated into geometric generation through a lightweight semantic projector with zero-initialized adaptive normalization for stable cross-modal conditioning. We further intro-duce a Self-Conditioned Decoupled Router (SCDR), which modulates the velocity field according to intermediate structural states dur-ing ODE integration. Experiments on Cross-Docked2020 show that LiFT achieves com-petitive distribution matching while improv-ing medicinal chemistry metrics and maintain-ing competitive structural validity under task-steering settings without additional generator fine-tuning. Our results suggest that language-derived chemical priors provide effective trend-level guidance for 3D molecular generation. Code and released artifacts are available at 
+
+https://github.com/kasurl/LiFT .
+
+1 Introduction 
+
+Structure-based drug design (SBDD) accelerates therapeutic discovery by designing small-molecule ligands that selectively bind disease-associated pro-tein targets (Anderson, 2003; Zhang et al., 2024b). Computationally, this objective requires simultane-ously satisfying two constraints: 3D physicochemi-cal complementarity within the binding pocket and 
+
+1D chemical validity (Buttenschoen et al., 2024; Lin et al., 2025). Over-optimizing geometric affin-ity at the expense of chemical viability, or vice versa, often produces non-synthesizable or inactive molecules (Jiang et al., 2025). Consequently, a cen-tral challenge in SBDD is balancing 3D spatial in-teractions with valid chemical structures across the vast molecular space (Walters and Murcko, 2020). Purely 3D SBDD models capture target-pocket geometry, but discrete chemical constraints such as valency, ring topology, and medicinal-chemistry preferences are often only implicit. Conversely, LLM-based molecular generators can exploit chemical knowledge from SMILES and natural-language descriptions, but standalone 1D propos-als cannot ensure target-specific 3D compatibility. Recent 1D–3D molecular generators such as Liu et al. (2025) and Chen et al. (2025) demonstrate the promise of integrating chemical priors with geomet-ric generation, yet they mainly transfer molecular-string representations into diffusion-style genera-tors rather than addressing how human task prefer-ences, pocket context, and property trade-offs can be translated into semantic conditions for pocket-aware 3D generation. They are also largely pocket-free, and their cross-modal conditioning is typically fixed rather than adapted to the evolving 3D state. In SBDD, such semantic–geometric mismatch can induce steric conflicts and reduce structural validity, motivating state-aware semantic guidance during generation. To address these limitations, we propose LiFT, a language-informed cross-modal framework built on flow matching for trend-guided 3D target-aware molecular generation. LiFT asks whether molec-ular strings generated from human-readable de-sign preferences can serve as reusable seman-arXiv:2608.31009v1 [cs.LG] 31 Aug 2026 tic priors for downstream geometric generation, rather than merely acting as final molecule pro-posals. A “Sense-Evolve-Assemble” LLM agent with Pocket-of-Thought reasoning converts pocket information, task preferences, and optional refer-ences into target-aware SMILES conditions. Afrozen chemical foundation encoder then maps these conditions into dense semantic latents, which are integrated into an ODE-governed flow field through zero-initialized lightweight modulation. To coordinate semantic trends with evolving spa-tial configurations, we further introduce the Self-Conditioned Decoupled Router (SCDR), which adapts semantic influence according to invariant summaries of intermediate structural states while preserving the SO (3) -equivariant geometry of the pocket-centered backbone (Satorras et al., 2021). This design enables property-aware steering across 
+
+de novo design and reference-guided scaffold hop-ping without additional generator fine-tuning. Extensive experiments on CrossDocked2020 show that LiFT provides effective trend-level guidance while maintaining competitive distribu-tion matching and structural validity, offering a lightweight approach to language-informed SBDD generation. Our main contributions are summa-rized as follows: • We introduce a language-informed 1D–3D conditioning pathway for target-aware SBDD, translating human-readable design prefer-ences and pocket context into reusable SMILES-derived semantic priors. These pri-ors are aligned with downstream geometric generation through state-aware cross-modal modulation, enabling property-aware trend guidance without treating LLM outputs as fi-nal molecules. • We introduce the Self-Conditioned Decoupled Router (SCDR), coupled with zero-initialized lightweight modulation, to adapt semantic influence according to intermediate spatial states and coordinate language-derived chem-ical priors with geometric constraints along the integration trajectory. • We design an evaluation protocol that jointly measures distribution matching, property-oriented generation, and industrial chemical filter compliance. Under this protocol, LiFT shows competitive distribution matching and effective trend steering across both de novo de-sign and scaffold hopping without additional generator fine-tuning. 
+
+2 Related Work 
+
+2.1 Generative Models in Structure-Based Drug Design 
+
+Structure-based drug design (SBDD) aims to gen-erate ligands that are compatible with 3D protein pockets in both geometry and chemistry. Recent 3D generative models directly operate on atomic coordinates, including spatial autoregressive mod-els (Luo et al., 2021; Peng et al., 2022), diffusion-based methods (Guan et al., 2023a; Huang et al., 2024; Guan et al., 2023b; Schneuing et al., 2024), and continuous-time Flow Matching frameworks (Zhang et al., 2024a; Dunn and Koes, 2026; Zhou et al., 2025; Schneuing et al., 2025). These ap-proaches are well suited for modeling pocket-conditioned spatial configurations, but discrete chemical constraints such as valency, ring patterns, and medicinal-chemistry preferences are not al-ways explicit in continuous coordinate generation. A complementary line of work treats molecules as 1D sequences and applies language-modeling architectures to SMILES or related representations (Bagal et al., 2022). Such models naturally capture chemical syntax and topological regularities, but their connection to target-specific 3D pocket ge-ometry is less direct. Target-aware sequence mod-els have been explored for drug design (Wu et al., 2024), while recent methods such as ELILLM fur-ther investigate the use of language-model represen-tations for structure-based molecular design (Hu et al., 2026). Our work follows this broader di-rection but treats language-derived molecular rep-resentations as intermediate semantic conditions for native pocket-conditioned 3D generation, with state-aware modulation along the flow trajectory. 
+
+2.2 Cross-Modal Conditioning and State-Aware Modulation 
+
+Cross-modal conditioning is commonly used to in-corporate external information into generative mod-els. Existing approaches include cross-attention or graph-language interaction modules (Liu et al., 2023), as well as FiLM- or AdaLN-style modu-lation in diffusion and transformer architectures (Perez et al., 2018; Peebles and Xie, 2023). Recent 1D–3D molecular generation methods further use learned projection modules to connect molecular representations with 3D generation processes (Liu et al., 2025; Chen et al., 2025). Our work follows this direction, but uses zero-initialized lightweight modulation (Zhu et al., 2026) to integrate SMILES-derived priors into the flow model with limited architectural overhead. Frozen chemical foundation models provide a useful interface for this conditioning by encod-ing SMILES into continuous representations that capture chemical syntax and property-related regu-larities from large molecular corpora (Ross et al., 2022; Soares et al., 2025a,b). We use these rep-resentations as soft chemical priors for 3D gener-ation, rather than exact structural targets. Unlike inference-time guidance methods that modify sam-pling or optimization trajectories with external ob-jectives (Choi et al., 2025; Jin et al., 2026; Guo et al., 2025), our conditioning signal is incorpo-rated into the learned velocity field. Because a fixed semantic signal may not be equally useful throughout ODE generation, our framework uses state-aware modulation to adapt the influence of SMILES-derived priors according to intermediate ligand states while preserving the geometric backbone of the 3D flow model. 
+
+3 Methodology 
+
+We propose LiFT, a language-conditioned frame-work for pocket-conditioned 3D molecular gener-ation (Figure 1). LiFT builds on continuous-time Flow Matching (Schneuing et al., 2025), learning a vector field that transports prior noise toward the empirical ligand distribution conditioned on a 3D protein pocket. It consists of four stages: (i) target-aware SMILES generation with the Sense-Evolve-Assemble LLM Agent (§3.1); (ii) semantic latent ex-traction from generated SMILES (§3.2); (iii) scalar-domain conditioning through a lightweight seman-tic projector (§3.3); and (iv) state-aware velocity-field modulation with the Self-Conditioned Decou-pled Router (§3.4). Detailed flow-matching deriva-tions are provided in Appendix G. 
+
+3.1 Sense-Evolve-Assemble LLM Agent 
+
+To make language conditioning explicit and chem-ically grounded, we introduce a Sense-Evolve-Assemble agent based on a Pocket-of-Thought (PoT) prompting strategy. Instead of directly decod-ing a molecule from the protein pocket, the agent first constructs a structured pocket profile, then de-rives task-specific SMILES candidates, and finally sanitizes the generated sequence before passing it to the 3D generator. In the Sense phase, the agent summarizes the local microenvironment of the pocket P. It de-fines the generative region with a spatial bounding box B ∈ R3×2 and applies Principal Component Analysis (PCA) to pocket coordinates to estimate the major geometric axes. We further restrict the interaction analysis to an 8.0 Å shell around the pocket centroid, within which the agent extracts key physicochemical cues, including hydrophobic residues, acidic and basic residues, and metal coor-dination centers such as ZN and MG. During the Evolve phase, the agent performs task-specific ligand proposal under either reference-free ( de novo ) or reference-guided ( scaffold hop-ping ) settings. Guided by PoT, it first produces a structured reasoning path rather than a raw molecule, relating candidate substructures such as rings or heteroatoms to nearby pocket features and assessing whether the proposed molecular topol-ogy is compatible with the pocket geometry. The prompt also incorporates medicinal chemistry pref-erences, allowing different generation modes to emphasize distribution matching, binding-oriented design, drug-likeness, or balanced property pro-files. In the Assemble phase, the proposed compo-nents are serialized into a raw SMILES sequence 
+
+Sraw . To reduce hallucinated or invalid outputs, we apply deterministic knowledge-guided decoding with cheminformatics checks for syntax errors, un-matched ring closures, and valency violations. The repaired and sanitized sequence Ssmiles is then used as the 1D semantic condition for the downstream continuous 3D flow matching process. 
+
+3.2 Semantic Latent Extraction for Cross-Modal Priming 
+
+To connect discrete SMILES conditions with con-tinuous geometric generation, we encode the agent-generated Ssmiles using SMI-TED, a chemical foundation model pre-trained on 91M molecules. The encoder maps the 1D molecular syntax and associated chemical context into a global semantic vector: 
+
+zsem = Encoder SMI-TED (Ssmiles ) (1) We use zsem as the cross-modal prior for the downstream flow model. Compared with discrete token injection, this latent representation provides a compact continuous interface for conditioning the Pocket Condition 
+
+> (3D Structure)
+
+Language Condition   
+
+> (1D Structure)
+> Target Physicochemical
+> Specifications
+> Optional: Reference Molecule Generation
+> Optional: Task Optimization
+
+Sense-Evolve-Assemble Agent   
+
+> Sense Phase
+> Spatial Range
+> Analysis
+> Extract principal
+> axis eigenvalues
+> Residues and
+> Metal Coordination
+> Centers
+> Evolve Phase
+> Analysis Result
+> Pocket-of-Thought
+> Topology Thinking
+> (Optional)
+> Reference
+> SMILES
+> Generation
+> Strategy/Partial
+> Mapping
+> Assemble Phase
+> Policy -based
+> Assembly
+> Task
+> Optimization
+> Feedback -
+> based Decoding
+> {COc 1cc 2ncnc(Nc 3
+> ccc(F)c(Cl)c 3)c 2cc 1
+> OCCCN 1CCOCC 1}
+> …… ……
+> Molecular Tokens Encoder
+> LLM Encoder
+> LLM Decoder
+> Bidirectional
+> Latent
+> Space Z
+> Extract Hidden Spaces
+> Generated
+> SMILES
+> Topological Embedding Engine
+> SiLU + MLP
+> Lightweight Projector
+
+Cross-modal SBDD Framework 
+
+Flow Matching Backbone       
+
+> Scale α Shift β Scale α Shift β Scale α Shift β
+> Initial
+> Molecule
+> State
+> GVP
+> Conv
+> Layer
+> GVP
+> FFN
+> Layer
+> AdaLN
+> (α,β)
+> SCDR
+> State
+> Module
+> AdaLN
+> (α,β)
+> ×5Layer
+> Zero-Init
+> SCDR-Scalar control
+> Self-Conditioned Decoupled Router
+> Routing Signal Source 1
+> Routing Signal Source 2
+> State Aware
+> Flow Matching Process
+> Normal/
+> Balance
+> /Chem./
+> Affinity
+
+Figure 1: Overview of the LiFT Framework. The left panel details the language-conditioned semantic pathway, utilizing the PoT agent, SMILES sanitization, and a foundation encoder to project sequences into dense priors. The right panel illustrates the cross-modal generation framework, injecting these semantic priors into an ODE-governed vector field with SCDR providing state-aware dynamic velocity modulation during flow matching. 
+
+3D velocity field with SMILES-derived chemical information. Because SMI-TED is pre-trained on large molecular corpora, zsem carries pharmaco-logical priors that can bias geometric generation toward property-oriented trends without fine-tuning the generator. 
+
+3.3 Scalar Priming via Lightweight Semantic Projector 
+
+SBDD requires combining 1D symbolic descriptors (zsem ) with 3D geometric configurations. We repre-sent each ligand state as a decoupled pair of invari-ant scalar features and proper-rotation-equivariant vector features: 
+
+x = ( s, V) ∈ RNL×ds × RNL×dv ×3 (2) Within this centered frame, SO (3) rotations are the geometric transformations preserved by the re-ported reflection-sensitive backbone. We therefore apply cross-modal priming only to the scalar do-main s. This design keeps the equivariant vectors 
+
+V unchanged by the non-equivariant 1D signal, al-lowing semantic conditioning to enter the model without disrupting the geometric update rules. A lightweight projector Pϕ maps the semantic latent into affine modulation parameters: 
+
+γ, β = Pϕ(zsem ) = Wp · σ(zsem ) + bp (3) where γ, β ∈ Rds . We employ a zero-initialization strategy ( Wp, bp = 0), so the projec-tor initially recovers the original scalar normaliza-tion path and introduces semantic conditioning only through learned deviations. Let AdaLN γ,β (s) = 
+
+LN (s)⊙(1+tanh( γ))+ β. The primed node state is then defined as: 
+
+sbase = AdaLN γ,β (s), Vbase = V. (4) Thus, sbase carries SMILES-derived priors before state-aware refinement by SCDR. 
+
+3.4 Self-Conditioned Decoupled Router (SCDR) 
+
+To coordinate semantic conditioning with geomet-ric generation, we propose the Self-Conditioned Decoupled Router (SCDR), a cross-modal routing module that adjusts semantic influence according to intermediate 3D structures, thereby reducing conflicts between 1D chemical priors and pocket geometry. During ODE integration, SCDR summarizes the evolving ligand state through invariant structural statistics. A DeepSets encoder projects node fea-tures into SO (3) -invariant latents znode = ϕ([ s ∥∥V∥]) , which are aggregated by a statistical read-out operator Ψstat :
+
+zstat =  E(znode ) ∥ max( znode ) ∥
+
+σ(znode ) ∥ log( N )  (5) where N is the atom count. Combining mean, max-imum, dispersion, and scale statistics, zstat pro-Agent of Sense     
+
+> Analyze Within an8.0 Ålocal
+> interaction shell
+> Steric Confinement
+> Net Charge
+> State
+> Metal Coordination
+> Acidic Anchors
+> Basic Anchors
+> Aromatic Anchors
+> PCA Describes
+> Geometric
+> Topology
+> Spatial -Based
+> Heteronuclear
+> Screening
+> Local spatial
+> shell distance
+> matrix
+
+Agent of Evolve 
+
+> Reference SMILES
+> Scaffold -Guided
+> Evolution
+> De Novo
+> Generation
+> External
+> Knowledge
+> Only
+
+Pocket -of -Thought 
+
+> Anchor Spatial Strategy
+> Interaction Mapping
+> Macroscopic Topology
+> and Geometric
+> Morphology Alignment
+
+Agent of Assemble  
+
+> Chemistry and Safety Generation
+> High-
+> affinity Generation
+> Balanced Target Generation
+> Distribution Matching
+> Generation
+> Task -Selection
+> Dual -Track Regular
+> Expression Parsing
+> COc1cc(Nc2ncnc3ccccc23)ccc1F
+> O=C 1C=CC(=O)c 2ccccc 12
+> O=n1ccccc1
+> Closed -loop Syntax
+> Checking
+> Feedback-guided Re-encoding
+> Knowledge -Based
+> Regeneration
+> Arbitrary
+> SOTA LLMs
+> GPT -Series
+> Claude -Series
+> Deepseek -Series
+
+Figure 2: Workflow of the “Sense-Evolve-Assemble” LLM agent. (Top) The Sense phase extracts spatial geometry and physicochemical anchors within an 8.0 Å pocket interaction shell to build the target profile. (Bottom Left) The 
+
+Evolve phase executes Pocket-of-Thought (PoT) reasoning, leveraging text specifications or reference structures for both de novo design and scaffold hopping. (Bottom Right) The Assemble phase performs rule-based sequence serialization, employing deterministic cheminformatics verification to enforce 1D topological and chemical validity. 
+
+vides a compact permutation-invariant summary of the current ligand configuration. To integrate structural context with semantic con-ditioning, both sources are projected into a shared latent space, yielding ˆhstruct and ˆhcond , where 
+
+ˆhcond encodes the semantic prior zsem and time embedding temb . Instead of directly adding the two representations, SCDR uses a dual-gated fu-sion mechanism: 
+
+gt = Sigmoid (MLP t(temb )) (6) 
+
+gc = Sigmoid (MLP c([ ˆhcond ∥ ˆhstruct ])) (7) The temporal gate gt controls how much structural feedback is used at different ODE stages, while the context gate gc modulates the interaction be-tween semantic and structural representations. The unified router latent h ∈ Rdh is obtained by gated residual fusion: 
+
+h = LayerNorm  MLP f use (ˆhcond +gt·gc·ˆhstruct )
+
+(8) Conditioned on h, the router branches into two pathways. In the State Path , the graph-level latent 
+
+hb(i) is broadcast to atom i to infer a bounded scalar gate αsstate,i ∈ Rds :
+
+αsstate,i = 1 + w(p)bas (Wstate hb(i)) (9) 
+
+sout,i = sbase,i + LN (si) ⊙ (αsstate,i − 1)
+
+(10) where Wstate ∈ Rds×dh is a learnable projec-tion and ba(z) = az/(1 + |z|). Setting the state scale as = 0 .5 bounds the gate within [0 .5, 1.5] 
+
+for stable calibration. The vector state bypasses this modulation ( Vout,i = Vi), preserving the pocket-centered SO (3) equivariance of the geo-metric backbone. Simultaneously, the Update Path modulates the geometric feed-forward network F = ( Fs, Fv) to regulate residual updates during generation. For each channel k ∈ { s, v }, it infers decoupled scal-ing factors gkup,i :
+
+gkup,i = 1 + w(p)bau (Wkup hb(i)) (11) 
+
+xnext,i = xout,i + gup,i ⊙ F (xout,i ) (12) where Wkup are the corresponding learnable weights, and gup,i = ( gsup,i , gvup,i ). A broader up-date scale au = 0 .9 permits residual scaling within Scalar     
+
+> State
+> Vector
+> State
+> SMILES
+> Embedding
+> Time
+> Embedding
+> Initial State
+> Lightweight
+> Projector 1
+> AdaLN -Zero S’
+> V’ Layer -norm
+> Structure-aware Operator
+> Mean
+> Standard
+> Deviation
+> Lightweight
+> Projector 3
+> Concat Lightweight
+> Projector 2
+> Routing Hub
+> Routing
+> Encoder
+> Warm-up
+> Scaling
+> Bounded
+> Scaling
+> State
+> Calibration
+> Gate
+> Scalar
+> Update
+> Gate
+> Vector
+> Update
+> Gate
+> Tanh(α) \β
+> Updated
+> State
+> Norm
+> Modulation
+> Final
+> State
+> Geometry
+> Update
+> Scaling
+> Deep
+> -Sets
+> Node
+> Read
+> Maximum
+> Log(Atom
+> Count)
+> Concat
+> Layer
+> Norm
+> Identity
+> Time Gate
+> Encoding
+> Conflict Gate
+> Encoding
+> LayerNorm
+> Identity
+
+Figure 3: Detailed architecture of the Self-Conditioned Decoupled Router (SCDR). Temporal/SMILES priors and intermediate geometric states ( S′, V ′) are contextualized and aggregated by the Structure-aware Operator 
+
+through a multi-scale DeepSets node readout. The Routing Module then decodes the fused representation into three decoupled pathways: the State Calibration Gate (αs
+
+> state
+
+), the Scalar Update Gate (gs
+
+> up
+
+), and the Vector Update Gate (gv
+
+> up
+
+) for downstream geometric update scaling. 
+
+[0 .1, 1.9] . By separating scalar state calibration from residual update modulation, SCDR enables semantic priors to interact with intermediate 3D structural states while maintaining equivariant geo-metric updates. 
+
+4 Experiments 
+
+In this section, we evaluate LiFT from two com-plementary perspectives: distribution matching fi-delity and property-oriented generation. We report distribution matching in Sec. 4.2, property-oriented results in Sec. 4.3, and ablation studies in Sec. 4.4. Extended analyses of language-derived conditions are provided in Appendix A and B, while imple-mentation details, extended metrics, and qualitative cases are provided in Appendix C, Appendix E, and Appendix F, respectively. 
+
+4.1 Experimental Setup Datasets and Baselines. We train on the refined CrossDocked2020 dataset (Francoeur et al., 2020) (100 K complexes) and compare with autoregres-sive models (Peng et al., 2022; Luo et al., 2021), 3D diffusion methods (Guan et al., 2023a,b; Huang et al., 2024), flow-matching frameworks (Schneu-ing et al., 2025; Zhou et al., 2025), and LLM-based SBDD pipelines (Wu et al., 2024; Hu et al., 2026). 
+
+Implementation Details. Our framework uses a 5-layer heterogeneous GVP-GNN (Jing et al., 2021) with a frozen SMI-TED encoder (Soares et al., 2025b), trained by continuous flow matching with T = 500 ODE steps. Hardware, inference speed, and hyperparameters are provided in Ap-pendix C.4. 
+
+Evaluation Metrics. We evaluate 1D pharma-cological/topological properties (QED, SA, LogP, and ChEMBL ring frequencies), 3D binding and validity (Vina/Gnina and PoseBusters), and filter compliance (REOS and RDKit alerts). For distri-bution matching, Wasserstein Distance (WD) is computed against the empirical ligand distribution from the 100K training complexes. Metric details are provided in Appendix C.3. 
+
+Information Access. Reference-free variants use only pocket-derived textual specifications and task preferences, without access to ground-truth lig-and SMILES, graphs, coordinates, docking poses, or ligand-derived labels. Reference-guided vari-ants additionally use an available ligand SMILES only as a scaffold-hopping anchor, not as an eval-uation target. Property-oriented variants change only inference-time task instructions after training the base 3D generator, without additional generator fine-tuning or external guidance models. 
+
+4.2 Comprehensive Distribution Matching and Generalization 
+
+To evaluate distribution matching, we compare gen-erated molecules against the empirical ligand distri-bution estimated from the 100K CrossDocked2020 training complexes. We report reference-free and reference-guided variants: Ligand-Ref Em-bedding directly encodes the available reference SMILES, whereas Norm No-Ref and Norm Ref 
+
+use distribution-oriented LLM prompting without and with a ligand reference. We also include two representative property-oriented variants, Balanced Ref and Vina No-Ref , to examine reference-guided scaffold hopping and de novo design without addi-tional 3D generator fine-tuning. Although LiFT is not specifically optimized for Table 1: Comprehensive distribution matching benchmark on CrossDocked2020. All metrics represent the Wasser-stein Distance (WD ↓) between generated molecular-property distributions and the empirical ligand distribution estimated from the 100K training complexes. The evaluation is rigorously divided into Binding Efficiency (Vina, Gnina), Medicinal Chemistry limits (QED, SA, LogP, Rotatable Bonds), and Topological Ring Systems (minimum ring frequencies > 0, > 10 , > 100 ). The best results are highlighted in bold , the second best are underlined, and the third best are marked with a dagger ( †).                                                                                                                                                         
+
+> Method Binding Eff. (WD ↓)MedChem Properties (WD ↓)Topological Rings (WD ↓)
+> Vina Gnina QED SA LogP Rot. Bonds >0>10 >100
+> Autoregressive Models
+> AR (Luo et al., 2021) 0.032 †0.020 0.036 1.066 1.389 1.370 0.429 0.420 0.402 Pocket2Mol (Peng et al., 2022) 0.047 0.023 0.057 0.127 0.737 3.087 0.320 0.316 0.300
+> 3D Diffusion Architectures
+> TargetDiff (Guan et al., 2023a) 0.035 0.031 0.054 1.513 0.497 †0.355 †0.488 0.504 0.498 DecompDiff (Guan et al., 2023b) 0.112 0.070 0.080 1.307 0.643 2.421 0.343 0.355 0.336 BindDM (Huang et al., 2024) 0.018 0.026 0.025 †1.559 0.648 0.723 0.522 0.532 0.533
+> Flow-Matching Frameworks
+> PAFlow (Zhou et al., 2025) 0.053 0.022 †0.050 1.664 2.462 1.392 0.608 0.623 0.602 DrugFlow (Schneuing et al., 2025) 0.042 0.024 0.023 0.243 †0.475 0.233 0.139 0.127 0.098
+> LLM-based SBDD Pipelines
+> TamGen (Wu et al., 2024) 0.376 0.186 0.076 4.303 0.945 5.149 0.028 †0.008 0.047 †
+> ELILLM-Diff (Hu et al., 2026) 0.377 0.190 0.048 5.341 3.424 1.307 0.521 0.540 0.527 ELILLM-Rand (Hu et al., 2026) 0.376 0.184 0.074 4.888 2.152 2.153 0.382 0.414 0.406
+> LiFT Variants
+> LiFT (Ligand-Ref Embedding) 0.034 0.020 0.054 0.437 0.954 0.409 0.260 0.244 0.207 LiFT (Norm No-Ref) 0.056 0.040 0.203 0.538 1.221 1.012 0.027 0.020 †0.010
+> LiFT (Norm Ref) 0.041 0.029 0.083 0.232 0.374 0.624 0.162 0.163 0.145
+> LiFT (Balanced Ref) 0.044 0.027 0.020 0.416 0.762 0.229 0.192 0.185 0.165
+> LiFT (Vina No-Ref) 0.031 0.019 0.197 0.568 1.104 1.400 0.008 0.004 0.028
+
+distribution matching, it achieves competitive WD performance across key metrics. Notably, No-Reference variants perform strongly in binding efficiency and topological ring distributions, sur-passing the Ligand-Ref variant on several metrics. Their higher WD on QED and SA reflects a dis-tributional shift rather than uniform degradation: generated molecules show improved pharmacolog-ical profiles relative to training-set ligands, which naturally moves them away from the empirical ref-erence distribution, as indicated in Table 2. 
+
+4.3 Property-Oriented Generation without Additional Generator Fine-Tuning 
+
+Moving beyond distribution matching, we evalu-ate property-oriented generation in Table 2. No-Reference variants generally outperform their Refer-ence counterparts on core medicinal-chemistry and topological metrics, suggesting that strict anchor-ing to empirical ligands can constrain language-derived priors, whereas reference-free prompting allows exploration of alternative valid chemical re-gions. Accordingly, No-Reference configurations improve QED up to 0.757 and SA down to 2.659, while maintaining strong ring-frequency alignment (78 .86% for rings > 10 ), filter compliance (RD-Kit/REOS > 71% ), and competitive PoseBusters validity (up to 73 .56% ). Detailed subindicators are provided in Appendix E. Task-specific prompts further induce directional property shifts: Vina-oriented instructions bias gen-eration toward higher binding affinity, whereas QED-centric instructions improve drug-likeness. Rather than deterministic optimization, this seman-tic conditioning acts as a trend-guided prior, with text specifications corresponding to downstream empirical scores as analyzed in Appendix B. Over-all, LiFT improves medicinal-chemistry profiles and filter compliance while preserving competitive binding and structural-validity indicators, suggest-ing a practical trade-off between language-derived property steering and 3D pocket compatibility. 
+
+4.4 Ablation Studies and Diagnostic Analyses Structural Module Ablation. Table 3 evalu-ates the main conditioning modules. The Ligand-Table 2: Property-oriented generation without additional generator fine-tuning on CrossDocked2020. Binding efficiency metrics (Gnina ↑, Vina ↓) are reported as absolute means. MedChem metrics (QED ↑, SA ↓) reflect the mean molecular properties, and topological/safety filters (Rings ↑, PoseB./RDKit/REOS ↑) are reported as pass rates (%). Best results are highlighted in bold , second best underlined, third best †.
+
+Category Method Binding Aff. MedChem Means Rings Freq (%) ↑ Filters (%) ↑
+
+Gnina ↑ Vina ↓ QED ↑ SA ↓ >0 >10 >100 RDKit REOS PoseB. 3D-based Models AR (Luo et al., 2021) 0.295 -0.414 † 0.509 4.289 40.99 36.48 31.09 52.69 43.17 59.86 PAFlow (Zhou et al., 2025) 0.262 -0.429 0.491 4.889 23.02 16.20 10.99 75.55 58.28 14.68 BindDM (Huang et al., 2024) 0.249 -0.362 0.508 4.784 31.68 25.31 17.98 69.81 56.83 31.93 DecompDiff (Guan et al., 2023b) 0.205 -0.267 0.454 4.532 49.58 43.01 37.60 60.27 44.62 54.92 TargetDiff (Guan et al., 2023a) 0.244 -0.344 0.480 4.738 35.08 28.07 21.41 65.19 53.17 51.28 DrugFlow (Schneuing et al., 2025) 0.252 -0.338 0.553 3.43 69.97 65.80 61.41 75.86 64.84 78.45 
+
+Pocket2Mol (Peng et al., 2022) 0.297 -0.425 0.573 3.198 51.83 46.90 41.22 83.46 65.95 72.02 LLM-based Models TamGen (Wu et al., 2024) 0.089 -0.003 0.460 7.528 81.02 † 37.08 66.50 37.08 57.75 5.64 ELILLM-Diff (Hu et al., 2026) 0.085 -0.002 0.487 8.567 31.78 24.50 18.53 22.62 71.31 † 3.60 ELILLM-Rand (Hu et al., 2026) 0.091 -0.003 0.460 8.113 45.66 37.06 30.67 27.97 65.39 4.14 LiFT Variants Ligand-Ref Embedding 0.263 † -0.352 0.480 3.660 57.88 54.07 50.54 59.69 47.14 71.74 
+
+LiFT (QED-Reference) 0.242 -0.329 0.521 3.694 63.90 59.06 54.20 60.20 48.62 67.17 
+
+LiFT (Vina-Reference) 0.243 -0.337 0.515 3.757 62.55 57.73 53.28 61.37 49.90 68.34 
+
+LiFT (Bal-Reference) 0.247 -0.335 0.533 3.640 64.65 59.96 54.72 63.52 51.25 68.31 
+
+LiFT (QED-No-Reference) 0.243 -0.334 0.744 2.724 † 80.43 74.88 † 69.09 † 83.19 † 71.10 72.21 †
+
+LiFT (Vina-No-Reference) 0.255 -0.373 0.732 † 2.662 83.08 78.86 74.07 83.36 73.81 73.56 
+
+LiFT (Bal-No-Reference) 0.241 -0.341 0.757 2.659 81.92 77.76 73.84 81.27 71.78 70.73 Ref Embedding setting serves as a reference-conditioned diagnostic baseline for the downstream generator. Removing zero-initialization slightly weakens binding, QED, and filter compliance, sug-gesting that zero-initialized modulation helps in-ject SMILES-derived priors without destabiliz-ing the flow backbone. Removing SCDR causes larger drops in QED, RDKit, and REOS, indicat-ing that state-aware routing mainly benefits the drug-likeness and filter compliance of semantically steered generation. 
+
+Cross-LLM Robustness and Selection. Bench-marking GPT-4o, Claude-4-Sonnet, and DeepSeek-V3 shows relatively small performance variation, suggesting that LiFT is not tied to a single language engine. DeepSeek-V3 achieves the strongest filter compliance, while GPT-4o provides the best QED and a stable property-oriented profile; we therefore use GPT-4o as the default backbone. 
+
+Table 3: Ablation analysis of core components and cross-LLM inference performance.                                                 
+
+> Model Variant Gnina ↑Vina ↓QED ↑SA ↓RDKit% ↑REOS% ↑
+> Structural/Component Ablation
+> LiFT (Ligand-Ref Embedding) 0.263 -0.352 0.480 3.660 59.69 47.14 w/o Zero-Init 0.248 -0.339 0.470 3.660 58.00 47.00 w/o SCDR (naive semantic injection) 0.245 -0.335 0.464 3.591 57.28 44.62
+> Generalization Across LLM Backbones
+> LiFT (GPT-4o) 0.241 -0.341 0.757 2.659 81.27 71.78 LiFT (Claude-4-Sonnet) 0.249 -0.330 0.700 2.777 78.20 73.98 LiFT (DeepSeek-V3) 0.258 -0.346 0.707 2.660 83.44 75.03
+
+Language-Condition Diagnostics. Beyond ar-chitectural ablations, Appendix A and Appendix B examine LLM-derived molecular conditions from complementary perspectives. Appendix A com-pares random, retrieved, direct-prompted, ablated, and full Sense-Evolve-Assemble SMILES condi-tions under the same 3D generator, testing whether structured language conditions provide more bal-anced guidance than arbitrary or retrieval-based priors. Appendix B further analyzes whether these conditions retain trend-level semantic effects after cross-modal projection: Appendix B.1 measures property-level correspondence between SMILES conditions and final molecules, Appendix B.2 com-pares generated and empirical ligand SMILES in ECFP4 space, and Appendix B.3 profiles SCDR gate behavior across training, ODE trajectories, and latent channels. 
+
+5 Conclusion 
+
+In this study, we introduce LiFT , a language-informed cross-modal framework built on flow matching for trend-guided 3D molecular gener-ation. Our evaluations show (i) strict ligand-reference anchoring can constrain exploration, whereas reference-free de novo prompting enables exploration of valid chemical regions; and (ii) property-oriented prompting can improve medici-nal chemistry profiles while maintaining compet-itive binding and structural validity. These re-sults demonstrate the potential of language-derived chemical priors as semantic conditions for pocket-conditioned 3D generation, enabling trend-level guidance without geometric-backbone fine-tuning. Limitations 
+
+While LiFT provides trend-guided language con-ditioning for SBDD, challenges in cross-modal generation remain. Natural language captures use-ful chemical and pharmacological preferences but lacks the geometric granularity for atomic-level control. Accordingly, LiFT provides trend-level guidance rather than exact property or structural control. Since LiFT relies on LLM-derived sym-bolic priors, its performance may vary with the chemical competence and reliability of the under-lying LLM, especially where text-based chemical knowledge is sparse or biased. Future work may ex-plore intermediate representations that better bridge language-level chemical intent and evolving 3D states, as well as richer modalities such as cryo-EM density maps or quantum interaction graphs. Current SBDD evaluation lacks consensus on balancing distributional fidelity, such as Wasser-stein Distance, with absolute property-oriented improvement. Validation on the static Cross-Docked2020 benchmark enables controlled com-parison but does not establish generalization across broader pocket distributions or capture real biologi-cal dynamics. Extending LiFT to additional targets, datasets, and wet-lab feedback remains important. 
+
+References 
+
+Amy C. Anderson. 2003. The process of structure-based drug design. Chemistry & Biology , 10(9):787–797. Viraj Bagal, Rishal Aggarwal, P. K. Vinod, and U. Deva Priyakumar. 2022. MolGPT: Molecular generation using a transformer-decoder model. Journal of Chem-ical Information and Modeling , 62(9):2064–2076. Martin Buttenschoen, Garrett M. Morris, and Char-lotte M. Deane. 2024. Posebusters: AI-based dock-ing methods fail to generate physically valid poses or generalise to novel sequences. Chemical Science ,15(9):3130–3139. Zhanpeng Chen, Weihao Gao, Shunyu Wang, Yanan Zhu, Hong Meng, and Yuexian Zou. 2025. MolSculpt: Sculpting 3D molecular geometries from chemical syntax. Preprint , arXiv:2512.10991. Seungyeon Choi, Hwanhee Kim, Chihyun Park, Dahyeon Lee, Seungyong Lee, Yoonju Kim, Hy-oungjoon Park, Sein Kwon, Youngwan Jo, and Sanghyun Park. 2025. Controllable 3D molecular generation for structure-based drug design through bayesian flow networks and gradient integration. In 
+
+Advances in Neural Information Processing Systems ,volume 38, pages 125612–125647. Curran Asso-ciates, Inc. Ian Dunn and David R. Koes. 2026. FlowMol3: Flow matching for 3D de novo small-molecule generation. 
+
+Digital Discovery , 5(5):2052–2066. Paul G. Francoeur, Tomohide Masuda, Jocelyn Sunseri, Andrew Jia, Richard B. Iovanisci, Ian Snyder, and David Ryan Koes. 2020. Three-dimensional convo-lutional neural networks and a cross-docked data set for structure-based drug design. Journal of Chemical Information and Modeling , 60(9):4200–4215. Bowen Gao, Yanwen Huang, Yiqiao Liu, Wenxuan Xie, Bowei He, Haichuan Tan, Wei-Ying Ma, Ya-Qin Zhang, and Yanyan Lan. 2025. Cidd: Collaborative intelligence for structure-based drug design empow-ered by llms. In Advances in Neural Information Processing Systems .Jiaqi Guan, Wesley Wei Qian, Xingang Peng, Yufeng Su, Jian Peng, and Jianzhu Ma. 2023a. 3D equivariant diffusion for target-aware molecule generation and affinity prediction. In International Conference on Learning Representations .Jiaqi Guan, Xiangxin Zhou, Yuwei Yang, Yu Bao, Jian Peng, Jianzhu Ma, Qiang Liu, Liang Wang, and Quan-quan Gu. 2023b. Decompdiff: Diffusion models with decomposed priors for structure-based drug design. In Proceedings of the 40th International Conference on Machine Learning , volume 202 of Proceedings of Machine Learning Research , pages 11827–11846. PMLR. Yingqing Guo, Yukang Yang, Hui Yuan, and Mengdi Wang. 2025. Training-free guidance beyond differ-entiability: Scalable path steering with tree search in diffusion and flow models. In The Thirty-ninth An-nual Conference on Neural Information Processing Systems .Xuanning Hu, Anchen Li, Qianli Xing, Jinglong Ji, Hao Tuo, and Bo Yang. 2026. Empow-ering llms for structure-based drug design via exploration-augmented latent inference. Preprint ,arXiv:2601.15333. Zhilin Huang, Ling Yang, Zaixi Zhang, Xiangxin Zhou, Yu Bao, Xiawu Zheng, Yuwei Yang, Yu Wang, and Wenming Yang. 2024. Binding-adaptive diffusion models for structure-based drug design. Proceedings of the AAAI Conference on Artificial Intelligence ,38(11):12671–12679. Lei Jiang, Shuzhou Sun, Biqing Qi, Yuchen Fu, Xiaohua Xu, Yuqiang Li, Dongzhan Zhou, and Tianfan Fu. 2025. Chem3DLLM: 3D multimodal large language models for chemistry. Preprint , arXiv:2508.10696. Jirui Jin, Cheng Zeng, Pawan Prakash, Ellad B. Tadmor, Adrian Roitberg, Richard G. Hennig, Stefano Mar-tiniani, and Mingjie Liu. 2026. Molguidance: Ad-vanced guidance strategies for conditional molecular generation with flow matching. Journal of Chemical Information and Modeling , 66(15):8860–8874. Bowen Jing, Stephan Eismann, Patricia Suriana, Raphael John Lamarre Townshend, and Ron Dror. 2021. Learning from protein structure with geomet-ric vector perceptrons. In International Conference on Learning Representations .Haitao Lin, Guojiang Zhao, Odin Zhang, Yufei Huang, Lirong Wu, Cheng Tan, Zicheng Liu, Zhifeng Gao, and Stan Z. Li. 2025. CBGBench: Fill in the blank of protein-molecule complex binding graph. In The Thirteenth International Conference on Learning Representations . Spotlight. Zhiyuan Liu, Sihang Li, Yanchen Luo, Hao Fei, Yixin Cao, Kenji Kawaguchi, Xiang Wang, and Tat-Seng Chua. 2023. MolCA: Molecular graph-language modeling with cross-modal projector and uni-modal adapter. In Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing ,pages 15623–15638. Zhiyuan Liu, Yanchen Luo, Han Huang, Enzhi Zhang, Sihang Li, Junfeng Fang, Yaorui Shi, Xiang Wang, Kenji Kawaguchi, and Tat-Seng Chua. 2025. NExT-Mol: 3D diffusion meets 1D language modeling for 3D molecule generation. In The Thirteenth Interna-tional Conference on Learning Representations .Shitong Luo, Jiaqi Guan, Jianzhu Ma, and Jian Peng. 2021. A 3D generative model for structure-based drug design. In Advances in Neural Information Processing Systems , pages 6229–6239. William Peebles and Saining Xie. 2023. Scalable diffu-sion models with transformers. In Proceedings of the IEEE/CVF International Conference on Computer Vision , pages 4195–4205. Xingang Peng, Shitong Luo, Jiaqi Guan, Qi Xie, Jian Peng, and Jianzhu Ma. 2022. Pocket2Mol: Efficient molecular sampling based on 3D protein pockets. In 
+
+Proceedings of the 39th International Conference on Machine Learning , volume 162 of Proceedings of Machine Learning Research , pages 17644–17655. PMLR. Ethan Perez, Florian Strub, Harm de Vries, Vincent Dumoulin, and Aaron Courville. 2018. FiLM: Vi-sual reasoning with a general conditioning layer. In 
+
+Proceedings of the AAAI Conference on Artificial Intelligence , volume 32. Jerret Ross, Brian M. Belgodere, Vijil Chenthamarak-shan, Inkit Padhi, Youssef Mroueh, and Payel Das. 2022. Large-scale chemical language representations capture molecular structure and properties. Nature Machine Intelligence , 4(12):1256–1264. Victor Garcia Satorras, Emiel Hoogeboom, and Max Welling. 2021. E(n) equivariant graph neural net-works. In Proceedings of the 38th International Con-ference on Machine Learning .Arne Schneuing, Charles Harris, Yuanqi Du, Kieran Didi, Arian Jamasb, Ilia Igashov, Weitao Du, Carla Gomes, Tom Blundell, Pietro Lio, Max Welling, Michael Bronstein, and Bruno Correia. 2024. Structure-based drug design with equivariant diffu-sion models. Nature Computational Science .Arne Schneuing, Ilia Igashov, Adrian W. Dobbelstein, Thomas Castiglione, Michael M. Bronstein, and Bruno Correia. 2025. Multi-domain distribution learning for de novo drug design. In The Thirteenth International Conference on Learning Representa-tions .Eduardo Soares, Emilio Vital Brazil, Victor Shira-suna, Dmitry Zubarev, Renato Cerqueira, and Kristin Schmidt. 2025a. A mamba-based foundation model for materials. npj Artificial Intelligence , 1:8. Eduardo Soares, Emilio Vital Brazil, Victor Shira-suna, Dmitry Zubarev, Renato Cerqueira, and Kristin Schmidt. 2025b. An open-source family of large encoder-decoder foundation models for chemistry. 
+
+Communications Chemistry , 8:193. W. Patrick Walters and Mark A. Murcko. 2020. As-sessing the impact of generative AI on medicinal chemistry. Nature Biotechnology , 38:143–145. Kehan Wu, Yingce Xia, Pan Deng, Renhe Liu, Yuan Zhang, Han Guo, Yumeng Cui, Qizhi Pei, Lijun Wu, Shufang Xie, Si Chen, Xi Lu, Song Hu, Jinzhi Wu, Chi Kin Chan, Shawn Chen, Liangliang Zhou, Neng-hai Yu, Enhong Chen, and 4 others. 2024. Tamgen: drug design with target-aware molecule generation through a chemical language model. Nature Commu-nications , 15(1):9360. Manzil Zaheer, Satwik Kottur, Siamak Ravanbakhsh, Barnabas Poczos, Russ R Salakhutdinov, and Alexan-der Smola. 2017. Deep sets. In Advances in Neural Information Processing Systems , volume 30. Curran Associates, Inc. Daiheng Zhang, Chengyue Gong, and Qiang Liu. 2024a. Rectified flow for structure based drug design. 
+
+Preprint , arXiv:2412.01174. Wei Zhang, Zekun Guo, Yingce Xia, Peiran Jin, Shu-fang Xie, Tao Qin, and Xiang-Yang Li. 2025. Mol-chord: Structure-sequence alignment for protein-guided drug design. Preprint , arXiv:2510.27671. Zaixi Zhang, Jiaxian Yan, Yining Huang, Qi Liu, En-hong Chen, Mengdi Wang, and Marinka Zitnik. 2024b. Geometric deep learning for structure-based drug design: A survey. Preprint , arXiv:2306.11768. Jingyuan Zhou, Hao Qian, Shikui Tu, and Lei Xu. 2025. Prior-guided flow matching for target-aware molecule design with learnable atom number. In The Thirty-ninth Annual Conference on Neural Informa-tion Processing Systems .Jie Zhu, Mingyu Ding, Boqiang Duan, Leye Wang, and Jingdong Wang. 2026. Unveiling the secret of adaln-zero in diffusion transformer. Preprint ,arXiv:2608.09438. Appendix Overview 
+
+The supplementary material is organized into eight complementary parts that further analyze the role of language-derived molecular conditions, provide reproducibility details, extend the experimental di-agnostics beyond the main paper, and clarify the methodological positioning of LiFT. • Appendix A: Extended Analysis of Language-Derived Molecular Conditions. 
+
+This appendix analyzes the intermediate SMILES conditions generated by the lan-guage agent before geometric generation. It includes condition-source ablations, 1D semantic evaluations, downstream 3D prior effects, and analyses of how structured language-derived conditions influence molecular generation under a fixed 3D backbone. • Appendix B: Semantic Preservation and Diagnostic Analyses. This appendix exam-ines whether language-derived molecular con-ditions retain measurable trend-level effects after cross-modal projection into 3D gener-ation. It includes property-level correspon-dence analysis, ECFP4 manifold comparisons, and SCDR routing diagnostics across training and ODE trajectories. • Appendix C: Experimental Details and Re-producibility. This appendix reports datasets, implementation settings, hyperparameters, evaluation protocols, hardware configurations, runtime and efficiency, pocket-level uncer-tainty estimates, absolute docking scores, and additional reproducibility details. • Appendix D: Controlled SMILES-Condition Protocols and Prompting Templates. This appendix describes the controlled prompting interfaces, information-access boundaries, task-specific steering directives, and structured generation tem-plates used by the language agent. • Appendix E: Rule-Level Structural, Med-Chem, and Pose Validity Diagnostics. 
+
+This appendix decomposes aggregate RDKit, REOS, and PoseBusters metrics into fine-grained rule-level analyses and geometric va-lidity sub-checks. • Appendix F: Qualitative Case Studies on Representative Targets. This appendix provides qualitative analyses of generated molecules under different conditioning set-tings, including comparisons of structural va-lidity, medicinal chemistry properties, and pocket compatibility. • Appendix G: Detailed Mathematical For-mulations. This appendix contains extended derivations and theoretical details for the pro-posed flow-matching and conditioning frame-work. • Appendix H: Extended Comparison with Related Work. This appendix provides a sys-tematic methodological comparison between LiFT and representative language-based, 1D– 3D, and native pocket-conditioned SBDD methods, together with a focused comparison with ELILLM. 
+
+A Extended Analysis of Language-Derived Molecular Conditions 
+
+This appendix provides an extended analysis of the intermediate 1D SMILES conditions used by LiFT. The main experiments in the paper evaluate the fi-nal 3D generated molecules, while this appendix focuses on the symbolic molecular conditions be-fore they are encoded by SMI-TED and injected into the 3D flow model. The purpose of this anal-ysis is to isolate whether the proposed language-derived conditions are chemically meaningful and structurally diverse, rather than merely acting as arbitrary SMILES priors. We evaluate six condition sources under the same reference-free balanced generation setting. All variants are evaluated on the same target-pocket set and produce SMILES conditions that are sub-sequently used by the same downstream 3D gen-eration pipeline. The only difference among these variants is how the intermediate SMILES condition is obtained. • C0-random : valid SMILES are randomly sampled from the training ligand pool. This setting controls for whether injecting any valid molecular string is sufficient to provide useful chemical priors. • C1-retrieved : SMILES are selected from the training ligand pool through a non-LLM re-trieval procedure. This setting represents a stronger non-generative molecular-prior base-line than random sampling, while avoiding direct access to test ligand SMILES. • C2-direct : the LLM directly generates SMILES from the pocket description and task preference, without the structured Sense-Evolve-Assemble procedure. This setting con-trols for the effect of ordinary direct prompt-ing. • C3-w/o-Sense : the language agent generates SMILES without the explicit pocket-sensing stage. This removes the structured extraction of local pocket features, such as geometric shape, charge state, and residue anchors. • C4-w/o-PoT : the agent receives the pocket in-formation but does not use Pocket-of-Thought reasoning before SMILES generation. This setting isolates the role of structured interme-diate reasoning. • C5-full : the full Sense-Evolve-Assemble agent used in LiFT. This setting combines pocket sensing, Pocket-of-Thought reasoning, and task-aware molecular assembly to pro-duce the final SMILES condition. This comparison separates three sources of signal: generic valid molecular priors (C0-random ), non-LLM retrieved molecular priors (C1-retrieved ), and LLM-derived molecular con-ditions with different levels of structured reasoning (C2–C5 ). Therefore, the analysis directly tests whether the full language agent provides more chemically structured 1D conditions than simpler alternatives. 
+
+A.1 1D Semantic Condition Analysis 
+
+We first evaluate the intermediate SMILES condi-tions before they are injected into the 3D generator. This analysis isolates whether the language-derived molecular conditions are chemically meaningful in their own right, rather than merely serving as arbi-trary textual inputs to the downstream flow model. All variants are evaluated on the same target set and differ only in how the 1D SMILES condition is obtained. Using the six condition sources defined above, we first evaluate the resulting SMILES before they are injected into the 3D generator. Table 4 reports representative 1D condition-quality metrics. We focus on validity, uniqueness, scaffold uniqueness, QED, SA, LogP, ring count, and scaffold novelty with respect to the training set. These metrics cover basic chemical validity, molecular diversity, medicinal-chemistry plausibility, and whether the generated conditions collapse to training-set scaf-folds. Several observations emerge. First, validity is saturated across all variants, indicating that the comparison is not driven by invalid SMILES fil-tering. Second, the retrieved baseline has zero scaffold novelty by construction and substantially lower scaffold diversity than generated conditions, showing that retrieval provides chemically valid but non-novel molecular priors. Third, direct prompt-ing achieves strong QED and SA, but it produces lower scaffold uniqueness and simpler ring profiles, suggesting that direct LLM generation tends to op-timize local drug-likeness without maintaining the same level of topological diversity. Finally, the full agent achieves the highest uniqueness, high scaffold uniqueness, strong scaffold novelty, and a balanced property profile. This suggests that the Sense-Evolve-Assemble design provides useful 1D molecular conditions beyond random, retrieved, or directly prompted SMILES. 
+
+A.2 Downstream Effect of 1D Condition Sources 
+
+We next examine whether the differences observed at the 1D condition level translate into down-stream 3D molecular generation behavior. For this analysis, all condition sources are passed through the same frozen SMI-TED encoder and the same trained 3D flow generator. The sampling configu-ration and evaluation pipeline are also fixed, so the only changing factor is the source of the intermedi-ate SMILES condition. Table 5 reports downstream 3D generation re-sults under the six condition sources defined in Appendix A.1. Random SMILES conditions lead to the weakest overall performance, with lower QED, worse SA, weaker binding-efficiency scores, and lower PoseBusters interaction-energy valid-ity. This confirms that injecting an arbitrary valid molecular prior is insufficient for effective 3D gen-eration. Retrieved SMILES provide stronger ring-frequency statistics, which is expected because re-trieved molecules are drawn from the empirical training ligand pool. However, this retrieval-based prior does not yield the best binding-related scores and also shows a relatively high LogP, suggesting that simply reusing training-set molecular priors Table 4: 1D molecular condition quality under different SMILES condition sources. All variants are evaluated before downstream 3D generation. C0 samples random valid SMILES from the training ligand pool; C1 retrieves training-set SMILES; C2 uses direct LLM prompting; C3 removes explicit pocket-sensing information; C4 removes Pocket-of-Thought reasoning; and C5 is the full Sense-Evolve-Assemble agent. The full agent preserves perfect validity, achieves the highest uniqueness, maintains high scaffold diversity, and produces chemically plausible property profiles without collapsing to retrieved training-set scaffolds. Boldface is omitted because this table is intended to compare overall trade-offs among validity, diversity, novelty, and medicinal-chemistry plausibility rather than single-metric dominance.                                                         
+
+> Condition Source Validity Unique Scaf. Unique QED SA LogP Rings Novel Scaf.
+> C0 Random 1.000 0.987 0.777 0.543 3.241 2.101 2.877 0.000 C1 Retrieved 1.000 0.767 0.000 0.673 2.512 3.647 1.977 0.000 C2 Direct 1.000 0.947 0.624 0.801 2.048 2.583 1.466 0.641 C3 w/o Sense 1.000 0.987 0.832 0.777 2.151 3.059 2.096 0.857 C4 w/o PoT 1.000 0.963 0.786 0.754 2.129 2.938 2.390 0.814 C5 Full 1.000 0.993 0.824 0.778 2.239 2.529 2.672 0.750
+
+Table 5: Downstream 3D generation results under different 1D SMILES condition sources. All variants use the same SMI-TED encoder, 3D flow generator, sampling configuration, and evaluation pipeline; only the source of the intermediate SMILES condition changes. C0 samples random valid SMILES from the training ligand pool; C1 uses retrieved training-set SMILES; C2 directly prompts the LLM to generate SMILES; C3 removes explicit pocket-sensing information; C4 removes Pocket-of-Thought reasoning; and C5 is the full Sense-Evolve-Assemble agent. Boldface is omitted because this table evaluates trade-offs across medicinal chemistry, binding-efficiency, topological, and structural-validity indicators rather than optimizing a single metric.                                                                       
+
+> Condition QED ↑SA ↓VinaEff ↓GninaEff ↑LogP Rot. ↑Ring >0↑Ring >10 ↑Ring >100 ↑PB-Int. ↑
+> C0 Random 0.579 3.699 -0.302 0.233 1.766 4.755 0.629 0.583 0.512 0.794 C1 Retrieved 0.693 2.855 -0.318 0.225 3.159 3.931 0.837 0.824 0.797 0.856 C2 Direct 0.760 2.683 -0.345 0.236 2.547 2.925 0.777 0.713 0.666 0.900 C3 w/o Sense 0.749 2.531 -0.343 0.238 3.117 2.584 0.766 0.706 0.656 0.881 C4 w/o PoT 0.736 2.732 -0.329 0.234 2.851 3.110 0.748 0.680 0.615 0.900 C5 Full 0.757 2.659 -0.331 0.241 2.347 3.716 0.819 0.778 0.738 0.902
+
+does not provide the most effective target-aware guidance. Direct LLM prompting achieves the highest QED and the best Vina efficiency, indicating that an LLM can generate useful drug-like conditions even without structured reasoning. However, its ring-frequency metrics are consistently lower than those of the full agent, suggesting that direct prompt-ing tends to favor local medicinal-chemistry opti-mization while providing less balanced topological guidance. Removing the Sense phase or Pocket-of-Thought reasoning also leads to weaker overall trade-offs. The w/o Sense variant obtains the lowest SA score, but it has reduced ring-frequency cover-age and lower PoseBusters interaction-energy va-lidity than the full model. Similarly, w/o PoT weak-ens ring statistics and does not improve binding-efficiency metrics. The full Sense-Evolve-Assemble agent provides the most balanced downstream behavior. Although it is not the best on every single metric, it achieves the best Gnina efficiency and the highest Pose-Busters interaction-energy validity, while maintain-ing strong QED, SA, and ring-frequency statistics. Compared with Direct LLM and w/o PoT, the full agent better preserves topological richness after 3D generation. Compared with Retrieved SMILES, it avoids collapsing to empirical training-set pri-ors while producing stronger binding-related and structural-validity indicators. These results support the view that structured language-derived SMILES conditions act as informative soft priors for 3D gen-eration, rather than arbitrary molecular strings or simple retrieval anchors. Together with the 1D condition-quality analy-sis in Appendix A.1, these results indicate that the proposed language agent improves both the inter-mediate symbolic conditions and their downstream effect after cross-modal projection into 3D molecu-lar generation. Table 6: Cross-modal trend correspondence between text-derived 1D conditioning targets and the final gener-ated 3D molecular ensembles under the LiFT (Balanced No-Ref) setting. Pearson correlations are computed at the pocket-ensemble level over 100 target pockets.              
+
+> Property Pearson rp-value
+> QED 0.7344 3.457 ×10 −18
+> LogP 0.8379 1.646 ×10 −27
+> Heavy atoms 0.7392 1.613 ×10 −18
+> Rotatable bonds 0.7619 3.427 ×10 −20
+> 6-ring count 0.7578 7.066 ×10 −20
+
+B Semantic Preservation and Diagnostic Analyses 
+
+This appendix provides additional diagnostic anal-yses for the language-conditioned generation pipeline. Rather than treating the LLM-generated SMILES as a black-box textual input, we exam-ine whether these 1D conditions remain chemically meaningful at different stages of the framework. The goal is not to prove exact preservation or one-to-one recovery of ground-truth ligands. Instead, we ask whether the agent-generated SMILES and their downstream 3D generations preserve measur-able trend-level and distribution-level relationships with empirical molecular data. We study this question from three complemen-tary perspectives. Appendix B.1 evaluates whether property tendencies encoded in the agent-generated SMILES are reflected in the calculated proper-ties of the final generated 3D molecules. Ap-pendix B.2 analyzes the topo-chemical distribu-tion of the agent-generated SMILES themselves by comparing their ECFP4 fingerprint embeddings with the 100 held-out ligand SMILES from the evaluated pockets. Appendix B.3 further profiles the learned behavior of the State Calibration Gate, Scalar Update Gate, and Vector Update Gate across training, ODE inference, and latent-channel distri-butions. Together, these analyses provide diagnos-tic evidence that the language-derived conditions are not arbitrary text strings, but chemically struc-tured inputs that remain informative before and during 3D generation. 
+
+B.1 Property-Level Trend Correspondence under Cross-Modal Projection 
+
+To examine whether text-derived conditions remain reflected in the generated molecules, we measure the correlation between agent-generated SMILES-derived conditions and calculated molecular prop-erties after 3D generation. This analysis is con-ducted at the ensemble level rather than the single-molecule level. For each target pocket, we average the properties of its generated ligands, which re-duces sampling noise and focuses on macroscopic generation trends. Under the unconstrained LiFT (Balanced No-Ref) setting, we generated more than 6,000 ligands for 100 target pockets from CrossDocked2020. For each pocket, we computed the average property value over its generated ligand ensemble and com-pared it with the corresponding text-derived condi-tioning target. As shown in Figure 4 and Table 6, the generated ensembles show consistently posi-tive correlations across multiple physicochemical and topological dimensions. All reported correla-tions are statistically significant, suggesting that language-derived conditions preserve measurable trend-level signals after cross-modal projection into 3D molecular generation. These results should be interpreted as evidence of trend-level correspondence rather than exact property control. The generated molecules are not expected to match the conditioning values point by point, since the final structures are also constrained by pocket geometry, flow dynamics, and chemical validity. Nevertheless, the observed correlations suggest that the language-derived conditions re-main informative after projection into the 3D gener-ation process. This supports the use of text-derived priors as soft guidance signals for property-oriented generation, while leaving the precise causal role of each architectural component to the ablation and diagnostic analyses. 
+
+B.2 Topo-Chemical Distribution of Agent-Generated SMILES 
+
+While Appendix B.1 examines whether SMILES-derived property tendencies are reflected after 3D generation, we further evaluate the agent-generated SMILES before they are injected into the geomet-ric generator. This analysis asks whether the 1D molecules proposed by the language agent occupy topo-chemical regions comparable to the empirical ligand SMILES from the test set. For each molecule, we compute 2,048-bit Mor-gan fingerprints (ECFP4, radius = 2 ) to represent local substructural patterns. We then project these high-dimensional fingerprints into two dimensions using t-Distributed Stochastic Neighbor Embed-ding ( t-SNE). The comparison is performed be-tween the agent-generated SMILES and the 100 0.4 0.5 0.6 0.7 0.8 0.9 1.0               
+
+> 1D Prior Semantic QED
+> 0.4 0.5 0.6 0.7 0.8 0.9 1.0
+> 3D Generated Ensemble QED
+> (a) QED Invariance ( r= 0.734 )
+> 012345
+> 1D Prior Semantic log P
+> 1
+> 012345
+> 3D Generated Ensemble  log  P
+> (b) LogP Invariance ( r= 0.838 )
+> 10 15 20 25 30
+> 1D Prior Heavy Atoms Count
+> 10.0 12.5 15.0 17.5 20.0 22.5 25.0 27.5 30.0
+> 3D Generated Ensemble Size
+> (c) Size Invariance ( r= 0.739 )
+
+Figure 4: Property-level trend correspondence under the LiFT (Balanced No-Ref) setting. The panels show ensemble-level correlations between properties derived from the agent-generated SMILES conditions and calculated properties of the final generated molecules across 100 test pockets: (a) QED ( r = 0 .734 ), (b) log P (r = 0 .838 ), and (c) molecular size measured by heavy atom count ( r = 0 .739 ). All reported Pearson correlations are statistically significant ( p < 10 −17 ). These results indicate that the SMILES-derived conditions preserve measurable property-level trends after cross-modal projection and 3D generation, without implying exact molecule-level regression. 
+
+ground-truth ligand SMILES corresponding to the test pockets. Since t-SNE is stochastic and depends on the full input matrix of each run, absolute co-ordinates should not be compared across panels. We therefore use the visualization only as a qualita-tive diagnostic of relative overlap, separation, and neighborhood structure within each panel. As shown in Figure 5a, the reference-guided 
+
+LiFT (Balanced Ref) setting produces SMILES whose ECFP4 embeddings broadly overlap with the ground-truth ligand SMILES. This behavior is expected because the reference-guided setting provides an explicit molecular anchor to the agent. The observed overlap suggests that, when reference information is available, the agent tends to gener-ate 1D molecular structures with local substructural patterns similar to those of the empirical ligands. In the reference-free LiFT (Balanced No-Ref) 
+
+setting, shown in Figure 5b, the agent-generated SMILES display a clearer shift relative to the ground-truth distribution. This is also expected, since the agent does not receive a reference molecule and therefore has more freedom to pro-pose alternative scaffolds. Importantly, the gen-erated SMILES remain close to the empirical dis-tribution in the projected fingerprint space, rather than forming a visually detached cluster. This sug-gests that the reference-free agent explores nearby topo-chemical regions while still preserving recog-nizable substructural similarity under the ECFP4 representation. Overall, this analysis complements the property-level correspondence in Appendix B.1. Ap-pendix B.1 shows that the agent-generated SMILES provide property-level signals that re-main visible after 3D generation. In contrast, the present analysis examines the SMILES conditions themselves and shows that their fingerprint distri-butions remain close to the ground-truth ligand SMILES, especially under reference-guided gen-eration. These results do not prove exact recovery of empirical ligands, nor do they imply that t-SNE distances are chemically quantitative. They pro-vide a qualitative check that the language agent produces chemically structured 1D conditions be-fore the downstream 3D flow model uses them. 
+
+B.3 Holistic Spatiotemporal Diagnostics of SCDR 
+
+Figure 6 provides a diagnostic view of the learned behavior of the Self-Conditioned Decou-pled Router (SCDR). The goal of this analysis is not to repeat the architectural design of SCDR, which has been described in Figure 3, Section 3.4, and Appendix F. Instead, we use this figure to ex-amine how the learned gates vary across training, ODE inference, and latent-channel distributions. We focus on three outputs: the State Calibration Gate αs
+
+> state
+
+, the Scalar Update Gate gs
+
+> up
+
+, and the Vector Update Gate gv
+
+> up
+
+.
+
+Macro-level training evolution. The left column of Figure 6 shows the aggregated gate values across training epochs. The State Calibration Gate αs
+
+> state
+
+stays within a relatively high range during training, with moderate fluctuations across pockets. This suggests that the state-calibration branch remains active rather than being ignored by the model. The Scalar Update Gate gs 
+
+> up
+
+rises during the early stage and then stays in a more stable range, indicating that scalar-state updates are learned early and re-main consistently used afterward. In contrast, the t-SNE Component 1 t-SNE Component 2 
+
+> (a) Global Chemical Space Alignment ( Balanced -Ref )
+> Natural Reference LiFT Generated
+> t-SNE Component 1 t-SNE Component 2
+> (b) Global Chemical Space Alignment ( Balanced -NoRef )
+> Natural Reference LiFT Generated
+
+Figure 5: Qualitative t-SNE visualization of topo-chemical distributions for agent-generated SMILES. The plots compare ECFP4 fingerprint embeddings of SMILES produced by the language agent with the 100 ground-truth ligand SMILES from the test pockets. (a) Under the reference-guided LiFT (Balanced Ref) setting, the agent-generated SMILES show broad overlap with the ground-truth ligand distribution in the projected fingerprint space. (b) Under the reference-free LiFT (Balanced No-Ref) setting, the agent-generated SMILES exhibit a more visible distributional shift while remaining near the empirical SMILES distribution. Because t-SNE is a qualitative embedding method, this figure is intended to show distributional tendencies rather than precise chemical-space distances. 
+
+Vector Update Gate gv 
+
+> up
+
+shows a gradual downward trend after the early phase. This pattern is consis-tent with a more conservative use of vector-state updates during later training, although we do not interpret it as direct proof of a specific physical mechanism. 
+
+Meso-level ODE trajectory dynamics. The mid-dle column profiles the same gates along the ODE integration trajectory. The State Calibration Gate 
+
+αs 
+
+> state
+
+increases during the middle stage of inte-gration and then decreases toward the final steps. This indicates that state calibration is most active in the intermediate part of generation, when the lig-and state has already moved away from the initial noise but has not yet reached the final configuration. The Scalar Update Gate gs 
+
+> up
+
+generally decreases along the trajectory, suggesting that scalar updates are stronger at earlier stages and gradually relaxed as integration proceeds. By comparison, the Vec-tor Update Gate gv 
+
+> up
+
+increases in the middle stage before declining near the end. This shows that scalar and vector updates follow different temporal patterns during inference. Across the three target pockets, the curves differ most visibly in the mid-dle stage but become closer near the terminal steps, suggesting pocket-dependent intermediate behav-ior with relatively similar final regimes. 
+
+Micro-level latent-channel spectra. The right column shows the distribution of gate weights across latent channels for different target pockets. The distributions are not uniform or single-peaked. For αs
+
+> state
+
+, the violin plots show separated high-and mid-value regions, indicating that state calibra-tion is unevenly distributed across channels. The Scalar Update Gate gs 
+
+> up
+
+and Vector Update Gate 
+
+gv 
+
+> up
+
+also show broad and partly multi-modal dis-tributions, with visible differences among pockets. These observations suggest that SCDR does not ap-ply the same update strength to all latent channels. Instead, different channels receive different levels of modulation, and the resulting distributions vary with the target pocket. 
+
+Summary. Overall, Figure 6 shows that SCDR has non-trivial learned gate behavior across three scales. During training, the three gates exhibit dif-ferent evolution patterns. During ODE inference, scalar and vector updates follow different temporal trends, with stronger pocket-level variation in the middle of the trajectory. At the channel level, the gate distributions show heterogeneous and pocket-dependent patterns rather than uniform collapse. These results should be viewed as diagnostic evi-dence rather than causal proof. They support a mod-est interpretation: SCDR learns structured, stage-dependent modulation signals that are compatible with the ablation results in Table 3. Together with A. Macro Evolution  B. Meso Trajectory  C. Micro Spectrum Figure 6: Holistic spatiotemporal diagnostics of SCDR. This figure analyzes the learned gate behavior of SCDR rather than its architectural design. A. Macro evolution: aggregated gate values across training epochs for the State Calibration Gate αs
+
+> state
+
+, Scalar Update Gate gs
+
+> up
+
+, and Vector Update Gate gv
+
+> up
+
+. B. Meso trajectory: gate values along ODE integration steps, showing different temporal patterns for scalar and vector updates and visible pocket-level variation in the middle stage. C. Micro spectrum: latent-channel distributions of gate weights across target pockets, showing heterogeneous and pocket-dependent modulation patterns. These diagnostics provide evidence that SCDR learns structured gate dynamics across training, inference, and latent-channel scales. 
+
+the property-invariance analysis in Appendix B.1 and the topo-chemical manifold analysis in Ap-pendix B.2, this provides additional evidence that the language-derived conditions behave as useful trend-level signals in the 3D generation process. 
+
+C Experiment Details 
+
+This section describes the dataset construction, con-ditioning settings, baseline replication protocol, and implementation details used in our experiments. The goal is to make the evaluation protocol ex-plicit and auditable across distribution matching, reference-guided generation, de novo generation, and preference-alignment settings. 
+
+C.1 Dataset Preparation and Preprocessing 
+
+We use the refined CrossDocked2020 benchmark for structure-based molecular generation. Each example is derived from a protein–ligand com-plex and provides two complementary views: a local three-dimensional pocket–ligand geometry for training the generative dynamics, and a one-dimensional molecular representation for construct-ing semantic conditions. This setting matches the target-aware generation problem considered in LiFT, where ligand generation is conditioned on ex-plicit pocket geometry while semantic information is provided through a controlled molecular prior. 
+
+Complex curation. We follow the standard re-fined CrossDocked preprocessing protocol and con-struct examples from the provided pocket-level structures. Complexes with unreliable binding poses, invalid molecular structures, or failed feature construction are excluded. Ligands are restricted to the small-molecule regime relevant to SBDD, ensuring that the benchmark focuses on realistic pocket-conditioned ligand generation rather than out-of-distribution molecular sizes. 
+
+Structural condition. For each retained com-plex, the receptor is represented by the local bind-ing pocket defined by the benchmark preprocessing protocol. This pocket definition is used only to con-struct the geometric conditioning graph and should not be confused with reference-ligand information exposed to the LLM. In the no-reference setting, the LLM does not receive the ground-truth ligand identity, SMILES, docking scores, or molecular properties. The protein pocket is encoded as a com-pact residue-level graph with scalar residue features and geometry-aware vector features, while the lig-and is represented by coordinates, atom types, and bond types for flow-matching training and sam-pling. 
+
+Semantic condition. For semantic embedding construction, ligand strings are canonicalized with RDKit and encoded by the frozen SMI-TED en-coder into a fixed-dimensional molecular semantic vector. This vector provides the one-dimensional chemical prior used by the cross-modal condition-ing interface. For controlled comparisons, we con-struct Ligand-Ref and pure LLM embedding vari-ants under the same processed protein–ligand split, so that the compared settings share identical pocket geometries and differ only in the origin of the se-mantic condition. 
+
+Evaluation. After preprocessing, the training split contains approximately 10 5 refined complexes, and a held-out subset of 100 protein pockets is used for in-distribution evaluation. For each held-out pocket, LiFT generates 100 samples using the same inference configuration across all re-ported settings. The resulting molecules are eval-uated with a unified post-processing and metric-computation pipeline, including cheminformatics validity checks, structural filters, docking-based scores, and distributional property analyses. 
+
+C.2 Baseline Specification and Replication Protocol 
+
+We compare LiFT with representative structure-based molecular generation methods spanning four major modeling families: autoregressive construc-tion, 3D diffusion, flow matching, and LLM-based SBDD. This benchmark suite covers the dominant design choices in target-aware ligand generation, including sequential graph growth, iterative geo-metric denoising, continuous-time generative trans-port, and language-guided molecular proposal. 
+
+Autoregressive Models. Autoregressive meth-ods formulate ligand generation as a sequence of local construction decisions conditioned on the pro-tein pocket. AR (Luo et al., 2021) represents early graph-based atom-by-atom generation for SBDD, while Pocket2Mol (Peng et al., 2022) extends this direction with an equivariant pocket-aware repre-sentation for predicting atom types, coordinates, and bonds during molecular growth. These meth-ods provide a representative comparison for dis-crete molecular construction under structural con-straints. 
+
+3D Diffusion Models. Diffusion-based methods generate ligands by learning to denoise molecular states in three-dimensional space under pocket con-ditioning. TargetDiff (Guan et al., 2023a) serves as a canonical equivariant diffusion baseline for target-aware generation. DecompDiff (Guan et al., 2023b) incorporates decomposed ligand priors, 
+
+BindDM (Huang et al., 2024) emphasizes binding-adaptive generation. Together, these baselines rep-resent the current mainstream of 3D geometric gen-erative modeling for SBDD. 
+
+Flow-Matching Models. Flow-matching meth-ods learn continuous transport dynamics from sim-ple priors to pocket-conditioned ligand distribu-tions. We include PAFlow (Zhou et al., 2025) and 
+
+DrugFlow (Schneuing et al., 2025) as representa-tive continuous-time SBDD baselines. This group provides the most direct comparison for evaluating generative models based on learned vector fields and ODE-style sampling. 
+
+LLM-based SBDD Pipelines. LLM-based pipelines examine whether molecular language priors can support target-aware ligand design under structure-based evaluation. TamGen (Wu et al., 2024) represents target-conditioned molec-ular generation with language-modeling compo-nents. ELILLM variants, including ELILLM-Diff 
+
+and ELILLM-Rand (Hu et al., 2026), are included as recent LLM-driven SBDD baselines. This group evaluates how language-guided molecular proposal pipelines compare with explicitly 3D generative models under the same benchmark. 
+
+Replication protocol. We distinguish between full reproduction and unified re-evaluation. For 
+
+DrugFlow and TamGen , we fully reproduce the baselines using the officially released configuration files. In both cases, we directly follow the provided YAML settings and do not modify model hyperpa-rameters, sampling parameters, or post-processing options. DrugFlow is included as the closest flow-matching baseline to LiFT, while TamGen is re-run because its generated molecule files are not pub-licly released in a directly usable form. For the remaining baselines, we use the pub-licly released generated molecules or official sam-ple files corresponding to the authors’ recom-mended evaluation setting whenever available, and evaluate them with our unified evaluator. This choice avoids introducing additional implementa-tion variance from re-training or re-sampling mul-tiple heterogeneous models. All molecules, in-cluding those generated by LiFT, are processed with the same validity checking, docking/rescoring, PoseBusters auditing, RDKit/REOS filtering, and metric-computation pipeline. Therefore, for these methods, the comparison should be interpreted as a unified re-evaluation of released samples rather than a full reproduction of the original training and sampling procedure. 
+
+C.3 Detailed Metric Definitions 
+
+To ensure an explicit and auditable evaluation protocol, our metrics strictly reflect the experi-mental multi-objective tracks (Sec. 4.3), eval-uating both absolute generative maximization (Means/Pass Rates) and empirical distribution alignment (Wasserstein Distance). 
+
+3D Binding Efficiencies. To rigorously assess target-aware affinity while penalizing physically unrealistic molecular inflation, both primary dock-ing metrics are computed as efficiencies (normal-ized by the generated ligand’s heavy atom count). 
+
+Vina Efficiency is derived from the raw AutoDock Vina v1.2.5 binding free energy (kcal/mol). Anal-ogously, Gnina Efficiency is computed using the GNINA framework, leveraging its 3D CNN-based cross-docking scoring function to evaluate deep empirical pose quality per heavy atom. 
+
+1D Pharmacological & Topological Proper-ties. Continuous and discrete molecular prop-erties are computed deterministically via RDKit .This track evaluates QED (Quantitative Estimate of Drug-likeness) and LogP (partition coefficient) for pharmacological viability, alongside the SA (Syn-thetic Accessibility) score to assess synthesis feasi-bility. Geometric complexity and spatial flexibility are systematically quantified via Rotatable Bond Counts and Topological Ring Frequencies (catego-rized into > 0, > 10 , and > 100 ring counts). 
+
+Structural Validity & MedChem Filters. Phys-ical realism and medicinal chemistry safety are audited through comprehensive sub-filter suites. 
+
+PoseBusters pass rates strictly verify 3D geometric constraints, covering critical sub-checks including Ring Flatness, Bond Angles, Double Bond stere-ochemistry, Internal Steric Clashes, and Protein-Ligand Overlap limits. Furthermore, 1D structural alerts are rigorously enforced via REOS (rapidly filtering BMS, Glaxo, Inpharmatica, and generic PAINS rule families) and RDKit Structural Alerts 
+
+(comprehensively detecting NIH, PAINS-A/B/C, and ZINC violations) to exclude toxic or chemi-cally reactive substructures. 
+
+Property Distribution Divergence. To quantify the macroscopic density shifts between the gener-ated ensembles and the empirical target distribu-tion across all aforementioned continuous metrics (Vina, Gnina, QED, SA, LogP, Rotatable Bonds, and Ring Frequencies), we explicitly employ the 
+
+Wasserstein Distance (WD) computed via SciPy 
+
+as our sole divergence metric. We deliberately avoid Kullback-Leibler (KL) divergence, Jensen-Shannon (JS) divergence, and Fréchet ChemNet Distance (FCD). This design choice is mathemat-ically imperative for continuous-time flow match-ing: because empirical properties generated dur-ing unconstrained multi-objective optimization fre-quently exhibit disjoint supports relative to the nat-ural distribution, KL divergence inherently suffers from numerical instability ( ∞), while JS diver-gence saturates, losing directional gradient sensi-tivity. Conversely, the Wasserstein metric (Earth Mover’s Distance) preserves a continuous, infor-mative cost gradient even under non-overlapping supports, perfectly corresponding with our genera-tive velocity field trajectory alignment. 
+
+C.4 Implementation and Hyperparameters 
+
+LiFT is implemented in PyTorch with PyTorch Lightning. We use a frozen SMI-TED encoder to provide the ligand-level semantic condition, and train a heterogeneous GVP-GNN as the pocket-conditioned geometric backbone. The SCDR/AdaLN controller incorporates the SMILES embedding and flow-time information into ligand-node updates. The model is optimized with a flow-matching objective over ligand coordinates, atom types, and bond types. During inference, samples are generated by integrating the learned vector field with an explicit Euler solver. We run all exper-iments on a single NVIDIA A800-SXM4-80GB GPU. On this hardware, one training epoch takes less than 10 minutes. For the 100-pocket evalua-tion setting with 100 generated ligands per pocket (10,000 molecules in total), LiFT 3D flow sam-pling takes 2 h 38 min 48 s; including language-condition generation and SMI-TED encoding, the complete measured pipeline takes 2 h 57 min 20 s. Docking and offline metric computation are excluded because they are evaluation procedures shared across methods rather than part of genera-tion. The core implementation details and hyperpa-Table 7: Core implementation settings of LiFT, includ-ing the GVP-based geometric backbone, SMI-TED se-mantic conditioning, flow-matching training objective, and Euler-based sampling protocol.                          
+
+> Component Hyperparameter Value
+> Backbone
+> Geometric network Heterogeneous GVP-GNN GVP layers 5
+> Node / edge hidden dim. (128 ,32) /(128 ,32)
+> Self-conditioning Enabled
+> Semantic control
+> Semantic encoder Frozen SMI-TED SMILES embedding dim. 768
+> Controller SCDR/AdaLN Controller condition SMILES embedding + flow time
+> Training
+> Objective Flow matching over coords., atoms, and bonds Optimizer AdamW with AMSGrad Learning rate 8×10 −4
+> Batch size 48
+> Training epochs 500
+> Sampling
+> ODE solver Explicit Euler Training flow steps 5000
+> Inference steps (NFE) 500
+> Atom / bond priors Marginal / uniform
+
+rameter settings are summarized in Table 7. 
+
+Runtime and efficiency. To make the inference cost explicit, Table 8 reports component-wise wall-clock measurements under the same A800 setup. Language-condition generation produces three valid SMILES conditions per pocket, yield-ing 300 conditions over 100 pockets. The 3D stage then generates 100 ligands per pocket. SMI-TED timing is reported both with and without its one-time loading cost. The 3D sampling stage accounts for approxi-mately 89.5% of the measured LiFT runtime. Un-der the matched sampling setting, LiFT requires 2 h 38 min 48 s versus 1 h 59 min 20 s for DrugFlow, corresponding to a 33.1% sampling-time overhead. This comparison isolates sampling cost rather than end-to-end system cost, since DrugFlow does not include corresponding language-generation or semantic-encoding stages. 
+
+C.5 Pocket-Level Uncertainty and Statistical Reporting 
+
+To quantify variability across targets, we re-port pocket-level sample standard deviation (SD), across-pocket variance, and pocket-bootstrap 95% confidence intervals (CIs). For each metric, we first aggregate generated molecules within each pocket and then compute SD and variance across test pock-ets. For CIs, we resample complete pockets with replacement, retain all molecules associated with each selected pocket, and recompute the original aggregate estimator. Using pockets rather than in-dividual molecules as the resampling unit avoids treating molecules generated for the same target as statistically independent. These quantities characterize across-pocket het-erogeneity and sampling uncertainty; they should not be interpreted as retraining-seed variance. Be-cause the reported results use fixed trained check-points, multi-seed retraining variance is a distinct source of uncertainty. Table 9 reports SD, vari-ance, and 95% CIs for the continuous metrics most central to the main comparison. SD is reported in the original metric units, whereas variance is in squared units. For the no-reference property-oriented variants, we additionally report uncertainty for representa-tive filter and pose-validity metrics in Table 10. For percentage metrics, SD is measured in percentage points and variance in squared percentage points. The uncertainty estimates support a cautious in-terpretation of small numerical differences. In par-ticular, the QED-NoRef variant has a QED 95% CI of [0.723, 0.763] and an SA 95% CI of [2.602, 2.851], while confidence intervals for several dock-ing and pose-validity comparisons overlap with strong 3D baselines. We therefore use these statis-tics to characterize stability and across-pocket het-erogeneity rather than to claim significance from small point-estimate gaps. 
+
+C.6 Absolute Docking Scores 
+
+For direct comparability with studies reporting un-normalized docking scores, we additionally report raw Vina and Gnina scores under the same evalua-tion and failure-handling protocol. These absolute scores complement the heavy-atom-normalized docking-efficiency metrics and the Wasserstein-distance analysis reported in the main paper. All methods use the same docking and failure-handling protocol. Raw values near zero for some sequence-based baselines reflect unsuccess-ful or unscored post-hoc 3D poses under this uni-fied pipeline rather than a different scoring func-tion. Taken together, the reported docking re-sults provide three complementary views: absolute Vina/Gnina scores for conventional comparability, heavy-atom-normalized efficiency for size-aware affinity evaluation, and Wasserstein Distance for distributional fidelity. 
+
+D Controlled SMILES-Condition Protocol 
+
+The main text uses the Sense-Evolve-Assemble 
+
+agent to convert pocket descriptions, task direc-Table 8: Measured runtime of the LiFT pipeline on a single NVIDIA A800-SXM4-80GB GPU. The matched DrugFlow comparison uses the same 100-pocket, 10,000-molecule sampling workload. 
+
+Component / Method Timed Batch Total Wall-Clock Time Normalized Runtime 
+
+LLM condition generation 100 pockets; 300 conditions 14 min 48 s 8.88 s/pocket; 2.96 s/condition SMI-TED encoding, incl. loading 300 conditions 224.08 s 0.747 s/condition SMI-TED core encoding 300 conditions 208.17 s 0.694 s/condition One-time SMI-TED loading One initialization 14.87 s Not amortized across future batches 
+
+LiFT 3D flow sampling 100 pockets × 100 ligands 2 h 38 min 48 s 0.953 s/molecule; 95.28 s/pocket 
+
+DrugFlow 3D flow sampling Matched 10,000-molecule workload 1 h 59 min 20 s 0.716 s/molecule; 71.60 s/pocket 
+
+Complete measured LiFT pipeline LLM + SMI-TED + 3D sampling 2 h 57 min 20 s 106.40 s/pocket 
+
+Table 9: Pocket-level uncertainty for continuous evaluation metrics. Each entry is SD / variance / 95% bootstrap CI . Confidence intervals are computed by resampling complete test pockets. 
+
+Method Gnina Eff. Vina Eff. QED SA 
+
+AR 0.061/0.0038/[0.283,0.307] 0.083/0.0068/[-0.426,-0.393] 0.119/0.0140/[0.485,0.533] 0.895/0.8019/[4.109,4.470] PAFlow 0.040/0.0016/[0.254,0.270] 0.092/0.0084/[-0.445,-0.414] 0.101/0.0102/[0.471,0.511] 0.830/0.6882/[4.720,5.058] BindDM 0.044/0.0019/[0.240,0.257] 0.074/0.0055/[-0.376,-0.347] 0.100/0.0101/[0.489,0.527] 0.654/0.4281/[4.661,4.902] DecompDiff 0.037/0.0014/[0.197,0.213] 0.069/0.0048/[-0.281,-0.252] 0.137/0.0187/[0.425,0.483] 0.551/0.3041/[4.407,4.649] TargetDiff 0.043/0.0018/[0.236,0.253] 0.069/0.0047/[-0.357,-0.330] 0.111/0.0124/[0.458,0.500] 0.593/0.3516/[4.624,4.850] DrugFlow 0.043/0.0018/[0.243,0.260] 0.081/0.0065/[-0.353,-0.322] 0.135/0.0184/[0.526,0.578] 0.701/0.4915/[3.295,3.570] Pocket2Mol 0.063/0.0039/[0.285,0.310] 0.076/0.0058/[-0.440,-0.410] 0.091/0.0083/[0.555,0.591] 0.631/0.3976/[3.076,3.323] TamGen 0.008/0.0001/[0.087,0.090] 0.013/0.0002/[-0.006,-0.001] 0.078/0.0060/[0.445,0.476] 0.387/0.1499/[7.450,7.602] ELILLM-Diff 0.020/0.0004/[0.081,0.089] 0.010/0.0001/[-0.004,-0.000] 0.105/0.0111/[0.466,0.507] 0.660/0.4361/[8.434,8.694] ELILLM-Rand 0.023/0.0005/[0.087,0.096] 0.012/0.0001/[-0.005,-0.001] 0.145/0.0210/[0.431,0.488] 0.624/0.3893/[7.988,8.234] LiFT (Lig.-Ref) 0.075/0.0056/[0.241,0.270] 0.098/0.0096/[-0.365,-0.326] 0.181/0.0327/[0.444,0.516] 1.133/1.2843/[3.435,3.892] LiFT (QED-Ref) 0.058/0.0034/[0.231,0.253] 0.092/0.0086/[-0.347,-0.311] 0.185/0.0342/[0.483,0.558] 1.097/1.2029/[3.464,3.922] LiFT (Vina-Ref) 0.064/0.0040/[0.231,0.255] 0.091/0.0083/[-0.347,-0.311] 0.182/0.0331/[0.479,0.552] 1.075/1.1560/[3.537,3.981] LiFT (Bal-Ref) 0.063/0.0040/[0.235,0.260] 0.096/0.0091/[-0.354,-0.317] 0.180/0.0324/[0.496,0.569] 1.086/1.1794/[3.416,3.876] LiFT (QED-NoRef) 0.038/0.0014/[0.236,0.250] 0.082/0.0068/[-0.357,-0.325] 0.094/0.0089/[0.723,0.763] 0.662/0.4380/[2.602,2.851] LiFT (Vina-NoRef) 0.043/0.0018/[0.248,0.264] 0.092/0.0085/[-0.363,-0.327] 0.099/0.0098/[0.708,0.750] 0.593/0.3511/[2.538,2.794] LiFT (Bal-NoRef) 0.037/0.0014/[0.234,0.248] 0.101/0.0103/[-0.350,-0.311] 0.086/0.0074/[0.740,0.774] 0.574/0.3291/[2.552,2.774] 
+
+Table 10: Pocket-level uncertainty for representative filter and pose-validity metrics. Each entry is SD / vari-ance / 95% bootstrap CI .            
+
+> Variant RDKit (%) REOS (%) PoseB. (%)
+> QED-NoRef 10.92/119.2/[81.11,85.12] 16.94/287.1/[67.92,74.12] 21.52/462.9/[68.20,76.00] Vina-NoRef 11.83/140.0/[80.83,85.74] 18.14/329.2/[70.17,77.25] 21.43/459.4/[69.40,77.30] Bal-NoRef 13.76/189.3/[78.35,83.99] 19.52/381.1/[67.88,75.58] 21.53/463.5/[66.50,74.60]
+
+tives, and optional ligand references into one-dimensional SMILES conditions for the down-stream flow model. This appendix formalizes the operational interface between the language-based SMILES proposal stage and the geometric gener-ator. It specifies the information available to the language model, the deterministic parsing and vali-dation procedure, and the construction of the fixed SMILES-derived semantic latent used during flow sampling. 
+
+D.1 Semantic Intervention and Information Boundary 
+
+LiFT conditions the geometric generator through a semantic vector zsem produced by a frozen SMI-TED encoder. The controlled variable is the source of the SMILES string used to instantiate this vector. When the semantic condition is instantiated from an LLM-generated SMILES string, the string is produced by the fixed protocol described below. In the Ligand-Ref Embedding condition, the available reference ligand SMILES is encoded directly as a reference embedding. This condition is used as a diagnostic, reference-guided setting to assess how reference semantic information affects the down-stream generator. It is therefore reported separately from reference-free de novo variants. The access boundary is fixed before any target is evaluated. In the reference-free de novo setting, the LLM receives only the pocket-derived profile and a task directive. It does not receive the test ligand, reference SMILES, hidden labels, dock-ing scores, filter outcomes, or generated 3D struc-tures. In the reference-guided setting, the LLM additionally receives the reference ligand SMILES and coarse reference-derived size constraints. We therefore report this setting separately as a Ligand-Table 11: Absolute docking scores under the unified evaluation protocol. Lower raw Vina is better, while higher raw Gnina is better. Values are mean ± standard deviation.                                                                                                           
+
+> Method Raw Vina ↓Raw Gnina ↑
+> AR −6.756 ±2.462 4.741 ±1.391
+> PAFlow −9.647 ±3.503 5.765 ±1.384
+> BindDM −8.236 ±3.066 5.593 ±1.403
+> DecompDiff −7.647 ±2.283 5.849 ±1.072
+> TargetDiff −7.770 ±2.761 5.475 ±1.388
+> DrugFlow −6.938 ±2.908 5.118 ±1.302
+> Pocket2Mol −6.984 ±2.907 4.687 ±1.441
+> TamGen −0.143 ±1.840 3.880 ±0.506
+> ELILLM-Diff −0.071 ±3.446 4.420 ±1.182
+> ELILLM-Rand −0.133 ±2.608 4.275 ±1.311
+> LiFT (Ligand-Ref Embedding) −6.825 ±2.555 4.902 ±1.329
+> LiFT (QED-Reference) −6.804 ±2.477 4.910 ±1.289
+> LiFT (Vina-Reference) −6.782 ±2.447 4.906 ±1.310
+> LiFT (Balanced-Reference) −6.797 ±2.542 4.902 ±1.305
+> LiFT (QED-No-Reference) −6.748 ±2.160 4.785 ±1.057
+> LiFT (Vina-No-Reference) −6.362 ±2.177 4.645 ±1.009
+> LiFT (Balanced-No-Reference) −6.576 ±2.601 4.791 ±1.047
+
+Ref variant. Across both settings, downstream met-rics are used only for evaluation, not for selecting, revising, or ranking the SMILES condition. The corresponding prompt skeletons make this input separation explicit: Table 12 lists the reference-free fields, while Table 13 shows the additional reference-guided fields. 
+
+D.2 Operational Protocol 
+
+The protocol follows the three stages described in the methodology. First, the Sense stage sum-marizes the target pocket into a compact textual profile, including coarse geometry and physico-chemical anchors from the local interaction shell. This profile is the only target-specific input in the reference-free setting. Second, the Evolve stage ap-plies a fixed Pocket-of-Thought (PoT) schema. The schema asks the LLM to state a compact spatial and topological plan before emitting SMILES, making the intended SMILES condition inspectable with-out using the intermediate plan as a reward, filter, or selection signal. Third, the Assemble stage ex-tracts tagged SMILES strings, applies deterministic cheminformatics verification, and passes the first valid, SMI-TED-encodable molecule to the seman-tic encoder. Prompt variants are fixed at the script level. Distribution-oriented, balanced, Vina-oriented, and QED/safety-oriented directives modify only the task text supplied to the LLM. They do not change the generator weights, invoke an additional guid-ance model, or introduce feedback from down-stream evaluation. The same parsing, validation, and semantic extraction rule is used for all prompt families and LLM backbones considered in the ex-periments. 
+
+D.3 Validation and Candidate Accounting 
+
+Candidate acceptance is based only on molecular string validity and successful SMI-TED encoding. RDKit is used as an unweighted validity check rather than as a ranking surrogate. If a gener-ated string fails to parse, the repair routine is re-stricted to local SMILES syntax correction using the parser diagnostic. It does not receive docking scores, property scores, reference-similarity scores, filter results, or sampled 3D coordinates. Thus, the repair step provides syntax-level recovery only and does not introduce score-feedback optimiza-tion over evaluation metrics. The repair interface is specified in Table 14, which exposes only the parser diagnostic, invalid SMILES string, and captured PoT context. When multiple valid candidates are available, their chronological order is preserved and the first SMI-TED-encodable candidate instantiates zsem .If no valid encodable candidate is produced un-der the fixed protocol, the target is logged as a semantic-instantiation failure rather than being re-placed through post-hoc search. This accounting rule prevents downstream scores from influencing which semantic condition is passed to the 3D gen-erator. 
+
+D.4 Semantic Feature Extraction and Claim Boundary 
+
+After validation, the selected SMILES string is embedded by the frozen SMI-TED encoder: 
+
+zsem = Encoder SMI -TED (Ssmiles ).
+
+The resulting vector is constructed before any 3D geometric generation and is held fixed throughout flow sampling. The downstream flow model does not call the LLM, rerun repair, inspect candidate rationales, or revise zsem using generated coordi-nates or evaluation metrics. This protocol supports a deliberately narrow op-erational claim: LiFT uses language to instantiate a fixed SMILES-derived semantic condition un-der predefined information boundaries. It does not claim that PoT rationales are faithful explanations, that the LLM independently performs molecular optimization, or that Ligand-Ref Embedding rep-resents a reference-free deployment condition. In-stead, the protocol separates SMILES-condition construction from 3D generation and downstream metric evaluation. 
+
+D.5 Prompt Skeletons and Structural Schema 
+
+For reproducibility, the accompanying prompt ta-bles define the input fields, required output tags, parsing schema, reference-guided additions, and repair interface used by the implementation. Run-time variable interpolations are shown in square brackets, e.g., [Target ID] . These templates are fixed before evaluation and are not edited per tar-get after observing generated molecules or bench-marking scores. Specifically, Table 12 defines the reference-free de novo template, Table 13 defines the Ligand-Ref scaffold-hopping template, and Ta-ble 14 defines the syntax-repair interface. 
+
+D.6 Task-Specific Property Optimization Directives 
+
+To evaluate controllable property steering, we construct task-specific SMILES-derived seman-tic conditions by varying only the directive given to the LLM. All other components are kept un-changed: the information boundary, deterministic SMILES parsing, validation procedure, candidate-accounting rule, SMI-TED semantic extraction, and the downstream 3D generator. As a result, the balanced, Vina-oriented, and QED/safety-oriented settings isolate the effect of semantic task direc-tives under the same retraining-free generation in-terface, rather than introducing separate optimiza-tion pipelines. The concrete directive blocks are reported in Table 15, Table 16, and Table 17. 
+
+E Rule-Level Structural, MedChem, and Pose Validity Analysis 
+
+Table 2 reports the aggregate RDKit, REOS, and PoseBusters pass rates together with the main op-timization metrics. These aggregate scores sum-marize whether generated molecules satisfy broad structural-alert, medicinal-chemistry, and 3D pose-validity checks, but they do not reveal which rule families or geometric constraints drive the result. In this appendix, we therefore unpack the aggre-gate filter outcomes into rule-level diagnostics: RD-Kit and REOS are decomposed into chemical alert families, while PoseBusters is decomposed into 3D validity sub-checks. 
+
+E.1 Fine-grained RDKit and REOS Checks 
+
+Tables 18 and 19 provide the chemical rule-level au-dit. Table 18 reports the RDKit structural-alert sub-filters, including NIH, PAINS, the PAINS-A/B/C subclasses, and ZINC. Table 19 reports the REOS medicinal-chemistry rule families, including BMS, Glaxo, Inpharmatica, and REOS-PAINS. All en-tries are pass rates, so higher values indicate fewer violations of the corresponding rule. The two tables explain the aggregate RDKit/REOS compliance re-sults in Table 2, rather than replacing the main comparison. The two chemical-filter tables show that different model families have different localized alert pro-files. Several baselines are strongest on individual NIH or PAINS columns, while LiFT no-reference variants are strong on ZINC and remain competi-tive on Glaxo and Inpharmatica while maintaining high PAINS-family pass rates. Together with the aggregate RDKit/REOS scores in Table 2, these sub-filters support a cautious interpretation: LiFT’s favorable chemical-filter behavior is not tied to a single rule family, but is reflected across multiple structural-alert and medicinal-chemistry checks. 
+
+E.2 Fine-grained PoseBusters Checks 
+
+RDKit and REOS operate mainly on molecular graph and substructure rules. PoseBusters pro-vides a complementary 3D validity check by testing whether the predicted ligand pose is geometrically plausible and physically compatible with the bind-ing pocket. This matters for SBDD evaluation be-cause a model can otherwise appear competitive on docking-oriented metrics while producing poses with broken connectivity, strained bond geometry, internal clashes, or unrealistic protein-ligand con-tacts. Table 20 reports PoseBusters sub-checks that complement the overall PoseBusters score in Ta-ble 2. These columns separate local ligand geometry from protein-ligand pose compatibil-ity: aromatic-ring flatness, bond-angle geome-try, double-bond flatness, internal steric clashes, protein-ligand maximum distance, and protein-volume overlap. As above, all values are pass rates in percentages, so higher values indicate fewer vio-lations. The PoseBusters sub-checks add a complemen-tary view to the aggregate pose-validity score in Table 2. Language-only baselines can satisfy several local geometry checks while still having Box 1: Blind De Novo Generation Template (No-Reference Setting) [System Role] 
+
+You are a premier De Novo Drug Designer. Your task is to generate novel lead-like molecules from scratch that perfectly complement the provided 3D protein pocket environment. 
+
+### GLOBAL DATASET BASELINE (Context Only) 
+
+To calibrate your chemical intuition, active ligands in our training set have the following average properties: QED ≈ 0.53, SA Score ≈ 3.2, LogP ≈ 1.76, Heavy Atoms ≈ 24, Rotatable Bonds ≈ 4.6, and Vina Score ≈ -8.3. Treat these values strictly as a preliminary global reference. You must flexibly adapt or even drastically deviate from these averages depending on the specific geometric shape, size, and chemical environment of the target pocket. 
+
+### STEP 1: POCKET-OF-THOUGHT (PoT) REASONING [CRITICAL] 
+
+Before generating SMILES, you MUST provide a brief ’Reasoning’ section (max 4 sentences). 1. Explicitly explain your spatial reasoning strategy based on the 8.0Å anchors. 2. INTERACTION MAPPING: You MUST specify which part of your proposed molecule (e.g., ’the secondary amine’, ’the phenyl ring’) corresponds to each anchor residue (e.g., ’to align with Asp102’). 3. Explain how the molecular topology (elongated, branched, or compact) fits the pocket’s geometric shape. 
+
+### STEP 2: DE NOVO GENERATION REQUIREMENTS 
+
+1. Scaffold Innovation: Generate entirely novel scaffolds from scratch. Prioritize chemical diversity and high 3D complementarity. 2. Guided Alignment (Soft Constraints): Treat the provided Macro 3D constraints as highly informed, important references to guide your design. [Insert Task-Specific Optimization Directive Here]. 3. Chemical Rigor: Ensure perfect SMILES syntax, proper valency, and strictly avoid problematic motifs (e.g., PAINS or highly reactive groups). 
+
+### OUTPUT FORMAT: 
+
+Your response must follow this EXACT structure: [Reasoning] Your spatial and property reasoning analysis here... <smiles>SMILES_1</smiles> <smiles>SMILES_2</smiles> <smiles>SMILES_3</smiles> 
+
+[User Input] 
+
+Target ID: [Target ID] [3D Local Environment Analysis (8.0Å Interaction Shell)] - Description: [Pocket Profile Description] CRITICAL INSTRUCTION: You are performing a blind de novo drug design. Your PoT should logically deduce a suitable novel chemical scaffold from scratch that strictly complements the pocket’s 3D environment. Now, perform Step 1 (PoT Reasoning) and Step 2 (Generation) to provide 3 de novo candidates. 
+
+Table 12: System prompt template for blind de novo ligand generation (no-reference setting). Box 2: Reference-Guided Optimization Template (Ref Setting) [System Role] 
+
+You are a premier Medicinal Chemist specializing in Scaffold Hopping. Your task is to design novel lead-like molecules by replacing the core scaffold of a known active ligand, while preserving its key pharmacophore interactions within the 3D pocket. 
+
+### STEP 1: POCKET-OF-THOUGHT (PoT) REASONING [CRITICAL] 
+
+Before generating SMILES, you MUST provide a brief ’Reasoning’ section (max 4 sentences). 1. Explicitly explain your spatial reasoning strategy based on the 8.0Å anchors. 2. INTERACTION MAPPING: You MUST specify which part of your proposed molecule (e.g., ’the secondary amine’, ’the phenyl ring’) corresponds to each anchor residue (e.g., ’to align with Asp102’). 3. Explain how the molecular topology (elongated, branched, or compact) fits the pocket’s geometric shape. 
+
+### STEP 2: LEAD OPTIMIZATION REQUIREMENTS 
+
+1. Scaffold Enhancement: Retain the core structural backbone of the reference ligand. Focus your innovation on decorating the core, optimizing side chains, or making bioisosteric replacements. Do not completely delete the core scaffold unless necessary to resolve a severe spatial clash. [Insert Task-Specific Optimization Directive Here]. 2. Physical Alignment: Ensure the new molecule stays within the target molecular weight and atom count ranges derived from the reference. 3. Chemical Rigor: Ensure perfect SMILES syntax, proper valency, and strictly avoid PAINS motifs or reactive functional groups. 
+
+### OUTPUT FORMAT: 
+
+Your response must follow this EXACT structure: [Reasoning] Your spatial and property reasoning analysis here... <smiles>SMILES_1</smiles> <smiles>SMILES_2</smiles> <smiles>SMILES_3</smiles> 
+
+[User Input] 
+
+Target ID: [Target ID] [3D Local Environment Analysis (8.0Å Interaction Shell)] - Description: [Pocket Profile Description] [Physical Boundary Constraints] - Target Molecular Weight: [Weight Range] - Heavy Atom Count: [Atom Count Range] [Reference Ligand Pattern (Ground Truth)] SMILES: [Reference SMILES] CRITICAL INSTRUCTION: The Reference Ligand is known to bind effectively; your PoT should explain how to enhance its existing interactions rather than fundamentally deleting its core scaffolds unless there is a severe spatial clash. Now, perform Step 1 (PoT Reasoning) and Step 2 (Generation) to provide 3 optimized candidates. 
+
+Table 13: System prompt template for reference-guided lead optimization and scaffold hopping. Box 3: Knowledge-Guided Decoding (KGD) Repair Prompt [System Role] 
+
+You are the ’KGD Repair Engine’. You fix SMILES based on specific parser error messages. 
+
+### DIAGNOSTIC FEEDBACK: 
+
+The chemical parser reported this error: [RDKit Error Message] 
+
+### REPAIR RULES: 
+
+1. If ’unclosed ring’ is reported, check your ring closure numbers (e.g., ’1’, ’2’) and ensure they all have pairs. 2. If ’valence’ is reported, fix the atom’s bond count or add appropriate charges. 3. Maintain the pharmacophore described in the reasoning. OUTPUT: Provide ONLY the repaired SMILES in <smiles></smiles> tags. 
+
+[User Input] 
+
+Target Reasoning: [Captured PoT Context] Broken SMILES: [Invalid SMILES String] Please fix the error indicated in the diagnostic feedback. 
+
+Table 14: System prompt template for Knowledge-Guided Decoding (KGD) chemical syntax repair. 
+
+Box 4: Property Optimization Template — Balanced Mode (No-Reference Setting) [System Role] 
+
+You are a premier De Novo Drug Designer. Your task is to generate novel lead-like molecules from scratch that perfectly complement the provided 3D protein pocket environment. 
+
+### STEP 1: POCKET-OF-THOUGHT (PoT) REASONING [CRITICAL] 
+
+Before generating SMILES, you MUST provide a brief ’Reasoning’ section (max 4 sentences). 1. Explicitly explain your spatial reasoning strategy based on the 8.0Å anchors. 2. INTERACTION MAPPING: You MUST specify which part of your proposed molecule (e.g., ’the secondary amine’, ’the phenyl ring’) corresponds to each anchor residue (e.g., ’to align with Asp102’). 3. Explain how the molecular topology (elongated, branched, or compact) fits the pocket’s geometric shape. 
+
+### STEP 2: MOLECULAR GENERATION REQUIREMENTS (BALANCED OPTIMIZATION) 
+
+1. De Novo Innovation: Generate entirely novel scaffolds from scratch. Do not rely on any known reference inhibitors. 2. Balanced Maximization: Explicitly optimize BOTH drug-likeness (QED > 0.6, SA < 3.0) AND theoretical binding affinity (e.g., highly negative Vina/Gnina scores). CRITICALLY: You must also optimize Ligand Efficiency (binding energy per heavy atom). To achieve this, do NOT artificially inflate the molecular size just to accumulate weak van der Waals forces. Every heavy atom must count. 3. Realism & Safety: Ensure the molecule maintains highly realistic 3D geometry without internal steric clashes or absurdly twisted bond lengths. Strictly avoid Pan-Assay Interference Compounds (PAINS) and reactive/toxic groups. 4. GRAMMAR & SYNTAX: The SMILES must be strictly valid. Ensure all ring closures (numbers) are perfectly paired, do not generate fake aromatic rings (Kekulization), and ensure no atom exceeds its maximum allowed valence. 
+
+### OUTPUT FORMAT: 
+
+Your response must follow this EXACT structure: [Reasoning] Your spatial reasoning analysis here... <smiles>SMILES_1</smiles> <smiles>SMILES_2</smiles> <smiles>SMILES_3</smiles> 
+
+Table 15: System prompt protocol for target-driven Balanced Optimization. Box 5: Property Optimization Template — Medicinal Chemistry / Safety Mode [System Role] 
+
+You are a premier De Novo Drug Designer. Your task is to generate novel lead-like molecules from scratch that perfectly complement the provided 3D protein pocket environment. 
+
+### STEP 1: POCKET-OF-THOUGHT (PoT) REASONING [CRITICAL] 
+
+Before generating SMILES, you MUST provide a brief ’Reasoning’ section (max 4 sentences). 1. Explicitly explain your spatial reasoning strategy based on the 8.0Å anchors. 2. INTERACTION MAPPING: You MUST specify which part of your proposed molecule (e.g., ’the secondary amine’, ’the phenyl ring’) corresponds to each anchor residue (e.g., ’to align with Asp102’). 3. Explain how the molecular topology (elongated, branched, or compact) fits the pocket’s geometric shape. 
+
+### STEP 2: MOLECULAR GENERATION REQUIREMENTS 
+
+1. De Novo Innovation: Generate entirely novel scaffolds from scratch. Do not rely on any known reference inhibitors. 2. Medicinal Chemistry Filters: Explicitly optimize for drug-likeness (QED > 0.6) and synthetic accessibility (SA < 3.0). Strictly avoid Pan-Assay Interference Compounds (PAINS) and reactive/toxic groups. 3. GRAMMAR & SYNTAX: The SMILES must be strictly valid. Ensure all ring closures (numbers) are perfectly paired, do not generate fake aromatic rings (Kekulization), and ensure no atom exceeds its maximum allowed valence. 
+
+### OUTPUT FORMAT: 
+
+Your response must follow this EXACT structure: [Reasoning] Your spatial reasoning analysis here... <smiles>SMILES_1</smiles> <smiles>SMILES_2</smiles> <smiles>SMILES_3</smiles> 
+
+Table 16: System prompt protocol for targeted Medicinal Chemistry and structural safety screening. 
+
+Box 6: Property Optimization Template — Affinity Mode (No-Reference Setting) [System Role] 
+
+You are a premier De Novo Drug Designer. Your task is to generate novel lead-like molecules from scratch that perfectly complement the provided 3D protein pocket environment. 
+
+### STEP 1: POCKET-OF-THOUGHT (PoT) REASONING [CRITICAL] 
+
+Before generating SMILES, you MUST provide a brief ’Reasoning’ section (max 4 sentences). 1. Explicitly explain your spatial reasoning strategy based on the 8.0Å anchors. 2. INTERACTION MAPPING: You MUST specify which part of your proposed molecule (e.g., ’the secondary amine’, ’the phenyl ring’) corresponds to each anchor residue (e.g., ’to align with Asp102’). 3. Explain how the molecular topology (elongated, branched, or compact) fits the pocket’s geometric shape. 
+
+### STEP 2: MOLECULAR GENERATION REQUIREMENTS (AFFINITY OPTIMIZATION) 
+
+1. De Novo Innovation: Generate entirely novel scaffolds from scratch. Do not rely on any known reference inhibitors. 2. Affinity & Efficiency Maximization: Explicitly optimize the theoretical binding affinity (e.g., highly negative Vina/Gnina scores). CRITICALLY: You must also optimize Ligand Efficiency (binding energy per heavy atom). To achieve this, do NOT artificially inflate the molecular size just to accumulate weak van der Waals forces. Every heavy atom must count. 3. PoseBusters Realism: Ensure the molecule maintains highly realistic 3D geometry without internal steric clashes or absurdly twisted bond lengths. 4. GRAMMAR & SYNTAX: The SMILES must be strictly valid. Ensure perfectly paired ring closures and no hypervalency. 
+
+### OUTPUT FORMAT: 
+
+Your response must follow this EXACT structure: [Reasoning] Your spatial reasoning analysis here... <smiles>SMILES_1</smiles> <smiles>SMILES_2</smiles> <smiles>SMILES_3</smiles> 
+
+Table 17: System prompt protocol for targeted Binding Affinity maximization. Table 18: RDKit structural-alert sub-filter pass rates on CrossDocked2020. All entries are percentages, and higher values indicate fewer violations. Best results among generated methods are highlighted in bold , and the second best are underlined.                                                                                                               
+
+> Category Method RDKit Structural Alerts (%) ↑
+> NIH PAINS PAINS-A PAINS-B PAINS-C ZINC 3D-based Models AR (Luo et al., 2021) 54.80 96.69 99.13 97.55 99.88 95.92 PAFlow (Zhou et al., 2025) 77.80 98.50 98.83 99.80 99.85 94.65 BindDM (Huang et al., 2024) 73.82 97.64 98.41 99.44 99.73 93.98 DecompDiff (Guan et al., 2023b) 64.02 95.73 98.15 97.83 99.64 97.15 TargetDiff (Guan et al., 2023a) 69.11 97.91 99.07 98.98 99.76 93.11 DrugFlow (Schneuing et al., 2025) 79.69 96.16 98.22 97.99 99.86 96.58 Pocket2Mol (Peng et al., 2022) 88.95 95.05 98.64 96.71 99.53 97.40 LLM-based Models TamGen (Wu et al., 2024) 89.72 95.70 99.28 97.85 98.52 38.93 ELILLM-Diff (Hu et al., 2026) 89.98 98.15 98.52 99.87 99.73 25.99 ELILLM-Rand (Hu et al., 2026) 87.81 96.70 98.68 98.22 99.72 32.47 LiFT Variants Ligand-Ref Embedding 63.21 95.32 99.05 96.42 99.83 94.29
+> LiFT (Bal-Reference) 67.74 95.33 98.97 96.48 99.76 96.00
+> LiFT (QED-Reference) 64.75 94.34 98.24 96.21 99.68 95.40
+> LiFT (Vina-Reference) 64.84 95.79 98.54 97.34 99.85 95.76
+> LiFT (QED-No-Reference) 86.08 96.69 97.76 99.17 99.65 99.48
+> LiFT (Vina-No-Reference) 86.86 95.85 98.09 97.89 99.77 99.21
+> LiFT (Bal-No-Reference) 83.55 97.05 98.13 99.11 99.78 99.62
+
+Table 19: REOS medicinal-chemistry rule-family pass rates on CrossDocked2020. All entries are percentages, and higher values indicate fewer violations. Best results among generated methods are highlighted in bold , and the second best are underlined.                                                                           
+
+> Category Method REOS Rule Families (%) ↑
+> BMS Glaxo Inpharmatica PAINS 3D-based Models AR (Luo et al., 2021) 54.80 61.94 54.22 97.03 PAFlow (Zhou et al., 2025) 77.80 87.96 70.25 98.62
+> BindDM (Huang et al., 2024) 73.82 93.37 67.62 98.00 DecompDiff (Guan et al., 2023b) 64.02 80.91 65.40 96.19 TargetDiff (Guan et al., 2023a) 69.11 90.93 69.86 98.19 DrugFlow (Schneuing et al., 2025) 79.69 89.75 79.34 96.61 Pocket2Mol (Peng et al., 2022) 88.95 96.27 72.91 94.98 LLM-based Models TamGen (Wu et al., 2024) 89.72 94.07 62.51 95.65 ELILLM-Diff (Hu et al., 2026) 89.98 89.47 82.35 98.14 ELILLM-Rand (Hu et al., 2026) 87.81 83.96 79.04 96.43 LiFT Variants Ligand-Ref Embedding 63.21 79.97 70.37 95.78
+> LiFT (Bal-Reference) 67.74 84.49 71.26 95.63
+> LiFT (QED-Reference) 64.75 83.36 71.16 94.67
+> LiFT (Vina-Reference) 64.84 84.91 70.47 96.20
+> LiFT (QED-No-Reference) 86.08 95.70 77.88 97.51
+> LiFT (Vina-No-Reference) 86.86 95.16 80.67 97.21
+> LiFT (Bal-No-Reference) 83.55 95.51 79.57 98.08
+
+very low overall PoseBusters pass rates, indicat-ing that isolated sub-checks do not guarantee a valid 3D pose. In contrast, LiFT variants retain stable protein-overlap behavior and competitive geometry-related sub-checks while also maintain-ing the RDKit/REOS compliance patterns above. This supports that LiFT’s aggregate gains remain consistent with both chemical rule filters and 3D pose-validity checks. 
+
+F Qualitative Case Study on Representative Targets 
+
+To visually demonstrate the binding modes and geometric complementarity of the generated molecules, we select four representative protein tar-gets (1E8H, 1JN2, 2AZY, and 3AF2) for qualitative analysis. These targets encompass a diverse range of challenging spatial environments, varying from deep, narrow binding pockets to wide, flat surface grooves. To ensure a fair and rigorous comparison, we establish baselines representing state-of-the-art autoregressive (AR), diffusion (DecompDiff), and flow-matching (PAFlow) paradigms, alongside the Ground Truth (GT) standard molecules from the test set. These specific targets were deliberately chosen due to their challenging nature, distinct physicochemical properties, and the high perfor-mance variance observed in their corresponding GT molecules. For each target, we generated a li-brary of dozens of candidate ligands across all gen-erative methods. Subsequently, these candidates were rigorously filtered based on a comprehen-sive evaluation of AutoDock Vina binding affinity, Quantitative Estimate of Drug-likeness (QED), and Synthetic Accessibility (SA). The selected ligand-protein complexes represent the top-performing candidates that achieve an optimal balance across these critical metrics, allowing for a rigorous visual comparison against the GT. As illustrated in the 3D visualizations and quan-titative annotations in Figure 7, the molecules gen-erated by LiFT exhibit superior spatial-semantic fidelity. Crucially, distinguishing itself from ap-proaches that merely game the Vina scoring func-tion, LiFT achieves an exceptional equilibrium: it not only excels in geometric complementarity but also demonstrates outstanding intrinsic molecular properties (QED and SA). Compared to baseline models—which often suffer from severe conforma-tional collapse (e.g., DecompDiff in 1JN2)—the spatial extension and receptor complementarity of LiFT closely parallel, and occasionally surpass, the GT ligands. LiFT successfully captures the authentic geometric binding modes while dramati-cally elevating the pharmacological properties (e.g., achieving exceptional QED scores of 0.893 in both 1E8H and 2AZY). Furthermore, LiFT maintains highly competitive Vina affinity (e.g., -11.01 in 1E8H) alongside highly reasonable SA values. This substantiates that our SCDR mechanism guaran-tees physical complementarity without sacrificing synthesizability, elegantly avoiding the common pitfall of trading drug-like properties for artificially inflated affinity scores—a catastrophic trade-off explicitly observed in PAFlow, which forces high Vina scores (e.g., -13.06 in 2AZY) at the severe expense of QED and SA degradation. 1E8H  1JN2  2AZY  3AF2                                                                   
+
+> Vina -9.66 , QED 0.736 , SA 4.861 Vina -5.62 , QED 0.642 , SA 2.013 Vina -10.33 , QED 0.782 , SA 3.981 Vina -5.97 , QED 0.871 , SA 4.194
+> Vina -10.04 , QED 0.493, SA 4.193 Vina -3.63 , QED 0.885 , SA 3.262 Vina -11.84 , QED 0.604, SA 5.347 Vina -8.68 , QED 0.504, SA 4.867
+> Vina -12.04 , QED 0.831 , SA 3.721 Vina -6.39 , QED 0.503 , SA 2.934 Vina -13.06 , QED 0.539 , SA 4.711 Vina -8.18 , QED 0.542, SA 5.157
+> Vina -10.03 , QED 0.281 , SA 4.125 Vina -5.95 , QED 0.400 , SA 3.366 Vina -10.91 , QED 0.540 , SA 4.789 Vina -7.74 , QED 0.171 , SA 4.645
+> Vina -11.01 , QED 0.893 , SA 3.051 Vina -6.20 , QED 0.828 ,SA 2.343 Vina -8.5 4,QED 0.893 , SA 2.105 Vina -8.74 , QED 0.634 , SA 2.814
+
+LiFT 
+
+AR 
+
+DecompDiff 
+
+PAFlow 
+
+GT Figure 7: Qualitative 3D visualization of generated ligands within four representative target pockets (1E8H, 1JN2, 2AZY, and 3AF2). The grid compares the binding poses and geometric complementarity of molecules generated by LiFT , AR, DecompDiff, and PAFlow, alongside the Ground Truth (GT) references. Key pharmacologi-cal metrics (AutoDock Vina binding affinity, QED, and SA) are annotated below each complex. Green bold text signifies superior performance or highly desirable drug-like properties, whereas red text highlights severe metric degradation (e.g., collapsed QED or SA scores despite artificially high Vina affinity). LiFT uniquely achieves an exceptional equilibrium, matching or exceeding GT geometric complementarity while strictly maintaining optimal synthesizability and drug-likeness. Table 20: PoseBusters sub-filter pass rates on CrossDocked2020. The table reports diagnostic 3D validity checks, excluding the overall PoseBusters score already reported in Table 2. All entries are percentages, and higher values indicate fewer geometric or physical violations. Best generated-method results are highlighted in bold , and second best are underlined; ties share the same mark.                                                                                                               
+
+> Category Method PoseBusters 3D Validity Checks (%) ↑
+> Ring Flat Bond Ang. Double Bond Int. Clash Max. Lig.-Prot. Dist. Protein Overlap 3D-based Models AR (Luo et al., 2021) 90.56 85.28 94.80 91.03 98.93 98.79 PAFlow (Zhou et al., 2025) 99.76 32.14 99.47 72.45 98.78 98.24 BindDM (Huang et al., 2024) 99.98 45.64 100.00 86.63 98.91 97.85 DecompDiff (Guan et al., 2023b) 99.97 92.82 96.52 93.92 98.81 98.81 TargetDiff (Guan et al., 2023a) 99.99 74.13 99.99 91.18 98.95 98.43 DrugFlow (Schneuing et al., 2025) 99.96 96.44 99.01 97.83 100.00 98.98 Pocket2Mol (Peng et al., 2022) 99.60 99.01 99.31 99.19 99.00 98.55 LLM-based Models TamGen (Wu et al., 2024) 100.00 99.85 100.00 100.00 8.40 97.95 ELILLM-Diff (Hu et al., 2026) 99.96 99.90 94.58 99.51 5.65 98.19 ELILLM-Rand (Hu et al., 2026) 99.97 99.94 97.76 99.35 6.58 98.02 LiFT Variants Ligand-Ref Embedding 99.99 94.51 99.63 95.78 100.00 99.97 LiFT (Bal-Reference) 99.97 94.03 99.24 95.84 100.00 98.94
+> LiFT (QED-Reference) 99.97 93.85 99.49 95.52 100.00 99.66
+> LiFT (Vina-Reference) 99.97 93.73 99.49 95.48 100.00 99.93
+> LiFT (QED-No-Reference) 99.87 95.65 99.27 95.59 100.00 99.61
+> LiFT (Vina-No-Reference) 99.93 95.96 99.59 97.01 100.00 98.35
+> LiFT (Bal-No-Reference) 99.81 95.57 99.50 94.97 100.00 99.23
+
+G Detailed Mathematical Formulations 
+
+This appendix gives an implementation-faithful ver-ification of LiFT’s heterogeneous conditional gen-erator. We make explicit the continuous coordinate flow, the categorical atom/bond bridges, and the conditions under which SCDR injects semantic control without changing the underlying transition families or breaking the geometric structure of the GVP backbone. 
+
+G.1 Problem Setup and Heterogeneous State Space 
+
+We formulate target-aware ligand generation as a heterogeneous conditional generative process. Given a protein pocket P, a semantic condition 
+
+zsem ∈ Rdsem , and a ligand size N fixed before the generative chain starts, LiFT learns 
+
+pθ(z1 | P , zsem , N ), (13) with zsem denoting the precomputed molecule-level semantic embedding routed by SCDR. It is a fixed conditioning vector for the generative tra-jectory, not a generated state variable and not an evaluator-side score. A ligand state is written as 
+
+zt = ( Xt, Ht, Et). (14) The three components are 
+
+Xt ∈ RN ×3, Ht ∈ { 0, 1}N ×Kh , Et ∈ { 0, 1}M ×Ke .
+
+(15) corresponding to coordinates, atom types, and bond types. N is the number of ligand atoms. For each forward pass, M is determined by a fixed candi-date edge set chosen before the bridge trajectory starts. In the reported setting, this set contains all unordered ligand atom pairs, so M = N (N − 1) /2
+
+for a single molecule. The same fixed edge set is used throughout training and sampling for that trajectory. Kh, K e are the atom and bond class counts. The components live in different state spaces: 
+
+Xt is Euclidean, whereas Ht and Et are categorical. LiFT therefore uses a heterogeneous process: 
+
+Xt : continuous flow matching ,
+
+(Ht, Et) : discrete Markov bridges . (16) The semantic condition enters the generative pro-cess through the neural parameterization of the dy-namics. We write 
+
+χt = ( zt, P, t, zsem ). (17) The learned dynamics return 
+
+bvXθ (χt), bpHθ (χt), bpEθ (χt). (18) The two distributions bpHθ and bpEθ serve as termi-nal atom-type and bond-type predictors. SCDR modulates this parameterization while leaving the coordinate and categorical state spaces intact. The heterogeneous process fixes the transition families; semantic guidance acts through the learned dynam-ics. G.2 Continuous Coordinate Flow Matching 
+
+The coordinate component uses Euclidean flow matching. Given a prior sample X0 and a data sample X1, LiFT uses, for t ∈ [0 , 1] ,
+
+Xt = (1 − t)X0 + tX1. (19) Coordinates use the pocket-centered frame imple-mented by center_data . Let cP be the pocket center before normalization. Training subtracts this same center from pocket and ligand coordinates before constructing the path: 
+
+P ← P − cP , X1 ← X1 − cP . (20) For pockets without explicit atoms, the same con-struction is anchored by the ligand center. The coordinate prior is sampled around the pocket cen-ter in the current frame, 
+
+X0 ∼ N (c norm  
+
+> P
+
+, I), (21) where c norm  
+
+> P
+
+= 0 after pocket centering in the stan-dard non-empty-pocket case. Thus X0 and X1 are expressed in one reference frame. This centering removes global translation. In the reported con-figuration, the model uses reflection-sensitive chi-ral edge features, so the architectural equivariance guarantee is stated for proper rotations: if pocket and ligand coordinates are jointly transformed by any R ∈ SO (3) , the GVP vector field transforms accordingly. The path velocity is 
+
+uXt = dXt
+
+dt = X1 − X0. (22) The neural field predicts a scaled coordinate ve-locity: 
+
+bvXθ (χt) ≈ X1 − X0
+
+cx
+
+, (23) where cx > 0 is the coordinate scaling constant used during training and sampling; we use cx =2.7. The atom-wise coordinate loss is 
+
+ℓXi = 13 bvXθ (χt)i − X1,i − X0,i 
+
+cx
+
+> 22
+
+. (24) The molecule-wise objective uses the mean over ligand atoms: 
+
+LX = Et, X0,X1
+
+"
+
+1
+
+N
+
+> N
+
+X
+
+> i=1
+
+ℓXi
+
+#
+
+. (25) The same scaling appears in inference. With sampler step size 
+
+δsam = 1
+
+Nsam 
+
+, (26) Euler integration updates coordinates as 
+
+Xk+1 = Xk + δsam cx bvXθ (χk). (27) Sampling inverts the training scale. The learned coordinate dynamics approximate the velocity field of the linear path while remaining conditioned on the pocket and semantic prior through the neural parameterization. 
+
+G.3 Discrete Markov Bridges for Atom and Bond Types 
+
+Atom and bond identities are categorical; we there-fore model them with discrete Markov bridges. The dynamics below are conditional on the ligand size 
+
+N . For bond variables, the candidate edge set is fixed along one trajectory, so M defines a fixed categorical state space for that forward pass. Let 
+
+Y ∈ { H, E} (28) denote either atom-type or bond-type variables. We write IY for its instance index set, with |I H | = N
+
+and |I E | = M . Each Yt,i ∈ { 0, 1}K is a one-hot categorical state, where K = Kh for atoms and 
+
+K = Ke for bonds. The initial state Y0,i is sampled from a categor-ical prior πY 
+
+> 0
+
+, and the terminal state Y1,i is the data one-hot label. The categorical priors are fixed before training and are not recomputed from test targets. In the reported configuration, πH 
+
+> 0
+
+uses the empirical atom-type marginal and πE 
+
+> 0
+
+uses a uni-form bond prior. For each instance i, the bridge marginal from 0 to t is defined by 
+
+¯Qt(Y1,i ) = (1 − t)I + t 1Y ⊤
+
+> 1,i
+
+. (29) The induced marginal is 
+
+q(Yt,i | Y0,i , Y1,i ) = Y0,i ¯Qt(Y1,i ). (30) The graph-level bridge factorizes over atom or edge instances: 
+
+q(Yt | Y0, Y1) = Y
+
+> i∈I Y
+
+q(Yt,i | Y0,i , Y1,i ).
+
+(31) The product form defines the elementary categor-ical kernels. Coupling among atom and edge variables is introduced through the shared state-dependent context χt, which parameterizes the ter-minal distributions below. The transition keeps each variable categorical while increasing probabil-ity mass toward the terminal data state. For a transition from time s to t, 0 ≤ s < t ≤ 1,define 
+
+βt|s = 1 − t
+
+1 − s . (32) The corresponding one-step bridge transition is 
+
+Qt|s(Y1,i ) = βt|sI + (1 − βt|s)1Y ⊤
+
+> 1,i
+
+. (33) The denominator is only evaluated for s < 1. At the final sampling step, t = 1 is allowed with s < 1,yielding β1|s = 0 and a terminal transition fully determined by the predicted clean-state distribution. For a current one-hot state Ys,i , the true bridge transition is 
+
+q(Yt,i | Ys,i , Y1,i ) = Ys,i Qt|s(Y1,i ). (34) The model predicts a terminal distribution for every instance, 
+
+bπYt,i := bpYθ,i (χt) = softmax  f Yθ,i (χt) . (35) The model transition is obtained by replacing the unknown terminal one-hot state with this predicted distribution: 
+
+bQθt|s,i = βt|sI + (1 − βt|s)1(bπYs,i )⊤. (36) 
+
+pθ(Yt,i | Ys,i , χ s) = Ys,i bQθt|s,i . (37) The transition is row-stochastic: all entries are non-negative, and every row sums to 
+
+βt|s + (1 − βt|s)
+
+> K
+
+X
+
+> k=1
+
+bπYs,i,k = 1 . (38) LiFT optimizes the variational bridge objective over sampled bridge states. During training, let 
+
+r denote the sampled current time. The bridge step size is 
+
+δtr = 1
+
+Ntr 
+
+, (39) where the reported runs use Ntr = 5000 . We set 
+
+r+ = min( r + δtr , 1) , (40) with r < 1 almost surely under the continuous time sampler. The KL term compares the true and learned one-step transitions from r to r+:
+
+LV LB Y = Er,z 0,z 1,Yr
+
+ 1
+
+|I Y |
+
+X
+
+> i∈I Y
+
+DKL 
+
+ qYi pYθ,i 
+
+ .
+
+(41) The two distributions inside the KL are 
+
+qYi = q(Yr+,i | Yr,i , Y1,i ),pYθ,i = pθ(Yr+,i | Yr,i , χ r). (42) Equivalently, each instance-level KL is 
+
+DKL 
+
+ qYi pYθ,i 
+
+ =
+
+> K
+
+X
+
+> k=1
+
+qr+ 
+
+> i,k
+
+log qr+
+
+> i,k
+
+pr+
+
+> θ,i,k
+
+, (43) with 
+
+qr+ 
+
+> i,k
+
+= q(Yr+,i = k | Yr,i , Y 1,i ),pr+ 
+
+> θ,i,k
+
+= pθ(Yr+,i = k | Yr,i , χ r). (44) The main objective uses this molecule-wise mean. The corresponding terminal cross-entropy form at the sampled time r is 
+
+LCE Y = − 1
+
+|I Y |
+
+X
+
+> i∈I Y
+
+D
+
+Y1,i , log bπYr,i 
+
+E
+
+. (45) We use the VLB objective for the discrete bridge losses. During sampling, for a step from t to t′ = t +
+
+δsam , the predicted terminal distribution defines 
+
+bQθt′|t,i = βt′|tI + (1 − βt′|t)1(bπYt,i )⊤. (46) The next categorical state follows 
+
+pθ(Yt′,i | Yt,i , χ t) = Yt,i bQθt′|t,i . (47) Sampling gives 
+
+Yt′,i ∼ Cat  pθ(Yt′,i | Yt,i , χ t) . (48) Discrete variables therefore remain categorical dur-ing both training and inference. 
+
+G.4 Joint LiFT Objective 
+
+The heterogeneous training objective combines the coordinate flow loss with the discrete bridge losses for atom and bond variables: 
+
+LLiFT = λxLX + λhLH + λeLE . (49) 
+
+LX denotes the coordinate flow-matching loss; LH
+
+and LE denote the Markov bridge losses for atom and bond types. In the reported configuration, λx =1.0, λh = 50 .0, and λe = 50 .0.Some implementation variants can add auxiliary torsion, rotation, or translation losses for flexible pocket variables outside the ligand flow/bridge con-struction. These terms are not part of the ligand objective above; the continuous–discrete ligand ob-jective remains the base generative objective. The semantic condition zsem enters these proba-bility paths through the shared neural parameteri-zation: 
+
+bvXθ , bπHθ , bπEθ
+
+
+
+= Gθ(χt). (50) This gives a clean separation between transition design and semantic modulation. The flow and bridge mechanisms define the continuous and cate-gorical transition families; SCDR routes zsem into their shared GVP parameterization. Semantic mod-ulation changes how transition parameters are pre-dicted while keeping the transition families fixed. Thus this appendix establishes a mathematically de-fined intervention channel for zsem ; claims about controllable property changes are empirical inter-vention claims evaluated through GT/LLM and ab-lation protocols, not theorem-level consequences of the objective alone. 
+
+G.5 SCDR Equivariant Routing 
+
+We formulate SCDR as an equivariant semantic routing module for a GVP backbone. The main text denotes the router latent by h; here we use q(l) to emphasize that the same mechanism is instantiated at each GVP layer. At layer l, ligand node features are 
+
+H(l) = {h(l) 
+
+> i
+
+}Ni=1 , h(l) 
+
+> i
+
+= ( s(l) 
+
+> i
+
+, V(l) 
+
+> i
+
+). (51) 
+
+s(l) 
+
+> i
+
+∈ Rds and V(l) 
+
+> i
+
+∈ Rdv ×3 are scalar and vector channels. An SCDR routing map 
+
+R(l) 
+
+> θscdr
+
+= R(l) 
+
+> θscdr
+
+(H(l), zsem , t ) (52) is constructed around four requirements: permuta-tion invariance over ligand atoms, geometric invari-ance of the routing signal, bounded perturbation of the backbone, and stable initialization behavior. 
+
+Invariant node descriptor. A scalar routing net-work cannot consume raw vector channels V(l)
+
+> i
+
+without fixing a coordinate frame. SCDR therefore accesses vector features through rotation-invariant quantities. We use the channel-wise vector norm: 
+
+V(l) 
+
+> i
+
+R 2 = V(l)  
+
+> i2
+
+(∀R ∈ SO (3)) . (53) We define the invariant node descriptor as 
+
+u(l) 
+
+> i
+
+=
+
+h
+
+LN s(s(l) 
+
+> i
+
+), LN v
+
+
+
+V(l) 
+
+> i2
+
+i 
+
+. (54) The descriptor remains state-dependent while being invariant to proper rotations. The reported back-bone may use reflection-sensitive chiral edge fea-tures; the SCDR router itself does not introduce additional frame-dependent vector inputs. 
+
+DeepSets sensing. Since zsem is molecule-level, the SCDR readout must be invariant to atom order-ing. The DeepSets (Zaheer et al., 2017) representa-tion principle gives a natural admissible family of permutation-invariant set functions: 
+
+F ({ui}Ni=1 ) = ρ
+
+> N
+
+X
+
+> i=1
+
+φ(ui)
+
+!
+
+. (55) SCDR follows this family by first computing 
+
+r(l) 
+
+> i
+
+= φ(l)(u(l) 
+
+> i
+
+), (56) then aggregating node states into an invariant struc-tural summary: 
+
+Ψ(l) 
+
+> str
+
+=
+
+h
+
+mean ir(l) 
+
+> i
+
+, max ir(l) 
+
+> i
+
+, std ir(l) 
+
+> i
+
+, log N
+
+i
+
+.
+
+(57) The mean, maximum, and standard deviation en-code global level, extreme local responses, and structural heterogeneity, while log N preserves molecular scale. The resulting Ψ(l) 
+
+> str
+
+is a com-pact DeepSets-motivated statistic of the current 3D molecular state, and is both permutation-invariant and geometrically invariant. 
+
+SCDR routing. Let τ (t) denote the integration-time embedding used by the backbone. We in-stantiate it as an RBF embedding of t when time embedding is enabled, and as the scalar t other-wise. This integration-time signal is distinct from the training-progress warmup variable p used be-low to activate SCDR parameters smoothly during optimization. SCDR uses the routing inputs 
+
+[zsem , τ (t), Ψ(l)
+
+> str
+
+]. (58) The semantic–time branch is 
+
+c(l) = ψ(l) 
+
+> c
+
+([ zsem , τ (t)]) , (59) and the structural branch is 
+
+g(l) = ψ(l)
+
+> s
+
+
+
+Ψ(l)
+
+> str
+
+
+
+. (60) After normalization, 
+
+ˆc(l) = LN( c(l)), ˆg(l) = LN( g(l)). (61) SCDR uses two gates: 
+
+a(l)time = σ
+
+
+
+η(l) 
+
+> t
+
+(τ (t)) 
+
+
+
+, (62) 
+
+a(l) 
+
+> c
+
+= σ
+
+
+
+η(l)
+
+> c
+
+
+
+[ˆ c(l), ˆg(l)]
+
+ 
+
+. (63) The shared router latent is 
+
+q(l) = LN 
+
+
+
+ρ(l) 
+
+ˆc(l) + a(l)time a(l) 
+
+> c
+
+ˆg(l) 
+
+. (64) Because both branches are built from invariant in-puts, q(l) is an invariant molecule-level routing variable. 
+
+Decoupled bounded dispatching. Since q(l) is invariant, it can generate scalar modulation coef-ficients without breaking equivariance. We de-note the SCDR parameter subset by θscdr ⊂ θ.For scalar states, SCDR first applies the semantic AdaLN path. Write ¯γ(l) = tanh γ(l)(zsem ) and 
+
+¯β(l) = β(l)(zsem ). Then 
+
+˜s(l) 
+
+> i
+
+= LN s(s(l) 
+
+> i
+
+), s(l) 
+
+> base,i
+
+= ˜ s(l) 
+
+> i
+
+⊙ (1 + ¯ γ(l)) + ¯β(l).
+
+(65) This base AdaLN path uses the semantic condi-tion alone. The full SCDR routing is obtained by combining this semantic state modulation with the structure-aware latent q(l) in the gates below. For vector updates, equivariance permits scalar gating but forbids arbitrary vector bias. SCDR therefore separates scalar state modulation from residual up-date modulation: 
+
+α(l) 
+
+> s,state
+
+= 1 + wprog (p)bas (W (l)
+
+> s,state
+
+q(l)),α(l) 
+
+> s,upd
+
+= 1 + wprog (p)bau (W (l)
+
+> s,upd
+
+q(l)),α(l) 
+
+> v,upd
+
+= 1 + wprog (p)bav (W (l)
+
+> v,upd
+
+q(l))
+
+(66) where 
+
+ba(x) = a x
+
+1 + |x| . (67) For vector inputs, ba is applied componentwise. In the reported implementation, as = 0.5 for the scalar state gate and au = av = 0 .9 for the scalar/vector update gates. The variable p ∈ [0 , 1] 
+
+denotes training progress, and wprog (p) ∈ [0 , 1] is the cosine warmup coefficient used when an ex-plicit progress schedule is supplied. This training-progress gate is separate from the integration-time gate atime (t). The routed scalar state is 
+
+ˆs(l) 
+
+> i
+
+= s(l) 
+
+> base,i
+
++ ˜ s(l) 
+
+> i
+
+⊙
+
+
+
+α(l) 
+
+> s,state
+
+− 1
+
+
+
+, (68) and the routed feed-forward update is 
+
+∆ˆ s(l) 
+
+> i
+
+= α(l) 
+
+> s,upd
+
+⊙∆s(l) 
+
+> i
+
+, ∆ ˆV(l) 
+
+> i
+
+= α(l) 
+
+> v,upd
+
+⊙∆V(l) 
+
+> i
+
+.
+
+(69) The vector gate is channel-wise scalar broadcast: if 
+
+α(l) 
+
+> v,upd
+
+∈ Rdv and ∆V(l) 
+
+> i
+
+∈ Rdv ×3, then 
+
+
+
+∆ ˆV(l)
+
+> i
+
+ 
+
+> c, :
+
+= α(l)
+
+> v,upd,c
+
+
+
+∆V(l)
+
+> i
+
+ 
+
+> c, :
+
+, c = 1 , . . . , d v.
+
+(70) The routed form can be summarized as 
+
+[zsem , τ (t), Ψ(l)
+
+> str
+
+] 7 −→ (α(l)
+
+> s,state
+
+, α (l)
+
+> s,upd
+
+, α (l)
+
+> v,upd
+
+)
+
+(71) where Ψ(l) 
+
+> str
+
+is the invariant structural statistic de-fined above. SCDR is a bounded, permutation-invariant, geometry-preserving routing module for semantic modulation of GVP dynamics. 
+
+G.6 Equivariance and Stability Proofs 
+
+We verify that the SCDR-modulated GVP block preserves the required geometric symmetries and remains a bounded perturbation of the original backbone. 
+
+Proposition 1: equivariance preservation. As-sume the base GVP block is permutation equiv-ariant over nodes and SO (3) -equivariant over vec-tor channels under the reported reflection-sensitive configuration. For any node permutation Π and any proper rotation R ∈ SO (3) , the base block satisfies 
+
+Fs(Π s, ΠVR) = Π Fs(s, V),FV (Π s, ΠVR) = Π FV (s, V)R. (72) Then the SCDR-modulated block preserves the same transformation laws. 
+
+Proof. SCDR reads vector channels only through norms: 
+
+∥ViR∥2 = ∥Vi∥2. (73) Each node descriptor ui is therefore SO (3) -invariant. Since Ψstr is built from permutation-invariant pooling operations (mean, max, std, and count), 
+
+Ψstr (Π s, ΠVR) = Ψ str (s, V). (74) Consequently, the router latent and all routing gates are invariant: 
+
+α(Π s, ΠVR) = α(s, V), (75) for 
+
+α ∈ { αs,state , α s,upd , α v,upd }. (76) The AdaLN coefficients γ(zsem ) and β(zsem )
+
+depend only on the molecule-level semantic con-dition and are broadcast to ligand nodes by the batch index. They remain invariant under node permutation and under SO (3) transformations, so scalar modulation preserves permutation equivari-ance. For the vector update, since αv,upd is an invariant channel-wise scalar broadcast over the Cartesian dimension, 
+
+∆ ˆV(Π s, ΠVR) = αv,upd ⊙ (Π∆ VR)= Π ( αv,upd ⊙ ∆V) R
+
+= Π∆ ˆV(s, V)R. 
+
+(77) Hence the SCDR-modulated block remains permu-tation equivariant and SO (3) -equivariant under the reported configuration. 
+
+Proposition 2: bounded routing. SCDR yields a bounded local amplification of the original GVP update. 
+
+Proof. The dispatching nonlinearity is 
+
+ba(x) = a x
+
+1 + |x| . (78) This implies 
+
+|ba(x)| < a. (79) Since 
+
+α = 1 + wprog (p)ba(W q), 0 ≤ wprog (p) ≤ 1,
+
+(80) we have 
+
+1 − a < α < 1 + a. (81) The vector update is consequently bounded: 
+
+∥∆ ˆV∥ = ∥αv,upd ⊙ ∆V∥ ≤ (1 + av)∥∆V∥.
+
+(82) The same argument applies to scalar updates, so each routed block remains a finite multiplicative perturbation of the corresponding backbone update. 
+
+Proposition 3: initialization behavior. At ini-tialization, the AdaLN state path recovers the scalar-normalized ligand state of the replaced nor-malization path. The vector state is passed un-changed, and either the warmup coefficient or the small-variance update initialization keeps the resid-ual gates near identity at startup. 
+
+Proof. The AdaLN projection is zero-initialized: 
+
+γ(zsem ) = 0 , β (zsem ) = 0 . (83) At the start of an explicit training-progress warmup schedule, 
+
+wprog (p) = 0 . (84) The routing gates then satisfy 
+
+αs,state = αs,upd = αv,upd = 1 . (85) Substituting these values gives 
+
+ˆs = LN s(s), ∆ˆ s = ∆ s, ∆ ˆV = ∆ V. (86) The scalar AdaLN projection starts exactly from the scalar-normalized ligand state, while the vector state path is unchanged. When the implementa-tion runs with active gates from the beginning, the gate heads are initialized with small variance and zero bias; because ba(0) = 0 and ba is Lipschitz around the origin, the multiplicative gates remain near one at startup. Proposition 2 controls their range throughout training. Together, these propositions characterize SCDR as an invariant, bounded, and stably initialized rout-ing mechanism. It preserves the geometric struc-ture of the GVP backbone while enabling semantic modulation. 
+
+G.7 Inference Consistency 
+
+Conditional sampling uses the transition families optimized during training and keeps the same semantic-conditioning interface as the training dy-namics. Before the chain starts, the ligand size N ,candidate edge set, categorical priors, and semantic condition zsem are fixed for the entire trajectory; they are not changed by downstream docking, prop-erty scores, reference molecules, or filtering. The generative chain starts from 
+
+X0 ∼ N (c norm  
+
+> P
+
+, I), H0 ∼ πH 
+
+> 0
+
+, E0 ∼ πE 
+
+> 0
+
+, (87) in the same pocket-centered frame used during training. Let δsam = 1 /N sam ; the reported runs use Nsam = 500 . For k = 0 , . . . , N sam − 1 with 
+
+tk = k/N sam , the model forms 
+
+zk = ( Xk, Hk, Ek), χ k = ( zk, P, t k, zsem )
+
+(88) and predicts 
+
+bvXθ (χk), bπHk , bπEk . (89) At every solver step, zsem is passed to the same SCDR-modulated GVP parameterization used dur-ing training; coordinate and categorical compo-nents then evolve according to their native transi-tion rules. For coordinates, the model is trained to predict the scaled velocity 
+
+bvXθ ≈ X1 − X0
+
+cx
+
+. (90) Euler sampling applies the inverse scaling: 
+
+Xk+1 = Xk + δsam cx bvXθ (χk). (91) The coordinate sampler thereby integrates the ve-locity field learned by the flow-matching objective. For each discrete variable 
+
+Y ∈ { H, E}, (92) the terminal distribution for instance i ∈ I Y has the softmax form 
+
+bπYk,i = softmax  f Yθ,i (χk) . (93) The corresponding one-step bridge matrix is 
+
+bQθk+1 |k,i = βkI + (1 − βk)1(bπYk,i )⊤, (94) where 
+
+βk = 1 − tk+1 
+
+1 − tk
+
+. (95) The next state is sampled as 
+
+Yk+1 ,i ∼ Cat 
+
+
+
+Yk,i bQθk+1 |k,i 
+
+
+
+. (96) Inference therefore follows the same transition families used by the trainingobjectives. Coordi-nates use the learned flow-matching velocity; atom and bondupdates use learned terminal distributions inside the Markov bridge family. SCDRaffects inference only through the shared neural parame-terization, leaving the continuous and categorical transition structures unchanged. 
+
+G.8 Summary of the Verification 
+
+The formulation positions LiFT as a structured het-erogeneous continuous–discrete generative model. Coordinates follow a flow-matching vector field, while atom and bond identities follow categori-cal Markov bridges. The semantic condition zsem 
+
+modulates the shared GVP parameterization while preserving these state spaces. SCDR is formulated as an equivariant routing module with four preserved properties: permuta-tion invariance, proper-rotation equivariance under the reported configuration, bounded local ampli-fication, and stable initialization. Its DeepSets-motivated structural sensing provides an invariant summary of the current 3D molecular state, and its decoupled scalar gates inject semantic modulation through equivariant vector-channel scaling. Overall, LiFT adds SCDR routing to the het-erogeneous flow/bridge process while preserving boundedness, near-identity initialization, and equiv-ariance. The appendix therefore establishes struc-tural compatibility between semantic routing and the heterogeneous generative dynamics. Chemical validity, affinity gains, and semantic controllability are established empirically by the experiments and intervention ablations rather than by the symmetry proof alone. 
+
+H Extended Comparison with Related Work 
+
+This appendix provides a structured compari-son between LiFT and representative approaches spanning 1D–3D molecular generation, protein-conditioned sequence generation, LLM-assisted molecular design, and native pocket-conditioned 3D SBDD. The comparison is organized around neutral methodological dimensions—language in-put, target representation, the role of the 1D repre-sentation, native output, trainable components, in-teraction stage, and trajectory-time control—rather than a LiFT-specific ranking criterion. The goal is to clarify which interface each method addresses and where language- or sequence-derived informa-tion enters the molecular design pipeline. 
+
+H.1 Systematic Methodological Comparison 
+
+Table 21 summarizes the main methodological distinctions. Existing approaches cover several complementary interfaces. NExT-Mol (Liu et al., 2025) and MolSculpt (Chen et al., 2025) connect molecular-language representations with target-free 3D molecular generation. MolChord (Zhang et al., 2025) and TamGen (Wu et al., 2024) use protein information to condition molecular-sequence generation, with the generated molecular string serving as the primary molecular proposal. ELILLM (Hu et al., 2026) searches a pretrained LLM latent space using target-dependent optimiza-tion feedback, while CIDD (Gao et al., 2025) ap-plies LLM-based refinement after an initial SBDD generation stage. Native 3D SBDD methods such as AR (Luo et al., 2021), Pocket2Mol (Peng et al., 2022), TargetDiff (Guan et al., 2023a), Decom-pDiff (Guan et al., 2023b), PAFlow (Zhou et al., 2025), and DrugFlow (Schneuing et al., 2025) di-rectly model pocket-conditioned ligand geometry without an open-ended language-derived semantic condition. LiFT occupies a different interface within this landscape: open-ended design preferences and pocket-derived specifications are converted into a SMILES-derived soft semantic prior rather than a final ligand, while the final molecular topology and pose are generated in the native pocket-conditioned 3D space. The semantic condition acts inside the flow trajectory, and SCDR adjusts its influence ac-cording to flow time and the evolving ligand state. This comparison concerns the location and role of cross-modal conditioning; it does not imply that the individual components used by LiFT are them-selves new molecular or geometric primitives. 
+
+H.2 Focused Comparison with ELILLM 
+
+ELILLM (Hu et al., 2026) is particularly relevant because both methods connect language-model rep-resentations with structure-based molecular design, but the representations play different roles and act at different stages. Table 22 therefore separates the two pipelines along the dimensions most directly related to their problem formulation. In short, ELILLM searches and optimizes a final 1D candidate in an LLM latent space and subse-quently obtains its 3D evaluation through conven-tional conformer construction and docking. LiFT instead uses language-derived chemical semantics as a soft condition that directly operates inside a native pocket-conditioned 3D generation trajec-tory. Accordingly, the two methods address related SBDD goals through different interfaces: ELILLM focuses on molecular-candidate optimization in language-model latent space, whereas LiFT fo-cuses on state-aware cross-modal conditioning of an evolving 3D generator. Table 21: Systematic methodological comparison of LiFT with representative related approaches. The dimensions describe where language, molecular strings, protein information, and 3D generation interact. “Native output” denotes the direct output of the generative model before optional post-hoc conformer construction, docking, or refinement. 
+
+Method Language Input Target Rep-resentation Role of 1D Repre-sentation Native Output Trainable Compo-nents / Objective Interaction Stage Trajectory-Time Control LiFT Open-ended task preferences, pocket descrip-tions, property trade-offs, and optional refer-ences Native 3D protein pocket Intermediate SMILES-derived 
+
+soft semantic prior , not the final ligand Pocket-conditioned 3D ligand and aligned pose Lightweight se-mantic projector and SCDR are optimized under the existing flow-matching objective while retaining the standard geometric backbone Semantic infor-mation acts in-side the 3D flow trajectory Dynamic rout-ing according to flow time and the evolving 3D ligand state NExT-Mol (Liu et al., 2025) No open-ended human design instruction; molecular string is provided No protein target SELFIES speci-fies the molecular identity to be reconstructed in 3D A conformer of the specified molecule 1D–3D representa-tion alignment and diffusion-based conformer genera-tion Molecular-string informa-tion is aligned with the corre-sponding 3D molecule dur-ing conformer generation Fixed molecule-level alignment; no pocket-conditioned semantic rout-ing MolSculpt (Chen et al., 2025) No open-ended task-language interface No protein target SELFIES-derived molecular-language features provide generic chemical knowl-edge Target-free 3D molecule Learnable queries/projector and a 3D diffusion objective Molecular-language features con-dition 3D diffusion No target-pocket state or language-guided state-dependent routing MolChord (Zhang et al., 2025) Text-aligned molecular repre-sentations, but not open-ended LiFT-style task control Protein struc-ture represen-tation Autoregressively decoded molec-ular string is the final molecular proposal SMILES; 3D conformer and docking are obtained afterward Structure adapter and molecular sequence de-coder trained with a sequence-generation objec-tive Protein rep-resentation conditions 1D decoding No native 3D generation tra-jectory TamGen (Wu et al., 2024) No open-ended human design-language interface Protein or pocket repre-sentation Generated SMILES is the final molecu-lar proposal SMILES; conformer construction and docking are post hoc Target-conditioned chemical language model with an autoregressive objective Target informa-tion conditions sequence decod-ing No native 3D generation tra-jectory ELILLM (Hu et al., 2026) Optimization objectives rather than an open-ended 3D design interface Target enters primarily through adocking oracle Optimized latent is decoded into the final SMILES can-didate SMILES; con-former genera-tion and dock-ing follow Bayesian optimiza-tion in a pretrained LLM latent space Control oc-curs during latent-space ex-ploration before 3D evaluation No interaction with an evolv-ing 3D ligand state CIDD (Gao et al., 2025) LLM refinement instructions in-formed by inter-action analysis Protein pocket and docking-derived feedback The molecular string represents an already gener-ated candidate to be edited Refined molec-ular proposal after an initial SBDD stage Prompted or iter-ative LLM refine-ment using dock-ing/interaction feedback Language in-tervenes after initial molecule generation Post-generation refinement rather than trajectory-internal control AR / Pocket2Mol / TargetDiff / Decom-pDiff / PAFlow /DrugFlow (Luo et al., 2021; Peng et al., 2022; Guan et al., 2023a,b; Zhou et al., 2025; Schneuing et al., 2025) No open-ended human-language instruction Native 3D protein pocket Usually no language-derived 1D semantic condition Pocket-conditioned 3D ligand and pose Autoregressive-, diffusion-, or flow-based 3D generation objec-tives Pocket geome-try participates throughout na-tive 3D genera-tion State-dependent geometric generation, but no language-derived seman-tic routing Table 22: Focused methodological comparison between ELILLM and LiFT. The distinction is primarily the role of the language-derived representation and the space in which target-aware control occurs. 
+
+Comparison Dimension ELILLM (Hu et al., 2026) LiFT 
+
+Core problem Searches for molecular candidates with improved docking objectives in a pretrained LLM latent space Enables language design intent to par-ticipate in native pocket-conditioned 3D generation Role of language/latent representation Optimized and decoded into the final SMILES candidate Forms a chemical-semantic prior that is not the final output How target information en-ters Primarily through a docking oracle and Bayesian-optimization feedback The 3D pocket directly conditions the flow backbone and is also interpreted by the agent to form a pocket-derived specification Native generation space LLM latent / 1D sequence space 3D ligand state space in the target-pocket coordinate frame Native output SMILES Atom types, 3D coordinates, and a pocket-aligned pose How the 3D structure is obtained Conformer embedding, optimization, and docking after sequence genera-tion Native generation within a pocket-conditioned flow trajectory Where control occurs Before generation, through search in the LLM latent space During generation, by dynamically modulating the velocity field accord-ing to the intermediate 3D state State-aware 3D routing No Yes, through SCDR 
+
+Adaptation to a new task Changes the optimization objective and reruns latent-space search Changes the inference-time language instruction without retraining the gen-erator
