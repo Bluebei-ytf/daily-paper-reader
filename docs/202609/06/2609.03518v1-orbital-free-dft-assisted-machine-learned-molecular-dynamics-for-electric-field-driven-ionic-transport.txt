@@ -1,0 +1,184 @@
+Title: Orbital-Free DFT-Assisted Machine-Learned Molecular Dynamics for Electric-Field-Driven Ionic Transport
+
+URL Source: https://arxiv.org/pdf/2609.03518v1
+
+Published Time: Fri, 04 Sep 2026 00:49:50 GMT
+
+Number of Pages: 6
+
+Markdown Content:
+# Orbital-Free DFT-Assisted Machine-Learned Molecular Dynamics for Electric-Field-Driven Ionic Transport 
+
+Yusuke Nishiya ,1, 2, ∗ Hiroya Nakata, 3 Yosuke Harada, 3 and Yu-ichiro Matsushita 1, 2, 4 
+
+> 1
+
+Department of Physics, Graduate School of Science, The University of Tokyo, 7-3-1, Hongo, Bunkyo-ku, Tokyo 113-0033, Japan 
+
+> 2
+
+Quemix Inc., Taiyo Life Nihombashi Building, 2-11-2, Nihombashi Chuo-ku, Tokyo 103-0027, Japan 
+
+> 3
+
+Advanced Technology Research Laboratories, Innovation Center, Idemitsu Kosan Co., Ltd. 1280 Kami-izumi, Sodegaura, Chiba, 299-0293, Japan 
+
+> 4
+
+Quantum Material and Applications Research Center, National Institutes for Quantum Science and Technology (QST), 2-12-1, Ookayama, Meguro-ku, Tokyo 152-8552, Japan 
+
+(Dated: September 4, 2026) We propose an orbital-free density functional theory (OFDFT)-assisted machine-learned molecu-lar dynamics method in which field-independent interatomic forces are evaluated using a machine-learned potential and atomic charges that depend on the local environment are obtained from OFDFT calculations. The atomic charges obtained by Bader partitioning of the OFDFT electron density are multiplied by the electric-field vector and added to the forces from the machine-learned potential. This approach enables molecular dynamics simulations under an electric field at a lower computational cost than Kohn–Sham DFT (KSDFT)-based molecular dynamics. As a proof of concept, the method was applied to β–Li 3PS 4 bulk and an S 8/Li 3PS 4 heterostructure under periodic boundary conditions. For Li 3PS 4 bulk, OFDFT yielded Li charges and a total charge of the PS 4 unit consistent with those obtained using KSDFT. In the heterostructure, Li ions migrated from the Li 3PS 4 region into the S-rich region within a simulation time of approximately 170 ps. Accompanying this migration, the mean Bader charge of the S atoms that initially formed S 8 rings changed from nearly neutral to negative. A comparison with KSDFT for a representative interfacial structure also confirmed that the negative charging of the S atoms upon the arrival of Li and the magnitude of the Li charges were qualitatively reproduced. These results demonstrate the possibility of treating field-driven ionic transport and changes in interfacial charge states using a universal machine-learned potential without training an additional material-specific charge-prediction model. 
+
+I. INTRODUCTION 
+
+Understanding ionic transport, structural changes, and interfacial reactions under external electric fields at the atomic scale is important for the design of a wide range of ionic materials, including solid electrolytes, electrode ma-terials, and electrochemical interfaces. Molecular dynam-ics (MD) is a powerful method for analyzing these phe-nomena; however, treating spatial and temporal scales close to those of real materials requires both interatomic interactions and responses to external fields to be evalu-ated accurately and at low computational cost. In recent years, the emergence of universal machine-learned interatomic potentials has made it possible to rapidly evaluate the energies and interatomic forces of diverse systems without constructing a potential from scratch for each material [1, 2]. However, since elec-tron densities and atomic charges that vary with the local environment are generally not provided as outputs, the force due to an electric field on each atom cannot be eval-uated directly. Formal charges or fixed charges obtained from an initial structure can also be used, but this ap-proximation cannot describe changes in atomic charges accompanying ion migration or changes in the coordina- 
+
+> ∗ynishiya@quemix.com
+
+tion environment. This limitation becomes particularly serious in systems where the local atomic environment changes substantially, such as electrode–electrolyte inter-faces. In a periodic system, within the linear-response regime, the force arising from a uniform electric field on atom i
+
+can be expressed using the Born effective charge tensor as 
+
+F field  
+
+> iα
+
+= e X
+
+> β
+
+Z∗ 
+
+> i,αβ
+
+Eβ , (1) where e is the elementary charge, Z∗ 
+
+> i,αβ
+
+is the Born ef-fective charge tensor, and Eβ is the β component of the electric-field vector. Shimizu et al. constructed a neural network that predicts each component of the Born effec-tive charge from an atomic structure and, by combining it with a neural-network potential, performed MD simula-tions of crystalline and amorphous Li 3PO 4 under electric fields [3]. In that study, however, the training data for Li 3PO 4 were generated from density-functional perturba-tion theory calculations for approximately 18,000 struc-tures. Application to different compositions or interfaces requires the new collection of Born effective charge data covering the target chemical systems and the retraining and validation of the prediction model. Another option for treating charge transfer and chem-ical reactions at classical computational cost is a reactive force field incorporating a charge-equilibration method. arXiv:2609.03518v1 [cond-mat.mtrl-sci] 3 Sep 2026 2However, ReaxFF parameters strongly depend on the combination of target elements and the reaction environ-ment, and parameters from different development fami-lies cannot be combined arbitrarily. Transferring existing parameters to a new chemical system requires extensive refitting and validation [4]. For example, ReaxFF param-eters have been developed for lithiated sulfur, including Li 2S and various Li xS compositions [5], but their reliabil-ity is not necessarily guaranteed for electrode–electrolyte interfaces such as S 8/Li 3PS 4.It is of course possible to obtain the electron density and evaluate atomic charges according to the local en-vironment by performing Kohn–Sham density functional theory (KSDFT) [6] during an MD simulation or by per-forming first-principles MD from the outset. However, because the computational cost associated with solv-ing and orthogonalizing Kohn–Sham orbitals increases rapidly with system size, long-time MD simulations of interfaces containing thousands of atoms remain diffi-cult [7]. By contrast, orbital-free DFT (OFDFT), a type of DFT in which the kinetic energy functional is explicitly given as a functional of the electron density, can be per-formed at a computational cost of O(N ) to O(N log N )for N atoms. Thus, the electron density of a large-scale system can be evaluated at lower cost than with KSDFT [7–9]. This approach may make it possible to rapidly obtain charge information that reflects changes in the local atomic environment without constructing a material-specific charge-prediction model in advance. On the other hand, the applicability of OFDFT itself to accurate interatomic-force calculations remains lim-ited although structural relaxations and first-principles molecular dynamics driven by OFDFT forces have re-produced KSDFT results for the radial distribution func-tions of simple liquid metals and for bulk properties such as equilibrium volumes and moduli [10–12]. For example, even computationally expensive nonlocal kinetic-energy density functionals can predict minimum-energy atomic structures at semiconductor interfaces that differ from those obtained using KSDFT [13]. In this study, therefore, the field-independent inter-atomic forces and the forces caused by the electric field are assigned to separate computational methods. The former are evaluated using a universal machine-learned interatomic potential, whereas the latter are obtained by performing OFDFT calculations and Bader-partitioning the resulting electron density at fixed intervals along the MD trajectory. The electric-field vector multiplied by the Bader charge of each atom is added to the interatomic force from the machine-learned potential. This construc-tion extends a universal machine-learned potential to MD simulations under electric fields. As an example application of this method, we consider a cathode–electrolyte interface consisting of S 8/Li 3PS 4.We first compare OFDFT charges in bulk Li 3PS 4 with KSDFT charges and then apply the method to an S8/Li 3PS 4 heterostructure under periodic boundary con-ditions to examine electric-field-dependent Li-ion migra-tion and the accompanying changes in the charges of in-terfacial S atoms.   
+
+> II. METHODS A. Hybrid force model
+
+The force used to update the motion of atom i is de-fined as 
+
+F tot  
+
+> i
+
+(t) = F ML  
+
+> i
+
+({R(t)})+ qi(tk)eE, tk ≤ t < t k+1 , (2) where F ML  
+
+> i
+
+is the force from the machine-learned poten-tial without an external field, and qi is the dimension-less charge in units of the elementary charge e. In this study, qi is obtained by performing Bader charge anal-ysis on the electron density calculated using OFDFT. The OFDFT calculation and Bader analysis are called at the discrete times tk, and in the present simulations the charges are held constant between two successive electron-density calculations. The machine-learned interatomic potential represents interatomic forces at zero electric field. Either a univer-sal machine-learned potential or a potential developed specifically by a user for an individual material may be used. In the present model, as represented by Eq. 2, the calculation of correction forces in directions perpendicu-lar to the electric field, that is, off-diagonal contributions, and forces arising from polarization induced by the ap-plied electric field are outside the scope of the model. In this study, the interatomic forces were evaluated using Orb-v3 [2] through the Atomic Simulation Environment (ASE) [14]. The temperature was controlled using the Nos´ e–Hoover dynamics [15, 16] implemented in ASE.  
+
+> B. Bader analysis using the OFDFT density and a Gaussian core reference density
+
+DFT [17] states that the total energy of an electron system can be expressed solely as a functional of the elec-tron density ρ(r). The electron density that minimizes this functional corresponds to the ground-state electron density. The total energy functional is constructed as follows: 
+
+E[ρ] = TS [ρ] + 
+
+Z
+
+vext (r)ρ(r)dr + EH[ρ] + EXC [ρ], (3) where TS is the kinetic energy of the non-interacting sys-tem, EH is the Hartree energy representing the classical electron–electron interaction, and EXC is the exchange– correlation energy. In OFDFT, the kinetic energy func-tional is directly given as a functional of the den-sity. In this study, we assume the use of local pseu-dopotentials, such as bulk-derived local pseudopotentials (BLPSs) [11, 18–20], optimized effective pseudopotentials 3(OEPPs) [21], and ab initio local ionic pseudopotentials (LIPSs) [12], as the potential vext representing the inter-action between the valence electrons and the nuclei with core electrons. Because OFDFT does not treat orbitals, the nonlocal pseudopotentials ordinarily used in KSDFT cannot be used without modification. The Bader charge assigned to each atom is calculated from the resulting electron density ρ(r) based on the methods of Refs. [22–24]. The valence electron density obtained as the solution of a DFT calculation using pseu-dopotentials generally does not have a maximum at the atomic positions. Therefore, when this density is di-rectly Bader-partitioned, all valence electrons surround-ing atom A may be assigned to neighboring atoms, and both the Bader volume and Bader charge of atom A may become zero. We therefore define a reference density in which the core-electron density contribution is approxi-mated by Gaussians: 
+
+ρref (r) = ρval (r) + X
+
+> A
+
+Qref 
+
+> A
+
+(2 πσ 2
+
+> A
+
+)3/2 exp 
+
+
+
+− |r − RA|2
+
+2σ2
+
+> A
+
+
+
+.
+
+(4) Here, Qref  
+
+> A
+
+and σA are the reference amplitude and width, respectively, for each element. The Bader region Ω A is defined as the region enclosed by zero-flux surfaces of the reference density. Importantly, the Gaussian density is used only to define Ω A. The electron count N val  
+
+> A
+
+and charge qA are given by 
+
+N val  
+
+> A
+
+=
+
+Z
+
+> ΩA
+
+ρval (r) dr, qA = Zval  
+
+> A
+
+− N val  
+
+> A
+
+, (5) so that the auxiliary Gaussian is not added to the valence electron count of each atom. Here, Zval  
+
+> A
+
+is the number of valence electrons in the isolated atom. In calculations using the projector augmented-wave (PAW) [25], the all-electron density is used as ρref . The KSDFT and OFDFT calculations in this study were performed with Quloud based on Quantum ESPRESSO [26, 27] and DFTpy [9], respectively.   
+
+> III. RESULTS AND DISCUSSIONS A. Charge evaluation for bulk Li 3PS 4
+
+To examine the charges obtained from OFDFT, the following four conditions were compared using a 32-atom orthorhombic β-Li 3PS 4 cell with lattice constants a =6.17˚ A, b = 8 .02˚ A, c = 13 .03˚ A. Under condition (a), KSDFT calculations were per-formed using the Perdew–Wang (PW) form [28] of the lo-cal density approximation (LDA) and the PAW method, whereas under condition (b), the Perdew–Zunger (PZ) form [29] of the LDA and the PAW method were used. Because the Li 1 s electrons were treated as valence elec-trons in these calculations, the cutoff energies for the wave functions and charge density were set to 100 Ry and 400 Ry, respectively. The resulting charge density was evaluated on an 80 × 100 × 160 real-space grid. Under condition (c), KSDFT calculations were per-formed using the PW form of the LDA and Martins– Troullier norm-conserving pseudopotentials (NCPPs). Only the Li 2 s orbital was treated as a valence orbital; the cutoff energies for the wave functions and charge den-sity were set to 60 Ry and 240 Ry, respectively, and the real-space grid was set to 60 × 80 × 128 points. For the above KSDFT calculations, a 6 × 4 × 3 k-point mesh was used for Brillouin-zone integration. Under condition (d), OFDFT calculations were per-formed using the PZ form of the LDA and the LKT (Luo-Karasiev-Trickey) [30] kinetic energy density functional (KEDF). BLPSs were used as the local pseudopotentials for Li and P, and an OEPP was used for S. The cutoff energy for the electron density and the real-space grid were set to the same values as those under condition (c). The same electron distributions were used to approxi-mate the core electron densities under conditions (c) and (d). The Gaussian amplitude Qref  
+
+> A
+
+was set to the dif-ference between the atomic number and the number of valence electrons, and the width σA was set to 0.40 Bohr for all three elements. The mean Bader charge for each element obtained from each calculation is shown in Table I. A comparison of (a) and (b) shows that, at the same LDA level, the difference in the exchange–correlation functional has almost no ef-fect on the charge of each element. A comparison of (a) and (c) shows that the correction of the core electron den-sity using the present parameters realizes a partitioning that yields similar Bader charges. The OFDFT results in (d) show that the Li charge is in good agreement with the KSDFT result, whereas the number of electrons around P is overestimated. However, this discrepancy arises from the assignment of charge within the PS 4 framework, and the total charge of PS 4 agrees with the KSDFT result. Therefore, rapid charge evaluation using OFDFT is con-sidered useful, for example, in use cases that focus only on the drift of Li ions along the electric field in the present material and do not regard the modulation of vibrational modes within the PS 4 framework as important.          
+
+> TABLE I. Mean Bader charges for each element obtained for the Li 3PS 4crystal. The charges are given in units of the ele-mentary charge e.Calculation condition Li PS(a) KSDFT, PAW, LDA-PW +0.87 +1.28 -0.97 (b) KSDFT, PAW, LDA-PZ +0.87 +1.29 -0.97 (c) KSDFT, NCPP, LDA-PW +0.90 +1.25 -0.99 (d) OFDFT, LDA-PZ +0.87 +0.06 -0.66
+> B. S8/Li 3PS 4heterostructure
+
+As a simple model of a cathode–electrolyte interface in a Li battery material, the structure shown in Fig. 1(a) 4was constructed, and Li migration under an applied elec-tric field was simulated according to the force in Eq. 2. The interval for charge evaluation using OFDFT was set to 250 fs. In this structure, β-Li 3PS 4 was arranged in a 2 × 2 array in the plane, cleaved along the (001) sur-face, and six S 8 rings were placed between the slabs; this arrangement was periodically repeated. The structure was relaxed by Langevin dynamics at 300 K for 10 ps, followed by Langevin dynamics at 100 K for 10 ps to re-move impulsive forces between atoms. Figures 1(b) and 1(c) plot the time evolution of the z coordinates of rep-resentative Li ions when an electric field was applied at a temperature of 500 K. As shown in Fig. 1(b), when the electric field was small, the Li ions did not overcome the interfacial energy barrier within a simulation time of ap-proximately 170 ps; when the electric field was stronger, the Li ions were observed to diffuse across the layers, as shown in Fig. 1(c). The change in the charges of the S atoms accompa-nying this Li migration is shown in Fig. 2. The figure shows the evolution of the mean charge of the S atoms that formed the neutral S 8-ring layer in the initial struc-ture. As Li ions entered the layer, the OFDFT electron-density optimization calculation for the entire simulation cell captured the negative charging of the S atoms. To evaluate the quantitative accuracy of the OFDFT charges during the MD simulation, KSDFT calculations using the PAW method and the PZ functional were per-formed for the snapshot structures. Fig. 2 shows that the reduction of the S atoms is also supported by Bader charge analysis based on KS-DFT. In Fig. 1(c), and the resulting charges of the structure at 50,000 fs were com-pared. As shown in Table II, the OFDFT and KSDFT Li charges are in good agreement, as in the bulk case. Although the S charges differ by approximately 0.1, it was confirmed at the KSDFT level of accuracy that the negative charging of S caused by the arrival of Li is not a behavior found only in OFDFT. Because the present calculation examines transient be-havior before equilibrium is reached, it is difficult to ex-tract physically meaningful statistical quantities. How-ever, when charges change owing to changes in the local environment as described above, they cannot be tracked by MD using a classical force field with initial charges as-signed. Incorporating charge evaluation using OFDFT is therefore considered one possible solution for simulations of electric-field-driven ionic systems.              
+
+> TABLE II. Comparison of KSDFT and OFDFT charges Atom KSDFT OFDFT Li, a +0.89 +0.86 Li, b +0.88 +0.86 Li, c +0.87 +0.87 S, i -0.73 -0.60 S, j -0.67 -0.69 S, k -0.76 -0.63
+> IV. CONCLUSIONS
+
+In this study, we developed an OFDFT-assisted machine-learned molecular dynamics framework for ionic systems. While utilizing the efficiency and force ac-curacy of a modern machine-learned interatomic po-tential for field-independent interatomic forces, atomic charges are evaluated at fixed intervals based on electron-density calculations using OFDFT. Application to amodel electrode–electrolyte interface in a Li battery ma-terial enabled us to observe the migration of Li ions along the electric field and changes in the charges of S atoms in the electrode depending on their local environments. There is no need to call computationally expensive KS-DFT for charge evaluation, and because a pretrained general-purpose machine-learned potential was used in the present demonstration, there is also no need to pre-pare a machine-learning model for charge prediction or a vast amount of KSDFT-based training data for fine-tuning the forces. DFT-based charge evaluation is also possible for elements such as S that can adopt various valence states. Future work includes verifying the gener-ality of the method by applying it to various systems and identifying use cases in which information useful for ac-tual materials development and performance evaluation can be extracted by reproducing experimental observa-tions. 
+
+> ACKNOWLEDGMENTS
+
+This work was partially supported by the Center of In-novations for Sustainable Quantum AI (JST Grant Num-ber JPMJPF2221). The computation in this work has been done using the facilities of the Supercomputer Cen-ter, the Institute for Solid State Physics, the University of Tokyo (ISSPkyodo-SC-2026-Ea-0014).                                          
+
+> [1] I. Batatia, P. Benner, Y. Chiang, A. M. Elena, D. P. Kov´ acs, J. Riebesell, et al. , The Journal of Chemical Physics 163 , 184110 (2025). [2] B. Rhodes, S. Vandenhaute, V. Simkus, J. Gin, J. Godwin, T. Duignan, and M. Neumann, arXiv preprint arXiv:2504.06231 10.48550/arXiv.2504.06231 (2025), arXiv:2504.06231 [cond-mat.mtrl-sci]. [3] K. Shimizu, R. Otsuka, M. Hara, E. Minami-tani, and S. Watanabe, Science and Technology of Advanced Materials: Methods 3,2253135 (2023), https://doi.org/10.1080/27660400.2023.2253135. [4] T. P. Senftle, S. Hong, M. M. Islam, S. B. Kylasa, Y. Zheng, Y. K. Shin, C. Junkermeier, R. Engel-Herbert, M. J. Janik, H. M. Aktulga, T. Verstraelen, A. Grama, and A. C. T. van Duin, npj Computational Materials 2,
+
+5
+
+FIG. 1. Application example of the present method to an S 8/Li 3PS 4 heterostructure. (a) Initial structure. The green, gray, and yellow spheres correspond to Li, P, and S, respectively. (b) Trajectories of Li ions at 500 K when an electric field of 0.05 V ˚ A−1 was applied along the c axis. (c) Trajectories of Li ions at 500 K when an electric field of 0.10 V ˚ A−1 was applied along the c axis. The region containing P atoms was defined as the Li 3PS 4 region and is shaded pink. 
+
+FIG. 2. Mean charge of the 48 S atoms that formed the S8 rings in the initial structure ( T = 500 K). The atoms are initially neutral but become negatively charged on average as Li ions enter from the Li 3PS 4 region during the time evolution when an electric field of 0 .10 V˚ A−1 is applied. Square markers denote the charge evaluation by KS-PAW for the snapshot structures in the OFDFT-assisted MD trajectory. 15011 (2016). [5] M. M. Islam, A. Ostadhossein, O. Borodin, A. T. Yeates, W. W. Tipton, R. G. Hennig, N. Kumar, and A. C. T. van Duin, Physical Chemistry Chemical Physics 17 , 3383 (2015). [6] W. Kohn and L. J. Sham, Phys. Rev. 140 , A1133 (1965). [7] W. Mi, K. Luo, S. B. Trickey, and M. Pavanello, Chemical Reviews 123 , 12039 (2023). [8] W. C. Witt, B. G. del Rio, J. M. Dieterich, and E. A. Carter, Journal of Materials Research 33 , 777 (2018). [9] X. Shao, K. Jiang, W. Mi, A. Genova, and M. Pa-vanello, WIREs Computational Molecular Science 11 ,e1482 (2021). 
+
+FIG. 3. Snapshot of the interfacial structure at t = 50 , 000 fs in Fig. 1(c). The charges were compared for the representative Li atoms shown in dark green and S atoms shown in orange. [10] D. J. Gonz´ alez, L. E. Gonz´ alez, J. M. L´ opez, and M. J. Stott, Phys. Rev. B 65 , 184201 (2002). [11] C. Huang and E. A. Carter, Phys. Rev. B 81 , 045206 (2010). [12] F. Imoto, M. Imada, and A. Oshiyama, Phys. Rev. Res. 
+
+3, 033198 (2021). [13] X. Shao, W. Mi, and M. Pavanello, Phys. Rev. B 104 ,045118 (2021). [14] A. H. Larsen, J. J. Mortensen, J. Blomqvist, I. E. Castelli, R. Christensen, M. Dulak, J. Friis, M. N. Groves, B. Hammer, C. Hargus, E. D. Hermes, P. C. Jennings, P. B. Jensen, J. Kermode, J. R. Kitchin, E. L. Kolsbjerg, J. Kubal, K. Kaasbjerg, S. Lysgaard, J. B. Maronsson, T. Maxson, T. Olsen, L. Pastewka, A. Pe-terson, C. Rostgaard, J. Schiotz, O. Schutt, M. Strange, K. S. Thygesen, T. Vegge, L. Vilhelmsen, M. Walter, Z. Zeng, and K. W. Jacobsen, Journal of Physics: Con-densed Matter 29 , 273002 (2017). [15] S. Nose, Journal of Chemical Physics 81 , 511 (1984). 6
+
+[16] W. G. Hoover, Physical Review A 31 , 1695 (1985). [17] P. Hohenberg and W. Kohn, Phys. Rev. 136 , B864 (1964). [18] C. Huang and E. A. Carter, Phys. Chem. Chem. Phys. 
+
+10 , 7109 (2008). [19] B. Zhou, Y. Alexander Wang, and E. A. Carter, Phys. Rev. B 69 , 125109 (2004). [20] B. G. del Rio, J. M. Dieterich, and E. A. Carter, Journal of Chemical Theory and Computation 13 , 3684 (2017), pMID: 28686438. [21] W. Mi, S. Zhang, Y. Wang, Y. Ma, and M. Miao, The Journal of Chemical Physics 144 ,134108 (2016), https://pubs.aip.org/aip/jcp/article-pdf/doi/10.1063/1.4944989/13696705/134108 1 online.pdf. [22] W. Tang, E. Sanville, and G. Henkelman, Journal of Physics: Condensed Matter 21 , 084204 (2009). [23] E. Sanville, S. D. Kenny, R. Smith, and G. Henkelman, Journal of Computational Chemistry 28 , 899 (2007), https://onlinelibrary.wiley.com/doi/pdf/10.1002/jcc.20575. [24] G. Henkelman, A. Arnaldsson, and H. Jonsson, Compu-tational Materials Science 36 , 354 (2006). [25] P. E. Bl¨ ochl, Phys. Rev. B 50 , 17953 (1994). [26] P. Giannozzi, S. Baroni, N. Bonini, M. Calandra, R. Car, C. Cavazzoni, D. Ceresoli, G. L. Chiarotti, M. Cococ-cioni, I. Dabo, A. Dal Corso, S. de Gironcoli, S. Fabris, G. Fratesi, R. Gebauer, U. Gerstmann, C. Gougoussis, A. Kokalj, M. Lazzeri, L. Martin-Samos, N. Marzari, F. Mauri, R. Mazzarello, S. Paolini, A. Pasquarello, L. Paulatto, C. Sbraccia, S. Scandolo, G. Sclauzero, A. P. Seitsonen, A. Smogunov, P. Umari, and R. M. Wentzcov-itch, Journal of Physics: Condensed Matter 21 , 395502 (2009). [27] P. Giannozzi, O. Andreussi, T. Brumme, O. Bunau, M. Buongiorno Nardelli, M. Calandra, R. Car, C. Cavaz-zoni, D. Ceresoli, M. Cococcioni, N. Colonna, I. Carn-imeo, A. Dal Corso, S. de Gironcoli, P. Delugas, R. A. DiStasio, A. Ferretti, A. Floris, G. Fratesi, G. Fugallo, R. Gebauer, U. Gerstmann, F. Giustino, T. Gorni, J. Jia, M. Kawamura, H.-Y. Ko, A. Kokalj, E. Kucukbenli, M. Lazzeri, M. Marsili, N. Marzari, F. Mauri, N. L. Nguyen, H.-V. Nguyen, A. Otero-de-la Roza, L. Paulatto, S. Ponce, D. Rocca, R. Sabatini, B. Santra, M. Schlipf, A. P. Seitsonen, A. Smogunov, I. Timrov, T. Thonhauser, P. Umari, N. Vast, X. Wu, and S. Baroni, Journal of Physics: Condensed Matter 29 , 465901 (2017). [28] J. P. Perdew and Y. Wang, Phys. Rev. B 45 , 13244 (1992). [29] J. P. Perdew and A. Zunger, Phys. Rev. B 23 , 5048 (1981). [30] K. Luo, V. V. Karasiev, and S. B. Trickey, Physical Re-view B 98 , 041111 (2018).

@@ -1,0 +1,1968 @@
+Title: SurfSpec: Enhancing Off-Target-Agnostic Specificity by Bounding Pocket-Ligand Geometric Mismatch
+
+URL Source: https://arxiv.org/pdf/2609.02963v1
+
+Published Time: Fri, 04 Sep 2026 00:09:34 GMT
+
+Number of Pages: 31
+
+Markdown Content:
+# SurfSpec: Enhancing Off-Target-Agnostic Specificity by Bounding Pocket-Ligand Geometric Mismatch 
+
+Minyeong Hwang ∗
+
+Kim Jaechul Graduate School of AI, KAIST 
+
+Yoorim Gang ∗
+
+Interdisciplinary Program in Artificial Intelligence, Seoul National University 
+
+Ziseok Lee 
+
+Department of Biomedical Sciences, Seoul National University 
+
+Wooyeol Lee 
+
+Department of Biomedical Sciences, Seoul National University 
+
+Young Bin Park 
+
+Calici 
+
+Jae-Mun Choi 
+
+Calici 
+
+Kyungsu Kim †
+
+School of Transdisciplinary Innovations, Interdisciplinary Program in Artificial Intelligence, and Department of Biomedical Sciences, Seoul National University 
+
+Eunho Yang †
+
+Kim Jaechul Graduate School of AI, School of Computing, KAIST, AITRICS 
+
+## Abstract 
+
+Lead optimization in structure-based drug design aims to improve target binding while avoiding unintended interactions with off-target pockets. However, existing affinity-driven methods do not explicitly control specificity, whereas current specificity-aware approaches commonly require prior knowledge of off-target structures. We address off-target-agnostic specificity-aware lead optimization by analyzing the geometric mismatch between a ligand and the target pocket. We provide a conservative specificity lower bound for geometrically separated off-targets without requiring access to off-target structures. By metricizing pocket– ligand mismatch, the triangle inequality shows that reducing target–ligand mismatch improves a conservative lower bound on mismatch to a separated off-target class, which can be translated into a specificity lower bound through an empirical geometry–affinity calibration. Motivated by this analysis, we introduce SurfSpec , an off-target-agnostic lead optimization framework that iteratively grows ligands toward under-occupied regions of the target pocket surface. SurfSpec alternates between linker generation toward selected target-surface patches, which provides geometric pseudo-labels, and refinement under a pocket-conditioned ligand prior, which restores these pseudo-labels into valid ligands. On the CrossDocked2020 test set, SurfSpec reduces geometric mismatch and outperforms evaluated off-target-agnostic lead optimization baselines in empirical specificity, while maintaining competitive target-affinity improvement. 
+
+## 1 Introduction 
+
+Lead optimization in structure-based drug design (SBDD) seeks to improve an initial ligand for a target pocket. Beyond increasing target-pocket affinity, an ideal optimized ligand should also avoid strong interactions with undesirable off-target pockets, thereby achieving ligand specificity. Many existing lead optimization methods Huang et al. (2024); Qiao et al. (2025); Chen et al. (2025); Zhou et al. (2024); Lee et al. (2026), however, primarily optimize affinity to the target pocket. As highlighted by recent work Gao et al. (2024), high target affinity alone does not guarantee specificity, because an optimized ligand may also bind strongly to unintended pockets. Such off-target interactions can reduce selectivity and cause adverse effects Keiser et al. (2009), motivating lead optimization methods that explicitly account for ligand specificity.   
+
+> ∗. Equal Contribution. †. Correspondence to: Eunho Yang eunhoy@kaist.ac.kr , Kyunsu Kim kyskim@snu.ac.kr .
+
+1arXiv:2609.02963v1 [q-bio.QM] 2 Sep 2026 Recent specificity-aware methods address this limitation using explicit negative supervision, either through off-target pocket information or activity labels for undesired targets. SBE-Diff Gao et al. (2024), for example, learns specific binding energy from positive and in-batch negative pocket–ligand pairs, whereas ActivityDiff Zhou et al. (2025) employs separately trained drug–target activity classifiers for desired target activity and undesired off-target activity. Although these methods demonstrate the value of incorporating specificity into molecular optimization, their applicability depends on the availability and representativeness of negative target information. In practice, potential off-target interactions form an open-ended set that may include unknown, structurally unavailable, or out-of-distribution targets. Larger surrogate negative sets and stronger activity predictors may improve coverage of observed interactions, but they cannot directly account for off-targets that are absent during training or unavailable at inference time. This motivates an off-target-agnostic formulation of specificity-aware lead optimization, in which only the target pocket is used during optimization. Instead of relying on off-target supervision, we seek a target-only geometric principle that can be analyzed without accessing off-targets during optimization. We define geometric mismatch between a ligand and a pocket using the Jensen–Shannon distance between surface-induced probability measures. Because this mismatch is metricized, the triangle inequality provides a conservative lower bound on ligand mismatch to geometrically separated off-target pockets using only the target pocket and the current ligand. Together with an empirical geometry–affinity calibration, this yields a target-only lower-bound analysis for specificity over separated off-target classes. Motivated by this analysis, we propose SurfSpec , an off-target-agnostic lead optimization framework that progressively expands an initial ligand toward under-occupied regions of the target pocket surface. SurfSpec alternates between surface-directed pseudo-label generation and molecular-prior-based recovery. At each iteration, it identifies a nearby target-surface patch that is insufficiently covered by the current ligand and constructs a pseudo-label by extending the ligand toward the selected region. A pretrained pocket-conditioned diffusion prior then recovers a valid ligand that preserves the intended geometric modification. Through this iterative procedure, SurfSpec improves coverage of accessible target-pocket regions and encourages target-pocket surface complementarity while maintaining consistency with the learned molecular distribution. To keep pseudo-label recovery simple and stable within the ligand-growth pipeline, SurfSpec uses a task-specific low-noise recovery procedure. General inverse-problem solvers Chung et al. (2023); Patel et al. (2025); Kim et al. (2026); Mardani et al. (2024) can be applied to this task, but they often rely on either clean-state posterior approximations along the reverse trajectory Chung et al. (2023); Patel et al. (2025) or multiple dependent optimization stages Kim et al. (2026); Mardani et al. (2024). The former can be unreliable in the high-noise regime, while the latter increases the orchestration cost of refinement. SurfSpec is motivated by the localized nature of the anchored recovery task: the desired ligand is expected to remain close to the geometric pseudo-label while lying on the highly structured pocket-conditioned ligand distribution, making the corresponding anchored distribution locally concentrated. Based on this observation, SurfSpec performs gradient-flow mode recovery for a localized pseudo-label-conditioned distribution at a single intermediate noise level, re-noises around the recovered mode, and completes sampling with a low-noise guided reverse SDE. This design avoids high-noise anchor-conditioned estimation and reduces dependence on repeated correction stages, serving as a practical recovery component for surface-directed ligand growth rather than a new general-purpose refinement principle. On the CrossDocked2020 test set Francoeur et al. (2020), SurfSpec achieves higher empirical specificity than evaluated off-target-agnostic lead optimization baselines while maintaining competitive target-pocket affinity, as shown in Table 1. It also outperforms a surrogate off-target-aware baseline guided by randomly selected off-target sets, highlighting the risk of unreliable specificity guidance from inaccurate off-target surrogates. Further analyses show that SurfSpec improves pocket coverage and geometric fit, and recovers surface-directed pseudo-labels with strong validity and fidelity. Our main contributions are as follows: • We formulate off-target-agnostic specificity-aware lead optimization through a target-only geometric mismatch metric, defined as the Jensen–Shannon distance between probability measures induced by the ligand surface and the ligand-oriented target-pocket surface. Under a geometric separation condition on the off-target class, the triangle inequality shows that reducing target–ligand mismatch improves a conservative lower bound on ligand mismatch to separated off-targets, which is translated into a specificity lower bound through an empirical geometry–affinity calibration. 2Figure 1: Conceptual comparison of off-target-agnostic lead optimization. Existing target-only lead optimiza-tion methods can improve affinity to the native target pocket, but may also increase compatibility with off-target pockets, resulting in limited specificity improvement. In contrast, SurfSpec optimizes the geometric fit to the native pocket, improving target affinity while reducing compatibility with geometrically distinct off-targets. • We introduce SurfSpec , an off-target-agnostic lead optimization framework motivated by this target-only geometric principle. SurfSpec iteratively grows ligands toward under-occupied regions of the target pocket surface by alternating linker generation toward selected surface patches and task-specific low-noise anchored recovery under a pocket-conditioned ligand prior. • We evaluate SurfSpec against off-target-agnostic lead optimization baselines using held-out off-target pockets that are never accessed during optimization. On CrossDocked2020, SurfSpec achieves higher empirical specificity while maintaining competitive target-pocket docking performance, with improved pocket coverage and geometric fit. 
+
+## 2 Related Work 
+
+Lead Optimization and Molecular Specificity. Recent SBDD models support pocket-conditioned molecular generation and lead optimization through autoregressive generation, equivariant diffusion models, and controllable molecular optimization Peng et al. (2022); Guan et al. (2023); Gu et al. (2024); Schneuing et al. (2024); Huang et al. (2024); Zhou et al. (2024); Chen et al. (2025). Methods such as PMDM, DecompOpt, and Delete Huang et al. (2024); Zhou et al. (2024); Chen et al. (2025) optimize an initial ligand or ligand fragment for target-pocket affinity, drug-likeness, and validity, but do not explicitly optimize molecular specificity. More recent approaches, including SBE-Diff and ActivityDiff Gao et al. (2024); Zhou et al. (2025), incorporate negative pockets or activity signals to improve specificity through off-target supervision. SurfSpec instead considers a target-only setting that improves specificity without requiring off-target supervision. 
+
+Geometric Complementarity. Classical docking methods Kuntz et al. (1982); Shoichet and Kuntz (1993) exploit pocket–ligand surface complementarity to identify favorable poses. Protein-pocket-conditioned SBDD models Peng et al. (2022); Guan et al. (2023); Schneuing et al. (2024); Zhou et al. (2024); Huang et al. (2024); Lin et al. (2023) use target pocket geometry for molecular generation, elaboration, or optimization. Other geometry-conditioned methods use reference molecular shapes, multimodal ligand profiles, or learned 3geometric representations, as in Diff-Shape Li et al. (2026), ShEPhERD Adams et al. (2025), and GeoRCG Li et al. (2025), while UniGuide Ayadi et al. (2024) applies user-specified geometric conditions through training-free inference-time guidance. However, these approaches do not explicitly formulate pocket–ligand surface complementarity as a metricized mismatch objective linked to molecular specificity. SurfSpec is oriented by this mismatch and connects geometric complementarity to molecular specificity optimization. 
+
+Training-Free Sample Refinement. Existing training-free sample refinement methods can be grouped into three paradigms. Reverse-path methods, including SDEdit, DDNM, MCG, DPS, ΠGDM, FAST-DIPS, FlowChef, and FlowDPS Meng et al. (2022); Wang et al. (2023); Chung et al. (2022, 2023); Song et al. (2023); Kim et al. (2026); Patel et al. (2025); Kim et al. (2025), initialize refinement from an intermediate noisy state and subsequently follow a reverse SDE/ODE trajectory. SDEdit Meng et al. (2022) constructs this state by directly perturbing an input anchor, whereas conditional reverse-path methods Chung et al. (2022, 2023); Song et al. (2023); Kim et al. (2025) incorporate observations or constraints through guidance terms computed from denoised estimates. Optimization-based methods, such as DiffPIR, DDS, DAPS, DCDP, PnP-Flow, FLOWER, FlowLPS, and FAST-DIPS Zhu et al. (2023); Vargas et al. (2023); Zhang et al. (2025); Li et al. (2024); Jia et al. (2025); Pourya et al. (2026); Park and Ye (2025); Kim et al. (2026), interleave prior-based denoising with explicit consistency-oriented optimization, projection, or proximal correction. Variational posterior methods, including RED-Diff, RSD, and FLAIR Mardani et al. (2024); Zilberstein et al. (2025); Erbach et al. (2025), instead optimize a parameterized variational distribution toward the target posterior. These approaches provide general and flexible mechanisms for training-free refinement across inverse problems and continuous data domains. In contrast, SurfSpec adopts a simpler task-specific refinement strategy tailored to geometrically constructed molecular pseudo-labels: it performs anchored recovery at a low noise level under a pocket-conditioned molecular prior, reducing reliance on high-noise clean-state posterior approximation or multi-stage posterior optimization. 
+
+## 3 Preliminaries 
+
+3.1 Problem Setup: Specific Lead Optimization without Off-Target Access 
+
+We consider lead optimization for a target pocket Ptgt when off-target information is unavailable. A ligand is represented as L = ( XL, H L), where XL ∈ R3×NL and HL ∈ { 0, 1}ntypes ×NL denote its coordinates and atom-type features, respectively. A pocket P = ( XP , H P ) is defined analogously. For the methodology derivation in Section 4, we use a rigid-body abstraction and identify ligands and pockets up to separate rigid transformations: L ∼ ρg (L) and P ∼ ρh(P ) for g, h ∈ SE(3) .Given the target pocket Ptgt and a set of possible off-target pockets O, we define specificity as the affinity gap between the target and the strongest off-target: 
+
+Spec( L; Ptgt , O) = APtgt (L) − max  
+
+> O∈O
+
+AO (L), (1) where AP (L) denotes the affinity between ligand L and pocket P , with larger values indicating stronger binding. In the methodology derivation, we instantiate AP (L) under the rigid-body abstraction as 
+
+max g∈SE(3) a(ρg (P ), L ), where a is the pose-level affinity. In experiments, however, we evaluate affinity using the standard AutoDock Vina docking protocol, allowing ligand torsional changes for practical evaluation. A ligand is therefore considered specific when it achieves strong target-pocket affinity without exhibiting similarly strong affinity for competing off-target pockets. 
+
+Specific Lead Optimization without Off-Target Access. Directly optimizing Eq. (1) is generally impractical because the true off-target set O is unavailable during lead optimization. Existing methods therefore either optimize target-pocket affinity alone or approximate the off-target set using a predefined collection of pockets. Methods that optimize target-pocket affinity alone often yield limited specificity improvement, because increasing target-pocket affinity can also increase off-target affinity Gao et al. (2024). Methods that rely on a predefined off-target set Gao et al. (2024); Zhou et al. (2025) explicitly account for specificity, but may fail to capture challenging off-targets outside the constructed set. We therefore seek a target-only optimization principle that improves specificity without requiring access to off-target pockets, where the guarantees apply to off-target pockets that are geometrically distinguishable from the target pocket. 4y (Å)  
+
+> x(Å)
+
+(b) Surface-Induced Densities (z=5.18  Å) (a) Surface representation Figure 2: Surface and measure representations used for geometric mismatch. (a) The ligand surface SL and the ligand-oriented pocket surface SLP , obtained by cropping the aligned pocket surface around the ligand. (b) A two-dimensional slice of the signed-distance-based Boltzmann densities induced by SL and SLP , which define the probability measures μL and νLP , respectively. The geometric mismatch dgm (L, P ) is computed as the Jensen–Shannon distance between these induced probability measures. 
+
+3.2 Jensen–Shannon Distance and Metric Structure 
+
+The Jensen–Shannon distance measures the discrepancy between two probability distributions through a symmetrized and smoothed KL divergence. For probability measures μ and ν defined on a common domain 
+
+Ω, let 
+
+¯μ = 12 (μ + ν).
+
+The Jensen–Shannon distance is defined as 
+
+dJS (μ, ν ) = 
+
+"
+
+12 KL( μ∥¯μ) + 12 KL( ν∥¯μ)
+
+#1/2
+
+. (2) Unlike an arbitrary divergence, the square-root Jensen–Shannon divergence is a metric on probability distributions and therefore satisfies the triangle inequality: 
+
+dJS (μ, ρ ) ≤ dJS (μ, ν ) + dJS (ν, ρ ). (3) 
+
+## 4 Methodology 
+
+4.1 Geometric Mismatch Bounds Specificity against Geometrically Distinct Off-Targets 
+
+We first analyze metricized geometric mismatch between the target pocket and the ligand as a target-only principle for specificity-aware lead optimization. The key intuition is that a ligand with small mismatch to the target pocket is encouraged to fit the native pocket, while its compatibility with geometrically distinct off-target pockets can be conservatively bounded through the metric structure. This objective is not intended to replace affinity optimization, but rather to optimize a geometric component that contributes to molecular recognition and favorable binding. Motivated by classical geometric docking and shape-complementarity studies Kuntz et al. (1982); Shoichet and Kuntz (1993), we formalize this principle by defining a computable mismatch metric, empirically validating its relationship with binding affinity, and deriving a specificity lower-bound analysis. 50.4 0.5 0.6 0.7 
+
+## dgm 
+
+0246810 12 14 16 18 
+
+> Affinity
+
+Train ( n = 531 )
+
+> Reference ligand 90% (cov=89.8%) 95% (cov=94.7%) 99% (cov=98.9%)
+
+0.4 0.5 0.6 0.7 
+
+## dgm 
+
+Test ( n = 100 )
+
+> Reference ligand 90% (cov=91.0%) 95% (cov=92.0%) 99% (cov=97.0%)
+
+Figure 3: Geometry–affinity calibration on CrossDocked2020. Gray points denote reference ligand–pocket pairs, where affinity is measured as the negative AutoDock Vina score and dgm is the proposed geometric mismatch. Lines show the fitted linear geometry–affinity trend with central 90%, 95%, and 99% empirical quantile envelopes constructed from training residuals. 
+
+Definition of geometric mismatch. We first express each pocket in the ligand-centered affinity-optimal frame. For ligand L and pocket P , define P L = ρg⋆(L,P )(P ), where g⋆(L, P ) ∈ arg max g∈SE(3) a(ρg (P ), L ).Let AL = {ai}NL 
+
+> i=1
+
+denote the heavy-atom coordinates of L, and define the ligand-local domain ΩL = {x ∈
+
+R3 : min i ∥x − ai∥2 ≤ 8 Å}. We define the ligand surface SL as the van der Waals surface of the ligand heavy atoms. For the aligned pocket P L, we define the ligand-oriented pocket surface SLP as the van der Waals surface of P L restricted to surface points within 8 Å of any ligand heavy atom. To compare these surfaces robustly, we convert SL and SLP into probability measures on the common domain ΩL. Let μL and νLP denote the probability measures induced by SL and SLP , respectively, through the signed-distance-based Boltzmann densities defined in Appendix B.1. We define geometric mismatch as the Jensen–Shannon (JS) distance between the two measures: 
+
+dgm (L, P ) = dJS (μL, ν LP )=
+
+ 12 KL( μL∥¯μ) + 12 KL( νLP ∥¯μ)
+
+1/2
+
+, (4) where ¯μ = ( μL + νLP )/2. A smaller dgm (L, P ) indicates stronger agreement between the ligand surface field and the ligand-oriented pocket surface field. We visualize the surfaces and probablity measures in Figure 2. 
+
+Correlation with affinity. We formalize the empirical relationship between geometric mismatch and binding affinity through a quantile-calibrated geometry–affinity envelope. This formulation accounts for residual affinity variation caused by non-geometric factors, such as electrostatics, hydrogen bonding, and desolvation, while retaining the principle that geometric mismatch constrains the attainable affinity range with high probability. 
+
+Assumption 1 (Quantile-calibrated geometry–affinity envelope). Let DCD denote the empirical ligand–pocket distribution induced by CrossDocked2020. For a tail probability η ∈ (0 , 1) , there exist monotone 
+
+6(a) Overal ligand refinement pipeline      
+
+> 1.
+> 3. Reverse SDE in Low-Noise Regime 2. Re-Noise
+> 2. 3.
+> 1. Lead Preparation 2. Pocekt Surface
+> Patch Selection
+> 3. Generating Pseudo-Label via
+> Fragment Linking & Truncation 4. Refine Pseudo-Label
+> into In-Distribution Sample
+> Pseudo-Label Generation Refinement Process (b) Distribution view in refinement
+> Surface Patch Truncated
+> Linker
+> 1.gradient flow mode recovery at low-noise time
+> geometric guidance prior score
+
+Figure 4: Overview of the ligand refinement pipeline. The left panel illustrates iterative pocket-surface-targeted ligand growth, while the right panel presents the prior-guided refinement process that maps an out-of-distribution pseudo-label toward an in-distribution ligand sample. 
+
+decreasing functions f η 
+
+> −
+
+and f η 
+
+> +
+
+such that, for (L, P ) ∼ D CD ,
+
+Pr 
+
+h
+
+f η
+
+> −
+
+(dgm (L, P )) ≤ AP (L) ≤ f η
+
+> +
+
+(dgm (L, P )) 
+
+i
+
+≥ 1 − η. (5) Figure 3 shows this validation. We fit a linear trend ˆa(d) = β0 + β1d using the random pairs from the CrossDocked2020 training split (n = 531) , and define the central (1 −η)-quantile envelope by f η
+
+> −
+
+(d) = ˆ a(d)+ qη/ 2
+
+and f η
+
+> +
+
+(d) = ˆ a(d) + q1−η/ 2, where qα is the empirical α-quantile of the training residuals. The fitted 90%, 95%, and 99% envelopes cover 89.8%, 94.7%, and 98.9% of the training samples, respectively, and cover 91.0%, 92.0%, and 97.0% of the 100 CrossDocked2020 test samples. 
+
+Specificity certificate for geometrically separated off-targets. We analyze off-target pockets that remain geometrically distinguishable from the target pocket under ligand-oriented surface representations. Let 
+
+Lopt denote the set of ligands reachable by optimization. For L ∈ L opt and O ∈ O , let mL(O) = dJS (νLPtgt , ν LO )
+
+denote the ligand-oriented geometric separation between the target and off-target pocket surfaces, where 
+
+νLPtgt and νLO are the ligand-oriented pocket measures induced by the corresponding cropped pocket surfaces. We call O a δ-separated off-target class if 
+
+inf 
+
+> L∈L opt
+
+inf  
+
+> O∈O
+
+mL(O) ≥ δ. 
+
+This condition requires every considered off-target pocket to remain at least δ away from the target pocket in the ligand-oriented metric throughout optimization. 
+
+Theorem 1 (Specificity certificate for separated off-targets). Let L ∈ L opt and ϵ = dgm (L, P tgt ).Suppose that O is a δ-separated off-target class. Under Assumption 1, with probability at least 1 − (|O| + 1) η,
+
+Spec( L; Ptgt , O) ≥ f η
+
+> −
+
+(ϵ) − f η
+
+> +
+
+([ δ − ϵ]+) . (6) 
+
+Consequently, this high-probability specificity lower bound weakly increases as the target mismatch ϵ
+
+decreases. 
+
+The theorem formalizes the target-only role of geometric mismatch. Although off-target pockets are not accessed during optimization, their geometric separation from the target pocket provides a specificity certificate: as the ligand better matches the target surface, the certified lower bound on its separation from geometrically distinct off-targets weakly increases. The proof applies the triangle inequality of dJS to the ligand-induced measure, the target-pocket measure, and each off-target pocket measure, yielding dgm (L, O ) ≥ [δ − ϵ]+. The quantile-calibrated geometry–affinity envelope then converts this geometric certificate into an affinity-gap certificate, where the target affinity is lower bounded by f η
+
+> −
+
+(ϵ) and each off-target affinity is upper bounded by f η
+
+> +
+
+([ δ − ϵ]+). A union bound over the target and off-target pockets gives the stated high-probability lower bound. The complete proof is provided in Appendix B.2. 7Method Off-Target [Spec ↑ Geometric Mismatch ↓ Occupancy ↑ Vina Dock ↓ Clash Rate ↓ # Atoms Agnostic Avg. Std. > 0.2 > 0.4 > 0.6 Avg. Std. Med. Avg. Q1 Q3 Avg. Q1 Q3 Initial Lead O -0.83 1.39 0.15 0.13 0.11 0.540 0.051 0.536 0.26 0.22 0.30 -7.17 -8.67 -5.73 0.00 22.75 Delete O -0.84 1.35 0.15 0.12 0.11 0.539 0.052 0.535 0.26 0.22 0.30 -7.23 -8.65 -5.73 0.00 22.85 PMDM O -1.16 2.48 0.12 0.09 0.08 0.501 0.056 0.489 0.33 0.27 0.38 -6.47 -8.87 -5.10 0.16 31.00 DecompOpt O -0.97 1.79 0.12 0.09 0.07 0.542 0.053 0.536 0.25 0.22 0.29 -6.08 -8.26 -4.49 0.02 22.75 DiffShape O -0.97 1.33 0.13 0.09 0.06 0.585 0.115 0.555 0.14 0.00 0.25 -6.90 -8.33 -5.20 0.11 21.91 ActivityDiff X -0.89 1.42 0.15 0.13 0.12 0.538 0.054 0.529 0.27 0.23 0.31 -7.07 -8.35 -5.39 0.11 22.89 PMDM–MS2 O -1.15 2.65 0.12 0.11 0.11 0.499 0.063 0.482 0.31 0.26 0.37 -8.95 -10.04 -7.01 0.25 33.42 PMDM–MS3 O -2.11 2.66 0.07 0.05 0.05 0.496 0.069 0.480 0.31 0.26 0.37 -8.38 -10.51 -6.43 0.31 35.83 PMDM–MS+ES O -0.90 1.98 0.15 0.15 0.14 0.500 0.057 0.489 0.33 0.28 0.38 -8.61 -10.14 -6.56 0.16 31.37 DecompOpt–MS2 O -1.00 1.26 0.11 0.09 0.07 0.542 0.053 0.538 0.25 0.22 0.28 -7.08 -8.79 -5.62 0.03 22.75 DecompOpt–MS3 O -0.91 1.41 0.12 0.10 0.09 0.541 0.053 0.537 0.25 0.21 0.28 -7.00 -8.57 -5.72 0.04 22.76 DecompOpt–MS+ES O -0.80 1.39 0.14 0.11 0.09 0.541 0.052 0.534 0.25 0.22 0.28 -7.40 -8.91 -5.95 0.03 22.75 DiffSBDD–SizeExt(+20) O -1.71 1.84 0.05 0.05 0.05 0.480 0.037 0.476 0.28 0.19 0.38 -7.57 -8.25 -6.37 0.45 35.88 DiffSBDD–SizeExt(+30) O -1.81 1.97 0.03 0.03 0.02 0.468 0.046 0.461 0.32 0.23 0.42 -7.14 -8.40 -5.44 0.62 41.58 Ours O -0.71 1.84 0.18 0.16 0.15 0.480 0.050 0.467 0.36 0.30 0.41 -8.63 -10.43 -6.31 0.00 34.99 
+
+Table 1: Off-target-agnostic lead optimization analysis. Bold indicates the unique best; underline marks all second-best values when the best is unique. 
+
+4.2 Ligand Growth via Geometric Pseudo-Labeling and Refinement 
+
+Motivated by the target-only specificity analysis, we design SurfSpec as an iterative ligand-growth pipeline that improves target-pocket surface fit without accessing off-target pockets during optimization. SurfSpec uses geometric mismatch as a practical design principle and operationalizes it through surface-directed ligand growth toward under-occupied regions of the target pocket. As illustrated in Figure 4, SurfSpec alternates between two stages. First, it generates a geometric pseudo-label by extending the current ligand toward a nearby under-occupied target-pocket surface region. Second, it refines this pseudo-label into a valid ligand using a pretrained diffusion prior over the pocket-conditioned ligand distribution. Repeating these stages encourages coverage of accessible target-pocket regions while maintaining consistency with the learned ligand distribution. The full procedure is described in Algorithm 1. 
+
+Geometric pseudo-label generation. We generate a pseudo-label by exploiting a pretrained linker generation model plinker . At iteration k, we select the closest unoccupied surface patch r(k) whose distance from the current ligand x(k) falls within 4–10 Å. The detailed filtering rule for unoccupied surface patches is provided in Appendix C.2. Given r(k), we sample a linker that connects the current ligand and the selected surface patch. The sampled linker is truncated to exclude pocket-clashing atoms falling within the 2 Åclashing threshold, forming a geometric pseudo-label x(k)label . The resulting x(k)label serves as a directed anchor for reducing the target pocket mismatch. 
+
+Pseudo-label refinement. Given the pseudo-label xlabel , the refinement task is to recover a valid ligand with the same number of atoms that remains close to xlabel while staying likely under the pocket-conditioned ligand prior. Formally, we target the anchored clean density 
+
+panc 0 (x | Ptgt , x label ) ∝ p0(x | Ptgt ) exp 
+
+
+
+− λ
+
+2 ∥x − xlabel ∥2
+
+
+
+, (7) where p0(x | Ptgt ) is the pretrained ligand prior and λ > 0 controls anchor fidelity. Let panc  
+
+> t
+
+denote the distribution obtained by diffusing panc 0 to time t.General-purpose inverse-problem solvers discussed in Section 2 can be applied to this refinement task, but their design choices are not tailored to geometrically constructed molecular pseudo-labels. Optimization-based and variational posterior methods often introduce multiple coupled correction or optimization stages, which require careful coordination of interaction hyperparameters in this molecular setting. Reverse-path methods avoid such multi-stage optimization, but typically depend on either denoised clean-state approximations, such as the DPS plug-in approximation p(x0 | y, P tgt , τ ) ≈ δˆx0|τ (y)(x0), or direct noising of the pseudo-label as in SDEdit. These approximations can become unreliable when applied at high noise levels or when the geometrically constructed pseudo-label lies outside the typical support of the pretrained molecular prior. 8Method                                                                                                                                   
+
+> Prior Consistency Pseudo-Label Faithfulness
+> Pocket Clash ↓Target Affinity ↑Validity ↑Bond MMD ↓RMSD ↓Topo. Sim. ↑
+> %<2Å Local Rep. Global Rep. Local Global C-C C-N C-O Avg. Q1 Q3 Avg. Q1 Q3 Pseudo label 0.00 1.46 7.61 0.23 6.75 0.84 0.06 0.01 0.09 0.00 0.00 0.00 1.00 1.00 1.00 DCDP 0.02 0.83 5.38 0.43 7.69 1.00 0.08 0.03 0.10 0.62 0.55 0.67 0.48 0.35 0.62 DPS 0.03 0.20 4.88 0.39 6.49 1.00 0.11 0.04 0.11 6.17 5.44 6.79 0.35 0.25 0.46 SDEdit 0.03 1.29 6.31 0.28 7.13 1.00 0.09 0.03 0.13 0.31 0.28 0.35 0.53 0.36 0.68 Red-Diff 0.51 5.04 42.39 0.14 1.67 1.00 0.12 0.05 0.16 1.47 0.97 2.00 0.95 0.99 1.00
+> RSD 0.77 9.54 106.75 0.12 0.69 1.00 0.11 0.04 0.15 2.77 1.98 3.62 0.93 0.91 1.00
+> Ours 0.01 0.33 4.40 0.46 8.00 1.00 0.08 0.03 0.08 0.78 0.66 0.90 0.48 0.34 0.64
+
+Table 2: Refinement results. Bold indicates best; underline indicates second-best among methods (only when best is unique). We therefore use a simpler task-specific low-noise recovery procedure that avoids multi-stage posterior optimization and avoids applying clean-state posterior approximation in the high-noise regime. The procedure is motivated by the local concentration of the anchored distribution under the combined constraints of pocket-conditioned validity and similarity to the pseudo-label. In Appendix B.3, we formalize this intuition by assuming that the anchored clean distribution is concentrated in a small ball around its mean. Under this condition, at a low-noise time τ where the local DPS score approximation in Assumption 3 holds, Proposition 2 shows that the anchored score flow converges to a neighborhood of the mode of panc  
+
+> τ
+
+, with residual error controlled by the implemented score approximation error. We therefore estimate this low-noise anchored point using the anchored score flow 
+
+dy s
+
+ds = ∇ys log pτ (ys | Ptgt )
+
+− λJ ˆx0|τ (ys)⊤  ˆx0|τ (ys) − xlabel 
+
+ .
+
+(8) Let y⋆ denote the recovered point. Proposition 4 further shows that re-noising around this recovered point, 
+
+xanc  
+
+> τ
+
+= y⋆ + στ ε, ε ∼ N (0 , I ), (9) approximates sampling from the low-noise anchored marginal panc  
+
+> τ
+
+. Starting from xanc  
+
+> τ
+
+, we complete sampling with a low-noise guided reverse SDE: 
+
+dx t =
+
+h
+
+ft(xt) − g2 
+
+> t
+
+{∇ xt log pt(xt | Ptgt )
+
+− λJ ˆx0|t (xt)⊤  ˆx0|t(xt) − xlabel 
+
+}
+
+i
+
+dt + gt d ¯Wt,
+
+(10) where ft and gt denote the drift and diffusion coefficients of the forward SDE defining the pretrained pocket-conditioned ligand prior pt(· | Ptgt ), and ¯Wt is the reverse-time Brownian motion. This low-noise reverse process approximately samples from the anchored clean distribution panc 0 .The refined ligand is passed to the next growth iteration, and the pipeline alternates between geometric expansion and refinement until the maximum number of iterations is reached or the target-pocket Vina score after local optimization increases relative to the previous iteration. 
+
+## 5 Experiments 
+
+5.1 Experimental Setup Benchmark and Implementation. We evaluate SurfSpec on the 100 test complexes from Cross-Docked2020 Francoeur et al. (2020). For each complex, the reference ligand paired with the target pocket is used as the initial lead, and each method generates one optimized molecule. SurfSpec runs at most K = 3 
+
+ligand-growth iterations, using DiffLinker Igashov et al. (2024) as the linker generation model plinker for surface-directed pseudo-label generation and DiffSBDD Schneuing et al. (2024) as the pretrained pocket-conditioned ligand prior p(· | Ptgt ) for refinement. The low-noise recovery time is fixed to τ = 0 .15 . Off-target pockets are never accessed by off-target-agnostic methods during optimization; for evaluation, each target is 9paired with an off-target set Oeval of 10 randomly sampled pockets from the remaining CrossDocked2020 test pockets. For refinement validation, we keep the pseudo-label and pretrained prior fixed, replace only the pseudo-label refinement step with existing inverse-problem solvers, and set the outer ligand-growth budget to 
+
+K = 1 so that each method performs a single optimization step for each CrossDocked2020 test complex. 
+
+Baselines and Metrics. We compare SurfSpec with representative lead optimization and editing baselines, including Delete, PMDM, DecompOpt, DiffShape, ActivityDiff, multi-step PMDM/DecompOpt variants, and DiffSBDD-based size-extension baselines Chen et al. (2025); Huang et al. (2024); Zhou et al. (2024); Li et al. (2026); Zhou et al. (2025). We evaluate empirical specificity using target and off-target AutoDock Vina scores, and additionally report target-pocket Vina score, target-pocket geometric mismatch, pocket occupancy, clash rate, and ligand size. For refinement validation, we report metrics for prior consistency and pseudo-label faithfulness. Detailed baseline construction, hyperparameters, and metric definitions are provided in Appendices C.1 and C.3 
+
+5.2 Performance on Specificity Enhancement 
+
+Table 1 reports lead optimization performance on CrossDocked2020. SurfSpec achieves the best empirical specificity among all evaluated methods, including the highest average score and the highest thresholded success rates. It also achieves the best pocket occupancy and a low target-pocket geometric mismatch, indicating that target-surface-directed growth effectively increases coverage of the target-pocket region. At the same time, SurfSpec maintains a strong target-pocket Vina docking score and zero clash rate. These results support that SurfSpec improves the empirical target-over-off-target preference while preserving favorable target-pocket docking behavior, without accessing off-targets during optimization. The augmented PMDM and DecompOpt variants with repeated optimization or early stopping do not match SurfSpec in empirical specificity, suggesting that the improvement is not explained solely by repeated baseline application or by the stopping criterion. The DiffSBDD-based size-extension baselines achieve low geometric mismatch, but they also produce high clash rates and weak empirical specificity. This indicates that reducing geometric mismatch through naive size growth is insufficient and can lead to invalid pocket occupation. In contrast, SurfSpec improves target-pocket occupancy and empirical specificity while maintaining zero clash rate, suggesting that surface-directed growth provides a more controlled way to exploit target geometry. 
+
+Non-vacuity of the specificity certificate. In Appendix D.1, we evaluate the certificate margin ML(O) = 
+
+dJS (νLPtgt , ν LO) − dgm (L, P tgt ), where dJS (νLPtgt , ν LO) is the ligand-oriented target–off-target pocket separation. When ML(O) > 0, the triangle-inequality lower bound on ligand–off-target mismatch is nonzero. Empirically, 
+
+65 .96% of the randomly sampled target–off-target pairs in the CrossDocked2020 test set have positive margin, indicating that the certificate is non-vacuous for a substantial fraction of evaluated pairs while remaining conservative. 
+
+5.3 Validation of Pseudo-Label Refinement 
+
+Table 2 evaluates refinement quality under a shared pseudo-label setting. SurfSpec achieves strong prior consistency, including the lowest clash rate among refinement methods, lowest global repulsion, best target-affinity diagnostics, perfect valence validity, and best or tied-best bond MMD values. At the same time, it preserves reasonable pseudo-label faithfulness, with RMSD substantially lower than DPS, Red-Diff, and RSD and topological similarity comparable to DCDP. These results support the proposed low-noise anchored recovery as a simple task-specific refinement method for recovering geometrically constructed molecular pseudo-labels under a pocket-conditioned ligand prior. 
+
+## 6 Conclusion 
+
+We studied off-target-agnostic specificity-aware lead optimization, where only the target pocket is available during optimization. We introduced a target-only geometric analysis based on metricized pocket–ligand surface mismatch, showing that reducing target mismatch weakly improves a conservative specificity lower bound for geometrically separated off-targets. Motivated by this analysis, we proposed SurfSpec , a surface-directed ligand-growth framework that expands ligands toward under-occupied target-pocket regions. On 10 CrossDocked2020, SurfSpec achieves higher empirical specificity, improves target-pocket occupancy, and maintains competitive docking performance with low geometric mismatch and zero clash rate. Additional analyses are provided in Appendix D. 
+
+## 7 Acknowledgement 
+
+This work was partly supported by the KHIDI grant funded by the Korean government (MOHW) [No.RS-2025-02307233, No.RS-2026-25613012], the NRF or IITP grants funded by the Korean government (MSIT) [No.05-26-04-0094, No.RS-2026-25472075, No.RS-2025-02305581, No.RS-2025-25442338, and No.RS-2021-II211343], the ITIP grant funded by the Korean government (MOTIR) [No.RS-2026-25549946], the Research grant from SNU, Strategic Hub grant for International Research Collaboration of SNU, and Institute for Information & communications Technology Planning & Evaluation(IITP) grant funded by the Korea government(MSIT) (RS-2019-II190075, Artificial Intelligence Graduate School Program(KAIST)). Kyungsu Kim is affiliated with the School of Transdisciplinary Innovations, Department of Biomedical Science, Interdisciplinary Program in Artificial Intelligence (IPAI), Medical Research Center, and AI Institute at SNU. 
+
+## References 
+
+K. Adams, K. Abeywardane, J. Fromer, and C. W. Coley. ShEPhERD: Diffusing shape, electrostatics, and pharmacophores for bioisosteric drug design. In The Thirteenth International Conference on Learning Representations , 2025. URL https://openreview.net/forum?id=KSLkFYHlYg. S. Ayadi, L. Hetzel, J. Sommer, F. Theis, and S. Günnemann. Unified guidance for geometry-conditioned molecular generation. In A. Globerson, L. Mackey, D. Belgrave, A. Fan, U. Paquet, J. Tomczak, and C. Zhang, editors, Advances in Neural Information Processing Systems , volume 37, pages 138891–138924. Curran Associates, Inc., 2024. doi: 10.52202/079017-4407. URL https://proceedings.neurips.cc/paper_ files/paper/2024/file/faa6276ea12d7afeb3e42b210c86f688-Paper-Conference.pdf. S. Chen, O. Zhang, C. Jiang, H. Zhao, X. Zhang, M. Chen, Y. Liu, Q. Su, Z. Wu, X. Wang, W. Qu, Y. Ye, X. Chai, N. Wang, T. Wang, Y. An, G. Wu, Q. Yang, J. Chen, W. Xie, H. Lin, D. Li, C.-Y. Hsieh, Y. Huang, Y. Kang, T. Hou, and P. Pan. Deep lead optimization enveloped in protein pocket and its application in designing potent and selective ligands targeting ltk protein. Nature Machine Intelligence , 7(3):448–458, 2025. doi: 10.1038/s42256-025-00997-w. URL https://doi.org/10.1038/s42256-025-00997-w. H. Chung, B. Sim, D. Ryu, and J. C. Ye. Improving diffusion models for inverse problems us-ing manifold constraints. In S. Koyejo, S. Mohamed, A. Agarwal, D. Belgrave, K. Cho, and A. Oh, editors, Advances in Neural Information Processing Systems , volume 35, pages 25683– 25696. Curran Associates, Inc., 2022. URL https://proceedings.neurips.cc/paper_files/paper/2022/file/ a48e5877c7bf86a513950ab23b360498-Paper-Conference.pdf. H. Chung, J. Kim, M. T. McCann, M. L. Klasky, and J. C. Ye. Diffusion posterior sampling for general noisy inverse problems. In International Conference on Learning Representations , 2023. URL https: //openreview.net/forum?id=OnD9zGAGT0k. J. Erbach, D. Narnhofer, A. Dombos, B. Schiele, J. E. Lenssen, and K. Schindler. Solving inverse problems with flair. In D. Belgrave, C. Zhang, H. Lin, R. Pascanu, P. Koniusz, M. Ghassemi, and N. Chen, editors, Advances in Neural Information Processing Systems , volume 38, pages 136667– 136704. Curran Associates, Inc., 2025. URL https://proceedings.neurips.cc/paper_files/paper/2025/file/ c7ae6e9659f0c99582c2e8214ba0b413-Paper-Conference.pdf. P. G. Francoeur, T. Masuda, J. Sunseri, A. Jia, R. B. Iovanisci, I. Snyder, and D. R. Koes. Three-dimensional convolutional neural networks and a cross-docked data set for structure-based drug design. J. Chem. Inf. Model. , 60(9):4200–4215, 2020. doi: 10.1021/acs.jcim.0c00411. URL https://doi.org/10.1021/acs.jcim. 0c00411. 11 B. Gao, M. Ren, Y. Ni, Y. Huang, B. Qiang, Z.-M. Ma, W.-Y. Ma, and Y. Lan. Rethinking specificity in SBDD: Leveraging delta score and energy-guided diffusion. In Proceedings of the 41st International Conference on Machine Learning , volume 235 of Proceedings of Machine Learning Research , pages 14811–14825. PMLR, 2024. URL https://proceedings.mlr.press/v235/gao24k.html. S. Gu, M. Xu, A. Powers, W. Nie, T. Geffner, K. Kreis, J. Leskovec, A. Vahdat, and S. Ermon. Aligning target-aware molecule diffusion models with exact energy optimization. In A. Glober-son, L. Mackey, D. Belgrave, A. Fan, U. Paquet, J. Tomczak, and C. Zhang, editors, Advances in Neural Information Processing Systems , volume 37, pages 44040–44063. Curran Associates, Inc., 2024. doi: 10.52202/079017-1398. URL https://proceedings.neurips.cc/paper_files/paper/2024/file/ 4ddfe69f164eae70abc86f0f9cbed7e8-Paper-Conference.pdf. J. Guan, W. W. Qian, X. Peng, Y. Su, J. Peng, and J. Ma. 3d equivariant diffusion for target-aware molecule generation and affinity prediction. In International Conference on Learning Representations , 2023. L. Huang, T. Xu, Y. Yu, P. Zhao, X. Chen, J. Han, Z. Xie, H. Li, W. Zhong, K.-C. Wong, and H. Zhang. A dual diffusion model enables 3d molecule generation and lead optimization based on target pockets. 
+
+Nature Communications , 15(1):2657, 2024. doi: 10.1038/s41467-024-46569-1. URL https://doi.org/10. 1038/s41467-024-46569-1. I. Igashov, H. Stärk, C. Vignac, A. Schneuing, V. G. Satorras, P. Frossard, M. Welling, M. Bronstein, and B. Cor-reia. Equivariant 3d-conditional diffusion model for molecular linker design. Nature Machine Intelligence , 6 (4):417–427, 2024. doi: 10.1038/s42256-024-00815-9. URL https://doi.org/10.1038/s42256-024-00815-9. F. Jia, Y. Huang, S.-H. Wang, C. Garcia-Cardona, A. L. Bertozzi, and B. Wang. Plug-and-play image restoration with flow matching: A continuous viewpoint, 2025. URL https://arxiv.org/abs/2512.04283. M. J. Keiser, V. Setola, J. J. Irwin, C. Laggner, A. I. Abbas, S. J. Hufeisen, N. H. Jensen, M. B. Kuijer, R. C. Matos, T. B. Tran, R. Whaley, R. A. Glennon, J. Hert, K. L. H. Thomas, D. D. Edwards, B. K. Shoichet, and B. L. Roth. Predicting new molecular targets for known drugs. Nature , 462(7270):175–181, 2009. doi: 10.1038/nature08506. URL https://doi.org/10.1038/nature08506. J. Kim, B. S. Kim, and J. C. Ye. Flowdps : Flow-driven posterior sampling for inverse problems. In Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV) , pages 12328–12337, 2025. M. Kim, S. Shin, and H. Lim. FAST-DIPS: Adjoint-free analytic steps and hard-constrained likelihood correction for diffusion-prior inverse problems. In The Fourteenth International Conference on Learning Representations , 2026. URL https://openreview.net/forum?id=voMeZVAkKL. I. D. Kuntz, J. M. Blaney, S. J. Oatley, R. Langridge, and T. E. Ferrin. A geometric approach to macromolecule-ligand interactions. Journal of Molecular Biology , 161(2):269–288, 1982. doi: https://doi.org/10.1016/ 0022-2836(82)90153-X. URL https://www.sciencedirect.com/science/article/pii/002228368290153X. Z. Lee, M. Hwang, W. Lee, S. Jo, J. Ko, Y. B. Park, J.-M. Choi, E. Yang, and K. Kim. On the collapse of generative paths: A criterion and correction for diffusion steering. In Proceedings of the 43rd International Conference on Machine Learning , 2026. URL https://openreview.net/forum?id=emv2qsi3TG. B. Li, X. Wu, Y. Cao, J. Lin, J. Zhong, H. Chen, Y. Lu, M. Tang, J. Lei, T. Ran, Y. Yang, M. Xu, J. Shang, and H. Chen. De novo molecular design via shape-constrained diffusion models. J. Chem. Inf. Model. , 66 (8):4592–4606, 2026. doi: 10.1021/acs.jcim.6c00044. URL https://doi.org/10.1021/acs.jcim.6c00044. X. Li, S. M. Kwon, S. Liang, I. R. Alkhouri, S. Ravishankar, and Q. Qu. DCDP: Decoupled data consistency with diffusion purification for image restoration, 2024. URL https://arxiv.org/abs/2403.06054. Z. Li, C. Zhou, X. Wang, X. Peng, and M. Zhang. Geometric representation condition improves equivariant molecule generation. In A. Singh, M. Fazel, D. Hsu, S. Lacoste-Julien, F. Berkenkamp, T. Maharaj, K. Wagstaff, and J. Zhu, editors, Proceedings of the 42nd International Conference on Machine Learning ,volume 267 of Proceedings of Machine Learning Research , pages 36921–36953. PMLR, 2025. URL https: //proceedings.mlr.press/v267/li25dz.html. 12 H. Lin, Y. Huang, O. Zhang, Y. Liu, L. Wu, S. Li, Z. Chen, and S. Z. Li. Functional-group-based diffusion for pocket-specific molecule generation and elaboration. In A. Oh, T. Naumann, A. Globerson, K. Saenko, M. Hardt, and S. Levine, editors, Advances in Neural Information Processing Systems , volume 36, pages 34603–34626. Curran Associates, Inc., 2023. URL https://proceedings.neurips.cc/paper_files/paper/2023/ file/6cdd4ce9330025967dd1ed0bed3010f5-Paper-Conference.pdf. M. Mardani, J. Song, J. Kautz, and A. Vahdat. A variational perspective on solving inverse problems with diffu-sion models. In B. Kim, Y. Yue, S. Chaudhuri, K. Fragkiadaki, M. Khan, and Y. Sun, editors, International Conference on Learning Representations , volume 2024, pages 28027–28053, 2024. URL https://proceedings. iclr.cc/paper_files/paper/2024/file/7711026951f3dc3afb2be427bf98bc73-Paper-Conference.pdf. C. Meng, Y. He, Y. Song, J. Song, J. Wu, J.-Y. Zhu, and S. Ermon. SDEdit: Guided image synthesis and editing with stochastic differential equations. In International Conference on Learning Representations ,2022. URL https://openreview.net/forum?id=aBsCjcPu_tE. J. Park and J. C. Ye. FlowLPS: Langevin-proximal sampling for flow-based inverse problem solvers, 2025. URL https://arxiv.org/abs/2512.07150. M. Patel, S. Wen, D. N. Metaxas, and Y. Yang. Flowchef: Steering of rectified flow models for controlled generations. In Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV) ,pages 15308–15318, 2025. X. Peng, S. Luo, J. Guan, Q. Xie, J. Peng, and J. Ma. Pocket2Mol: Efficient molecular sampling based on 3D protein pockets. In K. Chaudhuri, S. Jegelka, L. Song, C. Szepesvari, G. Niu, and S. Sabato, editors, 
+
+Proceedings of the 39th International Conference on Machine Learning , volume 162 of Proceedings of Machine Learning Research , pages 17644–17655. PMLR, 2022. URL https://proceedings.mlr.press/v162/ peng22b.html. M. Pourya, B. El Rawas, and M. Unser. FLOWER: A flow-matching solver for inverse problems. In The Fourteenth International Conference on Learning Representations , 2026. URL https://openreview.net/ forum?id=QGd34p02mI. A. Qiao, Y. Chen, J. Xie, W. Huang, H. Zhang, Q. Deng, J. Rao, J. Deng, F. Meng, Z. Wang, M. Xu, H. Chen, J. Xie, S. Zheng, Y. Yang, G.-B. Li, and J. Lei. A 3d pocket-aware lead optimization model with knowledge guidance and its application for discovery of new glutaminyl cyclase inhibitors. Briefings in Bioinformatics ,26(4):bbaf345, 2025. doi: 10.1093/bib/bbaf345. URL https://doi.org/10.1093/bib/bbaf345. A. Schneuing, C. Harris, Y. Du, K. Didi, A. Jamasb, I. Igashov, W. Du, C. Gomes, T. L. Blundell, P. Lio, M. Welling, M. Bronstein, and B. Correia. Structure-based drug design with equivariant diffusion models. 
+
+Nature Computational Science , 4(12):899–909, 2024. doi: 10.1038/s43588-024-00737-x. B. K. Shoichet and I. D. Kuntz. Matching chemistry and shape in molecular docking. Protein Engineering , 6 (7):723–732, 1993. doi: 10.1093/protein/6.7.723. URL https://doi.org/10.1093/protein/6.7.723. J. Song, A. Vahdat, M. Mardani, and J. Kautz. Pseudoinverse-guided diffusion models for inverse problems. In International Conference on Learning Representations , 2023. URL https://openreview.net/forum?id= 9_gsMA8MRKQ. F. Vargas, W. S. Grathwohl, and A. Doucet. Denoising diffusion samplers. In The Eleventh International Conference on Learning Representations , 2023. URL https://openreview.net/forum?id=8pvnfTAbu1f. Y. Wang, J. Yu, and J. Zhang. Zero-shot image restoration using denoising diffusion null-space model. In 
+
+International Conference on Learning Representations , 2023. URL https://openreview.net/forum?id= mRieQgMtNTQ. B. Zhang, W. Chu, J. Berner, C. Meng, A. Anandkumar, and Y. Song. Improving diffusion inverse problem solving with decoupled noise annealing. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pages 20895–20905, 2025. 13 R. Zhou, H. Zhu, J. Tang, and M. Li. ActivityDiff: A diffusion model with positive and negative activity guidance for de novo drug design, 2025. URL https://arxiv.org/abs/2508.06364. X. Zhou, X. Cheng, Y. Yang, Y. Bao, L. Wang, and Q. Gu. DecompOpt: Controllable and decomposed diffusion models for structure-based molecular optimization. In International Conference on Learning Representations , 2024. URL https://openreview.net/forum?id=Y3BbxvAQS9. Y. Zhu, K. Zhang, J. Liang, J. Cao, B. Wen, R. Timofte, and L. Van Gool. Denoising diffusion models for plug-and-play image restoration. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) Workshops , pages 1219–1229, 2023. N. Zilberstein, M. Mardani, and S. Segarra. Repulsive latent score distillation for solving inverse problems. In Y. Yue, A. Garg, N. Peng, F. Sha, and R. Yu, editors, International Conference on Learning Representations ,volume 2025, pages 60181–60224, 2025. URL https://proceedings.iclr.cc/paper_files/paper/2025/file/ 96d328a1f6d8396d8c8a62f2beee252a-Paper-Conference.pdf. 14 Table 3: Comparison of related molecular design and sample-refinement methods. 
+
+Method family Representative methods 
+
+> No objective-specific retraining Inference-time sample control Explicit geometric control Pocket– ligand surface complementarity Target-only specificity OOD pseudo-label refinement Lead Optimization
+
+Off-target-agnostic specificity-aware optimization  
+
+> SurfSpec (Ours)
+
+✓ ✓ ✓ ✓ ✓ ✓
+
+Off-target-guided specificity  
+
+> SBE-Diff, ActivityDiff
+
+× ✓ × × × × 
+
+> MolSculptor
+
+△ ✓ × × × ×
+
+Target-only optimization  
+
+> DecompOpt
+
+✓ ✓ × × × × 
+
+> Delete
+
+× × × × × × 
+
+> PMDM
+
+△ △ × × × × 
+
+> Diffleop, MolJO
+
+× ✓ △ × × ×
+
+> Sample refinement
+
+Reverse-path refinement  
+
+> SDEdit, DDNM, MCG, DPS, ΠGDM, FlowChef, FlowDPS
+
+✓ ✓ × × × ×
+
+Optimization-based refinement 
+
+> DiffPIR, DDS, DAPS, DCDP, PnP-Flow, FLOWER, FlowLPS
+
+✓ ✓ × × × ×
+
+Variational refinement RED-Diff, RSD, FLAIR ✓ ✓ × × × ×
+
+Constrained sample refinement FAST-DIPS ✓ ✓ × × × ×
+
+> Geometric control
+
+Shape-conditioned generation Diff-Shape × × ✓ × × ×
+
+Multimodal geometric generation ShEPhERD × × ✓ × × ×
+
+Representation-conditioned generation GeoRCG × × ✓ × × ×
+
+Training-free geometric guidance UniGuide ✓ ✓ ✓ × × ×
+
+> Molecular design
+
+Pocket-conditioned generation  
+
+> Pocket2Mol, TargetDiff, AliDiff
+
+× × × × × ×
+
+Multi-task SBDD generation  
+
+> DiffSBDD
+
+✓ ✓ △ × × × 
+
+> DiffGui, PocketXMol,
+
+× ✓ △ × × ×
+
+Molecular elaboration D3FG × × △ × × ×
+
+## Appendix A. Literature Context of the Work 
+
+Table 3 summarizes related methods across lead optimization, sample refinement, geometric control, and structure-based molecular design. SurfSpec is distinguished by jointly supporting inference-time geometric control, pocket–ligand surface complementarity, target-only specificity, and OOD pseudo-label refinement without objective-specific retraining. 
+
+## Appendix B. Proofs and Additional Theoretical Details 
+
+B.1 Surface-Oriented Probability Fields 
+
+We construct the surface-induced probability measures used in Eq. (4) from signed-distance functions. Let 
+
+AL = {ai}NL 
+
+> i=1
+
+denote the heavy-atom coordinates of the ligand L. As in the main text, we define the continuous 15 ligand-local domain 
+
+ΩL =
+
+n
+
+x ∈ R3 : min  
+
+> i
+
+∥x − ai∥2 ≤ 8 Å
+
+o
+
+. (11) Let SL denote the van der Waals surface of the ligand heavy atoms, and let SLP denote the ligand-oriented pocket surface, obtained by aligning the pocket to the ligand frame and restricting the pocket van der Waals surface to points within 8 Å of any ligand heavy atom. We define signed-distance functions on ΩL. For the ligand, let BL be the ligand van der Waals solid, whose boundary is SL. The signed distance to the ligand surface is 
+
+ϕL(x) = 
+
+(
+
+inf z∈S L ∥x − z∥2, x / ∈ BL,
+
+− inf z∈S L ∥x − z∥2, x ∈ BL. (12) For the pocket, let BLP be the aligned protein van der Waals solid. We define 
+
+ϕP (x) = 
+
+( inf z∈S LP ∥x − z∥2, x / ∈ BLP ,
+
+− inf z∈S LP ∥x − z∥2, x ∈ BLP . (13) Thus, ϕP (x) < 0 indicates that x lies inside the protein van der Waals volume, corresponding to a clash region. We define the ligand and pocket surface energies as 
+
+EL(x) = ϕL(x)2
+
+2σ2
+
+> L
+
+,EP (x) = ϕP (x)2
+
+2σ2
+
+> P
+
++ λclash [−ϕP (x)] +,
+
+(14) where [u]+ = max( u, 0) . The clash term discourages probability mass inside the protein side of the pocket surface. We convert these energies into normalized Boltzmann densities on the common continuous domain ΩL:
+
+qL(x) = exp( −βE L(x)) 
+
+R 
+
+> ΩL
+
+exp( −βE L(x′)) dx ′ , (15) 
+
+qP (x) = exp( −βE P (x)) 
+
+R 
+
+> ΩL
+
+exp( −βE P (x′)) dx ′ . (16) We set β = 2 in all experiments. The corresponding probability measures are 
+
+dμ L(x) = qL(x) dx, dν LP (x) = qP (x) dx. (17) The geometric mismatch in Eq. (4) is then computed as the Jensen–Shannon distance between μL and νLP ,which are defined on the same ligand-local domain. In implementation, the integrals in Eq. (16) are approximated by evaluating the unnormalized Boltzmann densities on a ligand-centered voxel grid over ΩL and normalizing the resulting discrete weights. 
+
+B.2 Proof of the Specificity Certificate 
+
+We first restate the quantile-calibrated geometry–affinity assumption used in the main text. This assumption provides an empirical bridge from geometric mismatch to affinity, while allowing residual variation due to non-geometric factors such as electrostatics, hydrogen bonding, and desolvation. 
+
+Assumption 1 (Quantile-calibrated geometry–affinity envelope). Let DCD denote the empirical ligand–pocket distribution induced by CrossDocked2020. For a tail probability η ∈ (0 , 1) , there exist monotone decreasing functions f η 
+
+> −
+
+and f η 
+
+> +
+
+such that, for (L, P ) ∼ D CD ,
+
+Pr f η
+
+> −
+
+(dgm (L, P )) ≤ AP (L) ≤ f η
+
+> +
+
+(dgm (L, P ))  ≥ 1 − η. (18) 16 Here, AP (L) is an affinity-like score for ligand L against pocket P , where larger values indicate stronger binding. 
+
+This assumption does not require geometry to fully determine affinity. Rather, it states that geometric mismatch constrains the attainable affinity range with high probability. The percentile envelope absorbs affinity variation caused by non-geometric interactions. We next formalize the geometric part of the certificate. Let Lopt denote the set of ligands reachable by optimization. For L ∈ L opt and O ∈ O , let 
+
+mL(O) = dJS (νLPtgt , ν LO )
+
+denote the ligand-oriented geometric separation between the target and off-target pocket surfaces, where 
+
+νLPtgt and νLO are the corresponding ligand-oriented pocket surface measures. We say that O is a δ-separated off-target class if 
+
+inf 
+
+> L∈L opt
+
+inf  
+
+> O∈O
+
+mL(O) ≥ δ. 
+
+This means that every considered off-target pocket remains at least δ away from the target pocket under the ligand-oriented surface metric throughout optimization. 
+
+Lemma 1 (Triangle lower bound for off-target mismatch). Let L ∈ L opt , and let 
+
+ϵ = dgm (L, P tgt )
+
+be the target mismatch. Then, for each off-target pocket O ∈ O ,
+
+dgm (L, O ) ≥ [mL(O) − ϵ]+. (19) 
+
+In particular, if O is a δ-separated off-target class, then 
+
+dgm (L, O ) ≥ [δ − ϵ]+ for all O ∈ O . (20) 
+
+Proof. By definition of the ligand-oriented mismatch, 
+
+dgm (L, P tgt ) = dJS (μL, ν LPtgt ) = ϵ, 
+
+and 
+
+dgm (L, O ) = dJS (μL, ν LO ).
+
+Since dJS is a metric on probability measures, it satisfies the triangle inequality: 
+
+dJS (νLPtgt , ν LO ) ≤ dJS (νLPtgt , μ L) + dJS (μL, ν LO ).
+
+Therefore, 
+
+mL(O) ≤ ϵ + dgm (L, O ).
+
+Rearranging gives 
+
+dgm (L, O ) ≥ mL(O) − ϵ. 
+
+Since dgm (L, O ) ≥ 0, we obtain 
+
+dgm (L, O ) ≥ [mL(O) − ϵ]+.
+
+If O is δ-separated, then mL(O) ≥ δ for every L ∈ L opt and O ∈ O . Hence 
+
+[mL(O) − ϵ]+ ≥ [δ − ϵ]+,
+
+which yields 
+
+dgm (L, O ) ≥ [δ − ϵ]+.
+
+17 Theorem 1 (Specificity certificate for separated off-targets). Let L ∈ L opt , and let ϵ = dgm (L, P tgt ).Suppose that O is a δ-separated off-target class. Under Assumption 1, with probability at least 1 − (|O| + 1) η,
+
+Spec( L; Ptgt , O) ≥ f η
+
+> −
+
+(ϵ) − f η
+
+> +
+
+([ δ − ϵ]+) . (21) 
+
+Consequently, reducing the target mismatch ϵ weakly improves this high-probability specificity lower bound. Proof. The proof has two steps. First, we obtain a geometric lower bound on the mismatch between the ligand and each off-target pocket. Second, we convert this geometric lower bound into an affinity-level specificity certificate using the percentile-calibrated geometry–affinity envelope. By Lemma 1, for every off-target pocket O ∈ O ,
+
+dgm (L, O ) ≥ [δ − ϵ]+. (22) Now consider the calibrated affinity events. For the target pocket, the lower envelope in Assumption 1 gives, with probability at least 1 − η,
+
+APtgt (L) ≥ f η
+
+> −
+
+(dgm (L, P tgt )) = f η
+
+> −
+
+(ϵ).
+
+For each off-target pocket O ∈ O , the upper envelope gives, with probability at least 1 − η,
+
+AO (L) ≤ f η
+
+> +
+
+(dgm (L, O )) .
+
+Because f η 
+
+> +
+
+is monotone decreasing and dgm (L, O ) ≥ [δ − ϵ]+, we have 
+
+f η
+
+> +
+
+(dgm (L, O )) ≤ f η
+
+> +
+
+([ δ − ϵ]+) .
+
+Therefore, for every O ∈ O ,
+
+AO (L) ≤ f η
+
+> +
+
+([ δ − ϵ]+) .
+
+Taking the maximum over off-target pockets yields 
+
+max  
+
+> O∈O
+
+AO (L) ≤ f η
+
+> +
+
+([ δ − ϵ]+) .
+
+Combining the target lower bound and the off-target upper bound gives 
+
+Spec( L; Ptgt , O) = APtgt (L) − max  
+
+> O∈O
+
+AO (L)
+
+≥ f η
+
+> −
+
+(ϵ) − f η
+
+> +
+
+([ δ − ϵ]+) .
+
+It remains to account for the probability of the calibrated events. The target lower-envelope event fails with probability at most η. For each of the |O| off-target pockets, the upper-envelope event fails with probability at most η. By the union bound, all calibrated events hold simultaneously with probability at least 
+
+1 − (|O| + 1) η. 
+
+Thus Eq. (21) holds with the stated probability. Finally, define the certified lower bound as 
+
+B(ϵ) = f η
+
+> −
+
+(ϵ) − f η
+
+> +
+
+([ δ − ϵ]+) .
+
+Since f η 
+
+> −
+
+is monotone decreasing, reducing ϵ weakly increases f η
+
+> −
+
+(ϵ). Also, reducing ϵ weakly increases [δ − ϵ]+,and since f η 
+
+> +
+
+is monotone decreasing, this weakly decreases f η
+
+> +
+
+([ δ − ϵ]+). Therefore, reducing the target mismatch ϵ weakly improves the high-probability lower bound B(ϵ).18 B.3 Low-Noise Analysis of Anchored Refinement 
+
+We analyze the low-noise anchored recovery step for a pseudo-label a = xlabel . Let 
+
+Va(x) = λ
+
+2 ∥x − a∥22
+
+denote the anchor potential. The anchored clean distribution is defined as 
+
+panc 0 (x | Ptgt , a ) = 1
+
+Za
+
+p0(x | Ptgt ) exp( −Va(x)) , (23) where Za is the normalizing constant. Let μanc 0 and Σanc 0 denote the mean and covariance of panc 0 (· | Ptgt , a ),respectively. For diffusion time τ , consider the Gaussian forward perturbation 
+
+Yτ = ατ X0 + στ Z, Z ∼ N (0 , I d), (24) where X0 ∼ panc 0 (· | Ptgt , a ) and Z is independent of X0. We denote the distribution of Yτ by panc  
+
+> τ
+
+.
+
+Assumption 2 (Anchored concentration). The anchored clean distribution is concentrated in a small ball around its mean: 
+
+supp ( panc 0 (· | Ptgt , a )) ⊂ B(μanc 0 , r 0). (25) This assumption formalizes the intuition that imposing both pocket-conditioned validity and similarity to the pseudo-label leaves a locally concentrated set of feasible clean ligands. It also implies the covariance bound 
+
+tr(Σ anc 0 ) = E ∥X0 − μanc 0 ∥22
+
+ ≤ r20 . (26) This covariance bound is a consequence of Assumption 2, not an additional assumption. 
+
+Proposition 1 (Mode recovery under anchored concentration). Suppose Assumption 2 holds. Let 
+
+y⋆τ be an interior mode of panc  
+
+> τ
+
+. Then 
+
+∥y⋆τ − ατ μanc 0 ∥2 ≤ | ατ |r0. (27) 
+
+Consequently, if the low-noise anchored score flow recovers the mode y⋆τ , then its convergence point lies within |ατ |r0 of the forward mean ατ μanc 0 .Proof. For the Gaussian forward perturbation in Eq. (24), the score identity is 
+
+∇y log panc  
+
+> τ
+
+(y) = − 1
+
+σ2
+
+> τ
+
+(y − ατ E[X0 | Yτ = y, P tgt , a ]) . (28) Since y⋆τ is an interior mode, ∇y log panc  
+
+> τ
+
+(y⋆τ ) = 0 . Therefore, 
+
+y⋆τ = ατ E[X0 | Yτ = y⋆τ , P tgt , a ].
+
+Conditioning on Yτ = y⋆τ only reweights the clean distribution and does not enlarge its support. Hence the posterior distribution of X0 | Yτ = y⋆τ remains supported in B(μanc 0 , r 0). Since this ball is convex, the posterior mean also lies in the same ball: 
+
+∥E[X0 | Yτ = y⋆τ , P tgt , a ] − μanc 0 ∥2 ≤ r0.
+
+Multiplying by |ατ | proves Eq. (30). 19 Assumption 3 (Local DPS score approximation). Let 
+
+esanc  
+
+> τ
+
+(y) = ∇y log pτ (y | Ptgt ) − λJ ˆx0|τ (y)⊤  ˆx0|τ (y) − xlabel 
+
+
+
+denote the DPS-style anchored score estimator used in Eq. (8) . On the region B visited by the low-noise anchored score flow, we assume that this estimator is locally close to the exact anchored score: 
+
+sup 
+
+> y∈B
+
+∥esanc  
+
+> τ
+
+(y) − ∇ y log panc  
+
+> τ
+
+(y)∥2 ≤ ξτ . (29) 
+
+Proposition 2 (Mode recovery under anchored concentration). Suppose Assumption 2 holds and define 
+
+κτ = α2 
+
+> τ
+
+r20
+
+σ2
+
+> τ
+
+.
+
+If κτ < 1, then log panc  
+
+> τ
+
+is strongly concave with constant 
+
+mτ = 1 − κτ
+
+σ2
+
+> τ
+
+.
+
+Consequently, panc  
+
+> τ
+
+has a unique mode y⋆τ , and 
+
+∥y⋆τ − ατ μanc 0 ∥2 ≤ | ατ |r0. (30) 
+
+Assume further that the approximate flow 
+
+dy s
+
+ds = esanc  
+
+> τ
+
+(ys)
+
+remains in a region B, and that the implemented score satisfies 
+
+sup 
+
+> y∈B
+
+∥esanc  
+
+> τ
+
+(y) − ∇ y log panc  
+
+> τ
+
+(y)∥2 ≤ ξτ .
+
+Then 
+
+∥ys − y⋆τ ∥2 ≤ e−mτ s∥y0 − y⋆τ ∥2 + ξτ
+
+mτ
+
+ 1 − e−mτ s . (31) 
+
+Proof. For a Gaussian forward perturbation, the Hessian identity gives 
+
+∇2 
+
+> y
+
+log panc  
+
+> τ
+
+(y) = − 1
+
+σ2
+
+> τ
+
+Id + α2
+
+> τ
+
+σ4
+
+> τ
+
+Cov ( X0 | Yτ = y, P tgt , a ) .
+
+Under Assumption 2, the conditional support of X0 | Yτ = y remains inside B(μanc 0 , r 0). Therefore, 
+
+∥Cov ( X0 | Yτ = y, P tgt , a )∥op ≤ r20 .
+
+Hence the largest eigenvalue of ∇2 
+
+> y
+
+log panc  
+
+> τ
+
+(y) is at most 
+
+− 1
+
+σ2
+
+> τ
+
++ α2 
+
+> τ
+
+r20
+
+σ4
+
+> τ
+
+= − 1 − κτ
+
+σ2
+
+> τ
+
+= −mτ ,
+
+so log panc  
+
+> τ
+
+is mτ -strongly concave. The score identity for Gaussian perturbations is 
+
+∇y log panc  
+
+> τ
+
+(y) = − 1
+
+σ2
+
+> τ
+
+(y − ατ E[X0 | Yτ = y, P tgt , a ]) .
+
+20 At the mode y⋆τ , the score vanishes, so 
+
+y⋆τ = ατ E[X0 | Yτ = y⋆τ , P tgt , a ].
+
+The posterior mean lies in the same convex ball B(μanc 0 , r 0), which gives Eq. (30). Let 
+
+sanc  
+
+> τ
+
+(y) = ∇y log panc  
+
+> τ
+
+(y), esanc  
+
+> τ
+
+(y) = sanc  
+
+> τ
+
+(y) + ∆ τ (y),
+
+with ∥∆τ (y)∥2 ≤ ξτ on B. Since sanc  
+
+> τ
+
+(y⋆τ ) = 0 , strong concavity implies 
+
+⟨ys − y⋆τ , s anc  
+
+> τ
+
+(ys) − sanc  
+
+> τ
+
+(y⋆τ )⟩ ≤ − mτ ∥ys − y⋆τ ∥22.
+
+Therefore, dds ∥ys − y⋆τ ∥2 ≤ − mτ ∥ys − y⋆τ ∥2 + ξτ .
+
+Gronwall’s inequality gives Eq. (31). 
+
+Proposition 3 (Accuracy of the low-noise Gaussian surrogate). Define the Gaussian surrogate 
+
+epanc  
+
+> τ
+
+= N  ατ μanc 0 , σ 2 
+
+> τ
+
+Id
+
+ , (32) 
+
+and the residual-dispersion ratio 
+
+ρτ = α2 
+
+> τ
+
+tr(Σ anc 0 )
+
+σ2
+
+> τ
+
+. (33) 
+
+Then 
+
+DKL (panc  
+
+> τ
+
+∥epanc  
+
+> τ
+
+) ≤ ρτ
+
+2 , (34) 
+
+W 22 (panc  
+
+> τ
+
+, epanc  
+
+> τ
+
+) ≤ α2 
+
+> τ
+
+tr(Σ anc 0 ), (35) 
+
+and 
+
+TV ( panc  
+
+> τ
+
+, epanc  
+
+> τ
+
+) ≤ 12
+
+√ρτ . (36) 
+
+Under Assumption 2, 
+
+ρτ ≤ α2 
+
+> τ
+
+r20
+
+σ2
+
+> τ
+
+. (37) 
+
+Thus, when |ατ |r0 ≪ στ , panc  
+
+> τ
+
+is well approximated by the Gaussian surrogate centered at ατ μanc 0 .Proof. Conditioned on X0 = x, the forward distribution is 
+
+Yτ | X0 = x ∼ N (ατ x, σ 2 
+
+> τ
+
+Id).
+
+By convexity of KL divergence in its first argument, 
+
+DKL (panc  
+
+> τ
+
+∥epanc  
+
+> τ
+
+)
+
+≤ EX0
+
+DKL 
+
+ N (ατ X0, σ 2 
+
+> τ
+
+Id) N (ατ μanc 0 , σ 2 
+
+> τ
+
+Id) 
+
+= α2
+
+> τ
+
+2σ2
+
+> τ
+
+E ∥X0 − μanc 0 ∥22
+
+ = ρτ
+
+2 .
+
+For the Wasserstein bound, couple 
+
+Yτ = ατ X0 + στ Z, eYτ = ατ μanc 0 + στ Z
+
+using the same Gaussian noise Z. Then 
+
+E
+
+h
+
+∥Yτ − eYτ ∥22
+
+i
+
+= α2 
+
+> τ
+
+tr(Σ anc 0 ),
+
+which proves Eq. (35). The total-variation bound follows from Pinsker’s inequality. Finally, Eq. (37) follows from Eq. (26). 21 Proposition 4 (Re-noising around the recovered point). Suppose Assumption 2 holds, and suppose the conditions of Proposition 2 hold. Let ys be the point obtained by the approximate anchored score flow at flow time s, and define bXτ = ys + στ ε, ε ∼ N (0 , I d).
+
+Equivalently, bXτ ∼ N (ys, σ 2 
+
+> τ
+
+Id).
+
+Then W2
+
+ panc  
+
+> τ
+
+, N (ys, σ 2 
+
+> τ
+
+Id)
+
+≤ 2|ατ |r0 + e−mτ s∥y0 − y⋆τ ∥2 + ξτ
+
+mτ
+
+ 1 − e−mτ s . (38) 
+
+In particular, if the recovered point is the exact mode ys = y⋆τ , then 
+
+W2
+
+ panc  
+
+> τ
+
+, N (y⋆τ , σ 2 
+
+> τ
+
+Id) ≤ 2|ατ |r0. (39) 
+
+Proof. By the triangle inequality, 
+
+W2
+
+ panc  
+
+> τ
+
+, N (ys, σ 2 
+
+> τ
+
+Id)
+
+≤ W2 (panc  
+
+> τ
+
+, epanc  
+
+> τ
+
+) + W2
+
+ epanc  
+
+> τ
+
+, N (ys, σ 2 
+
+> τ
+
+Id) .
+
+The first term is bounded by 
+
+W2 (panc  
+
+> τ
+
+, epanc  
+
+> τ
+
+) ≤ | ατ |
+
+q
+
+tr(Σ anc 0 ) ≤ | ατ |r0,
+
+where the first inequality follows from Proposition 3, and the second follows from Assumption 2. For the second term, recall that 
+
+epanc  
+
+> τ
+
+= N  ατ μanc 0 , σ 2 
+
+> τ
+
+Id
+
+ .
+
+Since the two Gaussian distributions have the same covariance, 
+
+W2
+
+ epanc  
+
+> τ
+
+, N (ys, σ 2 
+
+> τ
+
+Id) = ∥ys − ατ μanc 0 ∥2.
+
+By the triangle inequality, 
+
+∥ys − ατ μanc 0 ∥2 ≤ ∥ ys − y⋆τ ∥2 + ∥y⋆τ − ατ μanc 0 ∥2.
+
+Proposition 2 gives 
+
+∥ys − y⋆τ ∥2 ≤ e−mτ s∥y0 − y⋆τ ∥2 + ξτ
+
+mτ
+
+ 1 − e−mτ s ,
+
+and also 
+
+∥y⋆τ − ατ μanc 0 ∥2 ≤ | ατ |r0.
+
+Combining these bounds proves Eq. (38). If ys = y⋆τ , the flow-error term vanishes, yielding Eq. (39). 
+
+## Appendix C. Experimental Details 
+
+C.1 Implementation Details for Ligand Growth and Refinement Benchmark protocol. All ligand-growth experiments are conducted on the 100 test complexes from CrossDocked2020 Francoeur et al. (2020). For each complex, the reference ligand paired with the target pocket is used as the initial lead, and each method generates one optimized molecule. For each target pocket, we construct the evaluated off-target set Oeval by randomly sampling 10 pockets from the remaining 99 CrossDocked2020 test pockets. For off-target-agnostic methods, these off-target pockets are never accessed during optimization and are used only for evaluation. For ActivityDiff, which requires negative targets, we randomly assign 10 pockets as surrogate off-targets, reflecting the assumed inaccessibility of the true off-target set. 22 Docking timeout. Each AutoDock Vina docking run is limited to 300 seconds. Docking attempts that exceed this budget are treated as docking failures and excluded from the corresponding Vina-score aggregation. For empirical specificity metrics, a valid target-pocket docking score is required to compute the target-over-off-target gap; therefore, samples whose target-pocket docking fails are excluded from the specificity aggregation. 
+
+Shared outer ligand-growth loop. Unless otherwise stated, all methods use at most K = 3 outer ligand-growth iterations. At each iteration, we select the closest feasible unoccupied surface patch within 
+
+4–10 Å, generate a linker of size 10 using DiffLinker, and refine the resulting pseudo-label using the specified refinement method. The procedure terminates early if no feasible surface patch exists or if the target-pocket Vina score after local optimization worsens relative to the previous iteration. 
+
+Baseline variants. We evaluate PMDM and DecompOpt both in their standard forms and in augmented variants. MS2 and MS3 denote two-step and three-step applications of the corresponding baseline. MS + ES 
+
+denotes the multi-step variant with early stopping, where the stopping rule uses the same target-pocket Vina-score criterion as SurfSpec. These variants test whether SurfSpec’s performance can be explained by repeated application of existing lead-optimization baselines or by early stopping alone. 
+
+Naive size extension. We include DiffSBDD -SizeExt as a naive size-extension baseline because DiffSBDD is the pocket-conditioned diffusion prior used inside SurfSpec. This baseline increases the generated molecule size using DiffSBDD without selecting under-occupied target-surface regions. It therefore tests whether improved geometric mismatch can be obtained simply by adding more atoms, rather than through controlled surface-directed growth. 
+
+Surrogate off-target-aware baseline. ActivityDiff is evaluated as a surrogate off-target-aware specificity baseline. Because the true off-target set is unavailable during optimization, we construct its negative guidance using randomly selected negative targets. This setting evaluates whether approximate off-target information provides reliable specificity guidance. 
+
+Ours. SurfSpec uses the same DiffLinker proposal mechanism as the refinement baselines, but applies a low-noise anchored recovery procedure. After DiffLinker proposes a candidate pseudo-label, we first remove atoms whose distance to any pocket atom is less than 2 Å. This clash-truncation step produces the anchor used for refinement. We then run the low-noise mode-recovery update at τ = 0 .15 for 100 steps with step size 
+
+γproj = 0 .3. The anchor-guidance coefficient is set to 0.001 . The anchor target is the truncated pseudo-label, and the guidance score is evaluated at the current denoising state. After mode recovery, we perform 50 reverse-SDE steps from t = τ to t = 0 to obtain the refined ligand. In our experiments, this simpler SDEdit-style reverse process was sufficient for refinement, so we omit additional guidance along the reverse trajectory. Finally, the ligand is locally optimized using AutoDock Vina before proceeding to the next outer iteration. The complete procedure is described in Algorithm 1, and Figure 8 illustrates the ligand-growth steps. 
+
+Refinement baselines. For Table 2, all refinement baselines are evaluated under a shared one-step pseudo-label recovery setting. They consume the same DiffLinker pseudo-labels and use the same DiffSBDD pocket-conditioned ligand prior, and each method generates one refined sample for each CrossDocked2020 test complex. Thus, the comparison isolates the effect of the recovery procedure rather than the pseudo-label generator, diffusion prior, or outer growth policy. All refinement baselines use the same linker size, closest-patch selection rule, and Vina-based early stopping criterion described above. The baseline-specific refinement hyperparameters are summarized in Table 4. 
+
+C.2 Surface Patch Selection Policy 
+
+At each ligand-growth iteration, we select a protein surface patch as the target pseudo-fragment for linker generation. As the selection policy, we first construct visibility-filtered surface candidates and then selects the candidate closest to the current ligand. The selected candidate is used as the surface-side fragment for DiffLinker with fixed linker size 10. 
+
+Candidate construction. Let L be the set of ligand heavy-atom coordinates and let R be the receptor heavy atoms. We first define the local pocket atom set 
+
+P =
+
+
+
+x ∈ R : min  
+
+> ℓ∈L
+
+∥x − ℓ∥2 ≤ 10 Å
+
+
+
+.
+
+23 Method Key steps Other hyperparameters SDEdit 50 reverse steps τ = 0 .15                        
+
+> DPS 1000 reverse steps from t= 1 Anchor weight = 0 .001
+> DCDP 10 purification iterations; 100 inner consistency steps; 50 reverse steps per purification Consistency LR = 0 .01 ; consistency weight = 1 .0; purification
+> τ: 0 .15 →0.05 ; raw anchor gradients RED-Diff 50 optimization steps LR = 0 .001 ; anchor weight = 0 .001 ; prior weight = 0 .5; raw anchor gradients RSD 50 optimization steps; 4 particles LR = 0 .001 ; anchor weight = 0 .001 ; prior weight = 0 .5; repulsion weight = 0 .001 ; kernel bandwidth = 1 .0; raw anchor gradients
+
+Table 4: Hyperparameters for refinement baselines. All methods share the same outer ligand-growth loop, DiffLinker proposal, and Vina-based early stopping rule. From P, we extract an outer surface shell S by retaining the outer 20% of atoms with respect to distance from the pocket centroid. Specifically, for cP = |P| −1 P 
+
+> x∈P
+
+x and ρ(x) = ∥x − cP ∥2, we set 
+
+S = {x ∈ P : ρ(x) ≥ Q0.80 ({ρ(y) : y ∈ P} )} .
+
+We first construct a residue pool by selecting protein residues whose closest atom lies 4–10 Å from the current ligand. Each candidate fragment r is represented by the connected carbon atoms forming the backbone of the corresponding residue. We compute its distance to the extracted surface shell as 
+
+dsurf (r) = min  
+
+> x∈r, s ∈S
+
+∥x − s∥2.
+
+If at least one candidate satisfies dsurf (r) ≤ 2.5 Å, we keep only those surface-proximal candidates. 
+
+Visibility filtering. We further require each candidate to have line-of-sight to at least one ligand atom. For a candidate fragment r, a ligand atom ℓi, and a representative candidate atom x ∈ r, we sample the segment 
+
+p(t) = (1 − t)ℓi + tx, t ∈ { 0.1, 0.2, . . . , 0.9}.
+
+Blockers are receptor heavy atoms excluding atoms from the same as r. With clash cutoff δ = 2 .5 Å, we define 
+
+fblock (r, ℓ i) = 1
+
+|T | 
+
+X
+
+> t∈T
+
+1
+
+
+
+min  
+
+> b
+
+∥p(t) − b∥2 < δ 
+
+
+
+,
+
+T = {0.1, 0.2, . . . , 0.9}.
+
+A candidate is retained if there exists a ligand atom ℓi such that 
+
+fblock (r, ℓ i) ≤ 0.05 .
+
+Let C denote the resulting visibility-filtered candidate set. 
+
+Closest surface policy. Among the final candidates, we select the fragment with minimum ligand–fragment distance: 
+
+r⋆ = arg min  
+
+> r∈C
+
+dlig (r), dlig (r) = min  
+
+> ℓ∈L , x ∈r
+
+∥x − ℓ∥2.
+
+If C is empty, the growth iteration stops. Otherwise, r⋆ is used as the surface patch, and DiffLinker grows a linker of size 10 toward r⋆.
+
+C.3 Evaluation Metrics Off-target agnostic flag. For ligand-growth experiments, we indicate whether each method is off-target agnostic . A method is marked as off-target agnostic if it does not use off-target structures, scores, or activity labels during generation. This is a method-level property rather than a per-sample metric. Off-target pockets are used only for evaluation unless explicitly stated otherwise. 24 Clash rate. We measure protein–ligand clashes using a distance-based criterion. A generated ligand is considered clashing if any ligand atom is within 2 Å of any protein atom. The reported clash rate is the fraction of generated ligands that satisfy this condition: 
+
+ClashRate = 1
+
+N
+
+> N
+
+X
+
+> i=1
+
+1
+
+
+
+min 
+
+> a∈Li, b ∈Pi
+
+∥a − b∥2 < 2 Å
+
+
+
+.
+
+Lower clash rate indicates fewer physically implausible protein–ligand overlaps. 
+
+Ligand size. We report the mean number of heavy atoms in the generated ligand. Atom counts are computed using RDKit from the generated SDF files, with hydrogens excluded. 
+
+Empirical specificity. We evaluate cross-pocket specificity using AutoDock Vina docking scores. For each generated ligand, we dock it to the target pocket and to a finite evaluated off-target set Oeval . Let Stgt (L)
+
+denote the Vina docking score on the target pocket, and let SO(L) denote the score on off-target pocket O.Because lower Vina scores indicate stronger predicted binding, we define the empirical specificity estimate as 
+
+[Spec( L) = −
+
+
+
+Stgt (L) − min 
+
+> O∈O eval
+
+SO (L)
+
+
+
+.
+
+This metric compares the target-pocket score against the strongest predicted off-target binder among the evaluated off-targets. In addition to the sample average, we report thresholded success rates for [Spec > 0.2,
+
+[Spec > 0.4, and [Spec avg > 0.6.
+
+Geometric mismatch. Geometric mismatch measures ligand–pocket surface complementarity using the Jensen–Shannon distance defined in Eq. (4). For each ligand–pocket pair, we construct the ligand surface and the ligand-oriented target-pocket surface restricted to points within 8 Å of any ligand heavy atom. These surfaces induce probability measures on the common ligand-local domain through the signed-distance-based Boltzmann construction in Appendix B.1. Lower geometric mismatch indicates better agreement between the ligand surface-induced measure and the ligand-oriented target-pocket measure. 
+
+Pocket occupancy. Pocket occupancy measures how much of the target pocket is covered by the generated ligand. We define occupancy as the fraction of target-pocket grid points that are occupied by the ligand, where a grid point is counted as occupied if it lies within the predefined ligand fill radius of any ligand atom. We report the average, first quartile, and third quartile across samples. Higher occupancy indicates broader coverage of the target-pocket region. 
+
+Target-pocket Vina docking. We report the AutoDock Vina docking score of each generated ligand on the target pocket. This metric is distinguished from the Vina-derived score used during optimization, as it is computed by re-docking the final generated ligand with AutoDock Vina under the evaluation protocol. Because lower Vina scores indicate stronger predicted binding, lower values correspond to better target-pocket docking performance. We report the average, first quartile, and third quartile across generated samples. 
+
+Refinement prior consistency. For refinement experiments, we evaluate whether a refined ligand remains consistent with the pocket-conditioned ligand prior. We report protein clash rate using the same 2 Å criterion as above, RDKit valence validity, Vina score-only repulsion diagnostics, and bond-length MMD. The repulsion diagnostics use the unweighted repulsion term from Vina –score_only . We compute this diagnostic globally on the full receptor and locally on receptor atoms within 4 Å of the fragment neighborhood. Larger repulsion indicates stronger steric conflict and is not interpreted as docking affinity. 
+
+Valence validity. Valence validity is the fraction of expected samples that pass RDKit valence and sanitization checks. Missing ligands and invalid molecules are counted as failures. Higher validity indicates better chemical consistency. 
+
+Bond-length MMD. Bond-length MMD measures the discrepancy between the bond-length distribution of generated ligands and the reference distribution from the dataset. We compute maximum mean discrepancy separately for C–C, C–N, and C–O bonds. Lower values indicate that the generated bond geometry is closer to the reference molecular geometry. 25 Table 5: Geometric activation statistics of the specificity certificate on the filtered usable target–off-target pairs. Here M = ML(O) and LB = [ M ]+ denotes the triangle-inequality lower bound on ligand–off-target geometric mismatch.                        
+
+> Metric Avg. Std. Q1 Med. Q3
+> Pr[ M > 0] 65 .96% ––––Margin M0.014 0.057 -0.017 0.017 0.049 Lower bound LB 0.031 0.037 0.000 0.017 0.049
+
+Pseudo-label faithfulness. We evaluate whether refinement preserves the intended pseudo-label using RMSD and topological similarity. RMSD is computed against the pseudo-label SDF using the same atom indexing, without MCS remapping: 
+
+RMSD = 
+
+vuut 1
+
+n
+
+> n
+
+X
+
+> j=1
+
+∥xj − ˜xj ∥22,
+
+where xj and ˜xj denote corresponding atoms in the refined ligand and pseudo-label, respectively. Lower RMSD indicates better preservation of pseudo-label geometry. Topological similarity is computed as the Tanimoto similarity between RDKit path fingerprints of the refined ligand and pseudo-label using RDKFingerprint 
+
+with maxPath=7 . Higher topological similarity indicates better preservation of pseudo-label topology. 
+
+## Appendix D. Additional Results 
+
+D.1 Empirical Activation of the Geometric Specificity Certificate 
+
+The specificity certificate in Theorem 1 is based on a geometric condition: the target–off-target pocket separation should exceed the target–ligand mismatch. We empirically evaluate how often this condition is activated on randomly sampled target–off-target pocket pairs from the CrossDocked2020 test complexes. For each pair, we use the reference ligand L associated with the target pocket to construct the ligand-oriented pocket measures νLPtgt and νLO , and compute the target–ligand mismatch dgm (L, P tgt ) and the ligand-oriented target–off-target separation 
+
+mL(O) = dJS (νLPtgt , ν LO ).
+
+We define the geometric certificate margin as 
+
+ML(O) = mL(O) − dgm (L, P tgt ) (40) 
+
+= dJS (νLPtgt , ν LO ) − dgm (L, P tgt ). (41) When ML(O) > 0, the triangle-inequality lower bound 
+
+dgm (L, O ) ≥ [ML(O)] +
+
+is nonzero. Thus, ML(O) > 0 measures activation of the geometric lower-bound term. Figure 5 reports the empirical CDF of ML(O) over the filtered usable sampled pairs. We find that 65 .96% 
+
+of pairs have positive margin, showing that the geometric certificate is activated for a substantial fraction of evaluated target–off-target pairs. This indicates that the triangle-inequality certificate yields a nonzero ligand–off-target mismatch lower bound in many evaluated cases. Table 5 summarizes the resulting geometric lower-bound statistics. The positive activation rate shows that the conservative geometric lower-bound term is not purely vacuous on this benchmark. 
+
+D.2 Additional Validation with Resampled Off-Targets 
+
+To further validate the robustness of the main lead-optimization results, we repeat the off-target evaluation under a different evaluation setting. Specifically, for each target pocket, we construct a new Oeval by randomly sampling a different set of 10 off-target pockets from the remaining CrossDocked2020 test pockets, distinct 26 −0.1 0.0 0.1 0.2 0.3 
+
+## Certificate margin M = d(Ptgt ; O ) ¡ d(L; P tgt )
+
+0.00 0.25 0.34 0.50 0.75 1.00 
+
+> Empirical CDF
+
+non-vacuous ( M > 0)ECDF of MM = 0 Figure 5: Empirical activation of the geometric specificity certificate. The plot shows the empirical CDF of the certificate margin ML(O) = mL(O) − dgm (L, P tgt ), where mL(O) = dJS (νLPtgt , ν LO ) is the ligand-oriented target–off-target pocket separation. The shaded region indicates ML(O) > 0, where the triangle-inequality lower bound on ligand–off-target mismatch is nonzero. Overall, 65 .96% of filtered usable pairs fall in this activated region. from those used in Table 1. We also relax the AutoDock Vina timeout from 300 seconds to 1800 seconds per docking run. This setting is conservative in the sense that it reduces the influence of docking timeouts and provides more complete target/off-target docking evaluations. We additionally report the docking success rate, defined as the fraction of attempted Vina dockings that return a finite score under the timeout policy. Table 6 reports the full evaluation under this resampled off-target set and relaxed docking budget. The 
+
+[Spec block is the primary metric in this analysis, and its second line reports the relative improvement over the initial lead. SurfSpec achieves the largest empirical specificity improvement, including the best average score and the best specificity success rates at all evaluated thresholds. It also obtains the best average pocket occupancy, zero clash rate, and full docking success, while maintaining competitive target-pocket docking performance. Although the DiffSBDD size-extension baseline achieves the lowest geometric mismatch, it produces substantially higher clash rates, lower docking success, and weaker empirical specificity. These results support that SurfSpec improves target-over-off-target preference through controlled surface-directed growth rather than through naive ligand expansion or docking-failure artifacts. Table 7 further evaluates specificity under a new random seed for ligand generation and off-target sampling. Even under this independent seed, SurfSpec achieves the best empirical specificity across the average score and all specificity success rates. This additional specificity-focused comparison supports that the observed improvement is robust to the sampled ligands and off-target set, rather than being driven by a particular random seed. 
+
+D.3 Fine-Grained Empirical Specificity Distribution 
+
+In addition to the aggregate statistics reported in Table 1, we visualize the full per-sample distribution of empirical specificity scores. Figure 6 shows the distribution of [Spec across generated ligands for each method. SurfSpec produces an upward-shifted distribution relative to the initial lead and target-only baselines, indicating that the improvement in specificity is not driven only by a small number of outlier samples. This 27 Method Off-Target Primary Metric: [Spec ↑ Geometric Mismatch ↓ Occupancy ↑ Vina Dock ↓ Clash Rate ↓ # Atoms Dock Success ↑
+
+Agnostic Avg. Std. > 0.2 > 0.4 > 0.6 Avg. Std. Med. Avg. Q1 Q3 Avg. Q1 Q3 Initial Lead O -0.81 1.43 0.15 0.14 0.11 0.540 0.051 0.536 0.26 0.22 0.30 -7.17 -8.67 -5.73 0.00 22.75 1.00 Delete O -0.81  
+
+> +0%
+
+1.54 0.19 
+
+> +27%
+
+0.14 
+
+> +0%
+
+0.13  
+
+> +18%
+
+0.539 0.052 0.535 0.26 0.22 0.30 -7.23 -8.65 -5.73 0.00 22.85 1.00 PMDM O -1.10  
+
+> −36%
+
+2.03 0.15 
+
+> +0%
+
+0.12 
+
+> −14%
+
+0.12  
+
+> +9%
+
+0.501 0.056 0.489 0.33 0.27 0.38 -6.47 -8.87 -5.10 0.16 31.00 0.92 DecompOpt O -0.93  
+
+> −14%
+
+1.43 0.13 
+
+> −13%
+
+0.12 
+
+> −14%
+
+0.11  
+
+> +0%
+
+0.542 0.053 0.536 0.25 0.22 0.29 -6.08 -8.26 -4.49 0.02 22.75 0.91 DiffShape O -0.88  
+
+> −9%
+
+1.58 0.13 
+
+> −13%
+
+0.13 
+
+> −7%
+
+0.12  
+
+> +9%
+
+0.585 0.115 0.555 0.14 0.00 0.25 -6.90 -8.33 -5.20 0.11 21.91 0.99 ActivityDiff X -0.96  
+
+> −18%
+
+2.15 0.13 
+
+> −13%
+
+0.11 
+
+> −21%
+
+0.10  
+
+> −9%
+
+0.538 0.054 0.529 0.27 0.23 0.31 -7.07 -8.35 -5.39 0.11 22.89 1.00 PMDM–MS2 O -1.38  
+
+> −70%
+
+2.19 0.13 
+
+> −13%
+
+0.13 
+
+> −7%
+
+0.12  
+
+> +9%
+
+0.499 0.063 0.482 0.31 0.26 0.37 -8.95 -10.04 -7.01 0.25 33.42 0.91 PMDM–MS3 O -2.05  
+
+> −152%
+
+2.93 0.07 
+
+> −53%
+
+0.07 
+
+> −50%
+
+0.06  
+
+> −45%
+
+0.496 0.069 0.480 0.31 0.26 0.37 -8.38 -10.51 -6.43 0.31 35.83 0.82 PMDM–MS+ES O -1.02  
+
+> −26%
+
+2.08 0.19 
+
+> +27%
+
+0.17 
+
+> +21%
+
+0.14  
+
+> +27%
+
+0.500 0.057 0.489 0.33 0.28 0.38 -8.61 -10.14 -6.56 0.16 31.37 0.87 DecompOpt–MS2 O -1.03  
+
+> −27%
+
+1.33 0.11 
+
+> −27%
+
+0.11 
+
+> −21%
+
+0.08  
+
+> −27%
+
+0.542 0.053 0.538 0.25 0.22 0.28 -7.08 -8.79 -5.62 0.03 22.75 0.96 DecompOpt–MS3 O -0.99  
+
+> −22%
+
+1.39 0.12 
+
+> −20%
+
+0.09 
+
+> −36%
+
+0.08  
+
+> −27%
+
+0.541 0.053 0.537 0.25 0.21 0.28 -7.00 -8.57 -5.72 0.04 22.76 0.97 DecompOpt–MS+ES O -0.83  
+
+> −2%
+
+1.59 0.17 
+
+> +13%
+
+0.14 
+
+> +0%
+
+0.14  
+
+> +27%
+
+0.541 0.052 0.534 0.25 0.22 0.28 -7.40 -8.91 -5.95 0.03 22.75 0.95 DiffSBDD–SizeExt(+20) O -1.51  
+
+> −86%
+
+2.24 0.14 
+
+> −7%
+
+0.11 
+
+> −21%
+
+0.10  
+
+> −9%
+
+0.480 0.037 0.476 0.28 0.19 0.38 -7.57 -8.25 -6.37 0.45 35.88 0.93 DiffSBDD–SizeExt(+30) O -2.20  
+
+> −172%
+
+3.76 0.08 
+
+> −47%
+
+0.07 
+
+> −50%
+
+0.07  
+
+> −36%
+
+0.468 0.046 0.461 0.32 0.23 0.42 -7.14 -8.40 -5.44 0.62 41.58 0.81 Ours O -0.37  
+
+> +54%
+
+2.54 0.31 
+
+> +107%
+
+0.29 
+
+> +107%
+
+0.25  
+
+> +127%
+
+0.480 0.050 0.467 0.36 0.30 0.41 -8.63 -10.43 -6.31 0.00 34.99 1.00 
+
+Table 6: Off-target-agnostic lead optimization analysis. The [Spec block is the primary metric for specificity enhancement; its second line reports the relative improvement over the initial lead, 100 × (x − x0)/|x0|,except for the standard deviation. Blue and red percentages indicate positive and negative improvement, respectively, and bold percentages indicate the largest improvement in each specificity column. SurfSpec achieves the largest empirical specificity improvement, demonstrating strong target-over-off-target preference gains without off-target access during optimization. The geometric mismatch results provide supporting evidence that SurfSpec attains this gain through controlled target-pocket geometric fitting rather than naive ligand expansion. Bold indicates the unique best value; underline marks all second-best values when the best value is unique. Docking Success is the fraction of attempted Vina docks that returned a finite score under the 1800 s hard-timeout policy (timeouts and missing scores count as failures). supports that target-surface-directed growth provides more consistent target-over-off-target preference across the benchmark. 
+
+D.4 Qualitative Results 
+
+Figure 7 qualitatively compares optimized ligands on three representative target pockets. SurfSpec expands ligands toward under-filled pocket regions while maintaining plausible pocket-bound conformations. The inset values report the target-pocket geometric mismatch dgm , where lower values indicate better surface complementarity. These examples support that SurfSpec achieves controlled surface-directed growth with low geometric mismatch. 28 Method Primary Metric: [Spec ↑
+
+Avg. Std. > 0.2 > 0.4 > 0.6
+
+Delete -0.82 1.59 0.19 0.13 0.12 PMDM–MS+ES -1.02 1.86 0.19 0.14 0.14 DecompOpt–MS+ES -0.93 1.36 0.17 0.15 0.14 Ours -0.52 2.21 0.29 0.27 0.25 
+
+Table 7: Specificity-focused comparison under a second random seed for ligand generation and off-target sampling, complementing Tables 1 and 6. Docking is evaluated with a relaxed 1800 s timeout. SurfSpec achieves the best empirical specificity across the average score and all thresholded success rates, indicating that its specificity improvement is not driven by a particular random seed. Bold indicates the unique best value; underline marks all second-best values when the best value is unique. Initial Lead Delete PMDM DecompOpt DiffShape ActivityDiff PMDM-MS2 PMDM-MS3 PMDM-MS+ES DecompOpt-MS2 DecompOpt-MS3 DecompOpt-MS+ES DiffSBDD-SizeExt(+20) DiffSBDD-SizeExt(+30) Ours 
+
+−20 −15 −10 −5 0510 ̂
+
+> Spec
+
+Figure 6: Fine-grained distribution of empirical specificity scores on CrossDocked2020. Each violin plot shows the per-sample distribution of [Spec for one lead optimization method, where [Spec measures the target-pocket preference over the strongest evaluated off-target pocket. The inner marker indicates the central tendency. SurfSpec shifts the specificity distribution upward compared with target-only baselines, indicating more consistent improvement in target-over-off-target preference.                 
+
+> Lead PMDM DecompOpt ActivityDiff Ours ACE
+> 0.631 0.542 0.634 0.626 0.474
+> ATS5
+> 0.485 0.447 0.474 0.484 0.452
+> BAPA
+> 0.500 0.464 0.508 0.514 0.461
+
+Figure 7: Qualitative comparison of lead optimization results on three representative target pockets. Rows correspond to target pockets, and columns correspond to the initial lead and optimized ligands generated by different methods. The gray surface denotes the target pocket, and the inset value reports the target-pocket geometric mismatch dgm , where lower values indicate better surface complementarity. SurfSpec achieves low geometric mismatch across the shown examples while maintaining plausible pocket-bound conformations. 29 Algorithm 1: Full Ligand Growth Pipeline with Geometric Pseudo-Label Generation and Low-Noise Refinement 
+
+Require: native target pocket Ptgt , initial ligand x(0) , pretrained linker generation model plinker , pretrained pocket-conditioned ligand prior p(x | Ptgt ), maximum number of growth iterations K, low noise level τ ,anchor strength λ
+
+Ensure: optimized ligand xfinal  
+
+> 1:
+
+for k = 0 , . . . , K − 1 do  
+
+> 2:
+
+Construct the current ligand-oriented pocket surface for x(k) 
+
+> 3:
+
+Identify unoccupied pocket surface surface patches around the current ligand  
+
+> 4:
+
+Select the closest unoccupied surface patch r(k) whose distance from x(k) lies within 4–10 Å 
+
+> 5:
+
+if no feasible surface patch r(k) exists then  
+
+> 6:
+
+break  
+
+> 7:
+
+end if  
+
+> 8:
+
+Sample a linker from the pretrained linker generation model: 
+
+z(k) ∼ plinker 
+
+
+
+z | x(k), r (k), P tgt 
+
+ 
+
+> 9:
+
+Attach the sampled linker to the current ligand  
+
+> 10:
+
+Remove linker atoms that clash with the pocket under the 2 Å clash threshold  
+
+> 11:
+
+Obtain the geometric pseudo-label x(k)label  
+
+> 12:
+
+Define the anchored density around the geometric pseudo-label: 
+
+panc (x | Ptgt , x (k)label ) ∝ p(x | Ptgt ) exp 
+
+
+
+− λ
+
+2 ∥x − x(k)label ∥2
+
+ 
+
+> 13:
+
+Recover the low-noise mode y⋆(k) of panc  
+
+> τ
+
+by solving the gradient flow: 
+
+dy s
+
+ds =∇ys log pτ (ys | Ptgt )
+
+− λJ ˆx0|τ (ys)⊤ 
+
+ˆx0|τ (ys) − x(k)label 
+
+ 
+
+> 14:
+
+Re-noise the recovered low-noise mode: 
+
+xanc ,(k) 
+
+> τ
+
+= y⋆(k) + στ ε, ε ∼ N (0 , I ) 
+
+> 15:
+
+Starting from xanc ,(k) 
+
+> τ
+
+, run the reverse stochastic differential equation from t = τ to t = 0 :
+
+dx t = ft(xt) − g2 
+
+> t
+
+∇xt log pt(xt | Ptgt ) dt + gt d ¯Wt 
+
+> 16:
+
+Set the refined ligand as the next ligand x(k+1)  
+
+> 17:
+
+Locally optimize the refined ligand x(k+1) with AutoDock Vina (Vina Min)  
+
+> 18:
+
+if k > 0 and affinity drop is observed then  
+
+> 19:
+
+break  
+
+> 20:
+
+end if  
+
+> 21:
+
+xfinal = x(k+1)  
+
+> 22:
+
+end for  
+
+> 23:
+
+return the last refined ligand as xfinal 
+
+30 Initial Lead Surface Patch Pseudo-Label Refined Step 1 Surface Patch Pseudo-Label Refined Step 2 Surface Patch Pseudo-Label Refined Step 3 PYRE DPO4 PYRD Figure 8: Qualitative visualization of SurfSpec ligand growth on representative CrossDocked2020 complexes. Columns show different target pockets, and rows show the initial lead and the intermediate states across three growth iterations. At each step, SurfSpec first selects an under-occupied target-surface patch, constructs a surface-directed pseudo-label toward that patch, and then refines the pseudo-label under the pocket-conditioned ligand prior. The gray surface denotes the target pocket, the green sticks denote the current ligand, and the pale green sticks indicate the selected surface-directed growth region. SurfSpec progressively expands the ligand toward uncovered pocket regions while maintaining plausible pocket-bound conformations after refinement. 31

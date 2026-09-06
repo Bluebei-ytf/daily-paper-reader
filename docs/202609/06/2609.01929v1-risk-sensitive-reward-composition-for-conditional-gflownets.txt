@@ -1,0 +1,735 @@
+Title: Risk-Sensitive Reward Composition for Conditional GFlowNets
+
+URL Source: https://arxiv.org/pdf/2609.01929v1
+
+Published Time: Thu, 03 Sep 2026 00:25:09 GMT
+
+Number of Pages: 22
+
+Markdown Content:
+# Risk-Sensitive Reward Composition for Conditional GFlowNets 
+
+Carine Ribeiro dos Santos ∗1 and Ina P¨ ohner 2
+
+> 1
+
+Instituto de Qu´ ımica, Departamento de Qu´ ımica Orgˆ anica, Universidade Federal do Rio de Janeiro 
+
+> 2
+
+School of Pharmacy, University of Eastern Finland 
+
+carineribeirost@pos.iq.ufrj.br 
+
+# Abstract 
+
+Generative Flow Networks (GFlowNets) for structure-based drug design condition on one rigid protein structure. A flexible target holds several distinct structural shapes, its conformations , each occupied for a fraction of the simulation time. Scor-ing a candidate against all of them raises an open question: how do K scores become one reward? The designer cannot choose arbitrarily. Populations carry simulation error, and biology dictates which conformations are deal-breakers, so a candidate that fails one is disqualified, not merely ranked lower. No standard rule captures this. We compose the reward from a conditional value-at-risk (CVaR), a worst-case score rule, and an ambi-guity radius expressing distrust in the stated weights. Together, these define a family of targets, amor-tised by a single conditional GFlowNet. We answer whether such a sampler can be trained on fully enu-merable synthetic worlds, where every error is exact rather than estimated. Pricing the tail rather than averaging moves 2–10 times more mass to candidates that pass every con-formation. One network covers the family to within 0.37–2 .7× the error of a perfect sampler. An exact-KL oracle, a copy trained on the true target, shows if a shortfall is the optimiser’s or the architecture’s. When good candidates are rare, exploration decides: injecting unseen states finds 0 .987–1 .000 of good regions, while reweighting visited finds 0 .35–0 .76. 
+
+# 1 Introduction 
+
+Generative Flow Networks (GFlowNets) sample ob-jects proportionally to a reward rather than max-imising it [1, 2], suiting design problems where di-verse acceptable candidates are needed. Objects are assembled piece by piece, and training enforces consistency between the policy and the reward [3–6]. The reward is always a single number handed to the sampler, so how that reward is composed from several imperfect signals has not been examined. Molecular GFlowNets for drug discovery score a candidate against one target protein structure [7–9]. Real targets hold several distinct shapes, their con-
+
+> ∗Corresponding Author.
+
+formations, and binding selects among a pre-existing ensemble [10, 11], typically modelled computation-ally by docking to each representative [12]. Some conformations must be bound, others avoided; bind-ing the dominant one is not enough. Conformational populations carry error, so a fixed weight vector is misleading. A candidate failing a required conforma-tion is disqualified, yet no standard aggregation rule captures this. A weighted sum lets a strong score pay for a failed one, a Pareto front keeps the failing candidate on the frontier, an action mask acts before the deciding scores exist. Desirability functions [13] come closest, encoding disqualification multiplica-tively, but fix the aggregation shape in advance and offer no account of weight uncertainty. We compose the reward from two robust optimi-sation quantities. Conditional value-at-risk (CVaR) [14] at tail level β prices the worst β-fraction of scores rather than the average; an ambiguity ball of radius 
+
+ρ around the stated weights [15] (the standard Dis-tributionally Robust Optimisation (DRO) ambiguity set) expresses distrust in them. Together with a tem-perature βt and mixing weight wg , these four dials define a condition c and a fixed target p∗ 
+
+> c
+
+∝ R(x)βt
+
+before training. We abstract the requirements into four constraint geometries (including a floor and veto) modelled on multimeric proteins, repeated subunits where a molecule may need to bind every copy, avoid an interface, or clear a bulk threshold. The induced family lies outside existing GFlowNet conditioning mechanisms. We ask four questions: does the aggregation change the target enough to justify conditioning? Can one sampler learn the entire family? What does it cost? Where does it break? We answer on fully enumerable synthetic worlds, where target, policy, and exact L1 distance are closed-form computable. Extending the stan-dard enumerable-grid instrument [16, 17], our worlds are large enough for evaluation across a continuous family of conditions, and an exact-Kullback-Leibler (KL) oracle (a copy trained on the true target) at-tributes failure to capacity or optimisation. This is a measurement paper: the synthetic worlds are the instrument that buys exact evaluation, not a performance claim against docking. Our contributions are: 
+
+• A new reward composition mechanism. We compose the reward from a CVaR tail level β
+
+1arXiv:2609.01929v1 [cs.CE] 1 Sep 2026 and an ambiguity ball ρ, defining a fixed target 
+
+p∗ 
+
+> c
+
+∝ R(x)βt before training. Four constraint geometries carry the exclusions ( §3.2). 
+
+• The aggregation form changes what gets sampled. Pricing the tail under distrust of the weights moves 2–10 × more mass onto candidates that satisfy every requirement ( §4.1). 
+
+• One conditional network learns the entire family; an oracle diagnoses its failures. Asingle network covers the family to 0 .37–2 .7× the sampling floor across all four cases. An exact-KL oracle separates representational limits from optimisation shortfalls ( §4.2). 
+
+• Most scaling difficulties are curable, but some failures are fundamental. Larger spaces and deeper structures cost more compute, but longer training recovers performance. Extreme weight imbalance resists extra training; condition-ing on noisy scores fails even when the target is known perfectly. Such uncertainty is better absorbed into ρ (§4.4). 
+
+• Under sparsity, exploration decides the out-come. State injection maintains 0 .987–1 .000 mode coverage at s = 4; reweighting drops to 0 .35– 0.76. A flat ϵ-plateau creates a trap reweighting cannot escape. Prior work has not isolated this axis as a controlled variable ( §4.3). 
+
+• An exact diagnostic framework. Enumer-able worlds admit closed-form computation of the target, policy, and their L1 divergence over a con-tinuous family of conditions. An exact-KL oracle distinguishes representational insufficiency from optimisation residual ( §3.1, §4.2). 
+
+# 2 Related work 
+
+Aggregation in multi-objective GFlowNets. 
+
+Combining several quality scores into one number predates GFlowNets: the desirability-function tra-dition [13] builds a non-linear aggregate whose geo-metric form already encodes that a strong response cannot rescue a failed one, and the multi-objective molecular optimisation literature surveys the trade-offs at length [18]. Within GFlowNets, the pre-vailing choice is linear or rank-based. MOGFN [19] and HN-GFN [20] condition on a single prefer-ence vector or hypernetwork-generated weights, and goal-conditioned MOGFN variants amortise over de-sired outcome regions [21]. Order-Preserving [22] and Global-Order [23] GFlowNets avoid weights via Pareto-consistent rewards. All place the condition-ing variable at a point of the weight simplex (or dis-card weights entirely); we place it on a set , and price the worst reweighting inside it. The only non-linear aggregation in the literature is EP-GFlowNet’s prod-uct form [24], fixed by its federated setting rather than tunable. So far, none prices the tail of the score distribution under weight uncertainty. 
+
+Risk-sensitivity in GFlowNets. Risk-sensitivity has appeared in GFlowNets, but applied to stochastic rewards, not deterministic score aggregation. Quantile flows [25–27] apply distortion measures (e.g., CVaR) to terminal reward noise, inheriting a convention from risk-sensitive reinforcement learning in which the risk level is a property of the run rather than an input [28, 29]. In contrast, our aggregation is deterministic once scores are computed, and we supply the risk parameters as conditioning, so one network serves a range of preferences. The closest related work sits in continuous-flow fine-tuning: Flow Density Control [30] and Tail-aware Flow Fine-Tuning [31] optimise risk-averse objectives, but they maximise a risk functional of the distribution the policy induces ,so the target is defined only as the solution of an optimisation problem. We instead apply the risk measure inside the reward to define the target before training, so our target is a fixed distribution. The ambiguity layer, a ball around the stated weights, has no precedent in GFlowNets, though it is standard in DRO [15, 32–34]. The CVaR-DRO correspondence [14, 35], and the tilted-loss view connecting both to exponential reweighting [36], are why we can use a tail level and a radius as two dials on a single construction. Both dials act on a coherent risk measure [37], which licences the reordering argument of Appendix A. 
+
+Generation against molecular targets. Prior work on target-specific molecular generation assumes a fixed protein pocket. This includes autoregressive placement in a fixed pocket [38], joint ligand-pose diffusion [39], and flow matching [40]. GFlowNets have been applied through action spaces that en-force synthesisability [7, 8, 17, 41], but all fix a single pocket for the whole run. More relevant is condi-tioning on the pocket [9, 42]: it selects which target to bind, whereas ours specifies how to pool scores against a fixed set. The two approaches compose rather than compete. 
+
+Conditioning and exact evaluation. Condi-tioning a sampler on a description of its own target is established. Temperature-conditional GFlowNets [43] sweep the reward exponent, and Logit-GFN fixes a pathology where different temperatures cause different logit magnitudes. Goal- and outcome-conditioned variants [44, 45] amortise over outcomes. Our condition differs in the family it indexes rather than in the mechanism. For hard constraints, the prevailing approach makes infeasible objects un-reachable by construction [8, 46, 47]. Our floors and vetoes are evaluated after the candidate exists, 2so they are not reducible to this. Our evaluation fol-lows papers that also avoid Monte Carlo proxies [48– 50]. Lei et al. [51] provide a formal argument why a loss curve cannot substitute for a reported distance. We add exact evaluation on held-out conditions and an exact-KL oracle, a separate copy trained directly on the enumerated target, used solely to attribute residual error. 
+
+Exploration under sparsity. Exploration in GFlowNets has been addressed through replay and prioritised variants [52, 53], target networks that supply off-policy trajectories [54], local search [55], uncertainty-driven novelty [56, 57], sequential resid-ual learning [58], and adaptive teachers [16, 59]. These are usually compared by sample efficiency or final mode count. None distinguishes methods by where the training states come from : whether injected from outside the policy’s current support or reweighted from states already visited. This is pre-cisely the axis along which our results split cleanly (§4.3), cutting across the usual taxonomy: local search and teachers land on injection, replay and contrastive replay on reweighting, irrespective of how sophisticated the selection rule is. 
+
+# 3 Methods 
+
+## 3.1 The exact testbed 
+
+All experiments run on synthetic worlds over enu-merable X = {0, . . . , H − 1}d, with H the alphabet size and d the length. We use two families. The 
+
+calibration family ( H = 32, d = 2, |X | = 1024) fixes the operating point. The deployment-scale se-quence family ( H = 4, d = 8, |X | = 65 ,536) verifies transfer and studies discovery under sparsity. In the sequence family, each state is a string of length d
+
+over an alphabet of size H. At H = 4 and d = 8 this reproduces the shape of the standard TF-binding sequence benchmark, though the score fields are synthetic. They are drawn as a position-weight matrix plus sparse pairwise epistasis rather than read from binding data. We use sequences rather than molecular graphs because the risk layer acts on a(x) ∈ [0 , 1] K alone. A testbed need only preserve the scores’ statistical structure: bounded, non-separable in the upper tail, and over a space small enough to enumerate. The epistatic terms ensure non-separability, since a pure weight matrix is additive and would make the upper tail a product of per-position maxima. The 4 8 space satisfies all three. A realistic ligand space satisfies the first two and fails the last, on which exact eval-uation depends. Scaling variants at H = 16 , d = 3, at H = 8 , d = 4, and at H = 64 fill in the size axis. Enumerability is the design principle (Figure 1). For any condition c, both the target p∗ 
+
+> c
+
+and the policy’s terminating distribution pθ(· | c) are com-putable in closed form. Every reported error is there-fore an exact distance rather than a Monte-Carlo estimate. A world bundles K bounded score fields ( K con-formations). We write a(x) ∈ [0 , 1] K for the scores and w for their nominal Dirichlet weights (Dirich-let(2.0); a peaked family uses 0.3, where one signal dominates). Each score field stands in for one grader. Alongside them sits a single auxiliary objective g, a score that the reward carries but the risk layer never sees. On the sequence family, the score fields are generated from a Position-Weight Matrix (PWM, [61]), a standard model for DNA binding specificity; the sequence-design setting follows GFlowNet work on biological sequences [62], plus a PWM epista-sis model for position interactions, giving a non-separable upper tail for the aggregation to contend with. On the grid family, the fields are low-frequency mixtures, serving as a smooth control. The fields are analytic by construction; substituting a real scorer would forfeit the exact target that our measurement rests on. Two further dials shape a world: sparsity s ≥ 1thins upper tails by raising fields to s (constraints ex-empt; s = 1 identity), and score-robustness σ shifts promote down and suppress up by σ. Worlds are rejection-sampled against a faithfulness gate: risk-on and risk-off targets must differ by Total Variation TV ≥ 0.05, plus per-case non-degeneracy. Rejection counts are reported. Enumerability is an instrument, not an assump-tion. The reward is always computable: a deploy-ment runs K scorers and evaluates the closed-form dual of Eq. (1); training needs only log R(x), whose cost is independent of |X | . What a deployment cannot compute is Zc = P 
+
+> x
+
+R(x)βt , which requires enumeration. The synthetic worlds make Zc reach-able, so evaluation is a true distance. Since exact 
+
+Zc is unavailable in deployment, our diagnostics are built to outlive it. 
+
+## 3.2 Risk-sensitive targets 
+
+Risk enters through a distributionally robust CVaR with two dials. The tail level β ∈ (0 , 1] controls how far into the lower tail we look ( β = 1 recovers the ordinary weighted average). The ambiguity radius 
+
+ρ around the nominal weights expresses how much we distrust them ( ρ = 0 trusts them exactly). The aggregation is the DRO-CVaR functional, defined as Φ−(a; w, β, ρ ) = inf  
+
+> q∈Bρ(w)
+
+CVaR − 
+
+> β
+
+(a; q), (1) where the infimum runs over every reweighting q
+
+of the K signals lying within the ball Bρ(w). This is the DRO worst-case step: we take the infimum over the ambiguity set Bρ(w), robustifying CVaR 3World W                            
+
+> scores a,weights w
+> Condition c
+> (βt, w g, β, ρ, δ v)Exact risk layer Ψ( x): DRO-CVaR cases A–D Target
+> p∗
+> c∝R(x)βt
+> all of X
+> Conditional GFlowNet FiLM PF(x|c)head log Z(c)Exact L1
+> held-out c
+> ≤3×floor
+> condition same enumeration
+> Figure 1. The exact instrument. A world Wdefines score fields and weights; a condition cspecifies the risk dials. The exact risk layer Ψ( x) maps a candidate’s scores to an aggregate, which defines the target p∗
+> cover all states X. The conditional GFlowNet learns to sample from this target; evaluation computes the exact L1distance between the learned policy and the target. Ψ( x) is the DRO-CVaR aggregation and the policy is modulated by Feature-wise Linear Modulation (FiLM, [60]).
+
+against weight uncertainty. The Φ + variant is given by Φ +(a) = −Φ−(−a). The pair ( β, ρ ) interpolates between two extremes. The Boltzmann pole (β = 1 , ρ = 0) is the ordinary weighted average, which corresponds to the standard temperature-conditional sampling setup. The pure worst case (β → 0, ρ → ∞ ) prices only the very worst scores under the most adversarial reweight-ing. We implement three ball geometries Bρ: KL divergence (entropic dual), TV (exact greedy), and modified chi-squared ( χ2) (exact KKT). Here, exact KKT signifies that the Karush-Kuhn-Tucker opti-mality conditions are solved analytically in closed form; sorting the candidates allows us to exhaus-tively verify all valid support suffixes and returns the true mathematical worst-case without iterative optimization numerical drift. Each has its own reg-istered radius grid. All duals are solved exactly, outside the learning loop. The aggregation is deterministic: given scores a(x)and weights w, the dual returns a fixed number. No reward noise enters anywhere. The weights them-selves are uncertain, and ρ declares that uncertainty. We sweep ρ as a design variable; a deployment would calibrate it from data. Since the calibrated value differs per target, a sampler must serve a range of radii rather than one. The four cases are constraint geometries , not four settings of ( β, ρ ). Their effect on the target is il-lustrated in Figure 2. The risk dials operate inside each one. Each abstracts one shape of requirement arising when a candidate is scored against a tar-get’s several conformations (Table 1). What this work carries forward is that shape, not the biology it came from, which fixes the geometry before any experiment is run. Case A is the control. It requires binding to every conformation, with none being privileged. This is the situation for a viral protease active only when two copies are joined [63]. This gives a robust ag-gregate with no discontinuity. Case B adds a floor. Some targets present con-formations to avoid alongside those to bind. A can-didate that fails the first group badly enough is discarded whatever it achieves on the second. The reward trades a promoted aggregate against a sup-pressed one at rate γ, and excludes whatever falls below a floor f on the aggregate rather than on any single score. This excludes in bulk: 82% of the space is dead at the reference sparsity, 92% at s = 4. Case C adds vetoes. Certain conformations must never be bound at all. This is the situation where an intended inhibitor can instead switch its target on [65]. Any candidate whose score on some signal 
+
+d reaches cd − δv is disqualified. This peppers an otherwise live space with isolated dead points (2%). Case D nests. When a target’s conformations fall into natural groups, such as the repeated subunits of a symmetric protein whose binding sites interact [66], scores are pooled within a group before the groups combine. Nesting lets distrust be aimed , through a per-origin radius ρo under an outer compensatory-to-conjunctive dial βout . This leaves the target dense. Bulk exclusion (B), scattered exclusion (C), and none (A, D) are the three geometries that account for the ordering of the cases in all further discussions. The reward and the target it induces are 
+
+R(x) = 
+
+(
+
+ϵ, x excluded ,
+
+max( wg g(x) + wsΨ( x), ϵ ), else ,
+
+(2) 
+
+p∗ 
+
+> c
+
+(x) = R(x)βt
+
+P 
+
+> x′∈X
+
+R(x′)βt , (3) with ws = 1 − wg and ϵ = 10 −4. Here, excluded 
+
+means failing the floor (Case B) or a veto (Case C). The condition vector c collects the target tempera-ture βt (log-uniform on (0 .5, 8]), the auxiliary weight 
+
+wg ∈ (0 .1, 0.9), and the case’s risk block. It varies continuously, but the family it indexes does not. The floor is a contour discontinuity in the aggregate, 4Table 1. The four aggregation cases. Φ ± is the DRO-CVaR functional from Eq. (1). Each score set carries its own dials ( β, ρ ). The sets are neutral S0, promote S+, suppress S−, and origins o = 1 ..O with outer weights π.The third column states the requirement each geometry encodes with the class of target it was abstracted from; only the mathematical form is carried into the experiments. Case Ψ( x) requirement encoded A smooth Φ−(aS0 ) bind all shapes; none privileged [63] B floor Φ−(aS+ ) − γ Φ+(aS− ); Φ−(aS+ ) < f ⇒ R = ϵ
+
+clear a bar overall, avoiding a second set [64] C veto Φ−(aS+ ); 
+
+∃d : ad ≥ cd − δv ⇒ R = ϵ
+
+never bind certain shapes at all [65] D nested Φ−
+
+> out
+
+ Φ−
+
+> in
+
+(ao, ·)o=1 ..O ; π pool within groups of shapes, then across [66] dead 0%           
+
+> s = 1
+> A (smooth)
+> dead 82%
+> B (floor)
+> dead 2%
+> C (veto)
+> dead 0%
+> D (nested)
+> dead 0%
+> s = 4
+> dead 92% dead 2% dead 0%
+> 10 6
+> 10 5
+> 10 4
+> 10 3
+> 10 2
+> 10 1
+> 10 0
+> probability / panel maximum (log scale) dead ( R=ε)
+
+Figure 2. What each case asks for. Exact targets p∗ 
+
+> c
+
+at the calibrated operating condition on the deployment-scale sequence family, at the reference sparsity (top) and in the sparse regime (bottom). White marks ϵ-clamped (dead) states, with the share under each panel; colour is probability relative to each panel’s own maximum, so it compares states within a panel, not across panels. The cases differ in kind, not degree: A and D stay dense, C’s vetoes scatter isolated dead points through a live space, and B’s floor removes most of the space, with sparsity removing most of what remains. The floor column is the geometry against which §4.2 and §4.3 are read. 
+
+and the vetoes carve dead zones in X . Therefore 
+
+p∗ 
+
+> c
+
+jumps wherever a threshold crosses a candidate. Table B.1 in Appendix B collects every dial, with its range and default. Tail levels are bounded below by the smallest nominal weight of their set; inadmis-sible cells are reported, never dropped. Because the space is enumerable, the whole construction runs as one exact, training-free computation vectorised over all of X (Algorithm B.1, Appendix B). This is the object every learned sampler is measured against. 
+
+## 3.3 The conditional GFlowNet 
+
+States are built coordinate-wise in a fixed canonical order with PB ≡ 1, so each terminal state has exactly one trajectory and pθ (· | c) is an enumerable product of d softmaxes. The licence is the one Shen et al. [9] invoke in the 3D setting we ultimately target: autoregressive assembly makes the backward path deterministic. The policy is a residual (Multilayer Perceptron) MLP trunk (width 256, depth 4) over summed position-tagged coordinate embeddings. It is mod-ulated by Feature-wise Linear Modulation (FiLM, [60]) via a condition encoder (dimension 128), with a learned head log Z(c). Trajectory Balance (TB) collapses to the per-point residual 
+
+δ(x, c ) = βt log R(x)−log Z(c)+log PF (x | c), (4) minimised as E[δ2] over batches mixing on-policy samples with uniform draws over X (50/50). This guarantees support coverage by construction; the measured cost of that choice is reported as an ab-lation. Conditions come from a pool of 256 with precomputed log-rewards. A training-only clamp at 
+
+−25 on βt log R keeps ϵ-region targets from dominat-5ing residuals (evaluation targets are never clamped). Runs use 4,000 steps (12,000 for the learnability measurement of §4.2) with batches of 8 conditions ×
+
+64 points and learning rates 10 −3 (trunk) and 10 −2
+
+(log Z). Two controls bracket the result: SubTra-jectory Balance (SubTB, λ = 0 .9) and an exact-KL oracle trained by cross-entropy against the enumer-ated target, which isolates TB’s optimisation cost. Remaining settings are in Appendix C. 
+
+## 3.4 Evaluation protocol 
+
+Amortisation is scored by exact mean L1 to p∗ 
+
+> c
+
+on a held-out condition grid. Training draws inside an 
+
+L∞ radius of 0.05 are rejected. Results are quoted against the finite-sample floor: the L1 a perfect sampler would incur at the evaluation sample size. We use the pre-registered endpoint L1 ≤ 3× floor, over 4 worlds × 3 seeds. Target geometry is scored by total variation between risk-on and risk-off tar-gets. Utility is scored by joint-satisfaction mass :the fraction of the target’s probability landing on candidates that meet a world’s challenge level (a threshold candidates must meet to be considered successful). Under sparsity we report mode coverage and exact L1 side by side, because they rank the ex-ploration arms differently and neither alone tells the whole story. Worlds are the unit of replication with seeds nested inside. Results are scored by cluster bootstrap confidence intervals [67], cluster permuta-tion tests with effect sizes [68], two one-sided tests for equivalence [69], and Holm correction [70]. 
+
+# 4 Results 
+
+## 4.1 The family is worth indexing 
+
+Conditioning on ( β, ρ ) is only worth its training cost if the targets they index are genuinely different. The ( β, ρ ) plane spans from the Boltzmann pole (1 , 0), the ordinary weighted average, to the pure worst case. For each constraint case, we compute the exact target on an 11 × 9 grid over ( β, ρ ) for eight calibration worlds. We evaluate each cell by joint-satisfaction mass, the fraction of the target distribution on candidates that meet a world’s chal-lenge level. Comparisons are paired within worlds and each regime contributes its best admissible cell per world before averaging. Three observations follow from Table 2. First, the aggregation form is not decoration. On the floor case (B), the composed interior lifts satisfaction mass from 0.058 to 0.603, a tenfold gain. The probe cell (β = 0 .25 , ρ = 0 .5), named before running the fine grid, reproduces the headline to the digit (0.601). Second, each dial is individually live. Weight dis-trust alone beats the Boltzmann pole in all 32 case– world pairs and delivers most of the floor case’s gain (0.511), yet neither dial alone reaches the interior plateau. Third, the interior prices the satisfaction–diversity trade rather than escaping it. On Case B, its satisfaction-optimal end matches the worst pole on both axes. On Cases A and C, a roughly 2–2 .5×
+
+gain costs essentially no diversity. The nested case (D) is the registered exception. Its best interior cell never exceeds the worst pole on sat-isfaction (0/8 worlds; 0.063 against 0.069). Nesting buys aimed distrust instead. Placing the larger per-origin radius ρo on the genuinely noisier origin beats mismatched placement on tail stress (∆ = +0 .012, 
+
+p = 0 .030, d = 0 .76 at the 5th percentile), though the effect does not scale with asymmetry (Spearman 
+
+ρ = −0.17). 
+
+Verdict. The composed aggregation is a genuine third regime: both dials contribute in every world, and neither alone reaches the plateau (except the nested case, where its value is aimed distrust rather than mass). 
+
+## 4.2 One network serves the family 
+
+Given a family worth indexing, can one network serve it? We train a single conditional student per world and seed and evaluate it by exact L1 on a held-out condition grid. We compare against an exact-KL oracle, the same architecture trained directly on the enumerated target. The oracle diagnoses whether a shortfall is representational (the oracle is also insufficient) or optimisation (the oracle is sufficient while the student is not). Results are quoted against the finite-sample floor, the L1 a perfect sampler would incur. All four cases meet the pre-registered endpoint of 3 × the floor (Table 3). The smooth and nested cases sit below the sampling floor, so conditioning on the risk block costs nothing. The veto case is the clean dissociation: the oracle reaches 0 .44 × the floor while the student is at 1 .7×, so the entire deficit is optimisation. The floor case is the only one whose oracle also stays above the line (1 .18 ×), so part of its deficit is representational, though this is not intrinsic (the same oracle reaches 0 .95 × on the deployment-scale family). Amortisation has a price: per-condition experts beat the conditional student by 1 .4× to 3 .4× at matched compute. 
+
+Verdict. One conditional network learns the whole family within the endpoint, with two cases below the sampling floor. The oracle diagnoses each residual failure: pure training for the veto case, and repre-sentation for the floor case (grid geometry only). 6Table 2. Joint-satisfaction mass at the challenge level. Each dial alone (best admissible cell per regime, paired within worlds, mean over 8 worlds). Weight distrust ( ρ) alone beats the Boltzmann pole in 8/8 worlds in every case, while neither dial alone reaches the composed interior. Case Boltzmann ρ only β only interior worst pole A smooth 0.025 0.052 0.057 0.063 0.063 B floor 0.058 0.511 0.547 0.603 0.601 C veto 0.028 0.053 0.057 0.061 0.061 D nested 0.025 0.056 0.057 0.063 0.069 Table 3. Learnability on the calibration family (12,000 steps, 4 worlds × 3 seeds). Exact held-out L1 against the finite-sample floor. Every student–oracle gap is cluster-permutation significant ( p ≈ 0.027, d = 5 .0–16 .5). Case L1 floor ratio oracle diagnosis A smooth 0.082 0.223 0.37 × 0.17 × pass; both work B floor 0.398 0.147 2.7 × 1.18 × partly representational C veto 0.338 0.198 1.7 × 0.44 × pure training D nested 0.133 0.221 0.60 × 0.45 × pass; nesting composes free 
+
+## 4.3 Under sparsity, exploration de-cides the outcome 
+
+The results so far hold where satisfying states are common. Raising the sparsity exponent s removes that assumption. On the deployment-scale sequence family, we train an unconditional student at the calibrated condition under five regimes that share all settings except the source of the off-policy half of each batch: none (on-policy), uniform over X (mix), reward-prioritised replay, an adaptive teacher [16], and a contrastive replay (two-buffer) scheme [17]. The regimes divide into two families. State injection (mix, teacher) places states the policy would not visit. Visited-state reweighting (replay, contrastive replay) redistributes over states it already has. Sparsity flips the failure mode. At s = 1, den-sity matching binds and every arm finds all modes. At s = 4, discovery binds. The injecting arms pin 
+
+≈100% coverage in every case; the reweighting arms fall to or below the on-policy baseline (Table 4). The split follows the state source rather than the constraint case, surviving the change from bulk ex-clusion (B) to scattered dead points (C) to dense targets (A, D). A deployment that gets the reward right but the exploration wrong will report a well-fit sampler that has never seen the states it was built to find. The mechanism is visible in the exact data. Inside the ϵ-plateau, every state carries identical reward, so the TB residual is flat. On-policy sampling admits a degenerate optimum: collapse the policy onto a dead state, set log Z = βt log ϵ, and the empirical loss on its own samples is zero. On the floor case at 
+
+s = 4, where 92% of the space is dead, the on-policy arm is born inside this trap. Figure 3 shows a world where it never escapes. The injecting arms never enter the trap, since any live state in the batch forces log Z up. The reweighting arms cannot rescue what was never visited; the contrastive replay arm spends up to 93% of its samples on the Hamming-1 shell of the dead set (states differing by one coordinate from a dead state), studying the boundary without crossing it. The trap is detectable online as an edge-share spike paired with a coverage stall (Figure D.1, Appendix D). The two registered metrics rank the arms differ-ently. On the floor case at s = 4, averaged over worlds and seeds, replay attains the best exact L1
+
+(0.29) with poor coverage (0.39), while mix pairs near-full coverage (0.998) with a worse L1 (0.51). Density fidelity and mode discovery are separate objectives; either number alone would hide the split. 
+
+Verdict. Under sparsity, discovery binds and its cure is exploration, not signal shaping. What the sampler never visits, it cannot learn. 
+
+## 4.4 What it costs and where it stops 
+
+Trainability is not uniform over the design (Ap-pendix E). Two axes are priced but curable. Reso-lution costs the veto case. The dead-zone boundary grows with the space and must be visited rather than interpolated; the error climbs from 1 .4× to 2.1× the floor between H = 16 and H = 64, while the smooth and nested cases are size-robust. Depth costs the floor case, but only as a budget artifact. At 
+
+d = 3 , 4, the student breaches the endpoint while still descending; tripling the budget restores 2 .9–3 .0×.Two axes are not curable. The peaked weight fam-ily (Dirichlet concentration 0.3) leaves the floor case at 3 .2×, unmoved by tripling the budget. This is an open failure. Conditioning on the score-noise mar-gin σ also breaks the endpoint for both hard cases. The oracle assigns the blame: the floor case’s oracle 7Table 4. Mode coverage at sparsity s = 4 (means over worlds × seeds; the nested case at s = 4 is the single gated world, 3 seeds). At s = 1, every arm reaches essentially full coverage in every case. injection reweighting Case mix teacher replay contr. on-pol. A smooth 1.000 0.999 0.757 0.723 0.810 B floor 0.998 0.987 0.385 0.352 0.174 C veto 0.999 0.999 0.726 0.671 0.767 D nested 0.998 0.999 0.530 0.514 0.619 exact target p ∗ on-policy ( L1 = 2.000) mix ( L1 = 0.402)            
+
+> replay ( L1= 0.238) teacher ( L1= 0.420) contrastive ( L1= 0.306)
+> 10 7
+> 10 6
+> 10 5
+> 10 4
+> 10 3
+> 10 2
+> probability (log scale)
+> Case B (floor), s = 4
+
+Figure 3. What each arm reaches on the floor case at s = 4, one representative world. The on-policy panel is empty: at L1 = 2 .000, its support is disjoint from the target’s. The two registered metrics disagree: replay attains the best L1 (0.238) but poor coverage (Table 4); mix has the reverse ( L1 0.402). 
+
+under σ itself exceeds 3 × the floor, so the σ-indexed family is partly unrepresentable. A corruption study agrees: pre-shifting scores by σ roughly doubles the error to the true target (TV 0 .20 → 0.38 at 10% corruption). Score uncertainty is better spent as declared ambiguity ρ inside the aggregation than as a conditioning input. The risk signal drowns as the auxiliary objective takes over: at weight 0.9 for the smooth and veto cases, 0.85 for the nested case. The floor case never drowns, staying TV ≥ 0.26 apart even at 0.99. At 
+
+s = 4, the nested aggregation collapses to its flat form in 199–200 of 200 draws. 
+
+Verdict. The reward is trainable at a priced cost, though two axes resist. Peaked weights are an open failure; score noise defeats even a perfect training signal and is better absorbed as declared ρ than conditioned on. 
+
+# 5 Conclusion 
+
+One GFlowNet learns the whole family of targets, staying within 0 .37–2 .7× the error a perfect sam-pler would still make at our evaluation sample size. Where good candidates are rare, what limits the sampler is not how well it fits a target but whether it ever visits the right states. The construction carries over to structure-based drug design. Docking scores against each conforma-tion become the K scores, conformational popula-tions the nominal weights. The tail level β sets how strictly a candidate must satisfy all of them at once, and the radius ρ sets how far those estimated shares are trusted. The floor and the veto carry what a ranking cannot, that some conformations must be cleared and others never bound. The scores here are analytic rather than docking output, so what transfers is the construction and the diagnostics, not a performance claim. Never-theless, these results position risk-sensitive reward composition for conditional GFlowNets as a viable 8strategy for discovering robust candidates across the heterogeneous structural ensembles characteristic of challenging drug discovery problems. 
+
+# References 
+
+[1] E. Bengio, M. Jain, M. Korablyov, D. Pre-cup, and Y. Bengio. “Flow Network based Generative Models for Non-Iterative Diverse Candidate Generation”. In: Advances in Neu-ral Information Processing Systems (NeurIPS) 
+
+(2021). arXiv: 2106.04399 . url : https:// arxiv.org/abs/2106.04399 .[2] Y. Bengio, S. Lahlou, T. Deleu, E. J. Hu, M. Tiwari, and E. Bengio. “GFlowNet Foun-dations”. In: Journal of Machine Learning Research (2021). arXiv: 2111 . 09266 . url :
+
+https://arxiv.org/abs/2111.09266 .[3] K. Madan, J. Rector-Brooks, M. Korablyov, E. Bengio, M. Jain, A. Nica, T. Bosc, Y. Bengio, and N. Malkin. “Learning GFlowNets from partial episodes for improved convergence and stability”. In: International Conference on Ma-chine Learning (ICML) (2022). arXiv: 2209. 12782 . url : https://arxiv.org/abs/2209. 12782 .[4] N. Malkin, M. Jain, E. Bengio, C. Sun, and Y. Bengio. “Trajectory balance: Improved credit assignment in GFlowNets”. In: Ad-vances in Neural Information Processing Sys-tems (NeurIPS) (2022). arXiv: 2201.13259 .
+
+url : https://arxiv.org/abs/2201.13259 .[5] N. Malkin, S. Lahlou, T. Deleu, X. Ji, E. Hu, K. Everett, D. Zhang, and Y. Bengio. “GFlowNets and variational inference”. In: In-ternational Conference on Learning Represen-tations (ICLR) (2022). arXiv: 2210 . 00580 .
+
+url : https://arxiv.org/abs/2210.00580 .[6] D. Tiapkin, N. Morozov, A. Naumov, and D. Vetrov. “Generative Flow Networks as Entropy-Regularized RL”. In: International Conference on Artificial Intelligence and Statistics (AISTATS) (2023). arXiv: 2310 . 12934 . url : https://arxiv.org/abs/2310. 12934 .[7] M. Koziarski, A. Rekesh, D. Shevchuk, A. van der Sloot, P. Gai´ nski, Y. Bengio, C.-H. Liu, M. Tyers, and R. A. Batey. “RGFN: Synthesiz-able Molecular Generation Using GFlowNets”. In: arXiv preprint (2024). arXiv: 2406.08506 .
+
+url : https://arxiv.org/abs/2406.08506 .[8] M. Cretu, C. Harris, I. Igashov, A. Schneu-ing, M. Segler, B. Correia, J. Roy, E. Ben-gio, and P. Li` o. “SynFlowNet: Design of Di-verse and Novel Molecules with Synthesis Constraints”. In: International Conference on Learning Representations (ICLR) (2025). arXiv: 2405 . 01155 . url : https : / / arxiv . org/abs/2405.01155 .[9] T. Shen, S. Seo, R. Irwin, K. Didi, S. Olsson, W. Y. Kim, and M. Ester. “Compositional Flows for 3D Molecule and Synthesis Path-way Co-design”. In: Proceedings of the 41st International Conference on Machine Learn-ing (2025). arXiv: 2504.08051 . url : https: //arxiv.org/abs/2504.08051 .[10] D. D. Boehr, R. Nussinov, and P. E. Wright. “The role of dynamic conformational ensem-bles in biomolecular recognition”. In: Nature Chemical Biology 5.11 (2009), pp. 789–796. 
+
+doi : 10 . 1038 / nchembio . 232 . url : https : //doi.org/10.1038/nchembio.232 .[11] H.-X. Zhou. “From Induced Fit to Confor-mational Selection: A Continuum of Bind-ing Mechanism Controlled by the Timescale of Conformational Transitions”. In: Biophys-ical Journal 98.6 (2010), pp. L15–L17. doi :
+
+10.1016/j.bpj.2009.11.029 . url : https: //doi.org/10.1016/j.bpj.2009.11.029 .[12] R. E. Amaro, R. Baron, and J. A. McCam-mon. “An improved relaxed complex scheme for receptor flexibility in computer-aided drug design”. In: Journal of Computer-Aided Molec-ular Design 22.9 (2008), pp. 693–705. doi :
+
+10.1007/s10822-007-9159-2 . url : https: //doi.org/10.1007/s10822-007-9159-2 .[13] G. Derringer and R. Suich. “Simultaneous Op-timization of Several Response Variables”. In: 
+
+Journal of Quality Technology (1980). doi :
+
+10 . 1080 / 00224065 . 1980 . 11980968 . url :
+
+https://doi.org/10.1080/00224065.1980. 11980968 .[14] R. T. Rockafellar and S. Uryasev. “Optimiza-tion of conditional value-at-risk”. In: Journal of Risk (2000). doi : 10.21314/JOR.2000.038 .
+
+url : https://doi.org/10.21314/JOR.2000. 038 .[15] A. Ben-Tal, D. den Hertog, A. D. Waegenaere, B. Melenberg, and G. Rennen. “Robust Solu-tions of Optimization Problems Affected by Uncertain Probabilities”. In: Management Sci-ence (2013). doi : 10.1287/mnsc.1120.1641 .
+
+url : https://doi.org/10.1287/mnsc.1120. 1641 .9[16] M. Kim, S. Choi, T. Yun, E. Bengio, L. Feng, J. Rector-Brooks, S. Ahn, J. Park, N. Malkin, and Y. Bengio. “Adaptive teachers for amor-tized samplers”. In: International Conference on Learning Representations (ICLR) (2024). arXiv: 2410 . 01432 . url : https : / / arxiv . org/abs/2410.01432 .[17] H. Kim, M. Kim, C. Roget, D. Biton, L. Vaillancourt, Y. V. Brun, Y. Bengio, and A. Hernandez-Garcia. “Synthesizable Molecular Generation via Soft-constrained GFlowNets with Rich Chemical Priors”. In: arXiv preprint 
+
+(2026). arXiv: 2602.04119 . url : https:// arxiv.org/abs/2602.04119 .[18] J. C. Fromer and C. W. Coley. “Computer-Aided Multi-Objective Optimization in Small Molecule Discovery”. In: Patterns (2022). arXiv: 2210 . 07209 . url : https : / / arxiv . org/abs/2210.07209 .[19] M. Jain, S. C. Raparthy, A. Hernandez-Garcia, J. Rector-Brooks, Y. Bengio, S. Miret, and E. Bengio. “Multi-Objective GFlowNets”. In: 
+
+International Conference on Machine Learn-ing (ICML) (2022). arXiv: 2210.12765 . url :
+
+https://arxiv.org/abs/2210.12765 .[20] Y. Zhu, J. Wu, C. Hu, J. Yan, C.-Y. Hsieh, T. Hou, and J. Wu. “Sample-efficient Multi-objective Molecular Optimization with GFlowNets”. In: Advances in Neural Infor-mation Processing Systems (NeurIPS) (2023). arXiv: 2302 . 04040 . url : https : / / arxiv . org/abs/2302.04040 .[21] J. Roy, P.-L. Bacon, C. Pal, and E. Ben-gio. “Goal-conditioned GFlowNets for Con-trollable Multi-Objective Molecular Design”. In: arXiv preprint (2023). arXiv: 2306.04620 .
+
+url : https://arxiv.org/abs/2306.04620 .[22] Y. Chen and L. Mauch. “Order-Preserving GFlowNets”. In: International Conference on Learning Representations (ICLR) (2023). arXiv: 2310 . 00386 . url : https : / / arxiv . org/abs/2310.00386 .[23] L. Pastor-P´ erez, J. Alonso-Garcia, and L. Mauch. “Global-Order GFlowNets”. In: ICLR Workshop (2025). arXiv: 2504 . 02968 . url :
+
+https://arxiv.org/abs/2504.02968 .[24] T. da Silva, L. M. Carvalho, A. Souza, S. Kaski, and D. Mesquita. “Embarrassingly Par-allel GFlowNets”. In: International Confer-ence on Machine Learning (ICML) (2024). arXiv: 2406 . 03288 . url : https : / / arxiv . org/abs/2406.03288 .[25] M. G. Bellemare, W. Dabney, and R. Munos. “A Distributional Perspective on Reinforce-ment Learning”. In: International Conference on Machine Learning (ICML) (2017). arXiv: 
+
+1707.06887 . url : https://arxiv.org/abs/ 1707.06887 .[26] W. Dabney, G. Ostrovski, D. Silver, and R. Munos. “Implicit Quantile Networks for Dis-tributional Reinforcement Learning”. In: In-ternational Conference on Machine Learn-ing (ICML) (2018). arXiv: 1806.06923 . url :
+
+https://arxiv.org/abs/1806.06923 .[27] D. Zhang, L. Pan, R. T. Q. Chen, A. Courville, and Y. Bengio. “Distributional GFlowNets with Quantile Flows”. In: Transactions on Ma-chine Learning Research (2023). arXiv: 2302. 05793 . url : https://arxiv.org/abs/2302. 05793 .[28] Y. Chow, M. Ghavamzadeh, L. Janson, and M. Pavone. “Risk-Constrained Reinforcement Learning with Percentile Risk Criteria”. In: 
+
+Journal of Machine Learning Research (2015). arXiv: 1512 . 01629 . url : https : / / arxiv . org/abs/1512.01629 .[29] A. Tamar, Y. Glassner, and S. Mannor. “Op-timizing the CVaR via Sampling”. In: AAAI Conference on Artificial Intelligence (2015). 
+
+doi : 10.1609/aaai.v29i1.9561 . url : https: //doi.org/10.1609/aaai.v29i1.9561 .[30] R. D. Santi, M. Vlastelica, Y.-P. Hsieh, Z. Shen, N. He, and A. Krause. “Flow Den-sity Control: Generative Optimization Beyond Entropy-Regularized Fine-Tuning”. In: Ad-vances in Neural Information Processing Sys-tems (NeurIPS) (2025). arXiv: 2511.22640 .
+
+url : https://arxiv.org/abs/2511.22640 .[31] Z. Wang, R. D. Santi, X. Mo, M. M. Zavlanos, A. Krause, and K. H. Johansson. “Efficient Tail-Aware Generative Optimization via Flow Model Fine-Tuning”. In: arXiv preprint (2026). arXiv: 2602 . 16796 . url : https : / / arxiv . org/abs/2602.16796 .[32] E. Delage and Y. Ye. “Distributionally Ro-bust Optimization Under Moment Uncertainty with Application to Data-Driven Problems”. In: Operations Research (2010). doi : 10.1287/ opre.1090.0741 . url : https://doi.org/ 10.1287/opre.1090.0741 .[33] J. C. Duchi and H. Namkoong. “Learning models with uniform performance via distri-butionally robust optimization”. In: The An-nals of Statistics (2021). doi : 10.1214/20-AOS2004 . url : https://doi.org/10.1214/ 20-AOS2004 .10 [34] H. Rahimian and S. Mehrotra. “Frameworks and Results in Distributionally Robust Opti-mization”. In: Open Journal of Mathematical Optimization (2022). doi : 10.5802/ojmo.15 .
+
+url : https://doi.org/10.5802/ojmo.15 .[35] A. Ben-Tal and M. Teboulle. “An Old-New Concept of Convex Risk Measures: The Opti-mized Certainty Equivalent”. In: Mathemat-ical Finance (2007). doi : 10.1111/j.1467-9965 . 2007 . 00311 . x . url : https : / / doi . org/10.1111/j.1467-9965.2007.00311.x .[36] T. Li, A. Beirami, M. Sanjabi, and V. Smith. “On Tilted Losses in Machine Learning: Theory and Applications”. In: Journal of Machine Learning Research (2023). arXiv: 2109.06141 .
+
+url : https://arxiv.org/abs/2109.06141 .[37] P. Artzner, F. Delbaen, J.-M. Eber, and D. Heath. “Coherent Measures of Risk”. In: Math-ematical Finance (1999). doi : 10.1111/1467-9965 . 00068 . url : https : / / doi . org / 10 . 1111/1467-9965.00068 .[38] S. Luo, J. Guan, J. Ma, and J. Peng. “A 3D Generative Model for Structure-Based Drug Design”. In: Advances in Neural Informa-tion Processing Systems (2022). arXiv: 2203. 10446 . url : https://arxiv.org/abs/2203. 10446 .[39] A. Schneuing, C. Harris, Y. Du, K. Didi, A. Jamasb, I. Igashov, W. Du, C. Gomes, T. L. Blundell, P. Lio, M. Welling, M. Bronstein, and B. Correia. “Structure-based drug design with equivariant diffusion models”. In: Nature Computational Science (2024). doi : 10.1038/ s43588- 024- 00737- x . url : https://doi. org/10.1038/s43588-024-00737-x .[40] J. Cremer, R. Irwin, A. Tibo, J. P. Janet, S. Olsson, and D.-A. Clevert. “FLOWR: flow matching for structure-aware de novo, interaction- and fragment-based ligand gen-eration”. In: Nature Computational Science 
+
+(2026). doi : 10.1038/s43588-026-00998-8 .
+
+url : https://doi.org/10.1038/s43588-026-00998-8 .[41] S. Seo, M. Kim, T. Shen, M. Ester, J. Park, S. Ahn, and W. Y. Kim. “Generative Flows on Synthetic Pathway for Drug Design”. In: 
+
+International Conference on Learning Repre-sentations (ICLR) (2025). arXiv: 2410.04542 .
+
+url : https://arxiv.org/abs/2410.04542 .[42] T. Shen, S. Seo, G. Lee, M. Pandey, J. R. Smith, A. Cherkasov, W. Y. Kim, and M. Es-ter. “TacoGFN: Target-conditioned GFlowNet for Structure-based Drug Design”. In: Trans-actions on Machine Learning Research (2023). arXiv: 2310 . 03223 . url : https : / / arxiv . org/abs/2310.03223 .[43] M. Kim, J. Ko, T. Yun, D. Zhang, L. Pan, W. Kim, J. Park, E. Bengio, and Y. Ben-gio. “Learning to Scale Logits for Temperature-Conditional GFlowNets”. In: International Conference on Machine Learning (ICML) 
+
+(2023). arXiv: 2310.02823 . url : https:// arxiv.org/abs/2310.02823 .[44] L. Pan, M. Jain, K. Madan, and Y. Ben-gio. “Pre-Training and Fine-Tuning Genera-tive Flow Networks”. In: arXiv preprint (2023). arXiv: 2310 . 03419 . url : https : / / arxiv . org/abs/2310.03419 .[45] H. He, C. Chang, H. Xu, and L. Pan. “Look-ing Backward: Retrospective Backward Syn-thesis for Goal-Conditioned GFlowNets”. In: 
+
+arXiv preprint (2024). arXiv: 2406 . 01150 .
+
+url : https://arxiv.org/abs/2406.01150 .[46] M. AI4Science, : A. Hernandez-Garcia, A. Du-val, A. Volokhova, Y. Bengio, D. Sharma, P. L. Carrier, Y. Benabed, M. Koziarski, V. Schmidt, G.-M. Rignanese, P.-P. D. Breuck, and P. Clancy. “Crystal-GFN: sampling crys-tals with desirable properties and constraints”. In: arXiv preprint (2023). arXiv: 2310.04925 .
+
+url : https://arxiv.org/abs/2310.04925 .[47] R. Samanta. “Structurally Valid Log Gen-eration using FSM-GFlowNets”. In: arXiv preprint (2025). arXiv: 2510 . 26197 . url :
+
+https://arxiv.org/abs/2510.26197 .[48] M. W. Shen, E. Bengio, E. Hajiramezanali, A. Loukas, K. Cho, and T. Biancalani. “Towards Understanding and Improving GFlowNet Training”. In: International Conference on Machine Learning (ICML) (2023). arXiv: 
+
+2305.07170 . url : https://arxiv.org/abs/ 2305.07170 .[49] L. Atanackovic and E. Bengio. “Investigat-ing Generalization Behaviours of Generative Flow Networks”. In: Transactions on Machine Learning Research (2024). arXiv: 2402.05309 .
+
+url : https://arxiv.org/abs/2402.05309 .[50] A. Krichel, N. Malkin, S. Lahlou, and Y. Ben-gio. “On Generalization for Generative Flow Networks”. In: arXiv preprint (2024). arXiv: 
+
+2407.03105 . url : https://arxiv.org/abs/ 2407.03105 .[51] Z. Lei, A. Shreekumar, J. Rosenthal, R. Song, A. A. Cardenas, D. J. Fremont, D. Xu, S. Ukkusuri, and Z. B. Celik. “Stable GFlowNets with Probabilistic Guarantees”. In: arXiv preprint (2026). arXiv: 2605 . 01729 . url :
+
+https://arxiv.org/abs/2605.01729 .11 [52] N. Vemgal, E. Lau, and D. Precup. “An Empir-ical Study of the Effectiveness of Using a Re-play Buffer on Mode Discovery in GFlowNets”. In: SPIGM Workshop, ICML (2023). arXiv: 
+
+2307.07674 . url : https://arxiv.org/abs/ 2307.07674 .[53] Z. Ikram, L. Pan, and D. Liu. “Evolution Guided Generative Flow Networks”. In: Trans-actions on Machine Learning Research (2024). arXiv: 2402 . 02186 . url : https : / / arxiv . org/abs/2402.02186 .[54] E. Lau, N. Vemgal, D. Precup, and E. Bengio. “DGFN: Double Generative Flow Networks”. In: NeurIPS Workshop (2023). arXiv: 2310. 19685 . url : https://arxiv.org/abs/2310. 19685 .[55] M. Kim, T. Yun, E. Bengio, D. Zhang, Y. Bengio, S. Ahn, and J. Park. “Local Search GFlowNets”. In: International Conference on Learning Representations (ICLR) (2023). arXiv: 2310 . 02710 . url : https : / / arxiv . org/abs/2310.02710 .[56] L. Pan, D. Zhang, A. Courville, L. Huang, and Y. Bengio. “Generative Augmented Flow Net-works”. In: International Conference on Learn-ing Representations (ICLR) (2022). arXiv: 
+
+2210.03308 . url : https://arxiv.org/abs/ 2210.03308 .[57] J. Rector-Brooks, K. Madan, M. Jain, M. Ko-rablyov, C.-H. Liu, S. Chandar, N. Malkin, and Y. Bengio. “Thompson sampling for im-proved exploration in GFlowNets”. In: SPIGM Workshop, ICML (2023). arXiv: 2306.17693 .
+
+url : https://arxiv.org/abs/2306.17693 .[58] P. Dall’Antonia, T. da Silva, D. A. de Souza, C. L. C. Mattos, and D. Mesquita. “Boosted GFlowNets: Improving Exploration via Se-quential Learning”. In: arXiv preprint (2025). arXiv: 2511 . 09677 . url : https : / / arxiv . org/abs/2511.09677 .[59] I. Malek, A. Laajil, A. Sharma, E. Moulines, and S. Lahlou. “Loss-Guided Auxiliary Agents for Overcoming Mode Collapse in GFlowNets”. In: AAAI Conference on Artificial Intelligence 
+
+(2025). arXiv: 2505.15251 . url : https:// arxiv.org/abs/2505.15251 .[60] E. Perez, F. Strub, H. de Vries, V. Dumoulin, and A. Courville. “FiLM: Visual Reasoning with a General Conditioning Layer”. In: AAAI Conference on Artificial Intelligence (2018). 
+
+doi : 10 . 1609 / aaai . v32i1 . 11671 . url :
+
+https : / / doi . org / 10 . 1609 / aaai . v32i1 . 11671 .[61] G. D. Stormo. “DNA binding sites: repre-sentation and discovery”. In: Bioinformat-ics 16.1 (2000), pp. 16–23. doi : 10 . 1093 / bioinformatics/16.1.16 .[62] M. Jain, E. Bengio, A.-H. Garcia, J. Rector-Brooks, B. F. P. Dossou, C. Ekbote, J. Fu, T. Zhang, M. Kilgour, D. Zhang, L. Simine, P. Das, and Y. Bengio. “Biological Sequence De-sign with GFlowNets”. In: International Con-ference on Machine Learning (ICML) (2022). arXiv: 2203 . 04115 . url : https : / / arxiv . org/abs/2203.04115 .[63] G. M. Ferreira, T. Kronenberger, A. K. Ton-duru, R. D. C. Hirata, M. H. Hirata, and A. Poso. “SARS-COV-2 Mpro conformational changes induced by covalently bound ligands”. In: Journal of Biomolecular Structure and Dy-namics (2021). doi : 10.1080/07391102.2021. 1970626 . url : https://doi.org/10.1080/ 07391102.2021.1970626 .[64] A. D´ ıaz-Holgu´ ın, A. Rashidian, D. Pijnen-burg, G. M. Ferreira, A. Stefela, M. Kas-par, E. Kudova, A. Poso, R. van Beunin-gen, P. Pavek, and T. Kronenberger. “When Two Become One: Conformational Changes in FXR/RXR Heterodimers Bound to Steroidal Antagonists”. In: ChemMedChem (2022). doi :
+
+10.1002/cmdc.202200556 . url : https:// doi.org/10.1002/cmdc.202200556 .[65] B. N. Kholodenko. “Drug Resistance Resulting from Kinase Dimerization Is Rationalized by Thermodynamic Factors Describing Allosteric Inhibitor Effects”. In: Cell Reports (2015). 
+
+doi : 10.1016/j.celrep.2015.08.014 . url :
+
+https://doi.org/10.1016/j.celrep.2015. 08.014 .[66] V. G. Maltarollo, E. Shevchenko, I. D. de Mi-randa Lima, E. A. Cino, G. M. Ferreira, A. Poso, and T. Kronenberger. “Do Go Chasing Waterfalls: Enoyl Reductase (FabI) in Com-plex with Inhibitors Stabilizes the Tetrameric Structure and Opens Water Channels”. In: 
+
+Journal of Chemical Information and Model-ing (2022). doi : 10.1021/acs.jcim.2c01178 .
+
+url : https://doi.org/10.1021/acs.jcim. 2c01178 .[67] C. A. Field and A. H. Welsh. “Bootstrapping clustered data”. In: Journal of the Royal Sta-tistical Society: Series B (Statistical Methodol-ogy) 69.3 (2007), pp. 369–390. doi : 10.1111/ j.1467-9868.2007.00593.x .[68] M. D. Ernst. “Permutation methods: a ba-sis for exact inference”. In: Statistical Sci-ence 19.4 (2004), pp. 676–685. doi : 10.1214/ 088342304000000396 .12 [69] D. J. Schuirmann. “A comparison of the two one-sided tests procedure and the power ap-proach for assessing the equivalence of average bioavailability”. In: Journal of Pharmacokinet-ics and Biopharmaceutics 15.6 (1987), pp. 657– 680. doi : 10.1007/BF01068419 .[70] S. Holm. “A simple sequentially rejective mul-tiple test procedure”. In: Scandinavian Jour-nal of Statistics 6.2 (1979), pp. 65–70. url :
+
+https://www.jstor.org/stable/4615733 .[71] G. R. Bickerton, G. V. Paolini, J. Besnard, S. Muresan, and A. L. Hopkins. “Quantifying the chemical beauty of drugs”. In: Nature Chem-istry (2012). doi : 10.1038/nchem.1243 . url :
+
+https://doi.org/10.1038/nchem.1243 .13 Appendix A The risk block is not order-preserving 
+
+Section 1 claims the family ( β, ρ ) indexes are outside the reach of any temperature-conditional sampler. The argument has two halves, both checkable directly. First, temperature conditioning preserves the order. Under the factorised policy of §3.3 ( d softmaxes, 
+
+PB ≡ 1), the log-density of a terminal state is P 
+
+> j
+
+[s ℓ j,x j − log P 
+
+> v
+
+es ℓ j,v ] for a logit scale s; the second term is constant across states, so the induced ranking over X is that of P 
+
+> j
+
+ℓj,x j for every s > 0. Sweeping the temperature reweights the family but cannot reorder it, and the same holds for p∗ 
+
+> c
+
+∝ R(x)βt , monotone in R.Second, the risk block does not. Table A.1 evaluates Φ − at nominal weights (0 .40 , 0.35 , 0.25) for 
+
+A = (0 .95 , 0.90 , 0.10), strong on two signals and failing the third, and B = (0 .62 , 0.60 , 0.58), uniformly mediocre: at the Boltzmann pole A wins, and at any cell with a deepened tail or a widened radius B does. Since one network must serve both cells and no logit scaling can invert a ranking, conditioning on the risk block is necessary rather than optional, and §4.2 measures its cost. 
+
+Table A.1. The ranking inverts inside the family. Φ − at nominal weights (0 .40 , 0.35 , 0.25) for A = (0 .95 , 0.90 , 0.10) and B = (0 .62 , 0.60 , 0.58), TV ball. The inversion is not specific to this geometry: any coherent risk measure with a non-trivial tail level reorders candidates that differ in the shape of their score vector rather than its mean. (β, ρ ) Φ−(A) Φ−(B) winner (1 .00 , 0.0) Boltzmann pole 0.720 0.603 A
+
+(0 .50 , 0.0) tail only 0.500 0.590 B
+
+(0 .25 , 0.0) tail only 0.100 0.580 B
+
+(1 .00 , 0.3) distrust only 0.465 0.591 B
+
+(0 .25 , 0.3) interior 0.100 0.580 B
+
+(0 .25 , 0.5) interior 0.100 0.580 B
+
+14 B Notation and the exact target 
+
+Table B.1 lists every dial of §3.2 with its range and default, and Algorithm B.1 states the target computation in full. Both are training-free: p∗ 
+
+> c
+
+exists before any sampler does, and is the object every L1 in §4 measures distance to. The ambiguity radii are swept on geometry-specific grids, which are not comparable across balls: 0 , 0.2, 0.5, 1.2 nats for the KL ball, 0 , 0.05 , 0.15 , 0.35 of moved mass for total variation, and 0 , 0.3, 1, 3for the modified χ2 ball. All three duals were checked against brute force over 200 random instances per ball and agree to ≈ 3 · 10 −8, the solver’s own tolerance; at ρ = 0 the computation short-circuits to the plain CVaR and is exact by construction. 
+
+Table B.1. Every dial in the reward family and what it does. Symbol meaning range / default 
+
+β CVaR tail level, per set: 1 compensatory, → 0 conjunctive (0 , 1], ≥ set’s smallest weight 
+
+ρ ambiguity radius, per set: distrust of the stated weights [0 , 1.6] (KL ball) 
+
+βt target temperature: sharpness of p∗ ∝ Rβt (0 .5, 8] log-uniform 
+
+a, w the K scores of a candidate and their nominal weights [0 , 1] K ; Dirichlet(2.0) 
+
+g, wg auxiliary objective (e.g., drug-likeness, [71]) and its weight; 
+
+ws = 1 − wg
+
+(0 .1, 0.9) 
+
+γ, f trade-off rate for suppressed scores; floor threshold (Case B) 1; 35% quantile, per world 
+
+cd, δv veto threshold and margin (Case C) 0.85; [0 , 0.1] 
+
+ρo, βout aimed distrust per origin; outer joint-satisfaction dial (Case D) as ρ, β above 
+
+s sparsity exponent on objective fields (constraints exempt) 1 (identity); 4 in sparse regime 
+
+σ score-robustness margin: good −σ, bad + σ [0 , 0.2] 
+
+ϵ reward clamp on excluded and non-positive states 10 −4
+
+Algorithm B.1 Exact risk-composed target p∗
+
+> c
+
+Require: world W (score fields ak, nominal weights); condition c = ( βt, w g , risk block) 
+
+Ensure: exact p∗ 
+
+> c
+
+(x) over all x ∈ X , |X | = Hd 
+
+> 1:
+
+for all x ∈ X do  
+
+> 2:
+
+Ψ( x) ← the case’s aggregation (Table 1)  
+
+> 3:
+
+base( x) ← wg g(x) + ws Ψ( x) 
+
+> 4:
+
+R(x) ← ϵ if x is floored (B) or vetoed (C), else max(base( x), ϵ ) 
+
+> 5:
+
+end for  
+
+> 6:
+
+p∗ 
+
+> c
+
+(x) ← R(x)βt
+
+ P  
+
+> x′∈X
+
+R(x′)βt
+
+15 C Configuration 
+
+Sections 3.3 and 3.4 give the settings needed to read the results; Table C.1 gives the rest, so that any run can be reconstructed. Anything not listed either took its default value or is inert in every reported battery. 
+
+Table C.1. Configuration. Values are read from the dataclasses that ran ( epgfn.policy.ConditionalPolicy ,
+
+epgfn.train.TrainConfig , epgfn.worlds.WorldConfig , epgfn.conditions.ConditionRanges ), so they cannot drift from the configuration they describe. Per-battery overrides and the flags that are inert in every reported result are recorded in the released results tree. 
+
+Group Field Value Meaning 
+
+architecture cond dim 128 condition-embedding width (FiLM conditioning input) 
+
+dim 256 trunk width 
+
+depth 4 number of FiLM residual blocks 
+
+x1 dim 64 coordinate-embedding width 
+
+optimisation loss tb trajectory balance ( subtb /exact kl in the named abla-tions) 
+
+subtb lambda 0.9 geometric segment weight, SubTB arm 
+
+steps 2000 gradient steps (overridden per battery) 
+
+n conds 8 conditions per batch 
+
+n points 64 points per condition 
+
+uniform mix 0.5 share of uniform-over-X points (off-policy mixture) 
+
+lr 0.001 Adam learning rate, trunk 
+
+lr logz 0.01 Adam learning rate, log Z head 
+
+cond pool 256 pre-priced condition pool ( None = stream fresh conditions per step) 
+
+heldout radius 0.05 L∞ exclusion around held-out conditions 
+
+logit floor -25 training-only clamp on βt log R; evaluation targets are never clamped 
+
+eval every 200 evaluation interval (steps) 
+
+world H 32 grid resolution per coordinate 
+
+d 2 coordinates; |X| = Hd
+
+geometry grid score-field family 
+
+sparsity 1 satisfying-set sparsity exponent (W3.3) 
+
+k neutral 6 |S0| (case A) 
+
+k plus 5 |S+| (cases B, C) 
+
+k minus 4 |S−| (case B) 
+
+k named 3 |D| (case C) 
+
+n outer 4 |O| (case D) 
+
+k inner 4 inner states per origin (case D) 
+
+weight alpha 2 Dirichlet concentration for all nominal weights 
+
+gamma 1 trade-off on Φ( S−) (case B) 
+
+floor quantile 0.35 quantile defining the calibrated floor 
+
+c named 0.85 veto threshold cd (case C) 
+
+beta out 0.5 reference outer tail level (case D) 
+
+rho out 0.3 fixed outer KL radius (case D) 
+
+hardness margin 0.05 gate: minimum TV(risk-on, risk-off) 
+
+veto frac range 0.02, 0.5 gate: admissible veto share (case C) 
+
+floor frac range 0.05, 0.7 gate: admissible floor-fail share (case B) 
+
+delta probe 0.1 gate: veto-margin endpoint δmax 
+
+max attempts 200 gate: rejection-sampling cap 
+
+condition ranges beta t 0.5, 8 inverse-temperature range (log-uniform) 
+
+w g 0.1, 0.9 auxiliary-objective weight range 
+
+rho 0, 1.6 ambiguity radius range, per axis 
+
+delta 0, 0.1 veto margin range (case C) 
+
+16 D Exploration under sparsity 
+
+Figure D.1 gives the three traces §4.3 reads on the floor case at s=4: the exact L1, the mode coverage, and the online collapse diagnostic. The last is what makes the trap detectable during training rather than only after it — a rising share of samples on the dead set’s boundary paired with a coverage stall — and it is the signal a deployment would monitor, since the exact L1 that diagnoses the trap here is not available once X cannot be enumerated. 10 5 
+
+> training samples 0.5 1.0 1.5 2.0 exact  L1 to target
+> L1= 2 : disjoint support
+> 10 5
+> training samples 0.0 0.2 0.4 0.6 0.8 1.0 mode coverage
+> on-policy mix replay teacher contrastive
+> 10 5
+> training samples 0.5 0.6 0.7 0.8 0.9 edge share (cumulative)
+
+Figure D.1. Training traces on the floor case at s=4 (mean over worlds and seeds, band = spread). Left: the on-policy arm starts at the disjoint-support ceiling L1 = 2 and keeps the widest spread, the signature of a trap some seeds escape and others do not. Centre: coverage separates the injecting arms early and permanently. Right: the online diagnostic, a rising share of samples on the dead set’s boundary paired with a coverage stall. 
+
+Figure 3 shows the floor case at s=4, where the arms differ most; the panels below give every case at both sparsity levels, and carry three claims of §4.3. At s=1 all arms recover the target’s structure with tightly clustered L1, so the reference regime does not discriminate between arms. The collapse at s=4 is specific to the floor case: on A, C and D the on-policy arm attains L1 comparable to or better than the injecting arms, because those geometries leave enough live states in an on-policy batch to keep log Z
+
+anchored. And on C at s=4 the on-policy arm attains the best L1 (0.148) despite the worst coverage — the pattern reported for B, and the reason both metrics are reported side by side. 17 exact target p ∗ on-policy ( L1 = 0.112) mix ( L1 = 0.124) 
+
+replay ( L1 = 0.121) teacher ( L1 = 0.132) contrastive ( L1 = 0.149) 
+
+10 9
+
+10 8
+
+10 7
+
+10 6
+
+10 5
+
+10 4
+
+> probability (log scale)
+
+Case A (smooth), s = 1 Figure D.2. Case A (smooth), s=1. All arms recover the target; L1 spans 0.112–0.149. exact target p ∗ on-policy ( L1 = 0.113) mix ( L1 = 0.146) 
+
+replay ( L1 = 0.132) teacher ( L1 = 0.152) contrastive ( L1 = 0.131) 
+
+10 8
+
+10 7
+
+10 6
+
+10 5
+
+10 4
+
+10 3
+
+> probability (log scale)
+
+Case A (smooth), s = 4 
+
+Figure D.3. Case A (smooth), s=4. Sparsity thins the target but leaves no dead region; every arm tracks it, and the on-policy arm attains the best L1 (0.113). 
+
+18 exact target p ∗ on-policy ( L1 = 0.531) mix ( L1 = 0.601) 
+
+replay ( L1 = 0.352) teacher ( L1 = 0.577) contrastive ( L1 = 0.484)       
+
+> 10 8
+> 10 7
+> 10 6
+> 10 5
+> 10 4
+> 10 3
+> probability (log scale)
+
+Case B (floor), s = 1 Figure D.4. Case B (floor), s=1. The floor already removes 82% of the space, and the arms separate (replay attains 0.352 against on-policy’s 0.531), but no arm collapses: the collapse of Figure 3 needs sparsity on top of the floor. exact target p ∗ on-policy ( L1 = 0.300) mix ( L1 = 0.430) 
+
+replay ( L1 = 0.283) teacher ( L1 = 0.433) contrastive ( L1 = 0.376)       
+
+> 10 9
+> 10 8
+> 10 7
+> 10 6
+> 10 5
+> 10 4
+> probability (log scale)
+
+Case C (veto), s = 1 
+
+Figure D.5. Case C (veto), s=1. Scattered vetoes are visible as isolated dark points in the target; the replay arm smooths over them, attaining the best L1 (0.283) by ignoring the structure that defines the case. 
+
+19 exact target p ∗ on-policy ( L1 = 0.148) mix ( L1 = 0.251) 
+
+replay ( L1 = 0.158) teacher ( L1 = 0.292) contrastive ( L1 = 0.184)       
+
+> 10 8
+> 10 7
+> 10 6
+> 10 5
+> 10 4
+> 10 3
+> probability (log scale)
+
+Case C (veto), s = 4 Figure D.6. Case C (veto), s=4. No collapse: the on-policy arm attains the best L1 (0.148) while covering the fewest modes, the clearest case of the two metrics ranking arms in opposite orders. exact target p ∗ on-policy ( L1 = 0.116) mix ( L1 = 0.135) 
+
+replay ( L1 = 0.136) teacher ( L1 = 0.149) contrastive ( L1 = 0.140)       
+
+> 10 9
+> 10 8
+> 10 7
+> 10 6
+> 10 5
+> 10 4
+> probability (log scale)
+
+Case D (nested), s = 1 
+
+Figure D.7. Case D (nested), s=1. The nested target is dense and every arm matches it closely ( L1 0.116–0.149). 
+
+20 exact target p ∗ on-policy ( L1 = 0.105) mix ( L1 = 0.140) 
+
+replay ( L1 = 0.095) teacher ( L1 = 0.155) contrastive ( L1 = 0.104)       
+
+> 10 8
+> 10 7
+> 10 6
+> 10 5
+> 10 4
+> 10 3
+> probability (log scale)
+
+Case D (nested), s = 4 Figure D.8. Case D (nested), s=4. Sparsity introduces banded dead regions but no collapse; replay attains the best L1 (0.095). Compare the coverage column of Table 4, where the same replay arm reaches only 0.530: density fidelity and mode discovery are separate objectives. 
+
+21 E The price list 
+
+Section 4.4 names four difficulty axes and the case that binds each; Table E.1 collects them. The entries separate the axes by character: the size price does not flatten with resolution, because the veto boundary grows with the space and must be visited, whereas the depth price is measured while the student is still descending, which is what makes it a budget artifact rather than a limit. 
+
+Table E.1. The price list: held-out L1 as a multiple of the sampling floor, per difficulty axis, with the binding case. Axis price (binding case) cure size, H : 16 → 64 veto boundary grows: C 1.4 × → 2.1 × none within budget: more resolution is more boundary depth, d : 2 → 4 B breaches: 2.7 × → 3.6 × 3× budget buys it back below 3 ×
+
+peaked weights B 3.2 ×, unmoved by budget open failure score noise σ B 5.0 ×, C 3.2 ×; B’s σ-oracle itself >3× spend robustness in ρ, not conditioning 
+
+22

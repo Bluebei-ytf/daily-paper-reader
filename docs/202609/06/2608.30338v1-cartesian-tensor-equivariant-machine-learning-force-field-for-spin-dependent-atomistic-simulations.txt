@@ -1,0 +1,449 @@
+Title: Cartesian tensor equivariant machine-learning force field for spin-dependent atomistic simulations
+
+URL Source: https://arxiv.org/pdf/2608.30338v1
+
+Published Time: Tue, 01 Sep 2026 02:07:07 GMT
+
+Number of Pages: 17
+
+Markdown Content:
+# Cartesian tensor equivariant machine-learning force field for spin-dependent atomistic simulations 
+
+Junjie Wang 1,* , Yijie Zhu 1,* , Zhongwei Zhang 1, Zhiyue Guo 1,Xudong Zhu 2, Lixin He 2,3,4 , Chi Ding 1, and Jian Sun 1, †
+
+> 1
+
+National Laboratory of Solid State Microstructures, School of Physics and Collaborative Innovation Center of Advanced Microstructures, Nanjing University, Nanjing 210093, China 
+
+> 2
+
+Institute of Artificial Intelligence, Hefei Comprehensive National Science Center, Hefei 230088, China 
+
+> 3
+
+Laboratory of Quantum Information, University of Science and Technology of China, Hefei 230026, China 
+
+> 4
+
+Hefei National Laboratory, University of Science and Technology of China, Hefei, Anhui 230088, China 
+
+> *
+
+These authors contributed equally. †Corresponding author: jiansun@nju.edu.cn 
+
+Abstract 
+
+Magnetic materials exhibit an intricate coupling between atomic structure and spin degrees of freedom, posing a fundamental challenge for atomistic simulations across experimentally relevant length and time scales. Here we intro-duce HotPP-Spin, a spin-dependent extension of HotPP for magnetic machine learning interatomic potentials, built on Cartesian tensor equivariant message passing. Atomic magnetic moments are treated as explicit axial-vector degrees of freedom, while spatial-inversion and time-reversal parities are propagated through the tensor couplings. This construction provides a unified representation of exchange-dominated and spin-orbit-induced interactions without imposing predefined analytical interaction forms. A scalar spin-dependent potential en-ergy surface yields energy-conserving atomic forces and magnetic effective fields through differentiation. Benchmarks spanning collinear magnetism, noncollinear magnetism, and spin-orbit-coupling-induced magnetic anisotropy show that HotPP-Spin accurately describes magnetic energy landscapes, magnetic forces, and magnetic-order-dependent energy-volume relations within the same general framework. For H-phase monolayer VSe 2, stochastic spin-dynamics simulations using the learned magnetic effective fields locate the finite-size magnetic ordering crossover at 415–435 K, in close numerical agreement with the reported experi-mental value of 418 .5 ± 7.8 K. These results establish Cartesian tensor message passing as a general route for connecting first-principles magnetic energetics with large-scale atomistic simulations of coupled structural and spin phenomena. 
+
+Keywords: magnetic machine learning interatomic potentials; Cartesian tensor equivariance; spin-orbit coupling; spin dynamics; magnetic materials 
+
+# 1 Introduction 
+
+Magnetic materials underpin modern information storage, sensing, and emerging spin-tronic and quantum technologies. Despite their importance, a predictive microscopic description of magnetic ordering across structural distortions, spin-orbit coupling, and finite-temperature fluctuations remains challenging, particularly when atomic 1arXiv:2608.30338v1 [physics.comp-ph] 31 Aug 2026 structures and spin configurations evolve together [1–3]. Atomistic simulations of these phenomena therefore require energy models that resolve both types of degrees of freedom. Density-functional theory (DFT) provides first-principles magnetic energies, atomic forces, magnetic moments, and spin-orbit-induced magnetic anisotropy, but its cost limits simulations of large supercells, long time scales, and extensive thermal sampling [4, 5]. Machine learning interatomic potentials (MLIPs) extend first-principles accuracy to larger atomistic simulations [6]. Conventional MLIPs generally learn an energy from atomic positions and chemical species, but this description cannot distinguish spin configurations with the same atomic structure. A magnetic MLIP should instead learn a spin-dependent potential energy surface, 
+
+E = E({Ri, Z i, S i}), (1) where Si denotes the spin or local magnetic moment associated with atom i.Early machine-learning approaches retained explicit spin-Hamiltonian structures. Yu et al. supplemented a Heisenberg term with a nonlinear artificial-neural-network spin potential, increasing flexibility while treating spin degrees of freedom on a fixed lattice [7]. Nikolov et al. coupled a fitted spin Hamiltonian to a spectral neighbor analysis potential, thereby constructing a data-driven magnetoelastic potential en-ergy surface for spin-lattice dynamics while retaining an explicit decomposition of lattice and spin contributions [4]. Magnetic moment tensor potentials and magnetic high-dimensional neural network potentials subsequently introduced scalar magnetic variables into established interatomic-potential frameworks, with magnetic-force training improving relaxation and equilibration [8–10]. Such scalar-spin representa-tions are primarily suited to collinear magnetism. DeepSPIN, spectral vector-field descriptors, and magnetic atomic cluster expansion instead encode vector magnetic moments, extending the description to noncollinear spin-lattice systems [5, 11–13]. Equivariant message passing neural networks (MPNNs) based on spherical har-monics and irreducible tensor products, including NequIP, MACE, and Allegro, have achieved high accuracy for nonmagnetic interatomic potentials [14–16]. Extend-ing equivariant message passing to magnetic systems provides a systematic tensor representation of directional spin and structural variables. SpinGNN represents spin interactions through scalar spin products and distance-dependent spin-lattice terms [17]. SpinGNN++ uses time-reversal-equivariant convolutions for higher-order spin-lattice interactions, whereas MagNet embeds magnetic-moment vectors in spatially equivariant tensor products and is trained on SOC-inclusive noncollinear data [18, 19]. More recently, mMACE extended higher-order equivariant MACE message passing with vector magnetic moments for collinear and noncollinear systems, with and without SOC [20]. Here we introduce HotPP-Spin, the spin-dependent extension of the nonmagnetic Cartesian tensor message-passing architecture HotPP [21]. HotPP-Spin treats atomic magnetic moments as explicit axial-vector inputs and couples them to polar structural vectors through Cartesian tensor operations. The tensor channels track their distinct spatial-inversion parity and the time-reversal parity under Si → − Si, while the scalar energy remains invariant. Without explicit spin-orbit coupling (SOC), the construction represents exchange-dominated interactions governed by relative spin orientations; with SOC, it can represent the dependence of energy on spin orientation relative to the lattice. HotPP-Spin thus extends Cartesian tensor message passing to spin-dependent potential energy surfaces without prescribing analytical interaction forms. Atomic forces and magnetic effective fields follow from differentiation of the learned energy with respect to atomic positions and magnetic moments, respectively. 2We assess the framework across collinear and noncollinear magnetic systems, with and without SOC, through alloy energetics, magnetic-order-dependent energy–volume relations, spin-orbit-induced magnetic anisotropy, and finite-temperature spin dy-namics. These results demonstrate the applicability of Cartesian tensor message passing to energy-conserving atomistic simulations with coupled lattice and spin degrees of freedom. 
+
+# 2 Materials and method 
+
+2.1 Symmetry requirements 
+
+The central symmetry distinction in a magnetic MLIP is between structural vectors and spin vectors. For an orthogonal spatial transformation Q, a bond vector is a polar vector and transforms as 
+
+rij → Qr ij , (2) whereas a spin vector is an axial vector and transforms as 
+
+Si → det( Q)QS i. (3) Thus, under spatial inversion Q = −I, rij → − rij , while Si → Si. Under time reversal, the structural variables are unchanged and the spins change sign, 
+
+Ri → Ri, Zi → Zi, Si → − Si. (4) In the absence of external time-reversal-breaking fields, the total energy must be even under Eq. (4). HotPP-Spin labels each HotPP-style Cartesian hidden feature by its tensor rank and two parities. A feature (ℓ,p,τ )hti at message-passing layer t has rank ℓ, full spatial-inversion parity p = ±1, and time-reversal parity τ = ±1. Under a general orthogonal transformation,  
+
+> (ℓ,p,τ )
+
+hti →
+
+h
+
+p(−1) ℓi(1 −det Q)/2
+
+Q⊗ℓ(ℓ,p,τ )hti, (5) and under time reversal, (ℓ,p,τ )hti → τ (ℓ,p,τ )hti. (6) For pure inversion Q = −I, Eq. (5) reduces directly to (ℓ,p,τ )hti → p (ℓ,p,τ )hti, so 
+
+p is the complete inversion eigenvalue. Structural tensors generated from bond vectors are time-even, whereas every occurrence of a spin vector changes the time-reversal parity. Only scalar channels with rank ℓ = 0, even spatial parity, and even time-reversal parity are allowed to contribute directly to the total energy. This restriction applies only to the final scalar readout. Intermediate features retain all symmetry-allowed ( ℓ, p, τ ) sectors, including spatial- or time-reversal-odd channels, which may contribute through couplings whose final output is (0 , +, +). It therefore equates configurations related by inversion of the complete lattice–spin system, but does not require opposite spin chiralities on the same inversion-asymmetric lattice to be degenerate. This construction preserves rotational equivariance for intermediate tensors while guaranteeing rotational, inversion, and time-reversal invariance of the final energy. 3X⨂⨂YFilter Filter Filter X⨂⨂YX⨂⨂Y RBF  
+
+> ,,
+> …
+
+×
+
+> Embedding Readout Atomic interaction Atomic interaction Spin-lattice interaction Spin-lattice interaction
+
+,
+
+> …
+
+×
+
+X⨂⨂YFilter MLP Figure 1: Schematic architecture of HotPP-Spin. Atomic positions, chemical species, lattice information, and spin vectors are embedded into tensor features and passed through interaction blocks that update structural and spin-lattice channels. Atomic interaction blocks propagate structural information such as neighbor vectors and hidden features, while spin-lattice interaction blocks couple structural features with spin vectors. When SOC is disabled, the two upper orange tensor-product modules directly connected to Si and Sj in the left panel are restricted to scalar outputs with 
+
+ℓo = 0. Repeated interaction blocks are followed by a scalar readout, from which atomic forces and magnetic effective fields are obtained by differentiating the learned energy. 
+
+2.2 Overall network architecture 
+
+HotPP-Spin extends the HotPP Cartesian tensor message-passing framework [21] from a structural potential to a spin-dependent magnetic potential. For a periodic configuration, the input consists of atomic positions Ri, chemical species Zi, lattice vectors L, and spin vectors Si, where i = 1 , . . . , N . The model learns a scalar spin-dependent potential energy surface, 
+
+Eθ = Eθ({Ri, Z i, S i}, L ), (7) with parameters θ. The total energy is written as a sum of atom-centered contribu-tions, 
+
+Eθ = X
+
+> i
+
+εi, (8) where each εi depends on the local chemical, structural, and magnetic environment within a finite cutoff. Periodic boundary conditions enter through neighbor vectors 
+
+rij n = Rj + nL − Ri, (9) with lattice image n. Using relative vectors enforces translational invariance, and using shared local functions and neighbor summations enforces permutation symmetry among atoms of the same species. Figure 1 summarizes the HotPP-Spin architecture and the interaction blocks used to propagate structural and spin information. The spin variables in Eq. (7) 4may represent local magnetic moments or normalized spin directions, depending on the reference data. HotPP-Spin does not reduce this information to a scalar magnetic magnitude. Instead, each Si is treated as a vector degree of freedom so that collinear and noncollinear spin configurations with the same atomic positions can be assigned different energies and derivatives. HotPP-Spin follows the Cartesian tensor strategy of HotPP rather than using spherical harmonics as the primary representation. Neighbor information is first embedded through species-dependent radial functions of |rij | and Cartesian tensor products of the unit or displacement vector. Spin information is introduced through axial-vector channels associated with 
+
+Si and neighboring Sj . Messages are then formed by tensor products, contractions, and nonlinear mixing among structural, spin, and hidden tensor features, with the parity labels in Eqs. (5) and (6) updated at each coupling step. For Cartesian tensors X and Y of ranks ℓX and ℓY , respectively, the X ⊗ Y
+
+module uses the HotPP tensor contraction [21] [X ⊗z Y]a1··· aℓX −z b1··· bℓY −z
+
+= Xa1··· aℓX −z c1··· cz Yb1··· bℓY −z c1··· cz ,
+
+(ℓo, p o, τ o) = ( ℓX + ℓY − 2z, p X pY , τ X τY ),
+
+(10) where 0 ≤ z ≤ min( ℓX , ℓ Y ), and z = 0 gives the outer product. HotPP-Spin supplements the original rank rule with spatial and time-reversal parities ( p, τ ). For example, in the ( ℓ, p, τ ) notation, a polar bond vector belongs to (1 , −, +), whereas an axial spin vector belongs to (1 , +, −). Consequently, 
+
+Si ·Sj ∼ (0 , +, +) , rij ·Si ∼ (0 , −, −),
+
+(rij ·Si)( rij ·Sj ) ∼ (0 , +, +) . (11) The spin–spin scalar can contribute directly to the energy, whereas the single bond– spin contraction cannot. Coupling two such bond–spin odd scalars produces a symmetry-allowed structural–spin anisotropic scalar. For example, ( rik ×rjk )·(Si×Sj )is even under both spatial inversion and time reversal, yet changes sign when the spin chirality is reversed while the lattice is held fixed. These parity rules determine whether a coupling is symmetry-allowed; its physical presence and magnitude are learned from the reference data. Spin–spin contractions describe exchange-dominated changes associated with relative spin orientations, whereas mixed structural–spin con-tractions permit orientation dependence relative to the lattice when such dependence is present in the reference data. Following the edge construction of HotPP [21], the spin–lattice block in Fig. 1 can be summarized as ¯rt,ℓ ij n = Filter t,ℓ r (rij n) = f tℓ (dij n)u⊗ℓij n,
+
+¯St,k a = Filter t,k s (Sa) = gtk(|Sa|) bS⊗ka , a ∈ { i, j },
+
+¯St,ℓ s 
+
+> ij
+
+=
+
+h ¯St,k i 
+
+> i
+
+⊗ ¯St,k j
+
+> j
+
+i
+
+> ℓs
+
+,
+
+∆hti = X 
+
+> (j, n)∈N (i)
+
+MLP t
+
+n 
+
+¯rt,ℓ ij n ⊗ htj
+
+
+
+⊗ ¯St,ℓ s
+
+> ij
+
+o
+
+,ht+1  
+
+> i
+
+= hti + ∆ hti.
+
+(12) Here dij n = |rij n|, uij n = rij n/d ij n, and bSa = Sa/|Sa|; species dependence of the learnable radial functions is left implicit. Each ⊗ collects the symmetry-allowed contractions in Eq. (10), while channel mixing and tensor activation are absorbed 5into MLP t. Without SOC, the spin–spin branch is restricted to ℓmax  
+
+> s
+
+= 0. For equal input rank k, its scalar channel is ¯St, 0 
+
+> ij
+
+= gtk(|Si|)gtk(|Sj |)( bSi · bSj )k, (13) so only spin magnitudes, Si ·Sj , and their higher-order scalar combinations enter the structural message. These quantities are invariant under a simultaneous rotation of all spins relative to a fixed lattice and therefore describe exchange-like interactions without lattice-locked SOC terms. With SOC, symmetry-allowed channels with ℓs > 0are retained and subsequently coupled to ¯ rt,ℓ ij n ⊗ htj , allowing the energy to depend on spin orientation relative to the lattice. The actual cutoff, channel dimensions, tensor ranks, and number of message-passing layers are dataset-dependent implementation parameters, given for each benchmark in Appendix A. Because HotPP-Spin is an energy-conserving model, atomic and magnetic re-sponses are obtained by differentiating Eq. (7). Atomic forces are defined as 
+
+Fi = − ∂E θ
+
+∂R i
+
+. (14) The spin derivative defines the magnetic force, or equivalently the negative energy gradient in spin space, 
+
+BML  
+
+> i
+
+= − ∂E θ
+
+∂S i
+
+. (15) This quantity is the training target when magnetic-force labels are available. For fixed-length spin dynamics, only the component perpendicular to Si changes its orientation; the radial component does not contribute because Si × BML  
+
+> i
+
+= Si × BML  
+
+> i, ⊥
+
+.The LLG equation therefore uses the learned magnetic force directly rather than a separately trained torque. The model is trained against first-principles reference energies and, when available, atomic forces, magnetic forces, and virials. A representative mean-squared-error objective is 
+
+L = wE MSE 
+
+ Eθ
+
+N , Eref 
+
+N
+
+
+
++ wF MSE( Fθ, F ref )+ wB MSE  BML  
+
+> θ
+
+, B ref 
+
+ + wV MSE 
+
+ Vθ
+
+N , Vref 
+
+N
+
+
+
+.
+
+(16) Here N is the number of atoms, V is the virial tensor, and each MSE is averaged over the corresponding configurations and Cartesian components. The weights wE ,
+
+wF , wB , and wV control the relative balance among the training targets. This derivative-based training is essential for spin and spin-lattice dynamics because the same learned scalar energy must generate both atomic and magnetic forces. 
+
+2.3 SOC module and time-reversal parity 
+
+The symmetry labels introduced in Sec. 2.1 track the spatial-inversion and time-reversal characters of every tensor channel. Together with the spin-rank restriction described in Eqs. (12) and (13), they distinguish exchange-like scalar channels in the no-SOC construction from the ℓs > 0 spin–lattice channels that enable SOC-induced magnetic anisotropy. In the parity-resolved SOC model, channels with different ( p, τ )labels remain separate throughout the network, and the energy readout is restricted to ( ℓ, p, τ ) = (0 , +, +). No such restriction is imposed on the intermediate tensor features. The parity-unresolved SOC model used below is an ablation that retains tensor rank ℓ but merges channels with different spatial and time-reversal parities. 6(a) (b) (c) (d) Figure 2: (a) Reference 0 ◦, 90 ◦, 180 ◦, 270 ◦ spin sequence and the configurations obtained by (b) reversing spin chirality, (c) time reversal, and (d) a 45 ◦ in-plane global spin rotation. The low-symmetry nonmagnetic environment used in the architecture audit is included in the model input but omitted from the schematic. Table 1: Energy responses of untrained networks under the operations illustrated in Fig. 2. “Invariant” denotes no energy change within single-precision numerical accuracy, whereas “Changes” denotes a finite response across random initializations and configurations. All responses are assessed against the expected behavior of an SOC-active low-symmetry system; ✓ and × denote agreement and disagreement, respectively. The parity-unresolved SOC model is an ablation used only to test symmetry enforcement.             
+
+> Model Spin-chirality reversal Time reversal In-plane spin rotation 45 ◦
+> Model without SOC capability Invariant ( ×)Invariant ( ✓)Invariant ( ×)SOC, parity-unresolved Changes ( ✓)Changes ( ×)Changes ( ✓)SOC, parity-resolved Changes ( ✓)Invariant ( ✓)Changes ( ✓)
+
+Its rank-zero readout is therefore not guaranteed to belong to (0 , +, +) and can acquire spurious responses to spatial inversion or time reversal. This ablation is used only to test the role of explicit parity resolution, not as a model for the material benchmarks. These architectural constraints determine which dependencies are permitted, while their magnitudes are learned from the reference data. SOC-sensitive behavior is assessed using the SOC-inclusive H-phase monolayer VSe 2 data; the FeAl and Fe benchmarks instead test collinear multi-component fitting and noncollinear exchange-dominated behavior, respectively. We isolate these architectural roles with an untrained-network symmetry audit, avoiding any dependence on a fitted target or training-set augmentation. The input comprises a four-site magnetic chain embedded in a low-symmetry nonmagnetic environment; Fig. 2 shows only the magnetic sites for clarity. We evaluate eight ran-dom network initializations on 64 random spin and weakly perturbed low-symmetry structural configurations without optimization, and classify each transformation according to whether it produces an energy response beyond single-precision nu-merical residuals. Table 1 shows that the model without SOC capability and the parity-resolved SOC model are exactly time-reversal invariant at numerical precision, whereas the parity-unresolved SOC ablation has a finite response. The model without SOC capability is also invariant under spin-chirality reversal and global spin rotation, and therefore cannot represent the corresponding finite responses expected for the SOC-active low-symmetry system used in this audit. By contrast, both SOC networks permit finite chirality and spin-rotation responses because their spin channels couple to the fixed structural frame. These finite responses demonstrate representational permission rather than a physical prediction by randomly initialized weights; the audit therefore separates symmetry guaranteed by construction from behavior that could otherwise be learned accidentally from augmented data. 7Table 2: FeAl full-dataset fitting RMSEs. All models were trained and evaluated on the complete 2632-configuration dataset; the reported values are therefore in-sample fitting errors rather than held-out test errors. Stress errors are reported in GPa. The mMTP values are from Ref. [10]. The lowest RMSE in each column is shown in bold. A dash indicates that the quantity is not defined for that model.                        
+
+> Model E(meV/atom) F(meV/˚ A) σ(GPa) B(meV/ μB)mMTP ( Nψ= 4, wt= 0 .1) [10] 1.61 63.0 0.450 15.4 HotPP (no spin) 13.4 36.1 2.70 –HotPP-Spin 0.137 0.945 0.133 0.393
+
+2.4 Finite-temperature spin dynamics 
+
+For fixed-length stochastic spin dynamics, we follow standard atomistic spin-dynamics formulations [22] and write Si = μisi, where |si| = 1 and μi = |Si| is in units of 
+
+μB. At fixed μi, the energy-like spin force supplied to the dynamics is bML  
+
+> i
+
+=
+
+−∂E/∂s i = μiBML  
+
+> i
+
+, with BML  
+
+> i
+
+defined in Eq. (15). The corresponding tesla-valued field is BML  
+
+> i
+
+= bML  
+
+> i
+
+/(μiμB), and the deterministic part of the stochastic Landau– Lifshitz–Gilbert equation [23] is 
+
+ds i
+
+dt = − γ
+
+1 + α2
+
+si × B ML  
+
+> i
+
++ αs i ×  si × B ML 
+
+> i
+
+ , (17) where α is the Gilbert damping parameter and γ is the electron gyromagnetic ratio. The normalized magnetic order parameter is evaluated as 
+
+m = |P 
+
+> i
+
+Si|
+
+P 
+
+> i
+
+|Si| . (18) The Stratonovich SIB integrator, thermal-noise covariance, and sampling and blocking protocols are given in Appendix B. 
+
+# 3 Results 
+
+Across three material systems, we train four independent models on four separate datasets within the same general framework. The benchmarks comprise collinear FeAl, noncollinear exchange-dominated Fe, constrained collinear bcc/fcc Fe for the energy–volume diagnostic in Sec. 3.2, and trigonal-prismatic H-phase monolayer VSe 2 with SOC-inclusive reference data. Further dataset, model, first-principles, and spin-dynamics details are provided in Appendices A and B. 
+
+3.1 FeAl: collinear multi-component magnetic benchmark 
+
+We first test HotPP-Spin on the complete 2632-configuration collinear bcc Fe-Al alloy benchmark [10, 24]. The Fe and Al magnetic-moment magnitudes span 0– 3.72 and 0–0.23 μB, respectively. This benchmark probes whether the model can learn energy, atomic-force, stress, and magnetic-force labels in a multi-component magnetic alloy without explicit SOC. For a protocol-matched comparison with the published magnetic moment tensor potential (mMTP), we train HotPP-Spin on all 2632 configurations and evaluate it on the same full dataset. HotPP-Spin gives fitting RMSEs of 0.137 meV/atom for energy, 0.945 meV/˚ A for atomic forces, 0.133 GPa for stress, and 0.393 meV/ μB for magnetic forces, with the force errors computed over Cartesian components. Table 2 compares these values with the mMTP errors 80.00 0.25 0.50 0.75 1.00 1.25 1.50                            
+
+> Relative energy  E (eV/atom)  (a) BCC Fe: magnetic orders
+> FM AFM DAFM
+> (b) FCC Fe: magnetic orders
+> 8910 11 12 13 14 15 16
+> Atomic volume ( Å3/atom)
+> 0.00 0.25 0.50 0.75 1.00 1.25 1.50
+> Relative energy  E (eV/atom)  (c) BCC-FM: fixed moments
+> HotPP-Spin lower envelope Unconstrained DFT
+> 8910 11 12 13 14 15 16
+> Atomic volume ( Å3/atom)
+> (d) FCC-FM: fixed moments
+> 0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0
+> Fixed magnetic moment ( B/atom)
+
+Figure 3: Energy–volume relations for ideal bcc and fcc Fe predicted by the separately trained collinear HotPP-Spin model. (a,b) HotPP-Spin lower envelopes for the FM (blue), AFM (red), and DAFM (gold) orders, with corresponding unconstrained DFT values shown as filled circles. (c,d) Complete BCC-FM and FCC-FM fixed-moment landscapes; all 41 predicted curves from 0 to 4 μB per atom in increments of 0.1 μB
+
+are colored by moment magnitude. The dark curves are the HotPP-Spin lower envelopes obtained by minimizing the 41 fixed-moment predictions independently at each volume, and open circles show the unconstrained DFT results. All energies are referenced to the minimum across the six unconstrained DFT branches; the same reference is applied to the model predictions, with no phase- or order-specific fitted offset. The envelope is a discrete minimization over fixed-moment predictions and is not a self-consistent magnetic-moment relaxation. reported on the whole training set [10]. The mMTP row corresponds to the reported 
+
+Nψ = 4, wt = 0 .1 model, where Nψ is the number of magnetic basis functions used to represent the magnetic-moment dependence of the mMTP radial functions and 
+
+wt is the magnetic-force weight; HotPP-Spin uses equal nominal weights for the four fitted targets, although the numerical weights are not directly comparable across the two loss definitions. The spin-free HotPP baseline is trained on the same complete dataset using only energy, atomic-force, and stress labels and gives fitting RMSEs of 13.4 meV/atom, 36.1 meV/˚ A, and 2.70 GPa, respectively; magnetic-force prediction is not defined without magnetic-moment inputs. Under this matched in-sample evaluation protocol, HotPP-Spin has lower fitting RMSEs than mMTP for all four targets and lower errors than spin-free HotPP for the three shared targets; because the same configurations are used for fitting and evaluation, this comparison assesses fitting accuracy rather than generalization to unseen configurations. 
+
+3.2 Fe: noncollinear magnetic benchmark 
+
+We next consider noncollinear bulk Fe using the 34228 sixteen-atom configurations in the publicly released Fe 16 LCAO portion of the Fe-DeepSpin dataset. Although the 9underlying first-principles calculations included SOC, the source study reported that SOC effects in pure Fe are smaller than its intrinsic model errors [25]. Accordingly, we train the present Fe model without explicit SOC and use the dataset as an exchange-dominated benchmark of vector magnetic degrees of freedom. We use a fixed split of 30806 training configurations and 3422 held-out test configurations. The magnetic-moment magnitudes span 0.100–4.271 μB in the training set and 0.101–4.066 μB in the test set, with corresponding means of 2.264 and 2.261 μB.On the 3422 held-out configurations, HotPP-Spin gives componentwise RMSEs of 1.207 meV/atom, 13.553 meV/˚ A, and 6.936 meV/ μB for energy, atomic force, and magnetic force, respectively; the source-reported DeePSPIN-DZP test RMSEs are 8.60 meV/atom, 111 meV/˚ A, and 31.2 meV/ μB, respectively [25]. As a complementary collinear validation, we separately trained another model without explicit SOC on 4940 constrained ideal bcc and fcc Fe configurations spanning ferromagnetic (FM), antiferromagnetic (AFM), and double-layer antiferromagnetic (DAFM) orders; DAFM denotes successive spin layers in an ↑↑↓↓ sequence [25]. We use a fixed 4446/494 training/test split. These configurations cover atomic volumes from 8 to 16 ˚ A3/atom and magnetic-moment magnitudes from 0 to 4 μB per atom. On the independent 494-configuration test subset, the dedicated collinear model gives RMSEs of 11.678 meV/atom for energy, 7.797 meV/˚ A for atomic forces, and 14.857 meV/ μB for magnetic forces. Figure 3 compares this separately trained model with independently calculated unconstrained DFT results. The predicted envelopes follow the smooth DFT volume dependence and order-dependent energy separations; their RMSEs against the matched unconstrained DFT points range from 2.66 to 4.98 meV/atom across the six branches. The unconstrained DFT trajectories are used only for this diagnostic and are absent from both the training and held-out constrained subsets. The bcc-FM branch gives the global minimum, whereas the closer fcc branches and the volume-dependent fixed-moment envelopes expose the competition among lattice volume, magnetic order, and moment magnitude. Comparable constrained-energy landscapes were reported for magnetic ACE and Fe-DeepSpin, likewise revealing the strong dependence of magnetic energetics on lattice volume in Fe [5, 25]. Magnetic ACE further used the coupled landscape in finite-temperature simulations of FM–paramagnetic and bcc–fcc transformations [5], while Fe-DeepSpin demonstrated a finite-temperature FM–paramagnetic transition [25]. Figure 3 therefore validates the static energetic ingredients relevant to phase stability; transition temperatures require finite-temperature sampling and are not inferred here. 
+
+3.3 H-phase monolayer VSe 2: spin-orbit-induced magnetic anisotropy 
+
+We use the trigonal-prismatic H-phase monolayer, often denoted monolayer 2H-VSe 2,as a two-dimensional benchmark with SOC-inclusive reference data. The 421 training configurations comprise randomly displaced monolayer supercells and fixed-structure six-atom cells that scan the orientations of the two vanadium spins. In the random supercells, the vanadium spin vectors have random directions and magnitudes from 0.90 to 1.10 μB, while the selenium sites are nonmagnetic in the stored spin labels. On the training set, the model gives RMSEs of 1.50 meV/atom for energy, 15.8 meV/˚ A for atomic forces, and 5.08 meV/ μB for magnetic forces. To assess the relevant magnetic energy scales, we compare HotPP-Spin and SOC-DFT energies for in-plane (IP) and out-of-plane (OP) ferromagnetic states and an OP antiferromagnetic state in the same six-atom cell. Per vanadium atom, HotPP-Spin gives EOP-FM − EIP-FM = 0 .567 meV, compared with 0.615 meV from DFT, and 10 200 300 400 500 600  
+
+> Temperature (K)
+> 0.0 0.3 0.6 0.9
+> Order parameter  m
+> mvar( m)/ T
+> 0123
+> var( m)/ T (10 −5  K−1 )
+
+Figure 4: Stochastic spin dynamics for H-phase monolayer VSe 2 driven by HotPP-Spin magnetic effective fields. The normalized magnetic order parameter m =
+
+| P 
+
+> i
+
+Si|/ P 
+
+> i
+
+|Si| is shown in blue against the left axis, and the fluctuation measure var( m)/T , computed from equilibrated trajectories, is shown in red against the right axis. The simulations used a 2700-atom supercell; error bars show block-to-block standard deviations of the retained trajectories. The gray shaded interval marks the approximate 415–435 K range around the fluctuation maximum and the finite-size estimate of the ordering crossover. 
+
+EOP-AFM − EOP-FM = 132 .68 meV, compared with 138.89 meV from DFT. HotPP-Spin therefore reproduces both the small SOC-driven magnetic-anisotropy energy and the much larger FM–AFM energy splitting, correctly identifying the in-plane FM state as the lowest-energy configuration. The ferromagnetic ordering preference and in-plane easy axis are consistent with previous first-principles calculations for H-phase monolayer VSe 2 [26, 27]. First-principles-based spin models have yielded estimates of the Curie temperature ( TC) ranging from approximately 300 to 472 K, depending on strain and computational treatment [26–28]. Experimentally, temperature-dependent magnetic-circular-dichroism measurements on 2H-VSe 2 nanoflakes yielded TC =418 .5 ± 7.8 K [29]. To test whether the learned magnetic effective fields can be used in finite-temperature spin sampling, we performed stochastic LLG simulations for VSe 2
+
+using the dynamics described in Sec. 2.4. The simulations used a 2700-atom mono-layer supercell and sampled temperatures from 200 to 600 K. As shown in Fig. 4, the normalized order parameter m in Eq. (18) decreases from 0.824 at 200 K to 0.522 at 400 K and 0.090 at 600 K. For fixed site moments and the present normalization, the finite-size magnetic susceptibility satisfies χ ∝ Nmag var( m)/(kBT ), so the maximum of var( m)/T in the 420–430 K region provides a finite-size estimate of the magnetic ordering crossover in the HotPP-Spin-driven stochastic spin dynamics. The resulting 415–435 K interval lies within previous theoretical estimates and is close to the experimental temperature scale for 2H-VSe 2.11 4 Discussion and conclusions 
+
+We introduced HotPP-Spin, a Cartesian tensor equivariant magnetic MLIP that treats atomic magnetic moments as explicit axial-vector degrees of freedom and propagates spatial-inversion and time-reversal parities through Cartesian tensor couplings. Differentiation of a scalar spin-dependent energy yields energy-conserving atomic forces and magnetic effective fields, providing a consistent basis for structural and spin evolution. The FeAl and noncollinear Fe benchmarks quantify the fit quality for energies, atomic forces, and magnetic forces, while the Fe energy–volume tests reproduce magnetic-order-dependent bcc and fcc branches. For H-phase monolayer VSe 2, HotPP-Spin reproduces targeted SOC-sensitive magnetic anisotropy and FM-AFM energy differences, and the learned magnetic effective fields yield a finite-size ordering crossover of 415–435 K. This range is close to the MCD-derived TC =418 .5 ± 7.8 K reported for a 16.9-nm-thick 2H-VSe 2 flake, despite the different thickness and simulation protocol [29]. Looking ahead, embedding HotPP-Spin in evolutionary crystal-structure-search frameworks such as MAGUS and its symmetry-guided MAGUS 2.0 extension could enable joint exploration of atomic and magnetic configurational spaces [30, 31]. Adapting large-cell active-learning workflows such as NEPMaker to spin-dependent descriptors and magnetic-force labels could further automate the construction of robust magnetic datasets [32]. 
+
+# Code availability 
+
+The HotPP-Spin implementation developed in this work is available as part of the HotPP project at https://gitlab.com/bigd4/hotpp , the spin-dynamics code is available through the PyDyn project at https://gitlab.com/bigd4/pydyn , and the ActiveMiao active-learning module is available at https://gitlab.com/bigd4/ activemiao .
+
+# Acknowledgements 
+
+This work was supported by the National Natural Science Foundation of China (Grant Nos. 12125404, T2495231, and 12504277); the National Key R&D Program of China (Grant No. 2022YFA1403201); the Advanced Materials–National Science and Technology Major Project (Grant No. 2024ZD0607000); the Basic Research Program of Jiangsu (Grant Nos. BK20233001, BK20241253, and BK20253009); the Jiangsu Funding Program for Excellent Postdoctoral Talent (Grant Nos. 2025ZB440 and 2025ZB852); the China Postdoctoral Science Foundation (Grant No. 2025M773331); the Postdoctoral Fellowship Program of CPSF (Grant No. GZC20252202); the Fundamental and Interdisciplinary Disciplines Breakthrough Plan of the Ministry of Education of China (Grant No. JYB2025XDXM413); the Science Challenge Project (Grant No. TZ2025013); the AI & AI for Science Program of Nanjing University; the Artificial Intelligence and Quantum Physics (AIQ) Program of Nanjing University; the Nanjing University PhD Student Zhujian Program; and the Fundamental Research Funds for the Central Universities. The calculations were carried out using the supercomputers at the High-Performance Computing Center of the Collaborative Innovation Center of Advanced Microstructures and the high-performance supercomputing center of Nanjing University. 12 References 
+
+[1] N. Wu, S. Zhang, D. Chen, Y. Wang, and S. Meng. Nat. Commun. , 15, 2804, (2024). [2] M. C. Weber, M. Guennou, D. M. Evans, C. Toulouse, A. Simonov, Y. Kholina, X. Ma, W. Ren, S. Cao, M. A. Carpenter, B. Dkhil, M. Fiebig, and J. Kreisel. 
+
+Nat. Commun. , 13, 443, (2022). [3] C. Ding, Q. Lu, Z. Guo, T. Huang, J. Wang, Y. Han, D. Xing, and J. Sun. Sci. Bull. , 69, 1027–1036, (2024). [4] S. Nikolov, M. A. Wood, A. Cangi, J.-B. Maillet, M.-C. Marinica, A. P. Thomp-son, M. P. Desjarlais, and J. Tranchida. npj Comput. Mater. , 7, 153, (2021). [5] M. Rinaldi, M. Mrovec, A. Bochkarev, Y. Lysogorskiy, and R. Drautz. npj Comput. Mater. , 10, 12, (2024). [6] O. T. Unke, S. Chmiela, H. E. Sauceda, M. Gastegger, I. Poltavsky, K. T. Sch¨ utt, A. Tkatchenko, and K.-R. M¨ uller. Chem. Rev. , 121, 10142–10186, (2021). [7] H. Yu, C. Xu, X. Li, F. Lou, L. Bellaiche, Z. Hu, X. Gong, and H. Xiang. Phys. Rev. B , 105, 174422, (2022). [8] I. Novikov, B. Grabowski, F. Kormann, and A. Shapeev. npj Comput. Mater. ,8, 13, (2022). [9] M. Eckhoff and J. Behler. npj Comput. Mater. , 7, 170, (2021). [10] A. S. Kotykhov, K. Gubaev, V. Sotskov, C. Tantardini, M. Hodapp, A. V. Shapeev, and I. S. Novikov. Comput. Mater. Sci. , 245, 113331, (2024). [11] T. Yang, Z. Cai, Z. Huang, W. Tang, R. Shi, A. Godfrey, H. Liu, Y. Lin, C.-W. Nan, M. Ye, L. Zhang, H. Wang, and B. Xu. Phys. Rev. B , 110, 064427, (2024). [12] M. Domina, M. Cobelli, and S. Sanvito. Phys. Rev. B , 105, 214439, (2022). [13] R. Drautz. Phys. Rev. B , 102, 024104, (2020). [14] S. Batzner, A. Musaelian, L. Sun, M. Geiger, J. P. Mailoa, M. Kornbluth, N. Molinari, T. E. Smidt, and B. Kozinsky. Nat. Commun. , 13, 2453, (2022). [15] I. Batatia, D. P. Kov´ acs, G. Simm, C. Ortner, and G. Cs´ anyi. MACE: Higher order equivariant message passing neural networks for fast and accurate force fields. In Advances in Neural Information Processing Systems , volume 35, pages 11423–11436, 2022. [16] A. Musaelian, S. Batzner, A. Johansson, L. Sun, C. J. Owen, M. Kornbluth, and B. Kozinsky. Nat. Commun. , 14, 579, (2023). [17] H. Yu, Y. Zhong, L. Hong, C. Xu, W. Ren, X. Gong, and H. Xiang. Phys. Rev. B, 109, 144426, (2024). [18] H. Yu, B. Liu, Y. Zhong, L. Hong, J. Ji, C. Xu, X. Gong, and H. Xiang. Phys. Rev. B , 110, 104427, (2024). [19] Z. Yuan, Z. Xu, H. Li, X. Cheng, H. Tao, Z. Tang, Z. Zhou, W. Duan, and Y. Xu. Quantum Front. , 3, 8, (2024). [20] C. H. Ho, C. van der Oord, J. P. Darby, T. Keane, R. L. Benson, C. Rebolledo Es-pinoza, R. Kulkarni, E. Spinu, M. Papanikolaou, R. Tomsett, R. M. Forrest, J. J. Bean, G. Cs´ anyi, and C. Ortner. Equivariant many-body message passing interatomic potentials for magnetic materials, 2026. [21] J. Wang, Y. Wang, H. Zhang, Z. Yang, Z. Liang, J. Shi, H.-T. Wang, D. Xing, and J. Sun. Nat. Commun. , 15, 7607, (2024). [22] B. Skubic, J. Hellsvik, L. Nordstr¨ om, and O. Eriksson. J. Phys.: Condens. Matter , 20, 315203, (2008). 13 [23] J. H. Mentink, M. V. Tretyakov, A. Fasolino, M. I. Katsnelson, and T. Rasing. 
+
+J. Phys.: Condens. Matter , 22, 176001, (2010). [24] A. S. Kotykhov, K. Gubaev, M. Hodapp, C. Tantardini, A. V. Shapeev, and I. S. Novikov. Sci. Rep. , 13, 19728, (2023). [25] D. Zheng, X. Peng, Y. Huang, Y. Wang, D. Zhang, Z. Huang, Z. Cai, L. Zhang, M. Chen, B. Xu, and W. Zhou. npj Comput. Mater. , 12, 52, (2026). [26] H.-R. Fuh, C.-R. Chang, Y.-K. Wang, R. F. L. Evans, R. W. Chantrell, and H.-T. Jeng. Sci. Rep. , 6, 32625, (2016). [27] H. Sheng, H. Long, G. Zou, D. Bai, J. Zhang, and J. Wang. J. Mater. Sci. , 56, 15844–15858, (2021). [28] Y. Zhu, D. Zhang, H. Ye, D. Bai, M. Li, G. P. Zhang, J. Zhang, and J. Wang. 
+
+Phys. Rev. Appl. , 18, 024012, (2022). [29] X. Wang, D. Li, Z. Li, C. Wu, C.-M. Che, G. Chen, and X. Cui. ACS Nano , 15, 16236–16241, (2021). [30] J. Wang, H. Gao, Y. Han, C. Ding, S. Pan, Y. Wang, Q. Jia, H.-T. Wang, D. Xing, and J. Sun. Natl. Sci. Rev. , 10, nwad128, (2023). [31] Y. Han, C. Ding, J. Wang, H. Gao, J. Shi, S. Yu, Q. Jia, S. Pan, and J. Sun. 
+
+Nat. Comput. Sci. , 5, 255–267, (2025). [32] J. Wang, S. Pan, H. Zhang, Q. Jia, C. Ding, Z. Fan, and J. Sun. NEPMaker: active learning of neuroevolution machine learning potential for large cells. arXiv:2604.13848, 2026. [33] M. Chen, G.-C. Guo, and L. He. J. Phys.: Condens. Matter , 22, 445501, (2010). [34] P. Li, X. Liu, M. Chen, P. Lin, X. Ren, L. Lin, C. Yang, and L. He. Comput. Mater. Sci. , 112, 503–517, (2016). [35] J. P. Perdew, K. Burke, and M. Ernzerhof. Phys. Rev. Lett. , 77, 3865–3868, (1996). [36] P. H. Dederichs, S. Bl¨ ugel, R. Zeller, and H. Akai. Phys. Rev. Lett. , 53, 2512–2515, (1984). [37] Z. Cai, K. Wang, Y. Xu, S.-H. Wei, and B. Xu. Quantum Front. , 2, 21, (2023). [38] M. J. van Setten, M. Giantomassi, E. Bousquet, M. J. Verstraete, D. R. Hamann, X. Gonze, and G.-M. Rignanese. Comput. Phys. Commun. , 226, 39–54, (2018). [39] S. Grimme, J. Antony, S. Ehrlich, and H. Krieg. J. Chem. Phys. , 132, 154104, (2010). 14 A Computational details 
+
+A.1 Benchmark datasets 
+
+The FeAl data originate from 21 fully relaxed 16-atom bcc Fe-Al supercells with Al concentrations from 0% to 50% and different atomic arrangements [10, 24]. Additional configurations were generated by perturbing atomic positions, lattice vectors, and magnetic moments and by molecular dynamics at 300 K. About 80% of these additional configurations are perturbations and the remainder are molecular-dynamics snapshots; approximately 85% of the configurations in the complete dataset contain nonequilibrium magnetic moments and therefore nonzero magnetic forces. The noncollinear Fe benchmark uses the publicly released 16-atom LCAO subset of the Fe-DeepSpin dataset [25]. Its source workflow combines noncollinear spin-constrained DFT in ABACUS, active learning, and spin-lattice-dynamics sampling of bcc and fcc Fe. The collinear Fe energy–volume dataset instead contains constrained ideal bcc and fcc structures spanning ferromagnetic (FM), antiferromagnetic (AFM), and double-layer antiferromagnetic (DAFM) orders, atomic volumes from 8 to 16 ˚ A3/atom, and signed magnetic moments along the z axis. Its stored x and y
+
+magnetic-force labels are identically zero. The H-phase monolayer VSe 2 data comprise 200 randomly displaced 2 × 2 × 1supercells, 100 randomly displaced 3 ×3×1 supercells, and 121 fixed-structure six-atom cells scanning the orientations of the two vanadium spins. The 421 configurations are used for both fitting and aggregate error evaluation, so the reported aggregate errors are in-sample statistics. Three additional six-atom configurations evaluate ferromagnetic spins along z, antiferromagnetic spins, and ferromagnetic spins along x;the two vanadium atoms in the cell define the reported per-vanadium normalization. 
+
+A.2 Model and training settings 
+
+All four models are trained independently within the same general framework. They use 64-dimensional embedding and hidden channels, truncate the structural, magnetic, and output tensor ranks at two, and use a maximum body order of three. The structural radial filters contain eight Bessel functions from 1.0 ˚ A to the dataset-specific cutoff, followed by a two-layer (64 , 64) multilayer perceptron with SiLU activation; a fifth-order polynomial envelope imposes the cutoff. The FeAl model uses a 5.0 ˚ A cutoff, three structural and three spin interaction layers, and species-dependent linear-Chebyshev spin-radial intervals of 0.001–4.0 μB
+
+for Fe and 0–0.3 μB for Al. The noncollinear and collinear Fe models use the same cutoff and layer counts, with a spin-radial interval of 0.001–5.0 μB. These three models include the zeroth-order spin-pair basis and a two-layer (64 , 64) spin self-interaction head, and are trained without explicit SOC. The H-phase monolayer VSe 2 model uses a 6.0 ˚ A cutoff, a 1.5 μB spin-radial upper bound, two structural interaction layers, three spin interaction layers, and explicit SOC coupling. The FeAl loss assigns equal unit weights to energy, atomic-force, stress, and magnetic-force MSEs, whereas the other three losses assign equal unit weights to energy, atomic-force, and magnetic-force MSEs. Structure batch sizes are 16 for FeAl and VSe 2 and four for both Fe models. All models use AdamW with AMSGrad, zero weight decay, an initial learning rate of 10 −3, and 100 warmup steps; ReduceLROnPlateau uses a reduction factor of 0.8 for FeAl and VSe 2 and 0.9 for the Fe models, with a patience of ten evaluations. For the FeAl comparison, the reported mMTP row corresponds to the Nψ = 4 magnetic-basis model fitted with we = 1, wf = 0 .01 ˚ A2, ws = 0 .001, and magnetic-force weight wt = 0 .1 μ2B [10]. 15 A.3 First-principles settings 
+
+For FeAl, reference energies, atomic forces, stresses, and magnetic forces were computed using DFT and constrained DFT in ABINIT with PAW pseudopotentials, the PBE functional, a 6 × 6 × 6 k-point grid, and a 25 Hartree cutoff [10, 24]. For noncollinear Fe, the released LCAO labels were calculated with the DZP-7au-v2.0 numerical atomic-orbital basis and contain energies, atomic forces, and magnetic forces obtained as energy derivatives with respect to the constrained atomic magnetic moments [25]. The first-principles calculations underlying the noncollinear Fe-DeepSpin benchmark included SOC; the source study noted that SOC effects in pure Fe are weak and smaller than the intrinsic errors of its model [25]. For the collinear Fe energy–volume benchmark, the reference labels were calcu-lated with ABACUS in collinear LCAO mode [33, 34] using the PBE functional [35], an ONCVPSP norm-conserving Fe pseudopotential ( Fe.upf ), and the DZP-7au-v2.0 numerical atomic-orbital file Fe gga 7au 100Ry 4s2p2d1f.orb . The calculations used ecutwfc=100 Ry, kspacing=0.14 Bohr −1, Gaussian smearing with a width of 0.01 Ry, Broyden mixing, and scf thr=1e-6 Ry. Signed site moments along the collinear z axis were constrained following the Lagrange-multiplier formula-tion of Dederichs et al. [36], as implemented in ABACUS DeltaSpin [37], using 
+
+nspin=2 , sc mag switch=1 , signed per-atom sc targets, onsite radius=3.0 Bohr, 
+
+sc thr=1e-7 μB, nsc=100 , alpha trial=0.01 , and sccut=3.0 .The H-phase monolayer VSe 2 first-principles reference calculations were performed with ABACUS in the linear-combination-of-atomic-orbitals mode [33, 34]. They used the GGA/PBE exchange-correlation functional [35], fully relativistic norm-conserving PseudoDojo pseudopotentials [38], double-ζ plus polarization numerical atomic or-bitals, a 5 × 5 × 1 k-point mesh, a 20 ˚ A out-of-plane cell length, and ecutwfc=120 Ry. The calculations were noncollinear with SOC enabled and used constrained-spin set-tings following the DeltaSpin approach [37], with sc mag switch=1 , sc thr=1e-5 μB,
+
+nsc=400 , nsc min=2 , alpha trial=0.01 , and sccut=3 . Gaussian smearing with a width of 0.01 Ry, Broyden mixing, a self-consistent-field threshold of 10 −6 Ry, and a maximum of 400 SCF iterations were used; symmetry was disabled, atomic forces were evaluated, and DFT-D3 dispersion corrections were included [39]. 
+
+# B Finite-temperature spin-dynamics protocol 
+
+The reported finite-temperature calculations propagate fixed-length spins while holding the atomic positions fixed. Temperature points were sampled from 200 to 600 K, with a denser grid between 400 and 450 K. Most temperatures were run for 50000 steps with a 1 fs time step; the 410–450 K region was extended at the same target temperatures because of the large fluctuations near the ordering crossover. The notation and energy-to-field conversion follow the definitions in the main text; we use Gilbert damping α = 0 .1. No explicit radial projection is applied to bML  
+
+> i
+
+; the cross products remove its component parallel to si.The stochastic equation is interpreted in the Stratonovich sense and integrated using the semi-implicit B (SIB) method of Mentink et al. [23]. For a time step ∆ t,independent vectors ηi ∼ N (0 , I 3) define the dimensionless rotation increment Ωi = γ∆t
+
+(1 + α2)μiμB
+
+bML  
+
+> i
+
++ αs i × bML 
+
+> i
+
+
+
++ 11 + α2
+
+s
+
+2αγk BT ∆tμiμB
+
+ηi. (19) 16 The discrete thermal increments therefore obey 
+
+D
+
+∆Ω th 
+
+> iλ
+
+∆Ω th 
+
+> jκ
+
+E
+
+= 2αγk BT ∆t
+
+(1 + α2)2μiμB
+
+δij δλκ . (20) The SIB update solves 
+
+s′ 
+
+> i
+
+− si = − si + s′
+
+> i
+
+2 × Ωi, (21) first for a predictor and then for the final spin after recomputing the learned spin force at the predictor midpoint. The same Gaussian vector ηi is used in both stages. This Cayley-type update preserves |si| algebraically, so no separate spin renormalization is applied after a time step. The simulated system contains 900 vanadium sites with μi = 1 and 1800 nonmag-netic selenium sites with zero stored moments; the selenium sites are not propagated by the spin update or included in the denominator of the normalized magnetic order parameter. The initial spin state is the spin configuration stored in the input trajectory. Observables are recorded every 100 integration steps, corresponding to 0.1 ps. For temperatures sampled with continuation runs, the selected logs are the continuation segments initialized from the preceding trajectory. At the standard temperature points, the first 5 ps of the selected log is discarded as equilibration, leaving 45 ps for production averaging. For the 410–450 K continuation range, the first 20 ps is discarded and the longer remaining segment is used for production averaging, leaving approximately 200 ps of production data in the extended temper-ature window. The remaining samples are divided into non-overlapping blocks of 200 recorded samples, or 20 ps per block, with incomplete trailing samples ignored. Each standard-temperature trajectory therefore contributes two complete blocks, and its incomplete trailing 5 ps is discarded. Error bars are block-to-block standard deviations. 17

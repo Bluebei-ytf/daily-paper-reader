@@ -1,0 +1,298 @@
+Title: Accelerating dynamic simulations of photoexcited materials and their evolution by electron-informed machine learning
+
+URL Source: https://arxiv.org/pdf/2609.01492v1
+
+Published Time: Wed, 02 Sep 2026 01:40:53 GMT
+
+Number of Pages: 11
+
+Markdown Content:
+# Accelerating dynamic simulations of photoexcited materials and their evolution by electron-informed machine learning 
+
+Yunzhe Jia, Fankai Xie, and Yunfei Bai 
+
+Beijing National Laboratory for Condensed Matter Physics and Institute of Physics, Chinese Academy of Sciences, Beijing 100190, China and School of Physical Sciences, University of Chinese Academy of Sciences, Beijing 100049, China 
+
+Miao Liu ∗
+
+Beijing National Laboratory for Condensed Matter Physics and Institute of Physics, Chinese Academy of Sciences, Beijing 100190, China 
+
+Cui Zhang †
+
+Beijing National Laboratory for Condensed Matter Physics and Institute of Physics, Chinese Academy of Sciences, Beijing 100190, China and Songshan Lake Materials Laboratory, Dongguan, Guangdong 523808, China 
+
+Sheng Meng ‡
+
+Beijing National Laboratory for Condensed Matter Physics and Institute of Physics, Chinese Academy of Sciences, Beijing 100190, China School of Physical Sciences, University of Chinese Academy of Sciences, Beijing 100049, China and Songshan Lake Materials Laboratory, Dongguan, Guangdong 523808, China 
+
+Nonadiabatic coupled electron-nuclear dynamics upon electronic excitation underpin the mi-croscopic mechanism and rational modulation of diverse photoinduced functional phenomena in materials, yet their direct first-principles simulations remain computationally demanding. Here we develop a framework for nonadiabatic excited-state machine-learning molecular dynamics (EMLMD) simulations, where the nonequilibrium electronic information upon photoexcitation such as electron temperature is rigorously calibrated from high-precision real-time time-dependent density functional theory (rt-TDDFT) benchmark simulations, enabling accurate reconstruction of excited-state poten-tial energy surfaces (PES). This framework natively incorporates the excited-state electron–phonon couplings and intrinsically captures photoinduced phonon anharmonicity, both of which are missing in standard machine learning molecular dynamics, thus delivering first-principles-level accuracy for excited-state atomic evolutions. Large-scale EMLMD simulations resolve time- and momentum-resolved phonon dynamics in photoexcited materials, directly uncovering the competition between photogenerated coherent phonons and thermal phonons during photoinduced phase transition of bismuth. It also simultaneously resolves elusive atomic-scale microscopic dynamics and global structural rearrangement for selenium photoamorphization. Balancing high accuracy and efficiency, EMLMD offers a versatile paradigm to tackle key challenges in the study of complex excited-state molecular dynamics. 
+
+> Keywords: excited state, machine-learning potential, non-adiabatic molecular dynamics, light-induced phase transition.
+
+I. INTRODUCTION 
+
+Unraveling the dynamical evolution of coupled electron–nuclear systems is fundamental in understand-ing exotic physical behaviors of materials upon pho-toexcitation, covering a rich spectrum of light-induced phenomena such as photoinduced superconductivity [1, 2], structural phase transitions [3–5], transient fer-roelectric phases [6, 7], photo-induced amorphization    
+
+> ∗mliu@iphy.ac.cn
+> †cuizhang@iphy.ac.cn
+> ‡smeng@iphy.ac.cn
+
+[8, 9] and nonthermal melting [10]. In state-of-the-art first-principles excited-state simulations, real-time time-dependent density functional theory (rt-TDDFT) combined with surface hopping or Ehrenfest dynamics serves as the primary tool for describing excited-state electronic dynamics and nonadiabatic electron–phonon coupled evolution. In particular, excited-state dynamics is indispensable for characterizing structural evolution with significant atomic displacement, including phase transitions and photochemical reactions, where electron– phonon coupling evolves intricately under electronic ex-citation [11–15]. Despite its rigorous physical accuracy and substantial advances in revealing the microscopic mechanisms of excited-state electron–phonon dynam-arXiv:2609.01492v1 [cond-mat.mtrl-sci] 1 Sep 2026 2ics over the past decade, the first-principles framework suffers from prohibitive computational costs. This inher-ent limitation strictly confines its applications to sub-picosecond time scales and hundred-atom spatial scales, making it incapable of capturing long-time and large-scale physical processes, such as photo-driven long-lived structural relaxation [16] and the nucleation-and-growth kinetics of phase transition [17], thereby remaining a critical spatiotemporal bottleneck in this field. To reduce the high computational cost of first-principles simulations, phenomenological theoretical models have been widely adopted for excited-state dy-namic simulations. The two-temperature model (TTM) [18] is the most popular representative scheme, which simplifies the photoexcited system into two indepen-dently thermalized subsystems (electrons and ions) with intrinsic thermal couplings. Although its complexity can be extended by introducing more sophisticated consid-erations [19–21], the core assumption of dual thermal equilibrium within a single material remains unchanged. This approximation is feasible for simulating warm dense matter [22, 23], where the electron and ion subsystems exhibit distinct temperatures, while the short-range or-ders as well as the evolution of atomic-scale local mi-crostructures can be safely neglected. However, it fails to describe crystalline phase transitions accurately, as it ignores crucial spatial correlations and cannot account for the non-thermal electronic distribution prevailing in the early stage of photoexcitation, leading to inher-ent inaccuracies in modeling light-induced structural evolution of solid materials. The time-dependent Boltzmann equation (TDBE) ap-proach further optimizes the description of non-thermal electronic behaviors and enables the differentiated char-acterization of coupling strengths between electrons and individual phonon modes, while simultaneously describ-ing the evolution of both electron and phonon popu-lations. Nevertheless, TDBE still relies on multiple restrictive approximations: (i) it adopts the Marko-vian approximation based on Fermi’s golden rule; (ii) it treats electron–phonon coupling matrix elements as time-invariant constants during excited state evolution; (iii) it employs the harmonic approximation for phonon dy-namics, neglecting intrinsic phonon–phonon anharmonic interactions. Numerous experimental and theoretical studies have demonstrated that dynamically evolving electron–phonon couplings and phonon anharmonicity dominate the microscopic evolution of photoexcited ma-terials [1, 2, 24–26]. Consequently, TDBE is unable to reproduce key excited-state dynamic features compre-hensively, restricting its application in precise structural dynamic simulations. Conventional first-principles methods deliver rigorous excited-state nonadiabatic dynamics but cannot scale to large systems over extended timescales, while simpli-fied two-temperature and excited-state decomposition methods fail to capture intrinsic time-variant electron– phonon couplings and full phonon anharmonicity, yield-ing incomplete microscopic descriptions of nonequilib-rium structural evolution. To address this long-standing challenge, here we develop an advanced excited-state machine learning molecular dynamics (EMLMD) frame-work that embeds time-evolving electronic information (for example, multiple electron temperatures) as an in-dependent dynamic degree of freedom and reconstructs precise excited-state PES from rt-TDDFT benchmark trajectories, as illustrated in Fig. 1. This architecture natively encodes excited-state electron–phonon coupling matrix elements and full phonon–phonon anharmonic in-teractions, retaining predictive first-principles accuracy while substantially reducing the computational cost of large-scale and long-time excited state dynamic simu-lations. We systematically apply this approach to two paradigmatic photoinduced transformations in materials across thousands of atoms: light-driven phase transi-tion of bismuth and photoamorphization of selenium. Large-scale EMLMD simulations faithfully reproduce full laser-driven phase transition dynamics of metallic bismuth, resolving time- and momentum-resolved non-
+
+Γ phonon distributions in photoexcited bismuth and directly uncovering the competitive dynamics between laser-generated coherent phonons and thermal disor-dered phonons during phase transformation. For the photoamorphization of selenium, our work simultane-ously reveals previously inaccessible atomic-scale struc-tural rearrangement pathways and macroscopic global amorphization characteristics.   
+
+> II. RESULTS AND DISCUSSION A. Framework of EMLMD
+
+For electron–nuclear systems evolving at the ground and equilibrium states, the atomic structure uniquely determines the free energy of the system, built upon the prevailing Born–Oppenheimer adiabatic approximation. Machine learning molecular dynamics (MLMD) methods [30–32] can accurately capture ground-state dynamical behaviors by learning the ground-state PES mapped from atomic configurations, achieving computational accuracy comparable to conventional ab initio molecular dynamics (AIMD) when the PES is well-trained. In contrast, the dynamic evolution of excited and nonequilibrium systems is predominantly governed by electron redistribution, electron–phonon coupling, and phonon–phonon scattering, thereby demanding accurate and efficient dynamical description. The full excited-state PES, which incorporates phase-space information pertaining to electron excitation, can be defined as 
+
+Epot [{RI (t)}, {eLi(t)}]. Here {RI (t)} corresponds to 3time-dependent atomic coordinates, while the finite-dimensional parameter set {eLi(t)} encodes the complete electron distribution information {fnk}, where f rep-resents the electron distribution function, while n and 
+
+k denote the energy level index and reciprocal lattice vector, respectively. On this rigorously defined excited-state PES, semiclassical ionic dynamics evolve following the Newtonian equation of motion: 
+
+MJ
+
+d2RJ
+
+dt 2 = −∇ RJ Epot [{RI (t)}, {eLi(t)}]. (1) A major challenge in constructing excited-state PES lies in the extremely high dimensionality of the elec-tronic phase spaces in condensed matter systems. Ex-plicitly retaining the complete Nn · Nk-dimensional elec-tronic information directly leads to computationally in-tractable dataset collection and neural network training. To resolve this bottleneck, we implement a physically informed dimensionality-reduction scheme that approxi-mates the full electron distribution via a finite-parameter            
+
+> Figure 1. Schematic diagram of the workflow of excited state machine learning molecular dynamics (EMLMD). Schematic diagram of an excited-state dynamic process. The illustration shows initial state and an instan-taneous state connected by evolution of both electronic and ionic system. a–b The evolution equations and the different scenarios that they might describe for the electronic ( a) and ionic ( b) subsystems, respectively. {RI}and {Li}represent atomic coordinates and labels of electronic structure respec-tively. DFT methods are used to generate training data, while rt-TDDFT trajectories provide the evolution of {Li}.Machine learning potential is trained based on self-developed graph neural network (GNN).
+
+function: 
+
+f (n, k, t ) = L({Li(t)}, n, k) + O(n, k, t ). (2) Here the parameter set {Li(t)} exhibits substantially reduced dimensionality compared with the original high-dimensional electronic phase-space variable {eLi(t)},where O(n, k, t ) denotes the residual fitting error. By adopting physically justified approximations tailored to the system under study, we minimize systematic fitting errors and obtain robust, low-dimensional parameter sets 
+
+{Li(t)}, enabling reliable construction of the excited-state potential functional Epot [{RI (t)}, {Li(t)}].For metallic systems, electrons reach approximate thermal equilibrium within 1 ps following photoexcita-tion [20], so that the nonequilibrium electron distribu-tion can essentially be parameterized by a single electron temperature, as illustrated in Fig. 1a(i). In contrast, photoexcited semiconductors [27] and semimetal mate-rials [28, 29] feature distinct Fermi–Dirac distributions for electrons and holes respectively after photoexcita-tion (Fig. 1a(ii)). Furthermore, systems with structural defects or intense excitation of characteristic energy lev-els require specific treatment of the occupation states associated with defects and excited energy levels to ac-curately describe the electron distribution (Fig. 1a(iii)). In Notes 2–3, using VO 2 and Se as prototype examples, we present methods for fitting the electron distributions in the second and third types of cases mentioned above. Whether such a level of complexity needs to be consid-ered in actual dynamical simulations depends on the specific scientific questions being addressed. Full dynamic evolution of excited-state systems re-quires self-consistent propagation of both ionic config-urations (Eq. 1) and electronic states, the evolution of the latter can be expressed by 
+
+dL i(t)
+
+dt = F[{RI (t)}, {Li(t)}] + I(i, t ), (3) where F represents the complex mapping function gov-erning electronic state evolution, and I(i, t ) refers to the residual error derived from the dimensionality re-duction approximation, O(n, k, t ). Direct numerical solution of this sophisticated mapping function is non-trivial. Within a region significantly smaller than the beam spot, the material is subject to quasi-uniform spatial irradiation, meaning that the electronic struc-ture evolves in an effectively uniform manner across space. The temporal evolution of electronic parameters is thus calibrated by analysing high-precision rt-TDDFT trajectories obtained from small-scale calculations (see supplementary information (SI) Note 1 for details). The proposed EMLMD framework fundamentally overcomes the spatiotemporal scale limitation inherent to conven-tional first-principles excited-state dynamic simulations. It enables large-scale atomic dynamical simulations while 4           
+
+> Figure 2. Machine learning of electron-temperature-dependent excited-state potential energy surfaces. a–b
+> KS orbital energy variations calculated by the graph neural network (GNN) and DFT, respectively, along the A 1gphonon displacement coordinate. Insets show the zero-point ( ∆τκα = 0 ) derivative evolution as a function of Te.cGNN-predicted total energy profile along the A 1gphonon displacement coordinate, with schematic illustrations of A7 and SC lattice structures. dTime evolution of structural order parameter γunder unexcited and laser-excited conditions. Black and gray lines represent dynamic trajectories with and without light irradiation, respectively. Red and blue backgrounds denote characteristic SC and A7 phase regimes, respectively, with arrows indicating the ideal structural parameters of each phase.
+
+preserving critical excited-state physical properties, par-ticularly electron–phonon couplings and phonon anhar-monic interactions that dominate the microscopic origin of photoinduced dynamic behaviors. The machine-learning interatomic potential (MLIP) employed in this work is developed based on the Graph-based Pretrained Transformer Force Field (GPTFF) network [30]. We further refine the network architecture to enhance its capability in capturing subtle structural distortions and fine excited-state structural variations. The training dataset is systematically assembled from extensive high-precision nonadiabatic MD simulations, covering diverse lattice and electron temperatures, equi-librium geometries of stable phase, perturbed transition-state configurations, as well as excited-state trajectories derived from rt-TDDFT calculations. This comprehen-sive dataset guarantees strong generalization and high accuracy of the resulting interatomic potential for simu-lating photoinduced dynamics.  
+
+> B. Photoinduced structural phase transitions
+
+To demonstrate the practical applicability of the ap-proach above and the new insights it can offer, we select a few representative materials upon photoexcitation as illustrative examples. Real-time experimental mea-surements demonstrated the photoinduced phase tran-sition of crystalline bismuth (Bi) from a low-symmetry semimetallic A7 phase to a high-symmetry simple cu-bic (SC) phase [31]. First-principles nonadiabatic sim-ulations based on rt-TDDFT reveal the microscopic nonequilibrium dynamic process underlying such a light-driven Bi structure evolution towards the SC phase (Fig. S5). Phonon projection analysis reveals that such a structure transition is primarily governed by a high-frequency characteristic phonon eigen mode, i.e., A 1g
+
+mode (see Fig. S6). We thus deploy a tailored neural net-work potential (NNP) based on our validated EMLMD framework (Fig. S7), which accurately captures the key 5
+
+Figure 3. Environment-temperature-dependent phonon dynamics of photoexcited bismuth. a–c Time evolution of structural order parameter γ (upper panel) and average number of phonons nσ for certain phonon branches (lower panel) at bath temperatures of 50 K, 100 K and 300 K under laser excitation. Red and blue backgrounds delineate SC and A7 phase domains. The A 1g mode corresponds to Γ-point Ph-12. d–f q-resolved phonon occupation distributions per atom at representative time points ( t ∼ 1700 fs) near peak phonon density for 50 K, 100 K and 300 K trajectories, with corresponding structural snapshots embedded as insets in (a–c). Circle size and colour encode phonon occupation magnitude. 
+
+PES features underlying the photoinduced A7-to-SC phase transition of bismuth. Notably, our excited-state ML-derived potential in-herently incorporates detailed electron–phonon coupling information across excited-state PES, enabling quanti-tative evaluation of the electron–phonon coupling ma-trix elements. These elements define the microscopic strength of electron–phonon interaction and are ex-pressed as [32]: 
+
+gmnν (k, q) = umk+q ∆qν vKS unk . (4) Here, m and n denote electronic energy levels, ν repre-sents individual phonon modes, and k and q correspond to electron and phonon wave vectors, respectively. The term ∆qν vKS describes the Kohn–Sham (KS) energy variation induced by unit atomic displacement along a specific phonon vibration mode, which can be further decomposed as: 
+
+∆qν vKS = lqν
+
+X
+
+> α,s
+
+r M0
+
+Ms
+
+esα,ν (q) ∂sα, qvKS , (5) and 
+
+∂sα, qvKS = X
+
+> l
+
+e−iq·(r−Rl) ∂V KS 
+
+∂τ sαp r−Rl
+
+. (6) In these expressions, s is the atomic index in the prim-itive cell, α denote the Cartesian directions, and τsαp 
+
+represents the displacement of atom s in the l-th super-cell along α direction. While V KS obeys the relation that 
+
+∆qν V KS = eiq·r∆qν vKS . Adopting the frozen-phonon approximation, the partial derivative of the KS potential is numerically evaluated via finite atomic displacement: 
+
+∂V KS 
+
+∂τ sα τ 0
+
+> sp
+
+∼= V KS (r; τ 0 
+
+> sαp
+
++ b) − V KS (r; τ 0
+
+> sαp
+
+)
+
+b , (7) and b ∥ es,ν (q). Where b is the displacement vector applied to atomic coordinates, and es,ν (q) denotes the vibration vector of a certain phonon mode. To quantitatively characterize the electron-temperature (Te) dependence of electron-phonon couplings, we extracted pure KS potential energy 6evolution by subtracting nuclear interaction contri-butions from the total energy (Fig. 2a–b, Fig. S8). The zero-point slope of each energy curve corresponds to the effective KS potential derivative (insets of Fig. 2a–b), which directly determines the magnitude of electron-phonon coupling matrix element. Notably, our EMLMD scheme faithfully captures the positive correlation between electron-phonon coupling strength and electron temperature, consistent with values from DFT calculations. Beyond electronically modulated electron–phonon interactions, the total potential energy directly determines atomic displacements and intrinsically incorporates phonon anharmonicity. Figure 2c presents the MLIP-predicted total energy 
+
+Vtot along the A 1g displacement coordination, which exhibits excellent consistency with benchmark DFT data (Fig. S8). Increasing Te gradually shifts the global minimum of PES from the A7-phase toward the SC-phase, demonstrating that photoinduced Bi structural transition is driven predominantly by electronic modulation rather than direct lattice heating. To elucidate the dynamic evolution of the photoin-duced phase transition in bulk bismuth, we perform large-scale MD simulations on a 4000-atom Bi A7-phase supercell (see Fig. S9) using the well-trained MLIP, un-der both laser-excited and ground-state conditions. All simulations are conducted at lattice temperatures below 100 K to suppress intrinsic thermal lattice fluctuations. The equilibrium system maintains a constant Te of 300 K, whereas photoexcited simulations adopted Te trajec-tories mimicking high-precision rt-TDDFT calculations (Fig. S1). Photoexcitation is introduced via a Gaussian-shape laser pulse initiated at 100 fs with a duration of 
+
+∼ 64 fs and a peak electric field intensity of 0.386 V/Å. We define a structural order parameter γ = ⟨γi⟩ to quantitatively distinguish the atomic structures between the A7 and SC phases of bismuth, while setting: 
+
+γi = 1 − α X 
+
+> j̸=k
+
+min 
+
+n
+
+cos 4 θjik , (cos θjik + 1) 4o
+
+. (8) Here i denotes the index of a given atom, and j and k
+
+corresponds to its two neighboring atoms. The α is a constant scaling factor used to numerically amplify the differences associated with small structural distortions, and here we set α = 600 . Ideal A7 and SC lattices yield 
+
+γ ≈ 0.1 and γ = 1 .0, respectively (Fig. 2c). As shown in Fig. 2d, under equilibrium conditions with constant 
+
+Te, the Bi lattice undergoes only thermal perturbation variation in γ, retaining the stable A7 phase. In con-trast, rapid elevation of Te upon laser excitation triggers an ultrafast A7-to-SC structural transition, unambigu-ously demonstrating that Te dominates the photoinduced structure transformation pathway. Notably, large-scale EMLMD simulations further re-veal a new competitive interplay between the photoin-duced phase transition and lattice thermal perturbation, whereby elevated lattice temperatures destabilize the photo-induced SC phase. Using identical Te evolution trajectories (Fig. 2d), we perform systematic simulations at bath temperatures of 50 K, 100 K and 300 K. Tracking the temporal evolution of the structure order parameter 
+
+γ in the upper panels of Fig. 3a–c shows that low environ-ment temperatures (50 K and 100 K) enable complete and persistent transition from the A7 phase ( γ < 0.5) to the SC phase ( γ > 0.5) for over 1 ps. At 300 K, however, intense lattice vibrations induce substantial structural fluctuations, disrupting the metastable SC phase and suppressing photoinduced structural transformation. To unravel the underlying phonon dynamic origin of the environment-temperature-dependent phase tran-sition behaviors, we implement the phonon projection analysis to quantify photoinduced phonon excitation and coherent evolution (see SI Note 4 for detailed derivation). The amplitude Qqσ of σ-th phonon mode at wavevector 
+
+q follows: 
+
+Qqσ ∝ X
+
+> α,s
+
+hp Ms eα 
+
+> qσ
+
+(s)
+
+i∗ X
+
+> l
+
+uαl (s)e−iq·Rl . (9) where Ms is relative atomic mass of atom s, uαl (s) denote the displacement of atom s in the l-th cell along the α
+
+direction, and eα 
+
+> qσ
+
+(s) represents the polarization vector of the σ-th phonon at the q point, obtained from DFT ab initio calculations. Simulations are performed with a large supercell containing 1000 repeated primitive cells of the A7-phase for large-scale dynamical sampling (Fig. S9). Within the harmonic approximation, the Hamiltonian of the phonon mode (q, σ ) is written as 
+
+Hqσ = 12
+
+ ˙Q∗ 
+
+> qσ
+
+˙Qqσ + ω2 
+
+> σ
+
+(q)Q∗ 
+
+> qσ
+
+Qqσ
+
+
+
+. (10) The phonon occupation number per-atom nqσ for the σ-th phonon at the wavevector q and the average phonon number density nσ for σ-th phonon branch are defined as: 
+
+nqσ = 1
+
+N · Hqσ
+
+ℏωσ (q) = 1
+
+N ·
+
+˙Q∗ 
+
+> qσ
+
+˙Qqσ + ω2 
+
+> σ
+
+(q)Q∗ 
+
+> qσ
+
+Qqσ
+
+2ℏωσ (q) ,
+
+(11) and 
+
+nσ = 1
+
+Nq
+
+X
+
+> q
+
+nqσ . (12) where N and Nq represent the total number of atoms in supercell and the number of sampled q points in the primitive cell, respectively. Time evolution of the individual average phonon num-ber density nσ shown in the lower panels of Fig. 3a–c identifies the A 1g mode (Ph-12) as the dominant con-tributor to photoinduced lattice distortion toward the SC phase. Distinct phonon dynamic responses emerge 7at different bath temperatures: At 50 K and 100 K, strong electronic excitation substantially activates the A1g mode, driving the system into the metastable SC phase that gradually relaxes back to the A7 phase as Te
+
+decays. At 300 K, persistent thermal lattice fluctuations give rise to sustained oscillations in both phonon occu-pation and structural order, precluding the formation of SC phase. Structural snapshots captured near the peak phonon number density ( ∼ 2 ps) are presented as insets in Fig. 3a–c. Here, purple color denotes the A7 phase ( −0.5 ≤ γ < 0.5), yellow represents the SC phase (γ ≥ 0.5), and silver indicates highly distorted lattice structures ( γ < −0.5). The q-point-resolved phonon oc-cupation distributions analysis in Fig. 3d–f reveals highly localized Γ-point excitation of the key A 1g mode (Ph-12), while phonon modes 5 and 6 are preferentially excited near the S-point, demonstrating spatially heterogeneous phonon excitation upon photoirradiation. To further quantify thermal perturbation effects on phonon coherence, we calculate the phonon coherence factor η as derived in SI Note 5. Fully coherent phonons yield η = 2 owing to linear scaling of projection am-plitude with supercell size ( Qk ∝ N ), whereas fully randomized thermal phonons converge to η → 1. Coher-ence factor analysis in Fig. S10 reveal that low temper-ature preserves strong Γ-point A 1g phonon coherence, stabilizing the photoinduced SC phase. At elevated tem-perature, by contrast, thermal perturbation disrupts the coherent phonon dynamics across most k-points, con-verting coherent photoinduced phonons into incoherent thermal fluctuations and ultimately suppressing forma-tion of the new phase. These findings establish a new competing mechanism: photoinduced coherent phonon excitation drives structural transformation, while ther-mal lattice perturbation suppresses and disrupts the emergence of light-induced new phase.  
+
+> C. Photoinduced amorphization
+
+Glassy chalcogenide semiconductors exhibit prominent structural reconstruction upon photoexcitation, hold-ing a great promise for advanced phase-change memory technologies [33–35]. As a prototypical chalcogenide material, the long-standing controversy regarding the structure of amorphous selenium stems from its suscepti-bility to laser- and heat-induced ring-to-chain structural transitions [36–38]. In situ extended X-ray absorption fine structure (EXAFS) spectroscopy indicated that pho-toexcitation increases the average coordination number of selenium through the formation of dynamic inter-chain bonds [39]. Nevertheless, a comprehensive micro-scopic understanding of the full dynamic pathway of photoinduced structural amorphization remains elusive. To address this gap, we perform large-scale EMLMD simulations on a 4000-atom homogeneous ring-based monoclinic amorphous selenium (m-αSe), systematically elucidating the laser-driven bond rearrangement and underlying mechanism of photoinduced amorphization. To quantitatively resolve the diverse local structural motifs emerging during dynamic evolution, we develop a coordination-number-based cluster analysis scheme. Adopting a bonding threshold of 2.5 Å to identify chemi-cally bonded atomic clusters, we define a set of quantita-tive structural descriptors for systematic cluster config-uration classification. We first introduce the parameter 
+
+Cn, which quantifies the number of atoms with a coordi-nation number of n within individual clusters. Further, we define a cluster-type order parameter ζ to categorize distinct structural units, which is approximately equal to the maximum number of neighbors of an atom in the cluster and reflects the relative structural complexity of the cluster. Simple structural motifs characterized by Cn≥3 = 0 are classified into four categories: isolated atoms ( ζ = 0 .5, C2 = 0 , C1 = 0 ), atomic dimers ( ζ = 1 .0,
+
+C2 = 0 , C1 > 0), finite-length chains ( ζ = 1 .5, C2 > 0,
+
+C1 > 0), and infinite chains or closed rings ( ζ = 2 .0,
+
+C2 > 0, C1 = 0 ). A hierarchical classification strategy is further established for complex branched and cyclic architectures. Clusters with minor branching ( C3 > 0,
+
+Cn≥4 = 0 ) yield ζ = 3 .0 + 0 .25 · eC2 ( eC2 is used to merge structures with the same shape but different sizes, see SI Note 6 for detailed definition), while highly branched architectures with four-coordinated nodes ( C4 > 0) cor-respond to ζ = 4 .0 + 0 .25 · C3. This quantitative classifi-cation scheme achieves precise structural identification and allows for color-coded visualization of all cluster types, as shown in Fig. 4a. We simulate laser-induced structural evolution of pris-tine m-αSe phase using a Gaussian laser pulse with a peak electric field of 0.257 V/Å, initiated at 100 fs. Statistical analysis of temporal evolution of cluster pop-ulation reveals a multistage amorphization mechanism (Fig. 4b). Immediately after Te reaches its maximum, the system undergoes rapid structural breakdown, where the initial cyclic architectures are completely fragmented into isolated atoms or atomic dimers. These fragmented units rapidly recombine into short linear chains within tens of femtoseconds. A mixed structural regime com-prising isolated atoms, dimers and simple chains persists from 400 fs to 1200 fs. Beyond 1.2 ps, the population of fragmented units declines drastically, while complex branched chains continuously grow and eventually domi-nate the system composition. Representative structural snapshots at key dynamic stages, colored according to our standardized cluster classification rules, validate this sequential structural transformation pathway (Fig. 4c). Dynamic evolution of cluster microstructures and size throughout the amorphization process (Fig. 4d) clearly reveals that primary bond cleavage in the rings initiates at 150–200 fs, followed by spontaneous re-bonding events 8               
+
+> Figure 4. Photo-induced amorphization dynamics of selenium. a Schematic illustration of typical clusters type, with cluster order parameter ζvalues labeled for each structural motif. bTime evolution of population percentage of distinct cluster species. Grey, blue, red and green lines correspond to isolated atoms/dimers, simple unbranched chains, ring structures and complex branched chains, respectively. cRepresentative structural snapshots of system at 0 fs, 180 fs, 200 fs, 1000 fs, 2000 fs and 4000 fs, colored according to the cluster classification criteria in (a). dTime evolution of cluster types ζ
+> and sizes throughout the photoinduced amorphization process. Color of each data point denotes cluster size. eStructure evolution of a representative large cluster identified at 2400 fs. Atoms constituting the 2400 fs cluster are colored orange, while atoms with direct or indirect bonding connections at intermediate time steps are colored gray. fStructure evolution of a second representative cluster at 2400 fs. Several segments of the main chain are distinguished by adjacent blue hues, while branched sub-chains are colored by adjacent orange hues, respectively.
+
+after 250 fs. No complex branched clusters are observed during 300–1200 fs, and the system is overwhelmingly populated by small clusters containing no more than ten atoms. Large-branched structures emerge after 1200 fs, along with the formation of clusters with more than 25 atoms. To elucidate the atomistic mechanism governing complex structure formation, we track the evolution-ary trajectory of individual large clusters. A represen-tative cluster demonstrates that multiple initial ring units undergo sequential bond scission and structural rearrangement to assemble into extended linear chain configurations (Fig. 4e), in line with the experimentally measured decrease in the average coordination number of Se upon photoexcitation [37]. Complementary tracking of a second cluster reveals frequent reversible connection and disconnection between side branches and main back-bones (Fig. 4f), providing direct microscopic pictures for the structural dynamics proposed by Hegedüs et al. [36, 39]. On one hand, molecular dynamic simulations can provide evolutionary details that are inaccessible by EXAFS spectroscopy. On the other hand, by specify-ing an ideal m-α-phase initial state, we can capture a much clearer, atomistic scale view of ring-to-chain trans-formation process during photoamorphization, whereas experiments inevitably deal with a far more intricate amorphous-to-amorphous evolution.  
+
+> III. DISCUSSION
+
+The TTM, TDBE, and EMLMD approaches repre-sent three distinct modelling paradigms for excited-state 9                 
+
+> Table I. Comparison of three computational methods. TTM TDBE EMLMD
+> Electronic subsystem Thermalized Non-thermal Thermalized Phonon subsystem Thermalized Thermalized Non-thermal e–ph coupling resolution Averaged Phonon-resolved Phonon-resolved e–ph coupling evolution Fixed Fixed Time-dependent ph–ph coupling Neglected Neglected Considered
+
+dynamic simulations, each built upon unique physical assumptions and numerical approximations. While all three methods enable the description of coupled electron– phonon dynamic evolution, their valid regimes of appli-cability differ substantially due to distinct theoretical constraints and approximations, as summarized in Ta-ble 1. Although modified TTM variants have been devel-oped to partially account for non-thermal electron dis-tributions in special cases [19, 20], the standard TTM framework is fundamentally designed for coupled dy-namic evolution of thermalized electronic and phonon subsystems. This method prioritizes macroscopic statis-tical thermodynamic properties over atomic-scale fast dynamics. It is therefore well suited for dynamic evolu-tion on extended timescales, but inherently limited in resolving sub-picosecond nonequilibrium and transient atomistic processes. In contrast, the TDBE method specializes in captur-ing non-thermal electronic dynamics. In addition to its intrinsic capability to incorporate phonon–phonon inter-actions and non-thermal phonon effects, TDBE exhibits unique superiority in scenarios where individual elec-tronic behavior dominates, including carrier transport, photoionization, and exciton formation, where electrons cannot be approximated as a thermalized ensemble. The method is particularly well-suited for low-excitation or ultrashort-timescale processes, where lattice displace-ment and structural perturbation remain marginal. Distinctively, the EMLMD method is specifically es-tablished to tackle strong photoexcitation scenarios char-acterized by substantial atomic motion and prominent nonadiabatic dynamics, exemplified by photoinduced phase transitions. Conventional theoretical simulations have long suffered from inherent spatiotemporal mis-matches with experimental observations of light-induced structural phase transitions. Experimentally resolved structural evolution typically proceeds on the picosecond-to-nanosecond timescale, whereas standard rt-TDDFT simulations are restricted to hundreds of femtoseconds. Moreover, nucleation and growth processes during the phase transition of realistic materials are spatially het-erogeneous and dispersed, which cannot be adequately captured by conventional small cell calculations. The EMLMD framework effectively resolves these critical bottlenecks while maintaining first-principles level accu-racy. Although the current implementation is limited to systems with quasi-thermalized electron distributions, its physical generality and applicability can be further extended. Incorporation of sophisticated electron distri-bution functions fitted to rt-TDDFT trajectories can sig-nificantly broaden the accessible electronic phase space in excited states. Furthermore, integration of machine learning neural networks enables intelligent training and automated evolution of electronic parameters, achiev-ing accurate excited-state dynamical propagation and faithful reproduction of rt-TDDFT nonadiabatic effects. Scaling of the EMLMD toward larger-scale systems will further allow the exploration of complex physical pro-cesses, including defect-modulated dynamics and hetero-geneous phase transitions.  
+
+> IV. CONCLUSION
+
+In this work, we develop a machine learning-based excited-state molecular dynamics framework that incor-porates electronic order parameters (such as Te) as in-dependent dimensions to accurately reconstruct excited-state PES. The time evolution of electronic characteris-tics is rigorously derived from high-precision rt-TDDFT benchmark trajectories, which are obtained from small-scale first-principles calculations. This approach in-trinsically captures the excited-state electron–phonon coupling matrix elements and inherently incorporates phonon–phonon anharmonic interactions, enabling the construction of excited-state PES with first-principles accuracy. We comprehensively validate the reliability and universal applicability of EMLMD by two represen-tative photoinduced structural transformation processes: the photoinduced crystalline phase transition of bis-muth and photoamorphization of selenium. For bismuth structural transformation, our large-scale simulations provide time- and q-resolved phonon occupation infor-mation and directly visualize the competitive interplay between coherent photoexcited phonons and disordered thermal phonons. For selenium photoamorphization, the framework simultaneously resolves atomistic microscopic dynamics and global structural transformation charac-teristics. Systematic comparison with the conventional TTM and TDBE methods further highlights the unique 10 advantages and broad prospects of the newly developed EMLMD framework for probing the underlying dynamic processes and microscopic mechanisms of light-induced phenomena in functional materials. 
+
+METHODS Network training and dynamics based on the MLIP 
+
+The generation of training data is based on a series of AIMD trajectories, generated by the SIESTA [40] software package. The initial structures of the trajec-tories include the A7 phase, the SC phase, as well as some perturbed structures along the phase transition pathway. The trajectory dynamics cover electron tem-peratures ranging from 300 K to 24 ,000 K, while the ionic temperatures span a subset from 100 K to 500 K. Over 18 ,000 data points were extracted from all AIMD trajectories for network training. The network architec-ture was modified from the open-source GPTFF [30] software package by altering certain network modules to enable the recognition of more detailed structural changes. Additionally, the parameter dimensions for electronic information were expanded to allow the in-clusion of labels such as, but not limited to, electron temperature. The dynamics simulation was performed using the Python ASE package under the NVT ensemble. The ionic temperature was maintained at 100 K, with a timestep of 0.2 fs for a total of 20 ,000 steps. 
+
+First-principles excited-state molecular dynamics simulations 
+
+First-principles non-adiabatic molecular dynamics sim-ulations were performed using time dependent ab ini-tio package (TDAP) [41, 42], where the electron dy-namics are captured within the framework of real-time time dependent density functional theory (rt-TDDFT) and the coupled motion of electrons and nuclei is de-scribed by Ehrenfest dynamics [43]. The bismuth crys-tal is simulated with 2 × 2 × 2 supercell, containing 32 atoms. The initial lattice dimensions of the supercell are 13 .36 Å, 9.20 Å and 9.63 Å. A numerical atomic-orbital basis set with double-zeta polarization (DZP) and Troullier–Martins pseudopotentials is adopted. We employ the PBE version generalized gradient approxi-mation (GGA) [44] to describe the electronic exchange correlation interaction of the total energy. An auxil-iary real-space grid equivalent to a plane-wave cutoff of 150 Ry is used and the Brillouin zone is sampled by a 2 × 3 × 3 k-mesh. A linearly polarized laser pulse is applied with a Gaussian-enveloped waveform E(t) = 
+
+E0 cos( ωt ) exp −(t − t0)2/(2 σ2), where the photon en-ergy ℏω is 1.55 eV, the field intensity E0 = 0 .386 V/Å and the time to the peak t0 = 32 fs. The time step of 0.04 fs is applied for both electron and ion motions, evolving in a constant pressure-energy (NPE) ensem-ble, where pressure is controlled by Parrinello–Rahman method [45]. 
+
+Band structure and phonon calculations 
+
+Band structures are calculated via Vienna Ab Initio Simulation Package (VASP) [46] adopting the projector augmented wave (PAW) method. Phonon frequency and eigenvectors are computed via density-functional-perturbation theory (DFPT) with the PHONOPY [47].                                            
+
+> [1] D. Fausti et al., Science 331 , 189–191 (2011). [2] M. Mitrano et al., Nature 530 , 461–464 (2016). [3] M. Y. Zhang et al., Phys. Rev. X 9, 021036 (2019). [4] B. Kundys, M. Viret, D. Colson and D. O. Kundys, Nat. Mater. 9, 803–805 (2010). [5] J. Xu, D. Chen and S. Meng, Sci. Adv. 8, eadd2392 (2022). [6] T. Nova, A. Disa, M. Fechner and A. Cavalleri, Science
+> 364 , 1075–1079 (2019). [7] X. Li et al., Science 364 , 1079–1082 (2019). [8] A. Kolobov and S. Elliott, J. Non-Cryst. Solids 189 ,297–300 (1995). [9] T. Vasileiadis and S. N. Yannopoulos, J. Appl. Phys.
+> 116 , 103510 (2014). [10] A. Rousse et al., Nature 410 , 65–68 (2001). [11] M.-X. Guan et al., Phys. Rev. Lett. 128 , 015702 (2022). [12] C. Song, Q. Yang, X. Liu, H. Zhao, C. Zhang and S. Meng, J. Phys. Chem. Lett. 14 , 576–583 (2023). [13] J. Xu, D. Chen and S. Meng, J. Am. Chem. Soc. 143 ,10382–10388 (2021). [14] P. You et al., Nat. Mater. 23 , 1100–1106 (2024). [15] H. Zhao et al., Ultrafast Sci. 5, 0057 (2025). [16] I. Klett and B. Rethfeld, Phys. Rev. B 98 , 144306 (2018). [17] A. J. Sternbach et al., Nano Lett. 21 , 9052–9060 (2021). [18] J. K. Chen, D. Y. Tzou and J. E. Beraun, Int. J. Heat Mass Transfer 49 , 307–316 (2006). [19] E. Carpene, Phys. Rev. B 74 , 024301 (2006). [20] M. Uehlein, S. T. Weber and B. Rethfeld, Nanomaterials
+> 12 , 1655 (2022). [21] L. Jiang and H.-L. Tsai, J. Heat Transfer 127 , 1167– 1173 (2005). [22] G. E. Norman, S. V. Starikov, V. V. Stegailov, I. M. Saitov and P. A. Zhilyaev, Contrib. Plasma Phys. 53 ,129–139 (2013). [23] Q. Zeng and J. Dai, Sci. China Phys. Mech. Astron. 63 ,274611 (2020). [24] S.-Q. Hu, H. Zhao, C. Lian, X.-B. Liu, M.-X. Guan and
+
+11 
+
+S. Meng, npj Quantum Mater. 7, 14 (2022). [25] P. Suo et al., Phys. Rev. Lett. 126 , 227402 (2021). [26] A. Sinner and K. Ziegler, Ann. Phys. 418 , 168199 (2020). [27] A. Othonos, J. Appl. Phys. 83 , 1789–1830 (1998). [28] A. Crepaldi et al., Phys. Rev. B 86 , 205133 (2012). [29] I. Gierz et al., Nat. Mater. 12 , 1119–1124 (2013). [30] F. Xie, T. Lu, S. Meng and M. Liu, Sci. Bull. 69 , 3525– 3532 (2024). [31] S. W. Teitelbaum et al., Phys. Rev. X 8, 031081 (2018). [32] F. Giustino, Rev. Mod. Phys. 89 , 015003 (2017). [33] S. A. Kozyukhin, P. I. Lazarenko, A. I. Popov and I. L. Eremenko, Russ. Chem. Rev. 91 , RCR5033 (2022). [34] N. A. Bogoslovskiy and K. D. Tsendin, Semiconductors 
+
+46 , 559–590 (2012). [35] A. Srivastava, S. N. Tiwari, M. A. Alvi and S. A. Khan, 
+
+Mater. Res. Express 5, 015206 (2018). [36] A. Kolobov and K. Tanaka, Semiconductors 32 , 801–806 (1998). [37] A. Roy, A. V. Kolobov, H. Oyanagi and K. Tanaka, 
+
+Philos. Mag. B 78 , 87–94 (1998). [38] W. Lu et al., J. Am. Chem. Soc. 146 , 6345–6351 (2024). [39] J. Hegedüs, K. Kóháry, D. G. Pettifor, K. Shimakawa and S. Kugler, Phys. Rev. Lett. 95 , 206803 (2005). [40] J. M. Soler et al., J. Phys.: Condens. Matter 14 , 2745– 2779 (2002). [41] C. Lian, M. Guan, S. Hu, J. Zhang and S. Meng, Adv. Theory Simul. 1, 1800055 (2018). [42] P. You, D. Chen, C. Lian, C. Zhang and S. Meng, WIREs Comput. Mol. Sci. 11 , e1492 (2020). [43] B. F. E. Curchod, U. Rothlisberger and I. Tavernelli, 
+
+ChemPhysChem 14 , 1314–1340 (2013). [44] J. P. Perdew, K. Burke and M. Ernzerhof, Phys. Rev. Lett. 77 , 3865–3868 (1996). [45] M. Parrinello and A. Rahman, J. Appl. Phys. 52 , 7182– 7190 (1981). [46] G. Kresse and J. Furthmüller, Phys. Rev. B 54 , 11169– 11186 (1996). [47] A. Togo and I. Tanaka, Scr. Mater. 108 , 1–5 (2015).

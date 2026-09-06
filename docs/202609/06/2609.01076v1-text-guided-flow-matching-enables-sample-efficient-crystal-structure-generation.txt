@@ -1,0 +1,382 @@
+Title: Text-guided flow matching enables sample-efficient crystal structure generation
+
+URL Source: https://arxiv.org/pdf/2609.01076v1
+
+Published Time: Wed, 02 Sep 2026 01:11:54 GMT
+
+Number of Pages: 20
+
+Markdown Content:
+# Text-guided flow matching enables sample-efficient crystal structure generation 
+
+Wentao Li 11Tsinghua University 
+
+Abstract 
+
+Crystal generators can now propose periodic structures, but their control interfaces remain poorly matched to the mixed descriptors used in materials design. Text provides a compact way to combine composition, symmetry, prototype and property cues, yet it has not been clear whether such information can steer flow-based crystal generation. Here we introduce TFMat, a text-conditioned flow-matching framework that uses structured materials language as a semantic prior for a CrystalFlow generator. Across Perov-5, Carbon-24 and MP-20 crystal structure prediction benchmarks, TFMat improves one-candidate match rates over CrystalFlow and reaches a 92.04% MP-20 match rate with 20 candidates; in de novo generation, it improves element-count and density distribution alignment while retaining coarse property consistency in composition-selected outputs. These results position structured text as an inspectable control layer for translating human-readable materials intent into candidate crystals for downstream simulation and validation. 
+
+# Introduction 
+
+Generative modeling has changed the computational search for crystalline materials from enumerating known prototypes to proposing new periodic structures under chemical and functional constraints. The opportunity is large because stable crystals occupy a sparse subset of an enormous space of compositions, lattices and atomic arrangements. 1 High-throughput materials databases and community benchmark tools now provide the infrastructure for data-driven crystal design, 2–10 while graph neural networks and large-scale discovery pipelines have shown that learned atomic environments and interatomic representations can support accurate structure-property modeling. 11–18 The most useful generative model must therefore do more than populate a benchmark distribution: it must respond to the kinds of constraints that define an actual materials question. Such control becomes especially important when candidate structures must be ranked, relaxed and interpreted across downstream computations. The remaining challenge is not simply to generate valid crystals, but to make generation controllable in the language of materials design. Recent crystal generative models have addressed this challenge mainly by strengthening the geometric model. Conditional graph generators and physics-guided adversarial models established that chemical and symmetry constraints can improve validity, 19–21 and diffusion or flow-based methods then made it possible to jointly model periodic coordinates, lattices and atom types. 22–27 Other approaches introduced autoregressive crystal strings, language-model base distributions and large-scale property-conditioned diffusion. 28–30 Together 1arXiv:2609.01076v1 [cond-mat.mtrl-sci] 1 Sep 2026 these methods have clarified how to respect periodic geometry, but their control variables are often chosen for algorithmic convenience rather than for expressiveness. This gap is methodological as much as architectural, because realistic constraints rarely arrive as isolated labels. In parallel, materials natural-language processing has shown that chemical entities, synthesis recipes and property relations can be extracted from text using parsers, word embeddings and scientific language models. 31–38 These advances suggest that crystallographic metadata and language representations could become a shared control layer between human hypotheses, databases and generative models. This control layer is still underdeveloped. Most crystal generators are unconditional, conditioned only on composition, or driven by a small number of scalar labels. Such inputs are convenient for benchmarks, but they compress materials intent into a narrow representation: a scientist may know a formula, prototype family, space-group tendency, stability range and electronic-property expectation simultaneously, and these descriptors are often mixed across structured database fields and written descriptions. Text-guided diffusion models such as TGDMat and Chemeleon have recently shown that prompt representations can influence periodic materials generation, 39,40 and FlowLLM has explored language models as base distributions for flow-based generation. 29 However, it remains unclear whether a compact, frozen materials-language prior can improve a continuous crystal flow without replacing its geometric backbone. This is a more stringent question than adding another conditioning channel: if language merely repeats formula labels, its apparent benefit may reflect reconstruction from highly informative metadata rather than useful semantic control. The distinction matters for closed-loop and agentic materials workflows, where autonomous systems must translate research intent into candidates, pass them to simulation or synthesis modules, and keep the decision trail legible to researchers. 41–43 A useful text interface should therefore improve sample-efficient structure recovery now, expose where prompt information is most helpful, and remain honest about the boundary between controlled generation and open-ended discovery. Here we introduce TFMat, a text-guided extension of CrystalFlow designed to test that premise directly. TFMat keeps the flow-matching crystal generator as the central geometric model and adds a condition vector obtained from frozen MatSciBERT embeddings of structured materials prompts. The prompts are database-derived rather than free-form instructions; they include formula or composition information, symmetry descriptors and selected scalar properties, but not lattice vectors or fractional coordinates. This design isolates the contribution of the text prior more cleanly than replacing the entire generator, while keeping the task close to metadata-rich settings encountered in materials databases. We evaluate TFMat in composition-fixed crystal structure prediction (CSP) and text-conditioned de novo generation (DNG). In CSP, TFMat improves one-sample match rates over CrystalFlow on Perov-5, Carbon-24 and MP-20, with the largest gains on the constrained perovskite and carbon-network benchmarks, and the MP-20 gain persists under a 20-candidate evaluation budget. In DNG, TFMat does not dominate every validity metric, but it improves element-count and density distribution alignment and retains coarse formation-energy and band-gap cues in a composition-selected diagnostic subset. These results support a bounded conclusion: structured language descriptors can bias a flow-based crystal generator towards more relevant regions of crystal space, providing a practical interface for future materials discovery pipelines. 2Results 
+
+Structured prompts define two generation regimes 
+
+We first ask whether text conditioning helps under benchmark conditions that separate structural recovery from open-ended generation. The evaluation uses three standard crystal-generation datasets with increasing chemical and geometric diversity. 22,23,39 Perov-5 is a constrained five-atom perovskite benchmark and mainly tests recovery of a well-defined prototype family. Carbon-24 contains larger carbon unit cells and tests covalent-network generation in a chemically simple but geometrically demanding setting. MP-20 is a broad Materials Project-derived benchmark of inorganic crystals with up to 20 atoms per unit cell, and is therefore the most diverse dataset considered here. The same conditioning idea is evaluated in two regimes. In CSP, atom types and composition are fixed while the model predicts lattice parameters and fractional coordinates; this directly tests whether text improves recovery of a known target structure. In DNG, atom types, lattice and fractional coordinates are generated jointly after sampling the number of atoms, so the output is a text-conditioned crystal population rather than a single reconstruction. Throughout, TFMat receives structured prompts derived from database metadata, including formula, symmetry descriptors and selected property values where available. These prompts make the control signal reproducible, but they also define the scope of the claim: TFMat is evaluated as a structured text-conditioned generator, not as an unrestricted natural-language discovery system. 
+
+Text conditioning improves one-sample crystal structure prediction 
+
+The clearest test of sample efficiency is the one-sample CSP regime, where each test composition receives only one generated candidate. If the text condition is useful, it should increase the chance that this single trajectory enters the correct structural basin. Table 1 shows that TFMat does so consistently. Relative to CrystalFlow, the match rate increases from 53.69% to 91.33% on Perov-5, from 15.02% to 46.40% on Carbon-24 and from 67.65% to 77.80% on MP-20. This improvement is not confined to the easiest benchmark. Among the methods shown in Table 1, TFMat gives the highest one-sample match rate on all three datasets. The Carbon-24 result is particularly informative because the chemistry is fixed but the covalent networks are geometrically diverse; TFMat raises match rate by 31.38 percentage points and lowers RMSE from 0.3095 to 0.1353. On MP-20, TFMat improves structural retrieval even though its RMSE for matched structures is not the lowest. Representative matched structures are shown in Fig. 1. The result therefore points to a specific role for text: it helps select plausible basins of crystal space, while final geometric refinement remains a separate challenge.                                                          
+
+> Table 1: Single-sample CSP comparison across Perov-5, Carbon-24 and MP-20. Best values are bold and second-best values are underlined. Published baseline values are from TGDMat. 39 Match rates are percentages; lower RMSE is better.
+> Method Perov-5 Match Rate ↑Perov-5 RMSE ↓Carbon-24 Match Rate ↑Carbon-24 RMSE ↓MP-20 Match Rate ↑MP-20 RMSE ↓
+> P-cG-SchNet 48.22 0.4179 17.29 0.3846 15.39 0.3762 CDVAE 45.31 0.1138 17.09 0.2969 33.90 0.1045 DiffCSP 52.02 0.0760 17.54 0.2759 51.49 0.0631 TGDMat (Short) 56.54 0.0583 24.13 0.2424 52.22 0.0597 TGDMat (Long) 90.46 0.0203 44.63 0.2266 55.15 0.0572
+> CrystalFlow 53.69 0.0953 15.02 0.3095 67.65 0.0791 TFMat (Ours) 91.33 0.0449 46.40 0.1353 77.80 0.0868
+
+3AgPbSO 2 CsMnNOF TePdN 3   
+
+> C8C8C6
+> PbBrF K2Te TmMg
+> Perov5 Carbon24 MP20 Figure 1: Representative crystal structure predictions from TFMat. Each pair shows a ground-truth crystal (left) and a TFMat prediction (right). Atom species are distinguished by color and unit cells are outlined in black.
+
+Repeated sampling confirms the MP-20 retrieval gain 
+
+Repeated sampling tests whether the one-sample gain persists when the model is allowed to propose multiple candidates. In the 20-candidate MP-20 evaluation, a structure is counted as matched if at least one candidate matches the reference. TFMat again gives the highest match rate among the compared methods, reaching 92.04% compared with 85.38% for CrystalFlow and 82.02% for TGDMat (Long) (Table 2). The RMSE ranking defines the boundary of this claim. TGDMat (Short) reports the lowest RMSE at 0.0443, followed by TGDMat (Long) at 0.0483 and DiffCSP at 0.0492. TFMat therefore contributes most strongly to retrieval of the correct basin, rather than to the final geometric refinement of matched candidates. This distinction is practically important: in screening workflows, a candidate in the right basin can be passed to relaxation, whereas relaxation cannot rescue a sample that never reaches a relevant structural family.    
+
+> Table 2: MP-20 CSP comparison with 20 candidates. Best values are bold and second-best values are underlined. Published baseline values are from TGDMat. 39 Match rates are percentages.
+
+Method MP-20 Match Rate ↑ MP-20 RMSE ↓
+
+P-cG-SchNet 32.64 0.3018 CDVAE 66.95 0.1026 DiffCSP 77.93 0.0492 TGDMat (Short) 80.97 0.0443 
+
+TGDMat (Long) 82.02 0.0483 CrystalFlow 85.38 0.0614 TFMat (Ours) 92.04 0.0665 
+
+4Text-conditioned de novo generation reshapes generated populations 
+
+The DNG task is harder because the model must generate composition, lattice and coordinates jointly. Here the question changes from exact recovery to whether structured text can shape the generated population. TFMat’s main effect in this setting is distributional rather than a uniform increase in every validity metric. Relative to CrystalFlow, TFMat reduces element-count EMD from 0.2489 to 0.1990 and density EMD from 0.1701 to 0.0794, while retaining 99.06% structural validity and 99.67% coverage precision (Table 3). Representative generations are shown in Fig. 2. These changes indicate that the language condition biases population-level statistics without degrading geometric plausibility. The remaining bottleneck is atom-type generation, as reflected by weaker compositional validity than the unconditional baseline and the strongest published text-guided diffusion result.  
+
+> Table 3: MP-20 text-conditioned de novo generation. Values are percentages except for EMD metrics, where lower is better.
+
+Model Comp. valid ↑ Struct. valid ↑ COV-R ↑ COV-P ↑ # Elem. EMD ↓ Density EMD ↓
+
+CrystalFlow 83.21 98.74 99.45 99.76 0.2489 0.1701 TFMat (Ours) 81.32 99.06 98.91 99.67 0.1990 0.0794 
+
+5Pr 3In is Uranium Silicide structured and crystallizes in the cubic Pm-3m space group. Its formation energy per atom is -0.2732. Its band gap is 0.0. Its space group number is 221. Its E hull is 0.0. CsBr is Halite, Rock Salt structured and crystallizes in the cubic Fm-3m space group. Its formation energy per atom is -2.0529. Its band gap is 4.4247. Its space group number is 225. Its E hull is 0.0. TmIn 2Sn is beta Cu 3Ti-derived structured and crystallizes in the tetragonal P4/mmm space group. Its formation energy per atom is -0.3662. Its band gap is 0.0. Its space group number is 123. Its E hull is 0.0151. Yb 2TlIn is Heusler structured and crystallizes in the cubic Fm-3m space group. Its formation energy per atom is -0.4857. Its band gap is 0.0. Its space group number is 225. Its E hull is 0.0067. Zr 2VCo 3 is Frank-Kasper 𝜇 Phase-derived structured and crystallizes in the trigonal R-3m space group. Its formation energy per atom is -0.3281. Its band gap is 0.0. Its space group number is 166. Its E hull is 0.0. Tb 2HgTl is Heusler structured and crystallizes in the cubic Fm-3m space group. Its formation energy per atom is -0.4198. Its band gap is 0.0. Its space group number is 225. Its E hull is 0.0. Figure 2: Representative text-conditioned de novo generations. Each pair shows a reference MP-20 crystal (left) and a TFMat-generated crystal (right) conditioned on the corresponding structured prompt. 
+
+Surrogate property diagnostics support composition-selected consistency 
+
+The MP-20 prompts also contain formation-energy and band-gap cues, so we examined whether these coarse signals survive generation when composition is reasonably consistent. This is a surrogate diagnostic rather than a population-wide property benchmark. A composition-selected subset of 2,000 TFMat DNG candidates was evaluated with CGCNN regressors trained on MP-20 formation energy and band gap. 12 The selection procedure, element-match distribution and outlier rule are reported in Supplementary Note 4. Within this selected subset, CGCNN predictions were available for 1,994 structures. Formation-energy sign agreement is 95.94% (1,913/1,994). After removing 41 numerical outliers with absolute formation-energy error above 10 eV atom −1, the cleaned formation-energy MAE is 0.183 eV atom −1, the median absolute error is 0.114 eV atom −1 and Pearson 𝑟 = 0.962 (Fig. 3). Band-gap zero/nonzero type agreement is 83.65%, with MAE 0.419 eV, median absolute error 0.018 eV and Pearson 𝑟 = 0.817. These values support prompt-level consistency for the composition-selected subset, especially for formation-energy scale. They do not establish DFT stability, synthesizability or unfiltered population-wide property control. 65 4 3 2 1 0 
+
+> Formation energy (eV atom 1)
+> 0.0 0.1 0.2 0.3 0.4 0.5 0.6
+> Density
+
+a    
+
+> Reference CGCNN prediction
+> 02468
+> Band gap (eV)
+> 0.0 0.2 0.4 0.6 0.8 1.0
+> Density
+
+b      
+
+> Reference CGCNN prediction
+> 543210
+> Reference formation energy (eV atom 1)
+> 5
+> 4
+> 3
+> 2
+> 1
+> 0
+> Predicted formation energy (eV atom  1)
+> MAE=0.183 median AE=0.114 r=0.962
+
+c    
+
+> 02468
+> Reference band gap (eV)
+> 02468
+> Predicted band gap (eV)  MAE=0.419 median AE=0.018 r=0.817
+
+d
+
+> 0.5 1.0 1.5 2.0 2.5 3.0
+> Absolute error
+> 012345
+> Absolute error
+
+Composition-selected TFMat outputs (n=1953 after outlier removal) Figure 3: Surrogate property diagnostics for the composition-selected subset. Kernel density estimates and scatter panels compare reference prompt values with CGCNN-predicted properties for selected TFMat outputs. 
+
+Graph-embedding diagnostics support the population shift 
+
+The population-level picture is consistent with this interpretation. We embedded MP-20 test crystals and generated crystals with a pretrained graph encoder, then projected each generated set together with the MP-20 test set using t-SNE (Fig. 4). The unconditional CrystalFlow baseline and TFMat both cover broad regions of the test distribution, as expected from their shared geometric backbone. The text-conditioned run nevertheless shows a modest improvement in the per-panel histogram diagnostic, with Jensen-Shannon divergence decreasing from 0.6367 to 0.6200. A separate shared-coordinate diagnostic gives the same direction of change, with coverage recall increasing from 0.453 to 0.473, manifold precision increasing from 0.500 to 0.512 and shared t-SNE Jensen-Shannon divergence decreasing from 0.435 to 0.429 (Supplementary Table S7). The visualization is not a definitive metric because t-SNE distances are projection-dependent and the two displayed panels are projected separately. Its value is instead as a consistency check on the DNG statistics. TFMat changes the generated population most clearly through marginal distribution alignment, not through a large jump in validity, and the generated points remain spread across multiple clusters. This reduces the likelihood that the improved EMD values arise from a visually obvious collapse to a single prototype. 7Figure 4: t-SNE diagnostic for unconditional and text-conditioned MP-20 generation. Left: unconditional DNG baseline. Right: text-conditioned DNG. Each panel contains 9,046 MP-20 test structures and 10,000 generated structures and uses its own t-SNE projection. 
+
+# Discussion 
+
+TFMat supports a bounded conclusion: structured materials text can steer a flow-matching crystal generator towards more useful regions of crystal space. The strongest evidence is the one-sample CSP result, where the text-conditioned model improves match rate across Perov-5, Carbon-24 and MP-20 while retaining CrystalFlow as the central geometric generator. This is the regime in which semantic priors should be most visible, because the model has only one chance to choose a plausible structural basin. The comparison with TGDMat clarifies what kind of progress this represents. TGDMat remains a strong text-guided diffusion baseline, particularly for RMSE and MP-20 DNG compositional validity. TFMat is therefore not a universal replacement for diffusion-based text guidance. Its contribution is complementary: a compact language condition can be coupled to a continuous flow-matching generator and can improve sample-efficient structural retrieval. The MP-20 pattern, where match rate improves more clearly than RMSE, suggests that the current model is better at reaching relevant basins than at completing final geometric refinement. The DNG and diagnostic results extend, but also limit, this claim. Improvements in element-count and density EMDs, a modest shift in graph-embedding overlap, and composition-selected formation-energy and band-gap consistency all point in the same direction: structured text changes the generated distribution in ways that are not captured by validity alone. At the same time, compositional validity trails the best published text-guided diffusion result, and the property analysis depends on CGCNN surrogates and a selected subset. These observations make atom-type generation, exact prompt adherence and unfiltered property consistency the most important technical bottlenecks. The present prompts also define an important scope boundary. They are structured database-derived descriptions that include formula or composition-level information, space-group descriptors and scalar property values. The results therefore demonstrate controlled metadata-conditioned generation, not independent discovery from unconstrained natural language. The MP-20 prompt-control experiments support a prompt-content effect, but broader field ablations, unseen-prototype tests and stronger out-of-distribution prompt 8checks are needed to distinguish semantic generalization from reconstruction using highly informative prompts. Density-functional relaxation and unfiltered-population analysis will also be required before making claims about thermodynamic stability of newly generated materials. 44,45 
+
+Within these limits, the result suggests a practical design principle for future crystal generators. Text should not be treated only as annotation attached after generation; when embedded and fused into a geometric flow, structured materials descriptions can become an actionable prior over the search trajectory. This connects the benchmark result to larger closed-loop discovery workflows, where human hypotheses, database records, language-model planners and autonomous platforms need a shared representation of intent. TFMat is one step in that direction: it improves a current crystal-generation task while preserving an interface that can be inspected, edited and reused by both researchers and automated materials-science systems. 
+
+# Methods 
+
+Datasets and text conditions 
+
+We evaluated TFMat on Perov-5, Carbon-24 and MP-20, following the benchmark splits used by CDVAE, DiffCSP and TGDMat. 22,23,39 In CSP, the atom types and composition are fixed and the model predicts lattice and fractional coordinates. In DNG, the model generates atom types, lattice and fractional coordinates jointly after sampling the number of atoms from the empirical training distribution. Text conditions were generated from structured metadata fields associated with each crystal record. For MP-20, these prompts include formula-level identity, crystal-system or space-group information, formation energy, band gap and energy above hull when available. MatSciBERT embeddings were precomputed with mean pooling before training. The model therefore receives a structured semantic condition, not raw coordinates. 
+
+Flow-matching formulation for CSP 
+
+TFMat follows the flow-matching view of generative modeling, in which a neural network learns a velocity field that transports samples from a simple source distribution to the data distribution. 46–49 This deterministic transport perspective is complementary to denoising diffusion and score-based generative modeling. 50–52 For a crystal with 𝑁 atoms and fixed atom types a = (𝑎 1, . . . , 𝑎 𝑁 ), the generated state is 
+
+x = (k, F), (1) where k ∈ R6 is a six-dimensional lattice-polar representation and F ∈ [ 0, 1)𝑁 ×3 contains fractional coordinates. The target crystal is x1 = (k1, F1). We sample a source state 
+
+k0 ∼ N ( 0, 𝜎 2 
+
+> 𝑘
+
+I), F0 ∼ U ([ 0, 1)𝑁 ×3). (2) Fractional-coordinate displacement is wrapped with the minimum-image convention, 
+
+ΔF = (( F1 − F0 − 0.5) mod 1 ) − 0.5. (3) 9For 𝑡 ∼ U ( 0, 1), the interpolation is 
+
+k𝑡 = k0 + 𝑡 (k1 − k0), F𝑡 = F0 + 𝑡 ΔF. (4) The target velocities are 
+
+v★𝑘 = k1 − k0, v★𝐹 = Δ F. (5) The network predicts ( ˆv𝑘 , ˆv𝐹 ) from (k𝑡 , F𝑡 , a, 𝑡, c), where c is the projected text condition. The training loss is 
+
+LCSP = 𝜆 𝑘 ∥ ˆv𝑘 − v★𝑘 ∥22 + 𝜆 𝐹 𝑁 ∑︁ 
+
+> 𝑖 =1
+
+∥ ˆv𝐹,𝑖 − v★𝐹,𝑖 ∥22. (6) 
+
+Text-conditioned sampling 
+
+Sampling starts from the source state and integrates the learned velocity field with Euler updates. With 𝑇 
+
+integration steps and Δ𝑡 = 1/𝑇 ,
+
+k𝑡 +Δ𝑡 = k𝑡 + Δ𝑡 ˆv𝑘 , F𝑡 +Δ𝑡 = (F𝑡 + Δ𝑡 ˆv𝐹 ) mod 1 . (7) For text-conditioned models, the default conditional sampling factor is 1.0. Thus, the main reported TFMat runs should be interpreted as text-conditioned flow sampling. Additional guidance-factor sweeps vary the interpolation between conditional and unconditional decoder calls, in the broad spirit of classifier-free guidance, 53 but the present manuscript does not claim an isolated guidance contribution. 
+
+Extension to de novo generation 
+
+For DNG, the state includes a relaxed atom-type representation, 
+
+x = (Q, k, F), (8) where Q ∈ R𝑁 ×𝑑 𝑡 is decoded to discrete atom types at the end of sampling. The trajectory is 
+
+Q𝑡 = Q0 + 𝑡 (Q1 − Q0), k𝑡 = k0 + 𝑡 (k1 − k0), F𝑡 = F0 + 𝑡 ΔF. (9) The model predicts the joint velocity field ( ˆv𝑄 , ˆv𝑘 , ˆv𝐹 ), and the DNG training loss is 
+
+LDNG = 𝜆 𝑄 ∥ ˆv𝑄 − v★𝑄 ∥22 + 𝜆 𝑘 ∥ ˆv𝑘 − v★𝑘 ∥22 + 𝜆 𝐹 𝑁 ∑︁ 
+
+> 𝑖 =1
+
+∥ ˆv𝐹,𝑖 − v★𝐹,𝑖 ∥22. (10) 
+
+Evaluation metrics 
+
+CSP match rate and RMSE were computed with the pymatgen StructureMatcher 7 using a site tolerance of 0.5, an angle tolerance of 10 ◦ and a lattice tolerance of 0.3. In the 20-candidate evaluation, a test case is counted as matched if at least one generated candidate matches the reference. DNG metrics follow the CDVAE/DiffCSP/TGDMat protocol: compositional validity, structural validity, coverage recall (COV-R), 10 coverage precision (COV-P), and Earth mover’s distances for property or distribution statistics. 22,23,39 All percentages in tables are reported on a 0–100 scale. 
+
+Visualization and property diagnostics 
+
+The CSP and DNG qualitative panels were assembled from ASE renderings. The t-SNE diagnostics use pretrained graph-encoder embeddings of MP-20 test and generated structures. Each displayed t-SNE panel contains 9,046 test structures and 10,000 generated structures; a separate shared-coordinate t-SNE analysis is reported in the Supplementary Information. The property diagnostic used CGCNN regressors trained on MP-20 formation energy and band gap. The diagnostic subset was selected by ranking generated structures by element-composition match score; it is therefore a targeted consistency analysis rather than an unbiased estimate over all generated crystals. 
+
+# Data availability 
+
+The Perov-5, Carbon-24 and MP-20 benchmark datasets are publicly available through the CDVAE benchmark resources. 22 The derived text annotations, precomputed MatSciBERT embeddings, model checkpoints, generated structures and evaluation outputs are available from the TFMat dataset archive at https:// huggingface.co/datasets/littlepeachs/TFMat .
+
+# Code availability 
+
+The TFMat implementation and the scripts required to reproduce the reported generation, evaluation and figures are available at https://github.com/littlepeachs/TFMat .
+
+# Competing interests 
+
+The authors declare no competing interests. 
+
+# References 
+
+[1] Oganov, A. R., Pickard, C. J., Zhu, Q. & Needs, R. J. Structure prediction drives materials discovery. 
+
+Nature Reviews Materials 4, 331–348 (2019). https://doi.org/10.1038/s41578-019-0101-8 
+
+[2] Jain, A. et al. Commentary: The Materials Project: a materials genome approach to accelerating materials innovation. APL Materials 1, 011002 (2013). https://doi.org/10.1063/1.4812323 
+
+[3] Curtarolo, S. et al. AFLOW: An automatic framework for high-throughput materials discovery. Compu-tational Materials Science 58 , 218–226 (2012). https://doi.org/10.1016/j.commatsci.2012. 02.005 
+
+11 [4] Kirklin, S. et al. The Open Quantum Materials Database (OQMD): assessing the accuracy of DFT formation energies. npj Computational Materials 1, 15010 (2015). https://doi.org/10.1038/ npjcompumats.2015.10 
+
+[5] Draxl, C. & Scheffler, M. The NOMAD laboratory: from data sharing to artificial intelligence. Journal of Physics: Materials 2, 036001 (2019). https://doi.org/10.1088/2515-7639/ab13bb 
+
+[6] Choudhary, K. et al. The joint automated repository for various integrated simulations (JARVIS) for data-driven materials design. npj Computational Materials 6, 173 (2020). https://doi.org/10. 1038/s41524-020-00440-1 
+
+[7] Ong, S. P. et al. Python Materials Genomics (pymatgen): a robust, open-source Python library for materials analysis. Computational Materials Science 68 , 314–319 (2013). https://doi.org/10. 1016/j.commatsci.2012.10.028 
+
+[8] Ward, L., Agrawal, A., Choudhary, A. & Wolverton, C. A general-purpose machine learning framework for predicting properties of inorganic materials. npj Computational Materials 2, 16028 (2016). https: //doi.org/10.1038/npjcompumats.2016.28 
+
+[9] Ward, L. et al. Matminer: An open source toolkit for materials data mining. Computational Materials Science 152 , 60–69 (2018). https://doi.org/10.1016/j.commatsci.2018.05.018 
+
+[10] Dunn, A. et al. Benchmarking materials property prediction methods: the Matbench test set and Automatminer reference algorithm. npj Computational Materials 6, 138 (2020). https://doi.org/ 10.1038/s41524-020-00406-3 
+
+[11] Butler, K. T., Davies, D. W., Cartwright, H., Isayev, O. & Walsh, A. Machine learning for molecular and materials science. Nature 559 , 547–555 (2018). https://doi.org/10.1038/s41586-018-0337-2 
+
+[12] Xie, T. & Grossman, J. C. Crystal graph convolutional neural networks for an accurate and interpretable prediction of material properties. Physical Review Letters 120 , 145301 (2018). https://doi.org/10. 1103/PhysRevLett.120.145301 
+
+[13] Schutt, K. T. et al. SchNet: A deep learning architecture for molecules and materials. The Journal of Chemical Physics 148 , 241722 (2018). https://doi.org/10.1063/1.5019779 
+
+[14] Chen, C., Ye, W., Zuo, Y., Zheng, C. & Ong, S. P. Graph networks as a universal machine learning framework for molecules and crystals. Chemistry of Materials 31 , 3564–3572 (2019). https://doi. org/10.1021/acs.chemmater.9b01294 
+
+[15] Choudhary, K. & DeCost, B. Atomistic line graph neural network for improved materials property predictions. npj Computational Materials 7, 185 (2021). https://doi.org/10.1038/ s41524-021-00650-1 
+
+[16] Chen, C. & Ong, S. P. A universal graph deep learning interatomic potential for the periodic table. Nature Computational Science 2, 718–728 (2022). https://doi.org/10.1038/s43588-022-00349-3 
+
+12 [17] Deng, B. et al. CHGNet as a pretrained universal neural network potential for charge-informed atomistic modelling. Nature Machine Intelligence 5, 1031–1041 (2023). https://doi.org/10.1038/ s42256-023-00716-3 
+
+[18] Merchant, A. et al. Scaling deep learning for materials discovery. Nature 624 , 80–85 (2023). https: //doi.org/10.1038/s41586-023-06735-9 
+
+[19] Gebauer, N. W. A., Gastegger, M., Hessmann, S. S. P., Muller, K.-R. & Schutt, K. T. Inverse design of 3D molecular structures with conditional generative neural networks. Nature Communications 13 , 973 (2022). https://doi.org/10.1038/s41467-022-28526-y 
+
+[20] Kim, S., Noh, J., Gu, G. H., Aspuru-Guzik, A. & Jung, Y. Generative adversarial networks for crystal structure prediction. ACS Central Science 6, 1412–1420 (2020). https://doi.org/10.1021/ acscentsci.0c00426 
+
+[21] Zhao, Y. et al. Physics guided deep learning for generative design of crystal materials with symmetry constraints. npj Computational Materials 9, 104 (2023). https://doi.org/10.1038/ s41524-023-00987-9 
+
+[22] Xie, T., Fu, X., Ganea, O.-E., Barzilay, R. & Jaakkola, T. Crystal diffusion variational autoencoder for periodic material generation. International Conference on Learning Representations (2022). https: //openreview.net/forum?id=03RLpj-tc_ 
+
+[23] Jiao, R. et al. Crystal structure prediction by joint equivariant diffusion. Advances in Neural Information Processing Systems 36 (2023). https://openreview.net/forum?id=DNdN26m2Jk 
+
+[24] Luo, Y., Liu, C. & Ji, S. Towards symmetry-aware generation of periodic materials. Advances in Neural Information Processing Systems 36 (2023). https://openreview.net/forum?id=Jkc74vn1aZ 
+
+[25] Luo, X. et al. Deep learning generative model for crystal structure prediction. npj Computational Materials 10 , 254 (2024). https://doi.org/10.1038/s41524-024-01443-y 
+
+[26] Miller, B. K., Chen, R. T. Q., Sriram, A. & Wood, B. M. FlowMM: generating materials with Riemannian flow matching. International Conference on Machine Learning (2024). https://openreview.net/ forum?id=W4pB7VbzZI 
+
+[27] Luo, X., Wang, Z., Wang, Q. et al. CrystalFlow: a flow-based generative model for crystalline materials. 
+
+Nature Communications 16 , 9267 (2025). https://doi.org/10.1038/s41467-025-64364-4 
+
+[28] Antunes, L. M., Butler, K. T. & Grau-Crespo, R. Crystal structure generation with autoregressive large language modeling. Nature Communications 15 , 10570 (2024). https://doi.org/10.1038/ s41467-024-54639-7 
+
+[29] Sriram, A., Miller, B. K., Chen, R. T. Q. & Wood, B. M. FlowLLM: flow matching for material generation with large language models as base distributions. Advances in Neural Information Processing Systems (2024). https://openreview.net/forum?id=0bFXbEMz8e 
+
+13 [30] Zeni, C. et al. A generative model for inorganic materials design. Nature 639 , 624–632 (2025). 
+
+https://doi.org/10.1038/s41586-025-08628-5 
+
+[31] Swain, M. C. & Cole, J. M. ChemDataExtractor: a toolkit for automated extraction of chemical information from the scientific literature. Journal of Chemical Information and Modeling 56 , 1894–1904 (2016). https://doi.org/10.1021/acs.jcim.6b00207 
+
+[32] Kononova, O. et al. Text-mined dataset of inorganic materials synthesis recipes. Scientific Data 6, 203 (2019). https://doi.org/10.1038/s41597-019-0224-1 
+
+[33] Tshitoyan, V. et al. Unsupervised word embeddings capture latent knowledge from materials science literature. Nature 571 , 95–98 (2019). https://doi.org/10.1038/s41586-019-1335-8 
+
+[34] Devlin, J., Chang, M.-W., Lee, K. & Toutanova, K. BERT: pre-training of deep bidirectional transformers for language understanding. Proceedings of NAACL-HLT 4171–4186 (2019). https://doi.org/10. 18653/v1/N19-1423 
+
+[35] Beltagy, I., Lo, K. & Cohan, A. SciBERT: a pretrained language model for scientific text. Proceedings of EMNLP-IJCNLP 3615–3620 (2019). https://doi.org/10.18653/v1/D19-1371 
+
+[36] Gupta, T., Zaki, M., Krishnan, N. M. A. & Mausam. MatSciBERT: a materials domain language model for text mining and information extraction. npj Computational Materials 8, 102 (2022). https: //doi.org/10.1038/s41524-022-00784-w 
+
+[37] Shetty, P. et al. A general-purpose material property data extraction pipeline from large polymer corpora using natural language processing. npj Computational Materials 9, 52 (2023). https://doi.org/10. 1038/s41524-023-01003-w 
+
+[38] Song, Y., Jain, A., Ceder, G. & Ong, S. P. MatSci-NLP: evaluating scientific language models on materials science language tasks using text-to-schema modeling. Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (2023). https://aclanthology.org/ 2023.acl-long.609/ 
+
+[39] Das, K., Khastagir, S., Goyal, P., Lee, S.-C., Bhattacharjee, S. & Ganguly, N. Periodic ma-terials generation using text-guided joint diffusion model. International Conference on Learn-ing Representations (2025). https://proceedings.iclr.cc/paper_files/paper/2025/file/ 24e4e3234178a836b70e0aa48827e0ff-Paper-Conference.pdf 
+
+[40] Park, H. S., Onwuli, A. & Walsh, A. Exploration of crystal chemical space using text-guided gener-ative artificial intelligence. Nature Communications 16 , 4379 (2025). https://doi.org/10.1038/ s41467-025-59636-y 
+
+[41] MacLeod, B. P. et al. Self-driving laboratory for accelerated discovery of thin-film materials. Science Advances 6, eaaz8867 (2020). https://doi.org/10.1126/sciadv.aaz8867 
+
+[42] Szymanski, N. J. et al. An autonomous laboratory for the accelerated synthesis of novel materials. 
+
+Nature 624 , 86–91 (2023). https://doi.org/10.1038/s41586-023-06734-w 
+
+14 [43] Boiko, D. A., MacKnight, R., Kline, B. & Gomes, G. Autonomous chemical research with large language models. Nature 624 , 570–578 (2023). https://doi.org/10.1038/s41586-023-06792-0 
+
+[44] Hohenberg, P. & Kohn, W. Inhomogeneous electron gas. Physical Review 136 , B864–B871 (1964). 
+
+https://doi.org/10.1103/PhysRev.136.B864 
+
+[45] Kohn, W. & Sham, L. J. Self-consistent equations including exchange and correlation effects. Physical Review 140 , A1133–A1138 (1965). https://doi.org/10.1103/PhysRev.140.A1133 
+
+[46] Lipman, Y., Chen, R. T. Q., Ben-Hamu, H., Nickel, M. & Le, M. Flow matching for generative modeling. 
+
+International Conference on Learning Representations (2023). https://openreview.net/forum? id=PqvMRDCJT9t 
+
+[47] Liu, X., Gong, C. & Liu, Q. Flow straight and fast: learning to generate and transfer data with rectified flow. International Conference on Learning Representations (2023). https://openreview.net/ forum?id=XVjTT1nw5z 
+
+[48] Albergo, M. S. & Vanden-Eijnden, E. Building normalizing flows with stochastic interpolants. Inter-national Conference on Learning Representations (2023). https://openreview.net/forum?id= li7qeBbCR1t 
+
+[49] Tong, A. et al. Improving and generalizing flow-based generative models with minibatch optimal transport. Transactions on Machine Learning Research (2024). https://openreview.net/forum? id=CD9Snc73AW 
+
+[50] Ho, J., Jain, A. & Abbeel, P. Denoising diffusion probabilistic models. Advances in Neural Information Processing Systems 33 , 6840–6851 (2020). https://proceedings.neurips.cc/paper/2020/ hash/4c5bcfec8584af0d967f1ab10179ca4b-Abstract.html 
+
+[51] Song, Y., Sohl-Dickstein, J., Kingma, D. P., Kumar, A., Ermon, S. & Poole, B. Score-based generative modeling through stochastic differential equations. International Conference on Learning Representations 
+
+(2021). https://openreview.net/forum?id=PxTIG12RRHS 
+
+[52] Karras, T., Aittala, M., Aila, T. & Laine, S. Elucidating the design space of diffusion-based generative models. Advances in Neural Information Processing Systems 35 , 26565–26577 (2022). https:// openreview.net/forum?id=k7FuTOWMOc7 
+
+[53] Ho, J. & Salimans, T. Classifier-free diffusion guidance. NeurIPS Workshop on Deep Generative Models and Downstream Applications (2021). https://openreview.net/forum?id=qw8AKxfYbI 
+
+15 Supplementary Information 
+
+Supplementary Note 1: Dataset description 
+
+The benchmark tasks use the standard Perov-5, Carbon-24 and MP-20 crystal-generation splits adopted by prior crystal generative models. Perov-5 is a chemically constrained perovskite benchmark, Carbon-24 tests covalent carbon-network generation with larger unit cells, and MP-20 is the broadest benchmark used here, covering inorganic Materials Project structures with up to 20 atoms per unit cell. Table S1 reports the split sizes used for evaluation. The two evaluation regimes use the same data resources but impose different generation constraints. In CSP, atom types and composition are fixed and the model predicts lattice parameters and fractional coordinates. In DNG, the model generates atom types, lattice and fractional coordinates jointly after sampling the number of atoms from the empirical training distribution. The MP-20 t-SNE diagnostic uses 9,046 held-out structures, which is why the visualization count differs from the 8,000-sample CSP evaluation split.                  
+
+> Table S1: Benchmark split sizes and conditioning fields. The MP-20 t-SNE diagnostic uses 9,046 held-out structures.
+> Dataset Train Validation Test Text fields used for conditioning Perov-5 11,356 3,787 3,785 Formula, composition, prototype and symmetry-derived descriptors where available Carbon-24 6,090 2,032 2,030 Formula, carbon framework descriptors and symmetry-derived descrip-tors where available MP-20 27,131 9,046 8,000 Formula, crystal system or space group, formation energy, band gap and energy above hull where available
+
+Supplementary Note 2: Model and method details 
+
+TFMat keeps the CrystalFlow flow-matching backbone as the central generator and adds a structured semantic condition derived from database text. This design makes the comparison with CrystalFlow interpretable: the main architectural change is the conditioning pathway rather than a replacement of the geometric transport model. The condition vector is injected into the network as a fixed materials-language representation projected into the model conditioning space. The text conditions used in this work are generated from structured database fields rather than manually written prose. This choice makes the conditioning channel reproducible and keeps the comparison with CrystalFlow interpretable. Each prompt is assembled from fields that a materials scientist would plausibly use when specifying a target: formula or composition, prototype or structural family when available, crystal system or space-group descriptors, and selected scalar property values. The prompts intentionally do not contain fractional coordinates or lattice vectors. Each structured prompt is paired with a MatSciBERT representation. Embeddings are computed with a frozen MatSciBERT encoder followed by mean pooling over token representations. The resulting vector is projected into the TFMat conditioning space by a small multilayer perceptron before being fused with the flow-matching backbone. Freezing the text encoder reduces the number of trainable parameters and makes the experiment closer to a controlled test of whether existing materials-language representations can act as useful priors for crystal generation. Table S2 summarizes the metrics used across CSP and DNG. The match-rate and RMSE metrics are reference-based and therefore apply most directly to CSP, where a target structure is known for each composition. The DNG metrics are population-level diagnostics: they measure validity, coverage and distributional similarity, but they do not by themselves establish exact prompt recovery, thermodynamic stability or synthesizability. 16 Table S2: Metric definitions and interpretation. The table separates reference-based CSP metrics from population-level DNG diagnostics. 
+
+Metric What it measures Main limitation CSP match rate Fraction of test cases for which at least one generated candidate matches the reference under StructureMatcher thresholds Sensitive to matcher thresholds and to the number of generated candidates CSP RMSE Geometric error for matched structures after structure matching Only meaningful for matched structures; it does not penalize unmatched failures directly Compositional validity Fraction of generated compositions passing charge or composition-validity checks in the benchmark protocol Does not guarantee exact formula recovery from a text prompt Structural validity Fraction of generated structures passing basic geometric validity checks Does not guarantee stability after DFT relaxation COV-R Coverage recall of the generated distribution relative to the test set Depends on fingerprint choice and distance threshold COV-P Coverage precision of generated structures relative to the test distribution Can remain high even when some prompt-level attributes are not exactly recovered EMD statistics Earth mover’s distance between generated and reference distributions for selected scalar or count features Summarizes marginal distributions and may miss conditional mismatches at the individual-prompt level t-SNE JSD Histogram divergence between low-dimensional embedding distributions Projection-dependent and therefore used only as a qualitative diagnostic 
+
+This distinction explains why the manuscript reports several diagnostics rather than a single score. CSP match rate tests whether text conditioning improves the chance of entering the correct structural basin. DNG validity and EMD metrics test whether the generated population is plausible and distributionally aligned. The composition-selected CGCNN diagnostic asks a narrower question: among candidates that already agree well with the target element set, do generated structures preserve coarse property cues from the prompt? The answer is positive for formation-energy sign and moderate for band-gap type, but this remains a surrogate-model diagnostic. 
+
+Supplementary Note 3: CSP experiments and prompt-control analyses 
+
+The main text emphasizes the one-sample regime because it is the most direct test of sample efficiency. Table S3 reports both one-sample and 20-sample comparisons between CrystalFlow and TFMat. The gain is largest when the model has only one chance to sample a structure, especially on Perov-5 and Carbon-24. Under 20 evaluations, TFMat remains strongest on MP-20, while Carbon-24 and Perov-5 show a tradeoff in which TFMat gives lower RMSE but a slightly lower match rate than CrystalFlow.    
+
+> Table S3: Full CSP results for CrystalFlow and TFMat. Match rates are percentages. Δmatch is TFMat minus CrystalFlow in percentage points.
+
+Dataset Evaluations CrystalFlow match CrystalFlow RMSE TFMat match TFMat RMSE Δ match Perov-5 1 53.69 0.0953 91.33 0.0449 +37.65 Carbon-24 1 15.02 0.3095 46.40 0.1353 +31.38 MP-20 1 67.65 0.0791 77.80 0.0868 +10.15 Perov-5 20 100.00 0.0416 96.62 0.0349 -3.38 Carbon-24 20 89.21 0.2208 85.02 0.1561 -4.19 MP-20 20 85.38 0.0614 92.04 0.0665 +6.66 
+
+17 The prompt conditions used for CSP are structured rather than free-form. Table S4 lists the fields and their intended roles. The structured-prompt design is best viewed as a controlled materials-metadata interface: it is more reproducible than natural prose, but it is weaker than coordinate conditioning because it does not provide fractional coordinates or lattice vectors.  
+
+> Table S4: Prompt fields used as structured text conditions. Field availability varies across datasets and records. The table describes the intended semantic role of each field rather than a guarantee that every record contains every field.
+
+Prompt field Semantic role Important limitation Formula or composition Defines the chemical identity or composition-level target and gives the model a strong chemical prior Highly informative for CSP; shuffled-prompt and field-ablation controls are needed to quantify leakage Prototype or structural family Provides human-readable structural context when available Not uniformly available across all records Crystal system or space group Encodes coarse symmetry information that may constrain lattice and site patterns Exact symmetry recovery is not guaranteed by population-level DNG metrics Formation energy Provides a coarse stability cue for property-aware generation Used as a scalar text value, not as a DFT relaxation target during sampling Band gap Provides an electronic-type cue, especially zero/nonzero gap information Band-gap prediction is intrinsically noisier than formation-energy prediction in the CGCNN diagnostic Energy above hull Provides a metastability-related descriptor when available Missing values and database uncertainty limit its use as a strict generation target 
+
+Prompt-control experiments on MP-20 test whether the improvement depends on prompt-content alignment rather than only on extra conditioning parameters (Table S5). A milder property-shuffle control keeps formula and symmetry fields fixed while replacing scalar property values from chemically related donor prompts; it retains most of the full-text gain, consistent with formula and symmetry being the dominant CSP cues. A partial embedding perturbation replaces 20% of prompt embeddings by randomly shuffled embeddings and performs close to the no-text baseline, showing that embedding-level corruption is less interpretable and more disruptive than field-level prompt edits.  
+
+> Table S5: MP-20 CSP prompt-control experiments. All rows use 100 ODE steps, coordinate annealing and one generated candidate per test case. The full-text, property-shuffle and partial-shuffle rows use the text-conditioned CSP model; no-text uses the CrystalFlow baseline.
+
+Condition Prompt modification Match rate ↑ RMSE ↓
+
+Full structured prompt None 0.771875 0.087776 Property-shuffle control Formula and symmetry retained; scalar property fields shuffled 0.743500 0.088601 Partial-shuffle control 20% of prompt embeddings replaced by shuffled embeddings 0.655750 0.092532 No-text baseline No text condition 0.669750 0.077648 
+
+Supplementary Note 4: De novo generation experiments and hyperparameter selection 
+
+The best TFMat DNG result does not arise from simply increasing the number of ODE steps. We compared four targeted sampling configurations, varying integration depth, coordinate-annealing slope and guidance factor while keeping the evaluation pipeline fixed (Table S6). The best balance is obtained by the 100-step configuration with coordinate-annealing slope 10 and the default text-conditioned sampling factor. This setting gives the best number-of-elements EMD and density EMD while retaining high structural validity and coverage precision. The sweep suggests that the text-conditioned flow benefits from a moderate integration depth paired with a sharper coordinate schedule. Increasing the number of ODE steps to 200 slightly improves coverage recall 18 Table S6: Targeted TFMat sampling sweep on MP-20 DNG. Best values are bold and second-best values are underlined. The default conditional sampling factor is 1.0.                                                
+
+> ODE steps Anneal slope Guide factor Comp. validity ↑Struct. validity ↑COV-R ↑COV-P ↑# Element EMD ↓Density EMD 𝜌 ↓
+> 100 50.8 80.34 99.35 99.50 99.51 0.3178 0.1397 100 51.2 81.03 97.55 99.43 99.42 0.2428 0.2102 100 10 1.0 81.32 99.06 98.91 99.67 0.1990 0.0794
+> 200 51.0 81.11 98.30 99.55 99.27 0.2208 0.2659
+
+but worsens density alignment. Fixed guidance factors above or below the default also fail to dominate. For this reason, the main MP-20 DNG result uses the 100-step, anneal-slope-10 configuration. The displayed t-SNE panels in Fig. 4 are per-panel projections: each generated set is embedded together with the same MP-20 test set and then projected independently. This makes the plots suitable for visual inspection of overlap within each panel, but it means that point coordinates should not be compared directly between the two panels. To provide a more quantitative cross-model check, Table S7 reports both the per-panel Jensen-Shannon divergence shown in the figure and a separate shared-coordinate t-SNE diagnostic.                        
+
+> Table S7: MP-20 graph-embedding t-SNE diagnostics. The per-panel JSD values correspond to the two panels in Fig. 4. The shared-coordinate metrics are computed from a single projection containing the test set and both generated sets.
+> Model Test count Generated count Per-panel JSD ↓Shared COV-R ↑Shared COV-P ↑Shared JSD ↓
+> Unconditional DNG baseline 9,046 10,000 0.636697 0.453350 0.4997 0.435103 Text-guided DNG 9,046 10,000 0.619971 0.472806 0.5124 0.428576
+
+The property diagnostic in the main text uses a selected subset rather than the full generated population. The 2,000 structures were selected from the first 5,000 TFMat DNG candidates by element-composition match score, so the result measures the most composition-consistent subset of the generated population. Within this selected subset, 1,350 structures perfectly match the target element set and no structure has zero element overlap (Table S8). The average element-match score is 0.9075.  
+
+> Table S8: Element-composition match distribution for the top 2,000 generated structures. Structures are ranked by element-composition match score before the CGCNN property diagnostic is performed.
+
+Match category Count Percentage Score range Complete match 1,350 67.50% [1.0] Partial match 650 32.50% (0.0, 1.0) No match 0 0.00% [0.0] 
+
+Overall average 2,000 100.00% 0.9075 
+
+CGCNN predictions were available for 1,994 selected structures. The surrogate validation errors are summarized in Table S9. We removed 41 numerical formation-energy outliers with absolute error above 10 eV atom −1 before computing the cleaned formation-energy scatter statistics reported in Fig. 3. No outlier removal was applied to the band-gap diagnostic. These choices should be treated as diagnostic filtering rather than as a benchmark protocol.  
+
+> Table S9: CGCNN surrogate models used in the property diagnostic. Validation errors document the reliability of the surrogate models rather than replacing first-principles validation.
+
+Target property Best validation MAE Best epoch Diagnostic use Formation energy 0.0391 eV atom −1 84/100 Sign agreement and cleaned regression statistics Band gap 0.3747 eV 6/100 Zero/nonzero agreement and regression statistics 
+
+The large difference between formation-energy and band-gap validation errors is consistent with the main-text diagnostic: formation energy shows stronger correlation and lower median error, whereas band gap is more reliable as a coarse electronic-type indicator than as a precise regression target. This is why 19 the main text emphasizes formation-energy sign and band-gap zero/nonzero agreement rather than claiming quantitative electronic-structure accuracy. A separate diagnostic run with 1,000 generated samples, text embeddings, 100 ODE steps, coordinate-annealing slope 5 and a conditional sampling factor of 1.0 is not used as the main DNG result because its formula, space-group and crystal-system matching rates are very low: 2.10%, 2.30% and 0.00%, respectively. It is retained here because it defines an important interpretation boundary: strong population-level validity and coverage metrics do not guarantee exact recovery of the prompt formula or symmetry labels in a small diagnostic sample. This motivates the composition-selected property analysis above and the cautionary language in the Discussion. 20
