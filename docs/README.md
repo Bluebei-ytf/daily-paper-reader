@@ -41,17 +41,17 @@
 <section class="dpr-home-dashboard-card dpr-home-report-card">
   <div class="dpr-home-dashboard-header">
     <div>
-      <span class="dpr-home-dashboard-kicker">2026-09-06</span>
+      <span class="dpr-home-dashboard-kicker">2026-09-07</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">共 21 篇</strong>
+    <strong class="dpr-home-dashboard-count">共 20 篇</strong>
   </div>
   <dl class="dpr-home-dashboard-stats">
     <div class="dpr-home-dashboard-stat"><dt>累计更新</dt><dd>1 次</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>9</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>8</dd></div>
     <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>12</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-09-06 22:35:01 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-09-07 23:40:23 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -62,7 +62,7 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>今日共读21篇论文，精读9篇、速读12篇，其中两篇9.0分高光聚焦自旋相关原子模拟与光激发材料动态加速。最值得关注的是Cartesian张量等变机器学习力场的自旋应用，以及电子信息化机器学习对光激发材料模拟的突破，两者均达9.0满分。建议普通读者优先从速读中的uMOF数据库或LLM辅助材料合成评测入手，快速把握AI驱动材料研究的前沿趋势。</p>
+<p>今日共读20篇论文，其中8篇精读、12篇速读，聚焦分子表征与材料预测前沿。最值得关注的是CliffRank双分支框架攻克活性悬崖排序难题，以及LeJEPA自监督预训练提升分子图编码能力。建议普通读者优先了解自监督预训练与图神经网络在化学信息学中的落地价值。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -71,12 +71,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">精读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">9 篇</strong>
+    <strong class="dpr-home-dashboard-count">8 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Cartesian tensor equivariant machine-learning force field for spin-dependent atomistic simulations">Cartesian tensor equivariant machine-learning force field for spin-dependent atomistic simulations</span></li><li><span class="dpr-home-dashboard-paper-title" title="Accelerating dynamic simulations of photoexcited materials and their evolution by electron-informed machine learning">Accelerating dynamic simulations of photoexcited materials and their evolution by electron-informed machine learning</span></li><li><span class="dpr-home-dashboard-paper-title" title="Latent unified smooth Hamiltonians for excited state chemistry">Latent unified smooth Hamiltonians for excited state chemistry</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="CliffRank: A Dual-Branch Framework for Activity-Cliff Ranking Prediction">CliffRank: A Dual-Branch Framework for Activity-Cliff Ranking Prediction</span></li><li><span class="dpr-home-dashboard-paper-title" title="Self-Supervised Pretraining of Molecular Graph Encoders with LeJEPA">Self-Supervised Pretraining of Molecular Graph Encoders with LeJEPA</span></li><li><span class="dpr-home-dashboard-paper-title" title="Learning multistate kinetics with a variational multistate committor network">Learning multistate kinetics with a variational multistate committor network</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>7</strong></span><span class="dpr-home-dashboard-tag">smc <strong>2</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">smc <strong>5</strong></span><span class="dpr-home-dashboard-tag">aichem-map <strong>3</strong></span></div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-skim-card">
   <div class="dpr-home-dashboard-header">
@@ -87,7 +87,7 @@
     <strong class="dpr-home-dashboard-count">12 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="uMOF: A Universal Database, Benchmark, and Machine Learning Interatomic Potentials for Metal-Organic Frameworks">uMOF: A Universal Database, Benchmark, and Machine Learning Interatomic Potentials for Metal-Organic Frameworks</span></li><li><span class="dpr-home-dashboard-paper-title" title="MAIL: Memory-driven, Adaptive, Incremental, and Literature-grounded Framework for Hypothesis Generation in Chemistry">MAIL: Memory-driven, Adaptive, Incremental, and Literature-grounded Framework for Hypothesis Generation in Chemistry</span></li><li><span class="dpr-home-dashboard-paper-title" title="Evaluating LLM-based AI agents integrated with materials synthesis tools: the case of atomic layer deposition">Evaluating LLM-based AI agents integrated with materials synthesis tools: the case of atomic layer deposition</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="DISTAL: Distillation and Self-Supervised Pretraining for Structure-Agnostic Materials Property Prediction">DISTAL: Distillation and Self-Supervised Pretraining for Structure-Agnostic Materials Property Prediction</span></li><li><span class="dpr-home-dashboard-paper-title" title="Diagnosing Latent Energy Decomposition in Machine-Learning Interatomic Potentials via Interacting Quantum Atoms">Diagnosing Latent Energy Decomposition in Machine-Learning Interatomic Potentials via Interacting Quantum Atoms</span></li><li><span class="dpr-home-dashboard-paper-title" title="Element priors and target support shape chemical transfer in materials graph networks">Element priors and target support shape chemical transfer in materials graph networks</span></li></ul>
   </div>
   <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>9</strong></span><span class="dpr-home-dashboard-tag">smc <strong>3</strong></span></div>
 </section>

@@ -1,0 +1,655 @@
+Title: Embedded Graph Flows for Categorical Graph Generation
+
+URL Source: https://arxiv.org/pdf/2609.05328v1
+
+Published Time: Mon, 07 Sep 2026 01:13:33 GMT
+
+Number of Pages: 13
+
+Markdown Content:
+> Embedded Graph Flows for Categorical Graph Generation
+
+# Embedded Graph Flows for Categorical Graph Generation 
+
+Ethan Ma 1 Zihan Wang 1 Chris Siu Yeung Chow 2 Xinguo Feng 1
+
+Qingqing Li 3 Rui Jiang 4 Naipeng Dong 1 Guangdong Bai 5 
+
+> 1
+
+School of Electrical Engineering and Computer Science, The University of Queensland, Australia  
+
+> 2
+
+Institute for Molecular Bioscience, The University of Queensland, Australia  
+
+> 3
+
+Qunar.com, China 4 Chinese Academy of Sciences, China  
+
+> 5
+
+Department of Computer Science, City University of Hong Kong, Hong Kong SAR, China 
+
+Abstract 
+
+Generating categorical graphs requires choosing node and edge types that form a coherent structure without depending on node order. Many graph generators encode categories as fixed one-hot vectors, which can impose an artificial geometry in which categories are equidistant. We propose Embedded Graph Flows (EGF), a generative model that learns continuous embeddings for node and unordered-edge categories and transports Gaussian noise towards these learnt endpoints using a permutation-equivariant graph transformer. A terminal readout maps the embeddings back to discrete graph categories. Across molecular benchmarks, EGF achieved competitive performance. On QM9, EGF gives the best result on all four reported metrics among the three methods, including a Fréchet ChemNet Distance (FCD) of 0.150, compared with 0.717 for the categorical-diffusion baseline DiGress and 0.812 for the bridge-based baseline GruM. When applied to larger molecules in ZINC250k, EGF retains the lowest maximum mean discrepancy (MMD) using the neighbourhood subgraph pairwise distance kernel (NSPDK), indicating close agreement with the local substructures of the reference molecules. Our code is available at https://github.com/Trusted-System-Lab/EGF. 
+
+Keywords: graph generation; flow matching; learned graph embeddings; typed undirected graphs; molecular graph generation 
+
+1 Introduction 
+
+Categorical graph generation must choose node and edge types jointly because connectivity and type compatibility couple local decisions across the graph. The model must also accommodate variable graph sizes and preserve permutation symmetry: relabelling the nodes cannot change the graph distribution. These requirements are critical in molecular generation, where one incompatible atom-bond assignment invalidates an otherwise plausible structure. Existing methods evolve either categorical node and edge states, continuous arrays tied to fixed category codes, or probabilities over fixed one-hot endpoints [7, 11, 16, 21]. For continuous graph representations, the category encoding fixes the geometry of the state space. With one-hot endpoints, all distinct labels remain equidistant throughout training. Embedded Language Flows uses a trainable continuous embedding space for sequence representations [9]. Figure 1 illustrates this representational difference. We ask whether endpoint geometry can likewise be learned for categorical graphs while accommodating padding and preserving undirected-edge and node-relabelling symmetries.    
+
+> 1arXiv:2609.05328v1 [cs.LG] 4 Sep 2026 Embedded Graph Flows for Categorical Graph Generation CNO
+> state is always at a vertex
+
+DiGress 
+
+discrete token space    
+
+> ˆ𝐺 CNO
+> state moves inside the simplex
+
+GruM 
+
+continuous relaxation of class space  
+
+> 𝒛 0
+> CNO𝑊 one-hot state lives in R𝑑
+
+Ours 
+
+continuous embedding space                           
+
+> 01𝑡 01𝑡 01𝑡
+> CE at every step weighted MSE, then quantise MSE, CE only at 𝑡 =1
+> denoising supervision discretisation supervision
+> Figure 1. Transport spaces and supervision for DiGress [21], GruM [11], and EGF, illustrated with C, N, and O. DiGress moves between simplex vertices with stepwise cross-entropy. GruM follows an Ornstein-Uhlenbeck bridge mixture over Gaussian-initialised, category-coded arrays and predicts b𝐺 with weighted mean-squared error before quantisation. EGF moves a Gaussian source through R𝑑 , using mean-squared error along the path and cross-entropy at 𝑡 =1. In its panel, 𝑊 abbreviates 𝑊 𝑟 followed by arg max.
+
+Our work. Embedded Graph Flows (EGF) places node and unordered-edge categories at trainable anchors in R𝑑 . The anchors define the clean endpoints of the transport paths and provide the regression targets during training. A permutation-equivariant graph transformer predicts clean embeddings at points sampled along straight conditional paths from Gaussian noise. During generation, these predictions define a vector field that is integrated as an ordinary differential equation, and a learned terminal readout assigns categories. For padded, undirected graphs, the mask excludes padded slots from supervision and decoding. Each unordered node pair follows one trajectory to one terminal decision, and transport remains equivariant under node relabelling. 
+
+Contributions. EGF makes endpoint geometry trainable by learning node and edge category anchors jointly with continuous transport and terminal decoding. Its masked, undirected formulation is permutation-equivariant and assigns one shared state to each unordered node pair throughout training and generation. Empirically, we evaluate EGF on two widely used molecular benchmarks [17, 20]: QM9 for small organic molecules and ZINC250k for larger drug-like molecules. Under a common evaluator, EGF gives the best QM9 result on all four reported metrics. Its Fréchet ChemNet Distance (FCD) is 0 .150, compared with 0.717 for DiGress and 0 .812 for GruM, and its maximum mean discrepancy (MMD) computed with the neighbourhood subgraph pairwise distance kernel (NSPDK) is the lowest of the three on both benchmarks. 
+
+2 Related Work 
+
+2.1 Graph Diffusion and Flow Models 
+
+Flow matching learns a vector field along chosen probability paths without simulating complete paths during training [12]. Graph generators instantiate noising and transport in continuous or categorical state spaces. GDSS and GruM use real-valued node and edge arrays, through score-based diffusion and an Ornstein-Uhlenbeck bridge mixture, respectively [10, 11]. DiGress applies categorical diffusion [21]. Discrete flow models use continuous-time category transitions [3]; DeFoG makes the transition rates permutation-equivariant and supports flexible sampling [16]. Related molecular flow work studies probability-vector, Gaussian-to-one-hot, discrete, optimal-transport, and endpoint-consistent paths [5, 6, 8, 19]. EGF transports Gaussian vectors towards learned node and edge anchors with a deterministic ordinary differential equation, then applies a categorical readout at the endpoint. Learning the anchors lets the data shape the relative category geometry, while clean-embedding prediction gives transport and readout a shared representation. 
+
+> 2
+
+Embedded Graph Flows for Categorical Graph Generation 
+
+2.2 Categorical Endpoint Flows 
+
+CatFlow predicts a categorical distribution over fixed one-hot endpoints; its probability-weighted endpoint lies in the simplex and directly defines the field [7]. In contrast, EGF predicts a clean vector in a learned anchor space, derives the continuous field from that prediction, and performs categorical readout at 𝑡 = 1. 
+
+2.3 Embedding-Space Generation and Terminal Decoding 
+
+Embedded Language Flows uses straight-line transport in a continuous embedding space, predicts clean embeddings during denoising, and trains a terminal categorical readout on clean embeddings mixed with Gaussian noise [9]. The same network handles denoising and terminal readout. EGF adapts this shared continuous-to-discrete design to the node and edge variables of a graph. Applying this design to graphs requires handling padding, undirected edges, and node relabelling. EGF first masks padded coordinates, shares one state between (𝑖, 𝑗 ) and ( 𝑗, 𝑖 ), and makes both transport and readout equivariant to node relabelling. Unlike approaches such as DGAE, which factor generation through a discrete graph auto-encoder and an autoregressive model of its codes [2], EGF transports continuous graph states directly and assigns all active node and unordered-edge categories in parallel at the endpoint. 
+
+3 Method 
+
+EGF embeds the category at each active node and unordered pair as a continuous vector. During training, the graph transformer predicts this clean embedded graph from noisy states along the generation path and learns to recover discrete categories from clean embeddings mixed with Gaussian noise. To generate a graph, EGF starts from Gaussian noise and repeatedly updates its continuous node and edge states using the transformer’s current clean-embedding prediction. A final decoding pass selects the categories. The mask excludes padding throughout, and each undirected edge shares one state and one decision across its two stored directions. Domain-specific reconstruction and validation follow categorical decoding. The two training branches are shown in Figure 2. C CC CC CCON                                                                         
+
+> molecular graph
+> 𝐺 =(𝑋, 𝐸 )
+> 𝑌 𝑉
+> ...𝑌 𝐸
+> ...
+> one-hot 𝑌 = Φ 𝑚 (𝐺 )
+> active atoms & pairs
+> 𝑊 𝐴 /𝑊 𝐵
+> learned
+> 𝒙 𝑉
+> 𝒙 𝐸
+> embeddings
+> 𝒙 =(𝒙 𝑉 ,𝒙 𝐸 )
+> one vector per pair 𝑖 < 𝑗 , mirrored
+> 𝒛 𝑡 =(1−𝑡 )𝒛 0+𝑡 𝒙
+> 𝑡 ∼ U ( 0,1),𝒛 0∼ N ( 0, 𝐼 𝑑 )
+> denoising branch (w.p. 1−𝑝 )
+> ˜𝒙 =𝜌 𝒙 + ( 1−𝜌 )𝝃
+> 𝑡 =1,𝜌 ∼ U ( 0,1)
+> decoding branch (w.p. 𝑝 )
+> 𝑓 𝜃
+> graph transformer shared weights shared output cond. on 𝑡 , mask 𝑚 , mode 𝑞 𝑞 ∈ { denoise, decode }+diagonal input 𝑫 ̂
+> 𝒙 ̂𝒗 =̂𝒙 −𝒛 𝑡
+> 1−𝑡
+> Lden
+> 𝒗 =𝒙 −𝒛 0
+> sep. 𝑛 𝑉 , 𝑛 𝐸 ̂
+> 𝒙 𝑊 𝑟 ̂𝒙
+> output map, untied
+> Ldec
+> targets 𝑋, 𝐸
+> sep. 𝑛 𝑉 , 𝑛 𝐸
+
+Figure 2. EGF trains a shared graph transformer in denoising and decoding modes. The maps 𝑊 𝐴 , 𝑊 𝐵 embed node and edge categories. The denoising branch predicts clean embeddings along the Gaussian path; the decoding branch feeds noise-perturbed clean embeddings to the same transformer and maps its output to categories with 𝑊 𝑟 .Unordered-edge states are mirrored, padding is masked, and 𝑫 occupies the diagonal input. 
+
+3.1 Graph State and Embedding Map 
+
+The first step converts a padded categorical graph into the continuous state transported by EGF. A padded representation reserves 𝑁 = 𝑛 max node slots for every graph, where 𝑛 max is the maximum padded capacity. For any positive integer 𝑘 , write [𝑘 ] := {1, . . . , 𝑘 }, so 𝑖, 𝑗 ∈ [ 𝑁 ] index slots. Let 𝐶 𝑉 and 𝐶 𝐸 denote the numbers of node and edge categories. Write the undirected typed graph as 𝐺 = (𝑋, 𝐸 ), where 𝑋 is the node-category array and 𝐸 is the symmetric edge-category array. Its padded representation is paired with a mask 𝑚 ∈ { 0, 1}𝑁 , where 𝑚 𝑖 = 1 marks an active node slot and 𝑚 𝑖 = 0 marks padding. For 
+
+𝑚 𝑖 = 1, 𝑋 𝑖 ∈ [ 𝐶 𝑉 ] is the node category; for 𝑖 < 𝑗 with 𝑚 𝑖 𝑚 𝑗 = 1, 𝐸 𝑖 𝑗 = 𝐸 𝑗𝑖 ∈ [ 𝐶 𝐸 ] is the category of the unordered pair between slots 𝑖 and 𝑗 . Entries outside these active coordinates are padding and carry no graph category. 
+
+3Embedded Graph Flows for Categorical Graph Generation 
+
+To handle node and edge variables uniformly, each active node or unordered pair is treated as one categorical coordinate. The labels 𝑉 and 𝐸 in subscripts, superscripts, and values of 𝑟 distinguish node and edge coordinates. We write A𝑉 (𝑚 ) for active node coordinates and A𝐸 (𝑚 ) for active unordered-pair coordinates, and take their disjoint union as the full target set: 
+
+A𝑉 (𝑚 ) = {𝑖 ∈ [ 𝑁 ] : 𝑚 𝑖 = 1},
+
+A𝐸 (𝑚 ) = {𝑖, 𝑗 } : 1 ≤ 𝑖 < 𝑗 ≤ 𝑁, 𝑚 𝑖 𝑚 𝑗 = 1 ,
+
+A ( 𝑚 ) = A𝑉 (𝑚 ) ¤ ∪ A 𝐸 (𝑚 ).
+
+Thus a coordinate 𝑎 ∈ A ( 𝑚 ) is either an active node or an active unordered pair and receives a category target during training. Its type is 𝑟 (𝑎 ) ∈ { 𝑉, 𝐸 }, with 𝐶 𝑟 (𝑎 ) possible categories. The mask defines the active slots and target set A ( 𝑚 ); training and decoding operate on these coordinates. The edge class none is a valid target. The node output alphabet also contains absent for terminal readout; the reported training targets exclude this class. The domain adapter interprets both classes after terminal decoding. For a graph in the training data, EGF records the category at each active coordinate and then embeds it for transport. 
+
+One-hot encoding. For a node coordinate, set 𝑔 𝑖 := 𝑋 𝑖 ; for an edge coordinate, set 𝑔 {𝑖, 𝑗 } := 𝐸 𝑖 𝑗 . Thus 
+
+𝑔 𝑎 ∈ [ 𝐶 𝑟 (𝑎 ) ] is the categorical label at coordinate 𝑎 . We identify semantic category names such as absent and none with their fixed indices in the corresponding category set. For 𝑟 ∈ { 𝑉, 𝐸 } and 𝑐 ∈ [ 𝐶 𝑟 ],let 𝒆 (𝑟 ) 
+
+> 𝑐
+
+∈ R𝐶 𝑟 be the 𝑐 -th standard basis vector. Let Φ𝑚 be the fixed map that collects these vectors over the active coordinates: 
+
+𝑌 𝑎 = 𝒆 (𝑟 (𝑎 ) )  
+
+> 𝑔 𝑎
+
+∈ R𝐶 𝑟 (𝑎 ) , 𝑌 = Φ 𝑚 (𝐺 ). (1) Write 𝑌 = (𝑌 𝑉 , 𝑌 𝐸 ) for the node and edge parts of this collection. The fixed map Φ𝑚 applies independently at each active coordinate. Within each coordinate type, all distinct basis vectors are equidistant, so Φ𝑚 
+
+records category identity with a fixed geometry. 
+
+Learnable embedding. EGF maps these one-hot codes into a shared continuous space for transport. Let 
+
+𝑊 𝐴 ∈ R𝑑 ×𝐶 𝑉 and 𝑊 𝐵 ∈ R𝑑 ×𝐶 𝐸 be the learned maps for node (atom in the molecular instantiation) and edge (bond) categories, respectively: 
+
+𝒙 𝑎 =
+
+(
+
+𝑊 𝐴 𝑌 𝑎 , 𝑎 ∈ A 𝑉 (𝑚 ),𝑊 𝐵 𝑌 𝑎 , 𝑎 ∈ A 𝐸 (𝑚 ), 𝒙 = (𝒙 𝑎 )𝑎 ∈ A ( 𝑚 ) = (𝒙 𝑉 , 𝒙 𝐸 ). (2) The node and edge embedding maps have separate weights and are trained jointly with the network. Their columns define the category anchors, whose arrangement in R𝑑 is determined during training. During generation, the sampler draws 𝐾 ≤ 𝑁 from the empirical training-size distribution and constructs a mask 𝑚 with 𝐾 = |A 𝑉 (𝑚 )| = Í𝑁 𝑖 =1 𝑚 𝑖 active slots. To distinguish categorical codes from continuous states, bold symbols denote continuous vectors or arrays of vectors. We use 𝑌 for the deterministic one-hot encoding, 𝒁 for a random graph state, 𝒛 for a realisation, and 𝑫 for a node-aligned state held on the edge-array diagonal. Category labels, mask entries, indices, and times are scalar. Active-coordinate notation is convenient for graph semantics and losses, whereas the transformer receives fixed-size arrays. For computation, a graph state is stored as a zero-padded node array and a symmetric zero-padded edge array. Its state space is 
+
+Z𝑚 :=
+
+
+
+𝒛 = (𝒛 𝑉 , 𝒛 𝐸 ) ∈ R𝑁 ×𝑑 × R𝑁 × 𝑁 ×𝑑 :
+
+𝒛 𝑉 𝑖 = 0 if 𝑚 𝑖 = 0,
+
+𝒛 𝐸 𝑖 𝑗 = 𝒛 𝐸 𝑗𝑖 ,
+
+𝒛 𝐸 𝑖 𝑗 = 0 if 𝑖 = 𝑗 or 𝑚 𝑖 𝑚 𝑗 = 0
+
+
+
+. (3) Here 0 ∈ R𝑑 is the zero vector. For 𝑎 ∈ A ( 𝑚 ), the notation 𝒛 𝑎 denotes its unique active vector; an unordered-pair vector is stored at both (𝑖, 𝑗 ) and ( 𝑗, 𝑖 ) but counted once. We place 𝒙 from (2) in this 
+
+> 4Embedded Graph Flows for Categorical Graph Generation
+
+dense representation by mirroring active pair vectors and setting all other entries to zero. Thus 𝒙 ∈ Z 𝑚 is the clean endpoint of the flow defined in Section 3.2. 
+
+Diagonal state. The dense edge array reserves each active diagonal slot for an additional state aligned with node 𝑖 . Let 𝑫 𝑖 ∈ R𝑑 denote its diagonal vector and let 𝑫 = (𝑫 𝑖 )𝑖 ∈ A 𝑉 (𝑚 ) collect these vectors. For 
+
+𝒛 ∈ Z 𝑚 , write 𝒛 = (𝒛 , 𝑫 ) for the complete network input, understood as the node array 𝒛 𝑉 and the dense edge array obtained by inserting 𝑫 𝑖 at each active diagonal position of 𝒛 𝐸 . Write 𝒙 none := 𝑊 𝐵 𝒆 (𝐸 ) 
+
+> none
+
+for the embedded no-edge vector used as the endpoint of this channel. The diagonal state depends on the stage of the workflow. For every 𝑖 ∈ A 𝑉 (𝑚 ), training uses 𝑫 train  
+
+> 𝑡 ,𝑖
+
+= 𝑡 𝒙 none , sampling starts from 𝑫 sample 0,𝑖 = 0,and decoding uses 𝑫 dec  
+
+> 𝑖
+
+= 𝒙 none . The corresponding collections are denoted 𝑫 train  
+
+> 𝑡
+
+(𝑚 ), 𝑫 sample 0 (𝑚 ), and 
+
+𝑫 dec (𝑚 ); a subscript 𝑏 means that mask 𝑚 𝑏 is used. During sampling, this state evolves according to the update in Section 3.6. The network can use this channel in attention biases and incident-edge summaries. Training targets and graph reconstruction use the node and off-diagonal edge coordinates. 
+
+3.2 Source and Conditional Path 
+
+The embedding map supplies the clean endpoint 𝒙 . EGF uses a standard Gaussian source in the learned embedding space. Conditional on 𝑚 , let 𝒁 1 ∈ Z 𝑚 be the random clean endpoint induced by the graph distribution, and let 𝒙 be one realisation. The source is drawn independently of 𝒁 1 given 𝑚 , and the two are connected by the straight conditional path of rectified flow: 
+
+𝒁 0,𝑎 iid 
+
+∼ N ( 0, 𝐼 𝑑 ) for 𝑎 ∈ A ( 𝑚 ), 𝒁 𝑡 = (1 − 𝑡 ) 𝒁 0 + 𝑡 𝒁 1, 𝑡 ∈ [ 0, 1]. (4) Here 𝐼 𝑑 is the 𝑑 × 𝑑 identity matrix. For an unordered edge coordinate 𝑎 = {𝑖, 𝑗 }, the single draw 𝒁 0,𝑎 is stored symmetrically as 𝒁 𝐸  
+
+> 0,𝑖 𝑗
+
+= 𝒁 𝐸  
+
+> 0, 𝑗𝑖
+
+:= 𝒁 0,𝑎 . Both stored directions of each active pair therefore share one edge-noise vector. Conditioned on 𝒁 1 = 𝒙 , (4) interpolates linearly from 𝒁 0 to 𝒙 . The path remains in the masked state space (3) throughout transport, and categorical projection occurs at the endpoint. 
+
+3.3 Embedding-Space Flow Field 
+
+At generation time, the clean endpoint is unknown, so the sampler needs a field determined by its current state. For a fixed training endpoint 𝒙 , differentiating (4) gives the conditional field. Averaging over the endpoints compatible with the intermediate state gives the marginal field used for generation. Both fields belong to Z𝑚 :
+
+𝒖 𝑡 (𝒛 | 𝒁 1 = 𝒙 , 𝑚 ) = 𝒙 − 𝒛 
+
+1 − 𝑡 ,
+
+𝝁 𝑡 (𝒛 , 𝑚 ) := E[𝒁 1 | 𝒁 𝑡 = 𝒛 , 𝑡, 𝑚 ],
+
+𝒖 𝑡 (𝒛 | 𝑚 ) = 𝝁 𝑡 (𝒛 , 𝑚 ) − 𝒛 
+
+1 − 𝑡 , 0 ≤ 𝑡 < 1.
+
+(5) Here 𝝁 𝑡 (𝒛 , 𝑚 ) ∈ Z 𝑚 is the posterior mean clean endpoint. The marginal field points from the current state toward this mean with the 1 /( 1 − 𝑡 ) rectified-flow scaling. 
+
+Model output and field. The posterior mean in (5) is not available directly, so EGF approximates it with the graph transformer. Let 𝜃 denote the trainable network parameters. The network receives a mode indicator 𝑞 ∈ { denoise , decode }, matching Figure 2. The first value selects interior denoising and the second endpoint decoding. Write 𝑓 𝜃 = ( 𝑓 𝑉 𝜃 , 𝑓 𝐸 𝜃 ) for its full dense node and edge output streams in R𝑁 ×𝑑 
+
+and R𝑁 × 𝑁 ×𝑑 , respectively. Restricting these streams to A ( 𝑚 ) gives the shared output b𝒙 𝜃 (𝒛 , 𝑡, 𝑚, 𝑞 ),whose component at coordinate 𝑎 is b𝒙 𝜃 ,𝑎 ∈ R𝑑 . In denoising mode, EGF interprets the output as a clean-endpoint estimate and converts it into the model field: 
+
+b𝒗 𝜃 (𝒛 , 𝑡, 𝑚 ) = b𝒙 𝜃 (𝒛 , 𝑡, 𝑚, denoise ) − 𝒛 
+
+1 − 𝑡 , 0 ≤ 𝑡 < 1. (6) By predicting the clean endpoint, the network supplies the same 𝑑 -dimensional representation to both branches; the decoding map converts it to category scores. Prior work reports poor shared-weight categorical readout under direct velocity parameterisation [9]. 
+
+> 5Embedded Graph Flows for Categorical Graph Generation
+
+Under squared-error denoising, this clean-endpoint parameterisation recovers the field above. Specifi-cally, for fixed embedding maps and a complete training input 𝒛 = (𝒛 , 𝑫 train  
+
+> 𝑡
+
+(𝑚 )) , the population minimiser of the denoising mean-squared error below recovers the posterior mean on the active coordinates: 
+
+b𝒙 ∗ (𝒛 , 𝑡, 𝑚 ) = 𝝁 𝑡 (𝒛 , 𝑚 ),
+
+b𝒙 ∗ (𝒛 , 𝑡, 𝑚 ) − 𝒛 
+
+1 − 𝑡 = 𝒖 𝑡 (𝒛 | 𝑚 ).
+
+Equation (6) therefore recovers the marginal field in (5) from the clean-endpoint estimate. During training, 𝑫 train  
+
+> 𝑡
+
+(𝑚 ) is a deterministic function of 𝑡 and 𝑚 ; the complete input carries the same conditioning information as 𝒁 𝑡 , 𝑡, 𝑚 .
+
+3.4 Two-Branch Training Objective 
+
+Denoising learns transport through the embedding space, while decoding learns the terminal categorical readout. Both branches share 𝑓 𝜃 , and a mode is selected separately for each graph. Let {( 𝐺 𝑏 , 𝑚 𝑏 ) : 𝐺 𝑏 =
+
+(𝑋 𝑏 , 𝐸 𝑏 )} 𝐵 𝑏 =1 be a minibatch of 𝐵 padded graphs, let 𝑚 𝑏 = (𝑚 𝑏 1, . . . , 𝑚 𝑏𝑁 ) be graph 𝑏 ’s mask, and let 
+
+𝑔 𝑏,𝑎 be its target category at coordinate 𝑎 .Node and edge errors are normalised separately. For 𝑟 ∈ { 𝑉, 𝐸 }, define 𝑛 𝑟 := Í𝐵 𝑏 =1 |A 𝑟 (𝑚 𝑏 )| , the number of supervised coordinates of type 𝑟 in the full minibatch, and set 𝜆 𝑉 = 𝜆 𝐸 = 1. Here 𝑛 𝑉 counts active nodes and 𝑛 𝐸 counts active unordered pairs. The number of pairs grows quadratically with graph size, while the number of nodes grows linearly; the separate counts prevent this growth from reweighting the two coordinate types. Let 𝑝 ∈ [ 0, 1] be the probability that a graph is assigned to endpoint decoding. 
+
+Denoising branch (probability 1 − 𝑝 ). Draw 𝑡 𝑏 ∼ U ( 0, 1) independently for each graph, where U ( 0, 1)
+
+is the uniform distribution on (0, 1). Draw a source realisation 𝒛 0,𝑏 , form 𝒛 𝑡 𝑏 ,𝑏 = (1 − 𝑡 𝑏 )𝒛 0,𝑏 + 𝑡 𝑏 𝒙 𝑏 
+
+by (4), and append 𝑫 train  
+
+> 𝑡 𝑏
+
+(𝑚 𝑏 ) to obtain 𝒛 𝑡 𝑏 ,𝑏 . Write b𝒗 𝜃 ,𝑎 for the 𝑑 -dimensional component of (6) at coordinate 𝑎 . Since the target velocity along (4) is 𝒙 𝑏,𝑎 − 𝒛 0,𝑏,𝑎 , the denoising loss is 
+
+Lden =∑︁   
+
+> 𝑟 ∈ { 𝑉 ,𝐸 }
+
+𝜆 𝑟 
+
+𝑛 𝑟 𝐵 ∑︁ 
+
+> 𝑏 =1
+
+∑︁ 𝑎 ∈ A 𝑟 (𝑚 𝑏 )
+
+b𝒗 𝜃 ,𝑎 (𝒛 𝑡 𝑏 ,𝑏 , 𝑡 𝑏 , 𝑚 𝑏 ) −  𝒙 𝑏,𝑎 − 𝒛 0,𝑏,𝑎 
+
+ 22 . (7) Here ∥·∥ 2 is the Euclidean norm. Under (6), the velocity loss is equivalent to clean-embedding regression weighted by (1 − 𝑡 𝑏 )−2. This weight grows as 𝑡 𝑏 approaches 1; the open uniform distribution excludes the singular endpoint itself. 
+
+Decoding branch (probability 𝑝 ). This branch trains the categorical readout at 𝑡 = 1. For every graph 
+
+𝑏 , draw one 𝜌 𝑏 ∼ U ( 0, 1). For each active coordinate 𝑎 , draw 𝝃 𝑏,𝑎 ∼ N ( 0, 𝐼 𝑑 ), then mix the clean embedding with Gaussian noise: 
+
+e𝒙 𝑏,𝑎 = 𝜌 𝑏 𝒙 𝑏,𝑎 + ( 1 − 𝜌 𝑏 )𝝃 𝑏,𝑎 .
+
+For an edge, one noise vector is drawn per unordered pair and mirrored. Using the fixed decoding value for 𝑫 defined in Section 3.1, write e𝒙 𝑏 := (e𝒙 𝑏 , 𝑫 dec (𝑚 𝑏 )) for the complete input. For 𝑟 ∈ { 𝑉, 𝐸 }, the learned output map 𝑊 𝑟 ∈ R𝐶 𝑟 ×𝑑 converts a 𝑑 -dimensional output into 𝐶 𝑟 
+
+unnormalised category scores. The output maps 𝑊 𝑉 , 𝑊 𝐸 are untied from the embedding maps 𝑊 𝐴 , 𝑊 𝐵 .Applying softmax gives a probability distribution over the 𝐶 𝑟 categories. For each active coordinate, let 
+
+ℓ𝜃 ,𝑎 ∈ R𝐶 𝑟 (𝑎 ) denote the logits and let 𝝅 𝜃 ,𝑎 ∈ [ 0, 1]𝐶 𝑟 (𝑎 ) denote the resulting probabilities, 
+
+ℓ𝜃 ,𝑎 (𝒛 , 𝑚 ) := 𝑊 𝑟 (𝑎 ) b𝒙 𝜃 ,𝑎 (𝒛 , 1, 𝑚, decode ), 𝝅 𝜃 ,𝑎 (𝒛 , 𝑚 ) := softmax  ℓ𝜃 ,𝑎 (𝒛 , 𝑚 ).
+
+The decoding cross-entropy is 
+
+Ldec = −∑︁   
+
+> 𝑟 ∈ { 𝑉 ,𝐸 }
+
+𝜆 𝑟 
+
+𝑛 𝑟 𝐵 ∑︁ 
+
+> 𝑏 =1
+
+∑︁ 𝑎 ∈ A 𝑟 (𝑚 𝑏 )
+
+log 
+
+h
+
+𝝅 𝜃 ,𝑎 (e𝒙 𝑏 , 𝑚 𝑏 )
+
+i
+
+> 𝑔 𝑏,𝑎
+
+. (8) 
+
+> 6Embedded Graph Flows for Categorical Graph Generation
+
+The two branches use the same coordinate counts and type weights. Padded coordinates and diagonal entries remain outside both losses. Taking the expectation over branch assignments gives the minibatch objective 
+
+L = (1 − 𝑝 ) L den + 𝑝 Ldec . (9) During training, each graph samples a mode 𝑞 𝑏 with denoising and decoding probabilities 1 − 𝑝 and 𝑝 ,then contributes the corresponding branch loss. The resulting minibatch loss is a Monte Carlo estimate of (9). Both modes are processed in one batched forward and backward pass per step. The optimiser updates 
+
+𝜃 , 𝑊 𝐴 , 𝑊 𝐵 , and 𝑊 𝑉 , 𝑊 𝐸 in the same step. 
+
+3.5 Symmetry-Aware Graph Network 
+
+Because a graph has no privileged node ordering, the network must transform equivariantly when padded slots are relabelled. It therefore applies shared transformations across slots and receives no absolute slot identifiers. Diagonal entries of the dense stream 𝑓 𝐸 𝜃 are diagonal outputs that lie outside A ( 𝑚 ). Let 𝑃 
+
+be any 𝑁 × 𝑁 permutation matrix that reorders the padded slots, and let superscript ⊤ denote matrix transpose. Multiplication by 𝑃 and 𝑃 ⊤ acts on the two slot-index axes of a dense edge array and leaves its embedding axis unchanged. Define 𝑃 · 𝒛 := (𝑃 𝒛 𝑉 , 𝑃 𝒛 𝐸 𝑃 ⊤). The architecture satisfies 
+
+𝑓 𝜃 (𝑃 · 𝒛 , 𝑡, 𝑃𝑚, 𝑞 ) =
+
+
+
+𝑃 𝑓 𝑉 𝜃 (𝒛 , 𝑡, 𝑚, 𝑞 ), 𝑃 𝑓 𝐸 𝜃 (𝒛 , 𝑡, 𝑚, 𝑞 )𝑃 ⊤
+
+,
+
+for either mode. Reordering the slots and mask only reorders the corresponding node and edge outputs. Every layer is modulated by a numerical encoding of time and a learned embedding of the current mode. Each layer updates the edge stream using attention and the features of each node pair. It then averages the two stored directions to restore symmetry. The final edge output is symmetrised once more. Current edge features also affect node attention through an additive score term. For any attention head ℎ of width 𝑑 ℎ, let 𝑸 (ℎ) 
+
+> 𝑖
+
+, 𝑲 (ℎ) 
+
+> 𝑗
+
+∈ R𝑑 ℎ be the query and key vectors for nodes 𝑖 and 𝑗 , and let 𝛾 (ℎ) 
+
+> 𝑖 𝑗
+
+∈ R
+
+be the learned scalar contribution from their current edge features. The pre-mask attention score is 
+
+𝑠 (ℎ) 
+
+> 𝑖 𝑗
+
+= ⟨𝑸 (ℎ) 
+
+> 𝑖
+
+, 𝑲 (ℎ) 
+
+> 𝑗
+
+⟩√𝑑 ℎ
+
++ 𝛾 (ℎ) 
+
+> 𝑖 𝑗
+
+.
+
+Here ⟨· , ·⟩ is the vector dot product. Query-key normalisation applies separate layer normalisations to 
+
+𝑸 (ℎ) 
+
+> 𝑖
+
+and 𝑲 (ℎ) 
+
+> 𝑗
+
+before their dot product. A nonnegative hyperparameter 𝑐 cap optionally caps the attention scores. When 𝑐 cap > 0, the score is replaced by 𝑐 cap tanh (𝑠 (ℎ) 
+
+> 𝑖 𝑗
+
+/𝑐 cap ) before padded columns are masked; 
+
+𝑐 cap = 0 leaves the score uncapped. Permutation equivariance handles node relabelling; exact undirected symmetry also requires the two stored directions of an edge to agree. Each active pair 𝑖 < 𝑗 follows one shared trajectory from its source draw to its terminal decision. After every transport update, the sampler averages its two stored directions to remove numerical asymmetry. The diagonal state follows the separate convention above. A domain adapter may provide additional node features. These features reorder with the node slots and are used only as network inputs. 
+
+3.6 Sampling and Terminal Decoding 
+
+During generation, denoising predictions drive the numerical trajectory, followed by one decoding pass at the endpoint. Choose a positive integer 𝑆 and a sequence of times 0 = 𝑡 0 < 𝑡 1 < · · · < 𝑡 𝑆 = 1. These times divide the path into 𝑆 numerical integration intervals, indexed by 𝑠 = 0, . . . , 𝑆 − 1. Let 𝒛 sample  
+
+> 𝑠
+
+∈ Z 𝑚 
+
+denote the realised sampling state at time 𝑡 𝑠 . Unlike the training state 𝒁 𝑡 in (4), it is generated without a known clean endpoint. Initialise 𝒛 sample 0 with a realisation of the Gaussian source and use the zero diagonal state 𝑫 sample 0 (𝑚 ) from Section 3.1. 
+
+> 7
+
+Embedded Graph Flows for Categorical Graph Generation 
+
+At interval 𝑠 , one network evaluation on 𝒛 sample  
+
+> 𝑠
+
+= (𝒛 sample  
+
+> 𝑠
+
+, 𝑫 sample  
+
+> 𝑠
+
+) produces the clean-endpoint estimate on active coordinates and the diagonal output at every active node, 
+
+b𝒙 𝑠 := b𝒙 𝜃 (𝒛 sample  
+
+> 𝑠
+
+, 𝑡 𝑠 , 𝑚, denoise ), 𝒐 𝐷 𝑠,𝑖 :=  𝑓 𝐸 𝜃 (𝒛 sample  
+
+> 𝑠
+
+, 𝑡 𝑠 , 𝑚, denoise ) 
+
+> 𝑖𝑖
+
+, 𝑖 ∈ A 𝑉 (𝑚 ).
+
+These outputs drive the explicit Euler updates 
+
+𝒛 sample  
+
+> 𝑠 +1
+
+= 𝒛 sample  
+
+> 𝑠
+
++ ( 𝑡 𝑠 +1 − 𝑡 𝑠 ) b𝒙 𝑠 − 𝒛 sample 
+
+> 𝑠
+
+max {1 − 𝑡 𝑠 , 10 −4} , (10) 
+
+𝑫 sample  
+
+> 𝑠 +1,𝑖
+
+= 𝑫 sample  
+
+> 𝑠,𝑖
+
++ ( 𝑡 𝑠 +1 − 𝑡 𝑠 ) 𝒐 𝐷 𝑠,𝑖 − 𝑫 sample 
+
+> 𝑠,𝑖
+
+max {1 − 𝑡 𝑠 , 10 −4} . (11) Let 𝒐 𝐷 𝑠 := (𝒐 𝐷 𝑠,𝑖 )𝑖 ∈ A 𝑉 (𝑚 ) collect the diagonal outputs. Both updates use the same time increment and denominator safeguard. Equation (10) updates the node and off-diagonal edge state; (11) evolves the diagonal state. After each update, the sampler averages the two stored directions of every off-diagonal edge, zeros every node entry outside A𝑉 (𝑚 ) and every off-diagonal edge entry whose unordered pair lies outside A𝐸 (𝑚 ), and retains diagonal vectors only for slots in A𝑉 (𝑚 ). After source initialisation, the Euler rollout is deterministic. Every grid specified in Section 4.1.2 satisfies 1 − 𝑡 𝑆 −1 > 10 −4. Setting 𝑡 𝑆 = 1 in (10) therefore gives 
+
+𝒛 sample  
+
+> 𝑆
+
+= b𝒙 𝑆 −1, (12) so the last transport update places every active coordinate at the clean-embedding estimate from the evaluation at 𝑡 𝑆 −1. Before terminal decoding, the sampler replaces the diagonal state with the fixed value used in decoding training and forms 𝒛 dec  
+
+> 𝑆
+
+:= (𝒛 sample  
+
+> 𝑆
+
+, 𝑫 dec (𝑚 )) . One further network evaluation in decoding mode at 𝑡 = 1 produces a vector for each active coordinate. For a coordinate of type 𝑟 ,multiplication by 𝑊 𝑟 gives one score per category, and arg max selects the category with the largest score. The operation is applied once per active node and once per active pair 𝑖 < 𝑗 ; each edge decision is then copied to ( 𝑗, 𝑖 ).The shared network is evaluated in decoding mode at 𝑡 = 1 during training and sampling. Training supplies clean embeddings mixed with Gaussian noise; generation supplies the numerical-rollout endpoint. A rollout with 𝑆 intervals uses 𝑆 denoising evaluations and one decoding evaluation. Figure 3 illustrates the rollout, and Algorithm 1 gives the complete procedure. C CC CC CCON                
+
+> standard Gaussian source in embedding space early clean-embedding prediction later clean-embedding prediction last clean-embedding prediction final clean-embedding estimate domain reconstruction (molecular example) diagnostic category views of the predicted clean embeddings CNOEuler updates use predicted clean embeddings ̂xs
+> zsample 0,a ← N (0, I d)zsample
+> S=̂xS−1
+> if 1−tS−1>10 −4
+> endpoint decoding evaluation +largest-score choice
+> final category selection
+
+Figure 3. EGF sampling uses 𝑆 denoising calls from a Gaussian source followed by one terminal decoding call. Molecular reconstruction and sanitisation follow category selection; the intermediate panels visualise predicted clean embeddings. 
+
+8Embedded Graph Flows for Categorical Graph Generation 
+
+Algorithm 1 EGF sampling and terminal decoding. 
+
+1. Draw the active-slot count 𝐾 from the empirical training-size distribution, construct 𝑚 , and draw the masked source with one Gaussian vector per active node and per active pair 𝑖 < 𝑗 , mirrored to ( 𝑗, 𝑖 ).2. Set every component of 𝑫 sample 0 (𝑚 ) to 0. For 𝑠 = 0, . . . , 𝑆 − 1, evaluate the network at (𝒛 sample  
+
+> 𝑠
+
+, 𝑡 𝑠 , 𝑚, denoise ),form b𝒙 𝑠 and the diagonal outputs 𝒐 𝐷 𝑠 , apply (10) and (11), then restore edge symmetry and reapply the masking rule above. 3. Form 𝒛 dec  
+
+> 𝑆
+
+= (𝒛 sample  
+
+> 𝑆
+
+, 𝑫 dec (𝑚 )) and evaluate the same network once more at (𝒛 dec  
+
+> 𝑆
+
+, 1, 𝑚, decode ). Apply 𝑊 𝑉 to node outputs and 𝑊 𝐸 to edge outputs, select the largest score at each active node and once for each pair 𝑖 < 𝑗 ,then mirror the edge decisions. 4. Pass the projected categorical graph to the domain adapter for readout interpretation, reconstruction and validity assessment. 
+
+3.7 Categorical Readout and Domain Reconstruction 
+
+The numerical rollout ends with a continuous state, whereas reconstruction operates on a categorical graph. 
+
+Terminal categorical projection. Apply the logit map ℓ𝜃 ,𝑎 of Section 3.4 to the terminal input 𝒛 dec  
+
+> 𝑆
+
+. The decoded graph and its category at each active coordinate are 
+
+b𝐺 = ( b𝑋, b𝐸 ), b𝑔 𝑎 = arg max   
+
+> 𝑐 ∈ [ 𝐶 𝑟 (𝑎 )]
+
+ℓ𝜃 ,𝑎 (𝒛 dec  
+
+> 𝑆
+
+, 𝑚 ) 
+
+> 𝑐
+
+.
+
+The selected labels b𝑔 𝑖 and b𝑔 {𝑖, 𝑗 } populate b𝑋 𝑖 and b𝐸 𝑖 𝑗 , respectively. The decoded graph is paired with the mask 𝑚 . Each active node receives one decision, and each active pair 𝑖 < 𝑗 receives one decision that is copied to ( 𝑗, 𝑖 ); padded coordinates remain excluded. The result is a typed categorical graph. Domain-specific interpretation, reconstruction, and validity assessment follow. Applying EGF to a new domain requires node and edge alphabets, special readout categories, reconstruction rules, and any adapter features. 
+
+Molecular readout. In the reported QM9 and ZINC250k experiments, a node labelled absent is removed with its incident edges, none denotes no bond, and padding never enters the graph. The remaining atom and bond categories define a molecular graph. The molecular graph is first sanitised without repair. If sanitisation fails, the optional repair procedure is attempted. All reported validity values are measured before repair, and repaired results are kept separate. The molecular adapter also converts each current dense edge vector to provisional category probabilities softmax (𝑊 𝐸 𝒛 𝐸 𝑖 𝑗 ). For each node, it sums the non-none probability components over active partner slots, computes a bond-order-weighted total, and divides both summaries by the fixed scale 4. It also computes the mean probability of each edge category over those slots. These summaries are used as network input features. 
+
+4 Experiments 
+
+We evaluate EGF on two molecular graph benchmarks and rescore released DiGress and GruM samples through the same pipeline. 
+
+4.1 Experimental Setup 
+
+4.1.1 Datasets and Encodings 
+
+QM9 is a benchmark of small organic molecules, and ZINC250k is a benchmark of larger drug-like molecules [17, 20]. After processing, they contain 129,012 and 249,455 molecules, respectively. Using random seed 0, we permute each dataset, assign the first 10,000 molecules to the test set and the next 10,000 to validation, and retain 109,012 and 229,455 training examples. The padded capacities match the largest graph in each dataset: 𝑁 = 𝑛 max = 9 for QM9 and 𝑁 = 𝑛 max = 38 for ZINC250k. These capacities provide  92
+
+ = 36 and  38 2
+
+ = 703 unordered node-pair positions per graph. In the reported QM9 graphs, hydrogen atoms are implicit and inferred from the atom and bond types. 
+
+> 9Embedded Graph Flows for Categorical Graph Generation
+
+We evaluate aromatic and kekulised graph encodings. The aromatic encoding has 𝐶 𝐸 = 5 edge categories (none, single, double, triple, and aromatic). The kekulised encoding represents aromatic bonds by alternating single and double bonds and therefore has 𝐶 𝐸 = 4. Aromatic node categories combine the element, formal charge, and number of aromatic hydrogens; kekulised node categories use the element and formal charge. For the kekulised encoding, we kekulise a copy of each molecule before encoding; sanitisation later restores aromaticity and implicit-hydrogen rules. Neither encoding represents stereochemistry, isotopes, or radical-electron counts. Excluding absent, the node-category alphabets contain 19 and 10 classes for the QM9 aromatic and kekulised encodings, and 28 and 17 for the ZINC250k encodings; including that readout class gives 𝐶 𝑉 = 20 , 11 , 29 , 18, respectively. Padding remains controlled by the mask. Both encodings retain canonical aromatic Simplified Molecular Input Line Entry System (SMILES) strings as their reference representation. 
+
+4.1.2 Optimisation and Inference Settings 
+
+Training uses batches of 256 graphs and the AdamW optimiser with learning rate 2 × 10 −4, weight decay 0.01, and moment-decay coefficients (𝛽 1, 𝛽 2) = (0.9, 0.95 ). We use 2,000 learning-rate warm-up steps, clip the gradient norm at 1.0, apply no dropout, and use random seed 0. The exponential moving average of the network parameters has decay 0.9999 and is used for periodic sample generation. The node and edge embedding maps 𝑊 𝐴 , 𝑊 𝐵 , their independent output maps 𝑊 𝑉 , 𝑊 𝐸 , and the graph network are optimised together. As defined in Section 3.4, each graph is assigned to the decoding branch with probability 𝑝 , and both branch types can occur in one minibatch. Training uses automatic 16-bit brain floating-point (bfloat16) conversion for supported operations; sampling and evaluation do not. Training runs on one node with eight NVIDIA B200 GPUs. 
+
+4.1.3 Evaluation Metrics 
+
+Every value in Section 4.2 uses the same metric implementations, test reference, generated-sample count, and strict validity rule. Validity uses all generated graphs as its denominator; FCD, NSPDK-based MMD, and scaffold similarity use one fixed pool of valid molecules per dataset. 
+
+Validity. Strict validity is the percentage of generated graphs that reconstruct, without correction, to one connected molecule accepted by the chemical sanitisation software; a graph that produces multiple disconnected fragments is invalid under this rule. An aromatic repair heuristic is attempted only after the initial check fails. All tabulated validity values are measured before repair. 
+
+Distributional and scaffold agreement. FCD compares the means and covariances of features produced by a pretrained molecular network for generated and reference molecules [15], evaluated against the corresponding test reference at a common sample count. The NSPDK compares local graph neighbourhoods [4]; we use it within MMD and report the unbiased finite-sample estimate of squared MMD. Molecules that cannot be parsed or converted to the required graph features are omitted. Scaffold similarity follows the Molecular Sets (MOSES) convention [14] used by the baselines [10, 11]: index the union of all Bemis-Murcko scaffolds appearing in the reference or generated molecules, each holding a molecule’s ring systems and the linkers between them [1]. If that union contains 𝑀 scaffolds and 
+
+𝒄 ref , 𝒄 gen ∈ R𝑀  
+
+> ≥0
+
+are the corresponding count vectors, scaffold similarity is their cosine Scaffold = ⟨𝒄 ref , 𝒄 gen ⟩∥𝒄 ref ∥2 ∥𝒄 gen ∥2
+
+,
+
+which removes the overall count scale and compares relative scaffold frequencies. 
+
+> 10 Embedded Graph Flows for Categorical Graph Generation
+
+4.2 Comparison with Prior Methods                                   
+
+> Table 1. QM9 and ZINC250k results using the evaluation settings in Section 4.1.3; training settings are method-specific.
+> QM9 (at most 9 nodes) ZINC250k (at most 38 nodes)
+> Method Valid (%) ↑FCD ↓NSPDK MMD ↓Scaffold ↑Valid (%) ↑FCD ↓NSPDK MMD ↓Scaffold ↑
+> DiGress [21] 98.92 0.717 0.0031 0.7984 82.79 2.803 0.0032 0.4398 GruM [11] 99.69 0.812 0.0036 0.8086 98.65 2.276 0.0028 0.5802 EGF (ours) 99.87 0.150 0.0019 0.9936 96.56 3.326 0.0024 0.5546
+
+QM9. EGF has the best value on all four metrics. Its validity is 99.87%, compared with 98.92% for DiGress and 99.69% for GruM. FCD is 0.150, compared with 0.717 and 0.812; NSPDK-based MMD is 0.0019, compared with 0.0031 and 0.0036; and scaffold similarity is 0.9936, compared with 0.7984 and 0.8086. 
+
+ZINC250k. EGF has FCD 3.326, compared with 2.276 for GruM and 2.803 for DiGress, and NSPDK-based MMD 0.0024, compared with 0.0028 and 0.0032. Its validity is 96.56%, above DiGress but below GruM. Among the three rows, its scaffold similarity of 0.5546 is above DiGress at 0.4398 and below GruM at 0.5802. 
+
+5 Discussion 
+
+The results indicate that the molecular metrics capture complementary aspects of the generated graph distribution. NSPDK-based MMD compares local atom-bond graph neighbourhoods and their relative distances [4], whereas scaffold similarity measures agreement in the frequencies of Bemis–Murcko ring–linker frameworks [1, 14]. FCD instead compares the means and covariances of learned ChemNet features [15]. The strong QM9 results therefore suggest that EGF captures both local graph structure and broader molecular distributional properties on small molecular graphs. In ZINC250k, the maximum graph size increases from 9 nodes and 36 unordered pairs in QM9 to 38 nodes and 703 unordered pairs in ZINC250k. EGF maintains strong agreement on graph-structural metrics, such as NSPDK-based MMD, while its higher FCD and lower validity than GruM suggest that matching substructures does not ensure broader distributional agreement or chemical validity. From a molecular perspective, larger graphs introduce more atom–bond assignments that must jointly satisfy valence, connectivity, and aromaticity constraints. From a graph-generation perspective, the same result may reflect the increasing difficulty of jointly modelling node and edge categories as graph size and categorical complexity grow. 
+
+6 Limitations and Future Work 
+
+A component study is needed to separate the effects of learned endpoint geometry, the graph transformer, two-branch training, and terminal readout. The embedding stage is lightweight: atom and bond categories are mapped to endpoint anchors by one linear transformation each, 𝑊 𝐴 and 𝑊 𝐵 , so every occurrence of a category shares the same endpoint regardless of its local chemical environment. The graph transformer then provides contextual processing over these anchors. This shared endpoint geometry may be less expressive across the broader range of environments found in larger molecules and may contribute to EGF’s higher ZINC250k FCD. Future work could replace the category-only endpoint embeddings with richer, context-dependent node and edge representations learned by a pretrained molecular graph encoder [18]. EGF stores edge states densely, so the edge tensor contains 𝑁 2 entries; the largest graphs considered here use 𝑁 = 38. Scaling to larger capacities therefore requires additional memory and pairwise computation. The reported encodings also omit stereochemistry, isotope identity, and radical-electron counts; supporting them would require extensions to the category sets and reconstruction rules. Finally, the reported EGF runs were based on one training seed. Replicate runs would quantify uncertainty in the modest margins observed in ZINC250k NSPDK-based MMD and QM9 validity. 
+
+> 11 Embedded Graph Flows for Categorical Graph Generation
+
+In proprietary molecular-generation settings, both molecular data and trained models require protection. EGF offers a natural basis for both directions: its continuous graph states provide a representation space for model-specific data authorisation [13, 22], while the explicit separation of its embedding, graph transformer, and readout parameters provides clear integration points for model usage control [23]. Future work will evaluate these extensions and their effects on molecular validity and generation quality. 
+
+7 Conclusions 
+
+EGF generates categorical graphs by transporting Gaussian states through a learned embedding space. Separate trainable maps define the endpoints for node and unordered-edge categories. A permutation-equivariant transformer predicts these endpoints along straight paths, and a terminal readout assigns discrete categories. Padding is masked, and each unordered edge follows one shared state and terminal decision. Across the three methods, EGF has the best value on all four QM9 metrics and the lowest NSPDK-based MMD on ZINC250k. 
+
+Code and Data Availability 
+
+QM9 and ZINC250k are publicly available benchmark datasets [17, 20]. The code for training, sampling and evaluation, together with the configuration files for the reported runs, is available at https://github.com/Trusted-System-Lab/EGF under the PolyForm Noncommercial License 1.0.0. 
+
+References 
+
+[1] Guy W. Bemis and Mark A. Murcko. The properties of known drugs. 1. molecular frameworks. Journal of Medicinal Chemistry , 39(15):2887–2893, 1996. doi: 10.1021/jm9602928. URL https://pubs.acs.org/doi/10. 1021/jm9602928. [2] Yoann Boget, Magda Gregorova, and Alexandros Kalousis. Discrete graph auto-encoder. Transactions on Machine Learning Research , 2024. URL https://openreview.net/forum?id=bZ80b0wb9d. [3] Andrew Campbell, Jason Yim, Regina Barzilay, Tom Rainforth, and Tommi Jaakkola. Generative flows on discrete state-spaces: Enabling multimodal flows with applications to protein co-design. In Ruslan Salakhutdinov, Zico Kolter, Katherine Heller, Adrian Weller, Nuria Oliver, Jonathan Scarlett, and Felix Berkenkamp, editors, Proceedings of the 41st International Conference on Machine Learning , volume 235 of 
+
+Proceedings of Machine Learning Research , pages 5453–5512. PMLR, 2024. URL https://proceedings.mlr. press/v235/campbell24a.html. [4] Fabrizio Costa and Kurt De Grave. Fast neighborhood subgraph pairwise distance kernel. In Proceedings of the 27th International Conference on Machine Learning , pages 255–262, 2010. URL https://icml.cc/ Conferences/2010/papers/347.pdf. [5] Ian Dunn and David Ryan Koes. Exploring discrete flow matching for 3D de novo molecule generation. arXiv preprint arXiv:2411.16644 , 2024. doi: 10.48550/arXiv.2411.16644. URL https://arxiv.org/abs/2411.16644. [6] Ian Dunn and David Ryan Koes. Mixed continuous and categorical flow matching for 3D de novo molecule generation. arXiv preprint arXiv:2404.19739 , 2024. doi: 10.48550/arXiv.2404.19739. URL https://arxiv.org/ abs/2404.19739. [7] Floor Eijkelboom, Grigory Bartosh, Christian A. Naesseth, Max Welling, and Jan-Willem van de Meent. Vari-ational flow matching for graph generation. In Advances in Neural Information Processing Systems , volume 37, pages 11735–11764. Curran Associates, Inc., 2024. doi: 10.52202/079017-0374. URL https://proceedings. neurips.cc/paper_files/paper/2024/hash/15b780350b302a1bf9a3bd273f5c15a4-Abstract-Conference.html. [8] Xiaoyang Hou, Tian Zhu, Milong Ren, Dongbo Bu, Xin Gao, Chunming Zhang, and Shiwei Sun. Improving molecular graph generation with flow matching and optimal transport. arXiv preprint arXiv:2411.05676 , 2024. doi: 10.48550/arXiv.2411.05676. URL https://arxiv.org/abs/2411.05676. [9] Keya Hu, Linlu Qiu, Yiyang Lu, Hanhong Zhao, Tianhong Li, Yoon Kim, Jacob Andreas, and Kaiming He. ELF: Embedded language flows. arXiv preprint arXiv:2605.10938 , 2026. doi: 10.48550/arXiv.2605.10938. URL https://arxiv.org/abs/2605.10938. Version 2. [10] Jaehyeong Jo, Seul Lee, and Sung Ju Hwang. Score-based generative modeling of graphs via the system of stochastic differential equations. In Kamalika Chaudhuri, Stefanie Jegelka, Le Song, Csaba Szepesvari, Gang Niu, and Sivan Sabato, editors, Proceedings of the 39th International Conference on Machine Learning ,
+
+> 12 Embedded Graph Flows for Categorical Graph Generation
+
+volume 162 of Proceedings of Machine Learning Research , pages 10362–10383. PMLR, 2022. URL https://proceedings.mlr.press/v162/jo22a.html. [11] Jaehyeong Jo, Dongki Kim, and Sung Ju Hwang. Graph generation with diffusion mixture. In Ruslan Salakhutdinov, Zico Kolter, Katherine Heller, Adrian Weller, Nuria Oliver, Jonathan Scarlett, and Felix Berkenkamp, editors, Proceedings of the 41st International Conference on Machine Learning , volume 235 of 
+
+Proceedings of Machine Learning Research , pages 22371–22405. PMLR, 2024. URL https://proceedings.mlr. press/v235/jo24b.html. [12] Yaron Lipman, Ricky T. Q. Chen, Heli Ben-Hamu, Maximilian Nickel, and Matthew Le. Flow matching for generative modeling. In The Eleventh International Conference on Learning Representations , 2023. URL https://openreview.net/forum?id=PqvMRDCJT9t. [13] Shuofeng Liu, Zihan Wang, Minhui Xue, Long Wang, Yuanchao Zhang, and Guangdong Bai. Being transparent is merely the beginning: Enforcing purpose limitation with polynomial approximation. In 33rd USENIX Security Symposium (USENIX Security 24) , pages 6507–6524, Philadelphia, PA, August 2024. USENIX Association. ISBN 978-1-939133-44-1. URL https://www.usenix.org/conference/usenixsecurity24/ presentation/liu-shuofeng. [14] Daniil Polykovskiy, Alexander Zhebrak, Benjamin Sanchez-Lengeling, Sergey Golovanov, Oktai Tatanov, Stanislav Belyaev, Rauf Kurbanov, Aleksey Artamonov, Vladimir Aladinskiy, Mark Veselov, Artur Kadurin, Simon Johansson, Hongming Chen, Sergey Nikolenko, Alán Aspuru-Guzik, and Alex Zhavoronkov. Molecular sets (MOSES): A benchmarking platform for molecular generation models. Frontiers in Pharmacology , 11: 565644, 2020. doi: 10.3389/fphar.2020.565644. URL https://www.frontiersin.org/journals/pharmacology/ articles/10.3389/fphar.2020.565644/full. [15] Kristina Preuer, Philipp Renz, Thomas Unterthiner, Sepp Hochreiter, and Günter Klambauer. Fréchet ChemNet distance: A metric for generative models for molecules in drug discovery. Journal of Chemical Information and Modeling , 58(9):1736–1741, 2018. doi: 10.1021/acs.jcim.8b00234. URL https://pubs.acs.org/doi/10. 1021/acs.jcim.8b00234. [16] Yiming Qin, Manuel Madeira, Dorina Thanou, and Pascal Frossard. DeFoG: Discrete flow matching for graph generation. In Aarti Singh, Maryam Fazel, Daniel Hsu, Simon Lacoste-Julien, Felix Berkenkamp, Tegan Maharaj, Kiri Wagstaff, and Jerry Zhu, editors, Proceedings of the 42nd International Conference on Machine Learning , volume 267 of Proceedings of Machine Learning Research , pages 50269–50326. PMLR, 2025. URL https://proceedings.mlr.press/v267/qin25d.html. [17] Raghunathan Ramakrishnan, Pavlo O. Dral, Matthias Rupp, and O. Anatole von Lilienfeld. Quantum chemistry structures and properties of 134 kilo molecules. Scientific Data , 1(1):140022, 2014. doi: 10.1038/sdata.2014.22. URL https://www.nature.com/articles/sdata201422. [18] Yu Rong, Yatao Bian, Tingyang Xu, Weiyang Xie, Ying Wei, Wenbing Huang, and Junzhou Huang. Self-supervised graph transformer on large-scale molecular data. In Advances in Neural Information Processing Systems , volume 33, pages 12559–12571. Curran Associates, Inc., 2020. URL https://proceedings.neurips.cc/ paper_files/paper/2020/file/94aef38441efa3380a3bed3faf1f9d5d-Paper.pdf. [19] Daan Roos, Oscar Davis, Floor Eijkelboom, Michael Bronstein, Max Welling, İsmail İlkan Ceylan, Luca Ambrogioni, and Jan-Willem van de Meent. Categorical flow maps. arXiv preprint arXiv:2602.12233 , 2026. doi: 10.48550/arXiv.2602.12233. URL https://arxiv.org/abs/2602.12233. Accepted at the 43rd International Conference on Machine Learning; proceedings designated PMLR volume 306. [20] Teague Sterling and John J. Irwin. ZINC 15 – ligand discovery for everyone. Journal of Chemical Information and Modeling , 55(11):2324–2337, 2015. doi: 10.1021/acs.jcim.5b00559. URL https://pubs.acs.org/doi/10. 1021/acs.jcim.5b00559. [21] Clément Vignac, Igor Krawczuk, Antoine Siraudin, Bohan Wang, Volkan Cevher, and Pascal Frossard. DiGress: Discrete denoising diffusion for graph generation. In The Eleventh International Conference on Learning Representations , 2023. URL https://openreview.net/forum?id=UaAD-Nu86WX. [22] Zihan Wang, Zhiyong Ma, Zhongkui Ma, Shuofeng Liu, Akide Liu, Derui Wang, Minhui Xue, and Guangdong Bai. Catch-Only-One: Non-Transferable Examples for Model-Specific Authorization. arXiv preprint arXiv:2510.10982 , 2026. doi: 10.48550/arXiv.2510.10982. URL https://arxiv.org/abs/2510.10982. [23] Zihan Wang, Zhongkui Ma, Xinguo Feng, Chuan Yan, Dongge Liu, Ruoxi Sun, Derui Wang, Minhui Xue, and Guangdong Bai. Re-Key-Free, Risky-Free: Adaptable Model Usage Control. In 2026 IEEE 11th European Symposium on Security and Privacy (EuroS&P) , pages 696–711, 2026. doi: 10.1109/EuroSP68448.2026. 00051.

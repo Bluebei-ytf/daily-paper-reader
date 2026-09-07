@@ -1,0 +1,841 @@
+Title: 2609.00059v1.pdf
+
+URL Source: https://arxiv.org/pdf/2609.00059v1
+
+Published Time: Wed, 02 Sep 2026 00:02:57 GMT
+
+Number of Pages: 23
+
+Markdown Content:
+DISTAL: Distillation and Self-Supervised Pretraining for Structure-Agnostic Materials Property Prediction 
+
+Weiran Wang 1,2 , Xintong Huo 1,2 , Yueying Wang 1,2 , Yusi Fan 1,2 , Wenyan Wang 1,2 , Xin Feng 3, Ruihao Xin 4, Lan Huang 1,2 , Kewei Li 1,2,# , Fengfeng Zhou 1,2,# .
+
+1 College of Computer Science and Technology, Jilin University, Changchun 130012, China. 
+
+2 Key Laboratory of Symbolic Computa�on and Knowledge Engineering of Ministry of Educa�on, Jilin University, Changchun 130012, China. 
+
+3 School of Ar�ficial Intelligence, Jilin University of Chemical Technology, Jilin 130000, PR 
+
+China. 
+
+4 School of Electrical and Control Engineering, Jilin University of Chemical Technology, Jilin 130000, PR China .
+
+# Correspondence may be addressed to Fengfeng Zhou (FengfengZhou@gmail.com or 
+
+ffzhou@jlu.edu.cn), and Kewei Li (kwb1997@gmail.com) .Abstract 
+
+Materials property predic�on remains difficult in low -data se�ngs, where many target proper�es are supported by only a limited number of labeled samples. Models with the strongest predic�ve accuracy o�en depend on crystal structures, which restricts their use in early-stage screening 
+
+when structural informa�on is limited or unavailable. To address this challenge, we propose 
+
+DISTAL, a dual -prior framework for structure-agnos�c materials property predic�on that 
+
+combines self-supervised composi�onal pretraining with structure-aware knowledge dis�lla�on. DISTAL first learns transferable composi�onal representa�ons from a large virtual composi�on space using 145 composi�on -derived descriptors. It then dis�lls structural knowledge from a 
+
+pretraine d ALIGNN teacher into a composi�on -condi�oned student. This se�ng allows structural 
+
+priors to be used during training without requiring structural inputs at inference. By integra�ng explicit composi�onal descriptors, pretrained latent features, and dis�lled structural features within a unified predic�on pipeline, DISTAL captures complementary signals that are difficult to recover from any single representa�on alone. Across 39 benchmark tasks, the best -performing 
+
+mul�modal configura�on combines all three signals, and improves over the reference benchmark on 37 tasks . DISTAL achieves the strongest overall performance among all evaluated feature 
+
+combina�ons. These results indicate that composi�onal pretraining and structural dis�lla�on provide complementary priors and offer a prac�cal route to robust composi�on -only predic�on 
+
+in small-data materials informa�cs. The source code and the pre-trained models are anonymously available at: htps://osf.io/eq96d/overview?view_only=451617f42f7849e08750bd1852b48980 
+
+and will be released at the official link a�er acceptance. 
+
+Keywords: materials informa�cs; property predic�on; self -supervised pretraining; knowledge dis�lla�on; composi�on -only learning. 
+
+# Introduction 
+
+The discovery of func�onal materials increasingly depends on predic�ve models that can priori�ze large candidate spaces before costly experiments or density func�onal theory calcula�ons are performed (Merchant, et al., 2023). Machine learning and deep learning have 
+
+become a central tool in materials informa�cs, with applica�ons across computa�onal and 
+
+exper imental datasets. However, progress remains uneven across predic�on tasks. A small number of proper�es benefit from rela�vely large datasets, whereas many technologically relevant proper�es remain in low -data regimes. This makes robust model developmen t difficult 
+
+and limits the general use of highly expressive predictors (Gupta, et al., 2024; Gupta, et al., 2021; Huang, et al., 2024; Ward, et al., 2016) .
+
+Recent progress has been driven in part by structure-aware models, especially graph neural 
+
+networks that operate on atomis�c representa�ons (Chen, et al., 2019) . Cry stal Graph Convolu�onal Neural Networks showed that crystal structures can be encoded as graphs for accurate and interpretable property predic�on (Xie and Grossman, 2018) . Subsequent models 
+
+incorporated richer geometric informa�on. Among them, the Atomis�c Line Graph Neural Network explicitly propagates both bond and bond -angle informa�on through coupled message 
+
+passing on the bond graph and its li ne graph, which improves predic�on across diverse atomis�c 
+
+tasks (Choudhary and DeCost, 2021) . These studies show that structural geometry provides a 
+
+strong induc�ve bias for materials property predic�on. Yet the same dependency also creates a prac�cal barrier. Structure -aware models require crystal structures, which may be unavailable, 
+
+uncertain, or computa�onally expensive during early -stage materials screening (Choudhary and 
+
+DeCost, 2021; Xie and Grossman, 2018) .
+
+Structure-agnos�c approaches address this limita�on by predic�ng proper�es from composi�on 
+
+alone. Classical descriptor-based frameworks showed that chemically informed composi�on -
+
+derived atributes can support broad predic�ve coverage across inorganic materials (Ward, et al., 
+
+2016). More recent deep learning methods, such as Roost, further demonstrated that learnable composi�on -only representa�ons can improve predic� on without structural inputs (Goodall and Lee, 2020). These methods are atrac�ve for high -throughput discovery because they preserve scalability and avoid the structural botleneck. However, composi�on -only learning has an 
+
+intrinsic limita�on. It does not directly observe geometric informa�on that o�en governs coordina�on -sensi�ve, phase -dependent, or polymorph-dependent behavior. Its predic�ve 
+
+ceiling can therefore remain below that of strong structure-aware models (Goodall and Lee, 2020; 
+
+Lee, et al., 2023) .
+
+Data scarcity adds a second challenge. Many materials proper�es have too few labeled samples 
+
+to support stable training of expressive models from scratch. Transfer learning has therefore 
+
+become an important strategy in materials informa�cs. Gupta et al. showed that cross-property 
+
+deep transfer learning can improve predic�on on small materials datasets, even in composi�on -
+
+based se�ngs (Gupta, et al., 2021) . Later work extended this idea to structure-aware graph neural networks and reported gains across diverse materials datasets (Gupta, et al., 2024). In parallel, 
+
+recent studies have shown that self-supervised and pretraining-based strategies can strengthen structure-agnos�c models by learning reusable composi�onal representa�ons from unlabeled data before downstream adapta�on (Huang, et al., 2024; Rahman, et al., 2025) . These studies suggest that transfer learning and pretraining are both useful for low-data predic�on. However, they have o�en been developed along separate direc�ons. One direc�on emphasizes knowledge transfer across labeled property datasets, while the other focuses on representa�on learning within composi�on -only frameworks (Gupta, et al., 2024; Gupta, et al., 2021; Huang, et al., 2024) .
+
+These developments also align with the emerging founda�on -model view in materials discovery, where large-scale pretraining is used to learn transferable representa�ons across downstream 
+
+tasks (Pyzer -Knapp, et al., 2025) .
+
+This separa�on leaves an important methodological gap. Composi�on -only models are deployable at the earliest stages of screening, but structure-aware models benefit from richer physical priors. A prac�cal framework should retain the inference -�me simplicity of composi�on -
+
+only models and s�ll absorb useful informa�on from structure -aware learning. This need 
+
+mo�vates the present study. 
+
+Here, we introduce DISTAL, a dual -prior framework for structure-agnos�c materials property predic�on through dis�lla�on and self -supervised pretraining. DISTAL combines two complementary sources of prior informa�on within a single composi�on -only inference pipeline. 
+
+First, it learns transferable composi�onal priors through self -supervised pretraining on a large 
+
+virtual composi�on space represented by 145 composi�on -derived descriptors. Second, it dis�lls 
+
+structure-aware knowledge fr om a pretrained ALIGNN teacher into a composi�on -condi�oned 
+
+student encoder. This design allows structural priors to guide training without requiring structural 
+
+inputs during inference. The final predic�on pipeline integrates explicit composi�onal desc riptors, 
+
+pretrained latent composi�onal features, and dis�lled structural features. DISTAL is therefore not 
+
+designed to replace structure-aware learning. Instead, it provides a prac�cal bridge between 
+
+structure-aware supervision and structure-agnos�c d eployment. 
+
+Using this framework, we evaluate raw composi�onal descriptors, pretrained composi�onal features, dis�lled structural features, and their combina�ons across 39 benchmark tasks. Rather than trea�ng self -supervised composi�onal learning and structural transfer as compe�ng alterna�ves, our results support a complementary interpreta�on. Composi�onal pretraining and structural dis�lla�on encode dis�nct priors, and their integra�on yields a more robust composi�on -only predic�on framewor k for low-data materials informa�cs. Materials and Methods 
+
+# Overall Workflow 
+
+Figure 1. Overall workflow of DISTAL for structure -agnos�c materials property predic�on .
+
+All materials were represented in a shared 145-dimensional composi�on -derived descriptor space, denoted as 𝑥𝑥 . This descriptor vector served as the common input representa�on for the full DISTAL workflow. 
+
+As shown in Figure 1, DISTAL contains two upstream representa�on -learning branches and one 
+
+shared downstream predic�on stage. The first branch performs self -supervised composi�onal pretraining on a large unlabeled virtual composi�on set. This branch ma ps 𝑥𝑥 to a latent 
+
+composi�onal representa�on, denoted as 𝑧𝑧 , and reconstructs the input descriptor vector as 𝑥𝑥′ 
+
+through a decoder. The reconstruc�on task encourages the encoder to learn compact composi�on -level regulari�es from the virtual composi�o n space. 
+
+The second branch transfers structure-aware informa�on from a pretrained ALIGNN teacher to a composi�on -condi�oned student encoder. The ALIGNN teacher uses crystal -structure graphs as inputs, whereas the student encoder receives only the compos i�on -derived descriptor vector 𝑥𝑥 .Through this teacher-student design, the student learns a dis�lled structural representa�on, 
+
+denoted as 𝑠𝑠 . This representa�on carries structure -informed signals during training, but it does not require structural inputs during downstream inference. 
+
+The downstream stage evaluates x, 𝑥𝑥 ’, 𝑧𝑧 , 𝑠𝑠 , and their combina�ons across 39 property -predic�on tasks. This workflow separates three informa�on sources: explicit composi�onal descriptors, 
+
+latent features learned from self-supervised composi�onal pretraining, and structure -informed 
+
+> Composition-derived input ( x)145-dimensional descriptor vector ( x)
+
+CH3O4 ...   
+
+> composition Virtual-composition Pretraining
+> zdecoder
+> x’
+> zlatent code ALIGNN-based Distillation crystal structure (graph) ALIGNN teacher student encoder s
+> distilled structural representation feature fusion shared property predictor
+> .........
+> unlabeled virtual compositions reconstructed descriptor
+> vector (x′)
+> encoder
+> inference uses composition only
+
+features learned through dis�lla�on. The design allows direct assessment of whether composi�onal pretraining and structure -aware dis�lla�on provide complementary informa�on 
+
+for structure-agnos�c materials property predic�on. 
+
+# Virtual Composition Generation and Descriptor Construction 
+
+An unlabeled pretraining corpus was generated to support self-supervised composi�onal learning. The corpus contained 100,000 virtual composi�ons obtain ed through random formula sampling. 
+
+In the implemented generator, each candidate formula contained two to four elements selected from a predefined elemental pool. Each selected element was assigned an integer stoichiometric coefficient from 1 to 4. A candi date formula was retained only when it could be parsed and 
+
+featurized successfully and did not contain missing descriptor values. This virtual corpus was used to expand composi�onal coverage for representa�on learning. It was not intended to define a 
+
+chemically curated materials database. 
+
+All composi�ons were encoded using a 145 -dimensional composi�on -derived descriptor vector. 
+
+The descriptor set included stoichiometric descriptors, Magpie elemental -property sta�s�cs, 
+
+average valence-orbital features, and ion-property features. Composi� on parsing was performed with pymatgen (Ong, et al., 2013), and descriptor genera�on was implemented with matminer (Ward, et al., 2018). The Magpie descriptor family follows the general -purpose materials property 
+
+predic�on framework introduced by Ward et al. (Ward, et al., 2016) . The same 145-dimensional 
+
+representa�on was used throughout the study for virtual -composi�on pretraining, structural dis�lla�on, and downstream benchmark evalua�on. 
+
+For downstream evalua�on, we adopted the 39 computa�onal predic�on tasks defined in the JARVIS -based cross-property benchmark of Gupta et al. (Gupta, et al., 2021). Each task -specific 
+
+dataset was converted into the common 145-dimensional descriptor space before model training. 
+
+All downstream comparisons used the corresponding predefined splits. 
+
+# Self-Supervised Compositional Pretraining 
+
+Self-supervised composi�onal pretraining was used to learn reusable representa�ons from the 
+
+stand ardized virtual -composi�on descriptor matrix. All candidate models received the same 145 -
+
+dimensional Magpie -based composi�on descriptor vector as input and used a fixed 72 -dimensional latent space. The ini�al eva lua�on experiment included a baseline autoencoder, a 
+
+denoising autoencoder (DAE) (Vincent, et al., 2010), a sparse autoencoder, a varia�onal autoencoder (VAE) (Kingma and Welling, 2013), and a contrac�ve -autoencoder-inspired baseline 
+
+(Rifai, et al., 2011). For determinis�c encoder –decoder models, the encoder compressed the 
+
+input descriptor vector through a mul�layer perceptron with batch normaliza�on (Ioffe and Szegedy, 2015), LeakyReLU ac�va�on, and dropout (Srivastava, et al., 2014) . The decoder then mapped the latent vector back to the original descriptor space. 
+
+The candidate models differed in how they constrained or perturbed the latent representa�on. The DAE added Gaussian corrup�on to the input descriptors. The sparse autoencoder used sparsity regulariza�on during training. The VAE used a probabilis�c latent -variable formula�on. The contrac�ve -autoencoder-inspired baseline introduced a sensi�vity penalty to encourage local stability of the learned representa�on. All models were pretrained on the standardized virtual -
+
+composi�on descriptor matrix with an 8:2 train -valida�on split, AdamW op�miza�on (Loshchilov 
+
+and Huter, 2017), and early stopping. No independent test subset was created at this pretraining 
+
+stage because the autoencoders were not used as final predic�ve models. The valida�on split was used only to monitor pretraining and guide early stopping or representa�on selec�on. Final 
+
+performance assessment was conducted exclusively on the 39 downstream property-predic�on 
+
+tasks. 
+
+A�er the generic autoencoder evalua�on step , the denoising route was examined in greater detail 
+
+through six variants: adap�ve DAE, masked DAE, progressive DAE, context DAE, mul� -scale DAE, and residual DAE. The adap�ve DAE used a trainable noise parameter to learn the corrup�on amplitude. The masked DAE applied random feature masking. The progressive DAE adjusted the noise level across training. The context DAE used an aten�on -based feature-mixing block. The 
+
+mul� -scale DAE fused latent representa�ons extracted under different corrup�on scales. The residual DAE added a residual path from the input descriptors to the reconstruc�on output. These 
+
+variants were tr ained on the same standardized descriptor matrix and followed the same train –
+
+valida�on protocol. 
+
+The adap�ve -denoising branch was then combined with addi�onal architectural mo�fs to construct five hybrid backbones: ADAE -Standard, ADAE -Transformer, ADAE -GAN, ADAE -ResNet, and ADAE -CNN. These models preserved the same descriptor input and latent -space se�ng, but they differed in the architectural component used to enhance the encoder –decoder backbone. 
+
+ADAE -Transformer introduced a projected aten�on bra nch inspired by self-aten�on (Vaswani, 
+
+et al., 2017). ADAE -GAN added an adversarial discriminator in latent space (Goodfellow, et al., 2014). ADAE -ResNet used residual blocks in the encoder –decoder backbone (He, et al., 2016) .ADAE -CNN treated the descriptor vector as a one -dimensional signal and used convolu�onal 
+
+encoding with transposed-convolu�on decoding. 
+
+Stage-wise screening of these autoencoder variants was conducted to select the final composi�onal encoder for downstream fusion experiments. The selected encoder generated two 
+
+feature types from the same 145-dimensional des criptor vector: the latent composi�onal representa�on 𝑧𝑧 and the decoder-side reconstruc�on 𝑥𝑥′ . These two feature types were later evaluated with the explicit descriptor vector 𝑥𝑥 , the dis�lled structural representa�on 𝑠𝑠 , and their 
+
+combina�ons in the downstream predic�on stage. 
+
+# ALIGNN -Guided Structural Distillation 
+
+Structural dis�lla�on was conducted to incorporate geometry-aware informa�on into acomposi�on -only representa�on. In this branch, a pretrained ALIGNN model served as the 
+
+teacher (Choudhary and DeCost, 20 21). ALIGNN is a graph neural network that performs message passing on both the atomis�c bond graph and its line graph. This design allows the model to 
+
+encode bond-level and bond-angle informa�on within atomis�c structures (Choudhary and 
+
+DeCost, 2021). In the present workflow, teacher embeddings were extracted from the readout layer of a pretrained forma�on -energy ALIGNN model. Embeddings were generated for 
+
+success fully processed structures from a JARVIS -derived corpus (Choudhary and DeCost, 2021; 
+
+Choudhary, et al., 2 020) .
+
+A composi�on -condi�oned student encoder was then trained to regress the teacher embeddings 
+
+from the same 145-dimensional Magpie -based composi�on descriptors used throughout the study. The student network mapped the descriptor input to a 256 -dimensional output space 
+
+through a mul�layer perceptron with batch normaliza�on, SiLU ac�va�on (Elfwing, et al., 2018) ,and dropout. Training was formulated as supervised regression with mean-squared-error loss. An 
+
+8:2 train -valida�on split and early stopping were used. The student output is denoted as 𝒔𝒔 and is 
+
+used as the dis�lled structural representa�on in downstream predic�on. In this design, structure -
+
+derived informa�on is transferred during training, while downstream inference requires only composi�on -derived descriptors. Downstream Feature Co mbinations 
+
+Four feature types were evaluated in the downstream predic�on stage. The vector 𝒙𝒙 denotes the original 145-dimensional Magpie -based composi�on descriptor vector. The vector 𝒛𝒛 denotes the 
+
+latent composi�onal representa�on produced by the se lected pretrained encoder. The vector 𝑥𝑥′ 
+
+denotes the decoder-side reconstruc�on generated by the same pretrained model in the original 
+
+descriptor space. The vector 𝑠𝑠 denotes the dis�lled structural representa�on predicted by the composi�on -condi�one d student encoder. 
+
+Based on these feature types, nine downstream feature combina�ons were examined: 𝑥𝑥 , 𝑥𝑥′ , 𝑧𝑧 , 𝑠𝑠 ,
+
+𝑧𝑧 + 𝑥𝑥 , 𝑧𝑧 + 𝑥𝑥′ , 𝑥𝑥 + 𝑠𝑠 , 𝑥𝑥′ + 𝑠𝑠 , and 𝑧𝑧 + 𝑥𝑥 + 𝑠𝑠 . Feature fusion was implemented by direct 
+
+vector concatena�on. This design allowed the downstream evalua�on to compare individual informa�on sources with fused representa�ons. It also tested whether pretrained composi�onal features and dis�lled structural features provided addi�onal informa�on beyond the original composi� on descriptors. 
+
+# Downstream Prediction Protocol 
+
+Downstream evalua�on was performed on 39 task -specific datasets. Each dataset included a predefined training split and a fixed external test split. Cross -valida�on was applied only within 
+
+the training split. For each task and feature combina�on , the downstream predictor was trained by 10-fold cross-valida�on on the task -specific training data. In each fold, the fold -specific training por�on was used for model fi�ng, and the held -out fold was used for va lida�on. The fixed external test split was not used for scaler fi�ng, model fi�ng, valida�on, or early -stopping decisions. 
+
+All preprocessing transforma�ons were fited only on training data and were then applied to the corresponding valida�on and t est data. When target scaling was enabled, the target scaler was 
+
+fited only on the fold -specific training targets. The downstream predictor was a mul�layer perceptron with three hidden layers, batch normaliza�on, GELU ac�va�ons (Hendrycks and 
+
+Gimpel, 2016) , dropout, and a sc alar output layer. Op�miza�on used AdamW with early stopping 
+
+(Loshchilov and Huter, 2017). Model performance was evaluated by mean absolute error. 
+
+For each task and feature combina�on, the final test predic�on was obtained by averaging the predic�ons of the 10 fold -specific models on the same fixed test split. The mean absolute error of the averaged predic�on was reported as the primary metric. Benchmark comparison followed the 39-t ask evalua�on framework introduced in prior cross -property transfer-learning work 
+
+(Gupta, et al., 2021) .
+
+# Results and Discussion 
+
+# Benchmark Heterogeneity and Virtual Composition Coverage 
+
+(a) 
+
+(b )
+
+(c) 
+
+Figure 2. Benchmark diversity and virtual-composi�on coverage. The 39 downstream tasks have 
+
+heterogeneous target distribu�ons, and the virtual composi�on corpus provides broad unlabeled 
+
+descriptor-space coverage for pretraining. (a) Representa�ve target -property distribu�ons , and the complete list of plots for the 39 tasks is in the Supplementary Figure S1. (b) Representa�ve PCA projec�ons of downstream tasks, and the complete list of the plots for the 39 tasks is in the Supplementary Figure S2. (c) PCA density map of the virtual composi�on corpus. 
+
+Before evalua�ng the learned representa�ons, we first examined the sta�s�cal structure of the 39 downstream benchmark tasks and the coverage of the unlabeled virtual composi�on space 
+
+used for pretraining. This a nalysis provides context for the downstream results. It also clarifies why a single raw descriptor representa�on may not be sufficient across all tasks. 
+
+The target-property distribu�ons differed substan�ally across the 39 downstream tasks (Gupta, 
+
+et al., 202 1) (Figure 2a). Some tasks showed compact value ranges, whereas others showed broad, skewed, mul�modal, or long -tailed distribu�ons. Several proper�es also contained dense regions 
+
+near low values with sparse high-value tails. These paterns indicate that the benc hmark should 
+
+not be treated as a collec�on of closely matched regression tasks. Instead, it covers heterogeneous predic�on se�ngs with dis�nct target scales and distribu�onal shapes. This heterogeneity is important for evalua�ng whether learned representa�ons can improve predic�on across diverse materials -property regimes rather than only under a narrow data 
+
+distribu�on. 
+
+We next examined the raw 145-dimensional composi�on -derived descriptor space by task-wise 
+
+PCA projec�ons (Fig ure 2b). Several datasets showed visible target-associated gradients in the 
+
+first two principal components. This observa�on suggests that the descriptor space already 
+
+retains useful property-related varia�on. However, these gradients were o�en diffuse and 
+
+overlapping. The two-dimensional projec�ons rarely showed clean local separa�on by target value. Thus, the raw descriptor space provides an informa�ve star�ng point, but it may not organize property -relevant varia�on in a form that is op�mal for downstream predic� on. This 
+
+result supports the use of representa�on learning as a complementary step rather than a 
+
+replacement for chemically meaningful descriptors. 
+
+The PCA density map of the 100,000 virtual composi�ons further showed broad coverage in the Magpie -based descriptor space (Figure 2c). The virtual corpus formed a dense central region with extended peripheral coverage. This patern is consistent with the intended role of the corpus. It was not designed as a chemically curated candidate library. Instead, it se rved as a large unlabeled descriptor manifold for self-supervised pretraining (Huang, et al., 2024) . Such a corpus can expose 
+
+the encoder to broad composi�onal varia�on before task -specific supervision is introduced. 
+
+Together, these exploratory results mo�vate the representa�on -learning design (Merchant, et al., 2023) used in DISTAL. The downstream benchmark contains strong task -level heterogeneity, and the raw descriptor space contains useful but only par�ally organized property informa�on. At the same �me, the virtual composi�on corpus provides broad unlabeled coverage for composi�onal pretraining. These observa�ons support the subsequent evalua�on of explicit descriptors, pretrained composi�onal features, dis�lled structural features, and their fused representa�ons. 
+
+# Raw Composition -Derived Descriptors Establish a Strong Baseline 
+
+Figure 3. Raw composi�on -derived descriptors as the baseline representa�on . The figure 
+
+compares the model trained with raw composi�on -derived descriptors against the reference 
+
+model in terms of MAE , and their performances were denoted as MAERaw and MAERef . The 
+
+rela�ve improvement is calculated as �MAERef − MAERaw �/MAERef × 𝟏𝟏𝟏𝟏𝟏𝟏 %. Because lower MAE indicates beter predic�ve performance, posi�ve values indicate that the raw descriptor model outperformed the reference model, whereas nega�ve values indicate lower performance than the reference model. Overall, the raw descriptor baseline improved 29 of the 39 downstream 
+
+tasks, with a median rela�ve improvement of 3.4%. 
+
+We first evaluated the explicit composi�on -derived descriptor vector 𝑥𝑥 as a standalone baseline. This analysis is important because all downstream feature combina�ons in DISTAL are derived 
+
+from, or combined with, the same descriptor space. If the raw descriptor baseline was weak, later 
+
+gains from pretraining or dis�lla�on would be difficult to interpret. If 𝑥𝑥 already contains strong 
+
+predic�ve signal, the learned branches should be interpreted as complementary refinements rather than replacements for composi�on -derived descriptors. 
+
+> -40.0 -30.0 -20.0 -10.0 0.0 10.0 20.0 30.0
+> Relative MAE Improvement (%) Downstream Tasks Raw composition -derived descriptors Compared Against the Reference Study
+> 29/39 tasks were improved (Median Improvement 3.4%)
+
+The raw descriptor baseline achieved compe��ve performance across a substan�al frac�on of 
+
+the benchmark (Figure 3). Rela�ve to the reference benchmark of Gupta et al. (Gupta, et al., 2021) ,
+
+𝑥𝑥 improved the test MAE on 29 of the 39 tasks. The median rela�ve MAE improvement was +3.4%. 
+
+This result indicates that the 145-dimensional Magpie -based descriptors encode subs tan�al transferable informa�on across chemically diverse predic�on tasks. Thus, the star�ng point of DISTAL is not a weak handcra�ed control. It is an informa�ve composi�on -only representa�on that remains compe��ve across a broad mul�task benchm ark. 
+
+The improvement patern was not uniform. Several tasks showed clear gains, whereas a smaller 
+
+subset remained below the reference benchmark. This task-dependent behavior agrees with the exploratory analysis above. The raw descriptor space preserves property-relevant chemical 
+
+informa�on, but this informa�on is not always organized in a form that supports equally strong predic�on across all targets. This result leaves room for self -supervised pretraining and structural 
+
+dis�lla�on to resh ape or augment the descriptor-derived signal before downstream predic�on. 
+
+These observa�ons define the interpre�ve baseline for the rest of the study. First, explicit composi�on -derived descriptors should be treated as a strong benchmark, not as a nominal 
+
+control. Second, any benefit from learned representa�ons should be judged against this compe��ve composi�on -only baseline. The next analysis therefore asks whether self-supervised 
+
+composi�onal pretraining can extract latent features that further strengthen the predic�ve informa�on already present in 𝒙𝒙 .
+
+# Autoencoder-Derived Features Enhance Prediction 
+
+Figure 4. Stage-wise selec�on of self -supervised composi�onal autoencoder backbones. (a) Stage I comparison of generic autoencoder families. (b) Stage II comparison of denoising variants. (c) Stage III comparison of hybrid ADAE backbones.                      
+
+> 25 25
+> 28
+> 11 25
+> 18
+> 21
+> 18
+> 920 0510 15 20 25 30
+> AE DAE SAE VAE CAE-like Improved Tasks Tested Models
+> Stage I: Generic AEs
+> Best Choice
+> z
+> x'
+> 25 24 25 25 26
+> 10 19
+> 16
+> 19 18
+> 22
+> 28
+> 0510 15 20 25 30
+> ADAE MDAE PDAE CDAE MSDAE RDAE Improved Tasks Tested Models
+> Stage II: Denosing Variants Best Choice
+> z
+> x'
+> 27 25 20
+> 26 27 20
+> 28 16 28 28
+> 0510 15 20 25 30
+> Improved Tasks Tested Models
+> Stage III: Hybride Backbones
+> Best Choice zx'
+
+We next evaluated whether self-supervised autoencoder pretraining could improve downstream 
+
+predic�on s beyond the raw descriptor baseline. The comparison was performed in three stages, and each stage assessed both learned feature types derived from the pretrained model: the latent 
+
+representa�on 𝑧𝑧 and the decoder-side reconstruc�on 𝑥𝑥′ . This dis�nc�on is important because 
+
+the downstream analysis does not assume that the latent space is the only useful representa�on. The reconstruc�on stream may also retain transformed descriptor informa�on that benefits predic�on. 
+
+The stage-wise comparison showed that self-supervised composi�onal pretraining can improve 
+
+downstream predic�ons, but the effect was strongly dependent on the backbone and the feature 
+
+type (Figure 4). No candidate was uniformly op�mal for both 𝒛𝒛 and 𝒙𝒙′ . This result indicates that latent knowledge transferability and reconstruc�on -side u�lity should be treated as related but 
+
+non-iden�cal proper�es of a pretrained composi�onal model. 
+
+In Stage I, the generic autoencoder comparison showed that determinis�c autoencoder families 
+
+we re more compe��ve than the varia�onal baseline (Fig ure 4a). On the latent side, the sparse autoencoder achieved the highest improvement count, with gains on 28 of the 39 tasks. On the reconstruc�on side, the denoising autoencoder gave the strongest result among the Stage I 
+
+candidates, with improvements on 21 tasks. The denoising autoencoder was therefore retained 
+
+for the next stage. This outcome suggests that input perturba�on provided a useful pretraining 
+
+signal for the present virtual-composi�on descriptor corpus. It also shows that the best latent representa�on and the best reconstruc�on stream did not necessarily arise from the same 
+
+criterion. 
+
+Stage II compared six denoising variants and again showed a split between the two feature types (Figure 4b). MSDAE achieved the highest latent -side improvement count, with gains on 26 of the 39 tasks. RDAE achieved the highest reconstruc�on -side count, with improvements on 28 tasks, 
+
+but it showed weaker latent-side predic�on power. ADAE improved 25 tasks t hrough 𝑧𝑧 and 19 tasks through 𝑥𝑥′ . It was therefore retained for architectural extension because it provided a more 
+
+balanced outcome across both branches. This result suggests that the denoising strategy changes 
+
+not only the reconstruc�on behavior, but a lso the downstream value of the learned latent 
+
+representa�on. 
+
+Stage III further examined hybrid ADAE backbones (Fig ure 4c). ADAE -CNN produced the strongest 
+
+latent-side result, with improvements on 27 of the 39 tasks. The reconstruc�on branch reached 28 -t ask improvements for ADAE -CNN, ADAE -ResNet, and ADAE -Transformer. Among these high-
+
+performing reconstruc�on -side candidates, ADAE -ResNet was retained as the final composi�onal backbone for the subsequent fusion experiments. This choice reflects the stage -wise selec�on logic of the present workflow. The final backbone was selected to balance denoising behavior, latent transferability, reconstruc�on -side performance, and compa�bility with the later fusion se�ng. 
+
+Overall, the autoencoder comparison supp orts two conclusions. First, self-supervised pretraining 
+
+on the unlabeled virtual composi�on space can produce feature types that improve downstream 
+
+predic�on across many tasks. Second, the benefit depends on the form of the learned representa�on. The latent branch and the reconstruc�on branch encode different views of the same descriptor space, and their downstream value can diverge across architectures. This finding 
+
+supports the later use of both 𝒛𝒛 and 𝒙𝒙′ as candidate feature types rather than restric�ng the analysis to the latent embedding alone. It is also consistent with recent materials -informa�cs studies that show pretraining can improve predic�on in data -limited materials se�ngs (Huang, 
+
+et al., 2024; Rahman, et al., 2025) .
+
+# Distilled Structural Features Provide the Strongest Standalone Representation 
+
+Figure 5. Standalone benchmark comparison of four feature types. The figure compares four 
+
+standalone feature types, including 𝑥𝑥 , 𝑥𝑥 
+
+′ , 𝑧𝑧 , and 𝑠𝑠 , across the 39 downstream tasks. The last column gives the number of tasks improved over the reference benchmark for each feature type. The task-wise map shows improvement status for each task and feature type. Colored cells denote improvement (red) over the reference benchmark, whereas blue cells denote no improvement. 𝑠𝑠 achieved the highest improvement count among the four standalone feature types. 
+
+We next evaluated the dis�lled structural branch 𝑠𝑠 as a standalone representa�on. This analysis isolates the effect of structure -aware knowledge transfer under the composi�on -only inference 
+
+se�ng used throughout this study. The composi�onal branches 𝑧𝑧 and 𝑥𝑥′ were learned from the virtual descriptor manifold, whereas 𝑠𝑠 was obtained by training a composi�on -condi�oned     
+
+> Features Encut Eps ETC11 ETC12 ETC13 ETC44 ETC66 KAA KLU MaxIrM MaxM Meps MinIrM
+> Nem300k NPF NSB
+> BgOptb PMDi PMDiel PMDiio PMEij PPF PSB
+> ShearGV
+> SLME Spillage ETC22 Magoszi BgMbj BulkKV ETC33 ETC55 Exfoli MinM Deltae Ehull Magout
+> Pem300k
+> PMDij
+> Improved
+> x29
+> x' 28
+> z26
+> s33
+
+student encoder to regress embe ddings from a pretrained ALIGNN teacher. The downstream 
+
+behavior of 𝑠𝑠 therefore reflects the extent to which structure -aware informa�on can be transferred into a model that does not require crystal structures at inference �me. 
+
+The dis�lled structural b ranch was the strongest standalone feature type (Figure 5). Used alone, 
+
+𝑠𝑠 improved over the reference benchmark on 33 of the 39 tasks. This exceeded the raw descriptor baseline 𝑥𝑥 (29/39), the reconstructed composi�onal branch 𝑥𝑥′ (28/39), and the latent composi�onal branch 𝑧𝑧 (26/39) (Fig ure 5a). The task -wise comparison further shows that this advantage was broadly distributed across the benchmark rather than restricted to a small group of datasets (Figure 5b). These results indicate that structure -aware supervision remains 
+
+informa�ve a�er transfer into a composi�on -condi �oned representa�on. In prac�cal terms, part of the benefit of structure -aware learning can be retained as a dis�lled prior within a structure -
+
+agnos�c predictor. 
+
+This finding is central to the design of DISTAL. The goal is not to reproduce a full stru cture-aware 
+
+model under the same input condi�ons. Instead, the goal is to recover useful structural informa�on when deployment is limited to composi�on -only inputs. From this perspec�ve, the 
+
+strong standalone performance of 𝑠𝑠 shows that teacher-studen t dis�lla�on provides an effec�ve route for impor�ng structural bias into a composi�on -only predic�on pipeline. This interpreta�on 
+
+is consistent with recent work showing that structure-aware transfer learning can strengthen materials-property predic �on across diverse datasets (Gupta, et al., 2024) , and with recent 
+
+studies that highlight pretraining and transferred representa�ons for data -limited materials modeling (Huang, et al., 2024; Rahman, et al., 2025) .
+
+The role of 𝒔𝒔 should s�ll be interpreted in rela�on to the other feature type s. Its strong standalone performance does not mean that explicit composi�onal descriptors are unnecessary. It also does not imply that dis�lled structural features should replace direct st ructure-aware modeling when 
+
+reliable crystal structures are available. Rather, the result shows that structural dis�lla�on is a prac�cal source of transferable informa�on under a composi�on -only inference constraint. This 
+
+observa�on mo�vates the nex t analysis, where the complementarity among 𝑥𝑥 , 𝑧𝑧 , 𝑥𝑥′ , and 𝑠𝑠 is evaluated through feature fusion. Feature Fusion Reveals Complementary Information 
+
+(a) (b) 
+
+(c) 
+
+Figure 6. Benchmark summary across nine downstream feature modes. (a) This panel shows the number of downstream tasks improved over the reference benchmark. (b) This panel shows the 
+
+mean test MAE across the 39 -task benchmark. Standalone feature types are shown for 𝑥𝑥 , 𝑥𝑥 
+
+′, 𝑧𝑧 ,and 𝑠𝑠 . Pairwise feature fusion modes are shown for 𝑧𝑧 + 𝑥𝑥 , 𝑧𝑧 + 𝑥𝑥 
+
+′ , 𝑥𝑥 + 𝑠𝑠 , and 𝑥𝑥 
+
+′ + 𝑠𝑠 . The three-feature fusion 𝑧𝑧 + 𝑥𝑥 + 𝑠𝑠 achieves the lowest mean test MAE and matched the highest 
+
+improvement count. (c) Task-wise MAE improvements across nine feature modes .
+
+The preceding analyses showed that the four feature type s contribute different types of informa�on. The explicit descriptor vector 𝑥𝑥 provided a strong composi�on -only baseline. The autoencoder-derived features 𝑧𝑧 and 𝑥𝑥′ captured self-supervised composi�onal structure. The dis�lled representa�on 𝑠𝑠 transferred structure-aware informa�on into a composi�on -only 
+
+inference se�ng. W e therefore asked whether these feature types were redundant, or whether 
+
+their combina�on could improve downstream predic�on. 
+
+29 28 26 
+
+33 
+
+28 29 37 36 37 0510 15 20 25 30 35 40 xx' 
+
+> z
+> s
+> z + x z + x'
+> x + s x' + s
+> z + x + s
+
+Standalone feature types Pairwise feature fusions Three-feature fusion 
+
+> Number of Improved Tasks
+
+Feature Combinations 
+
+Benchmark Improvement Counts 
+
+41.341 41.413 41.439 
+
+40.763 40.982 41.057 39.975 39.979 39.889 
+
+39.000 39.500 40.000 40.500 41.000 41.500 42.000 xx' 
+
+> z
+> s
+> z + x z + x'
+> x + s x' + s
+> z + x + s
+
+Standalone feature types Pairwise feature fusions Three-feature fusion 
+
+> Mean Test MAE
+
+Feature Combinations 
+
+Mean Test MAE Across Tasks                    
+
+> AvgChange(%)
+> Dataset MaxIrM MinIrM MaxM BgOptb PMDiio PSB
+> NSB
+> PMDi Eps
+> ShearGV
+> ETC12 Meps Encut PPF SLME
+> NPF
+> KAA ETC11 ETC13 KLU PMEij
+> Nem300k
+> ETC33 ETC22 ETC66 Spillage PMDiel ETC44 BgMbj BulkKV MinM ETC55 Deltae Ehull Magoszi
+> Pem300k
+> Exfoli Magout PMDij
+> -3.484 x46.828
+> -3.432 x' 40.000
+> -2.686 z30.000 -5.912 s20.000 -3.953 z + x 10.000
+> -3.809 z + x' 0.000
+> -7.610 x + s -10.000
+> -7.283 x' + s -20.000
+> Three-Feature Fusion -7.788 z + x + s -26.865
+> Relative MAE Change (%)
+> Lower is better Standalone Feature Types Pairwise Feature Fusions
+
+The comparison across nine feature combina�ons shows clear complementarity among the feature types (Figure 6a,b ). Among the sta ndalone features, 𝑠𝑠 achieved the strongest result, with 
+
+improvements over the reference benchmark on 33 of 39 tasks and a mean test MAE of 40.76. 
+
+However, the two-way fusion 𝑥𝑥 + 𝑠𝑠 further improved performance, with gains on 37 of 39 tasks and a lower me an test MAE of 39.97. This result shows that the explicit composi�onal descriptors 
+
+in 𝑥𝑥 are not fully captured by the dis�lled structural representa�on s. Instead, descriptor -level 
+
+chemical informa�on and transferred structural informa�on provide dis�nct signals for downstream predic�on. The task-wise heatmap further shows that this complementarity is not 
+
+restricted to the aggregate counts: different feature combina�ons dominate different subsets of tasks, whereas the final 𝑧𝑧 + 𝑥𝑥 + 𝑠𝑠 representa�on provides one of the most consistently favorable paterns across the benchmark (Figure 6c). 
+
+The three-way fusion 𝑧𝑧 + 𝑥𝑥 + 𝑠𝑠 achieved the strongest overall result in the present comparison. 
+
+It matched the highest improvement count, with gai ns on 37 of 39 tasks, and produced the lowest 
+
+mean test MAE, 39.89. This result is notable because 𝑧𝑧 was not the strongest standalone feature type. Used alone, 𝑧𝑧 improved 26 of 39 tasks. Its added value became clearer a�er fusion with 𝑥𝑥 
+
+and 𝑠𝑠 . This pa tern suggests that the latent composi�onal representa�on captures informa�on that is not fully preserved by the raw descriptors or by the dis�lled structural branch. 
+
+These results clarify the role of each component in DISTAL. The explicit descriptors provide a 
+
+stable chemical basis. Structural dis�lla�on contributes the strongest standalone learned prior. 
+
+Self-supervised composi�onal pretraining adds latent informa�on that becomes most useful in the fused representa�on. The overall performance of DISTAL therefore arises from feature complementarity rather than dominance by a single representa�on. This finding supports the central design of the framework: composi�on -only inference can benefit from both descriptor -level chemistry and structure-aware knowledge transfer, especially when these signals are integrated within a shared downstream predictor. Task-wise comparison with composition -only baselines 
+
+Figure 7. Task-wise MAE comparison among the reference benchmark, external composi�on -
+
+only neural baselines, x-only baselines, and the final DISTAL model across 39 materials property predic�on tasks. The heatmap reports MAE values for the reference benchmark ( Ref ), 𝑥𝑥 -only baseline models, MatBERT -Formula, iBRNet -EF, and the final DISTAL model. The x -only baselines were trained using only the 145-dimensional composi�on -derived descriptor vector 𝑥𝑥 , including Ridge regression (Ridge) , random forest (RF) , extra trees (ETree), and histogram gradient boos�ng 
+
+(HG B). MatBERT -Formula and iBRNet -EF denote addi�onal composi�on -only neural baselines 
+
+evaluated under the same fixed -split protocol. DISTAL denotes the final 𝑧𝑧 + 𝑥𝑥 + 𝑠𝑠 configura�on .For all models trained or re-evaluated in this study, the reported MAE val ues were computed on 
+
+the fixed external test split by averaging predic�ons from the 10 fold -specific models . Within each dataset column, cell backgrounds follow a blue-to-red gradient from the lowest to the highest 
+
+MAE. 
+
+To place the final model in a broad er task-wise context, we further compare the 𝑧𝑧 + 𝑥𝑥 + 𝑠𝑠 
+
+configura�on with the reference 39-task benchmark of Gupta et al. (Gupta, et al., 2021) , four 𝑥𝑥 -only baselines trained in this study , and two addi�onal composi�on -only neural baselines. The 𝑥𝑥 -only baselines use the same 145-dimensional composi�on -derived descriptor vector 𝑥𝑥 , but do not use self-supervised composi�onal features or dis�lled structural features. For each task, we 
+
+evaluate the MAE values among Ridge regression, random forest, extra trees, and histogram 
+
+gradient boos�ng. In addi�on, we evaluated MatBERT -Formula, inspired by LLM4Mat -Bench 
+
+(Niyongabo Rubungo, et al., 2025), and iBRNet -EF, based on the elemental -frac�on representa�on used in iBRNet (Gupta, et al., 2024) . As shown in Figure 7, DISTAL improve s over the reference benchmark on 37 of the 39 tasks and achieves the lowest MAE in most task -wise comparisons. 
+
+The task-wise comparison in Figure 7 also shows that the advantage of DISTAL is not confined to a small subset of datasets. Compared with the reference benchmark, the final DISTAL model 
+
+improves most tasks across different property families, inclu ding band-gap-related, elas�c, dielectric, thermoelectric, and piezoelectric targets. Compared with the best 𝑥𝑥 -only baselines, 
+
+DISTAL also remains compe��ve across the majority of tasks, indica�ng that the fused representa�on provides informa�on beyond what can be recovered by conven�onal regressors 
+
+trained on the raw descriptor vector alone. The comparison with MatBERT -Formula and iBRNet -
+
+EF further places DISTAL against recent composi�on -only neural baselines. This comparison strengthens the centr al interpreta�on of DISTAL: explicit composi�onal descriptors, self -
+
+supervised composi�onal features, and dis�lled structural priors each contribute dis�nct informa�on, and their integra�on yields a stronger composi�on -only predictor. 
+
+The compariso n also defines the current boundary of the framework. The final 𝑧𝑧 + 𝑥𝑥 + 𝑠𝑠 model 
+
+did not improve over the reference benchmark on two tasks: magmom_outcar and piezo_max_dij. 
+
+These excep�ons suggest that some proper�es may remain difficult to capture from composi�on -
+
+only inputs, even a�er composi�onal pretraining and structural dis�lla�on. This limita�on is 
+
+expected for targets that may depend strongly on detailed structural, electronic, or symmetry-
+
+related informa�on. The result does not weaken the overall benchmark patern. Instead, it iden�fies where richer supervision, task -specific modeling, or direct structure -aware inputs may 
+
+s�ll be needed. 
+
+Overall, the final benchmark comparison confirms that DISTAL provides a broadly effec�ve 
+
+structure-agnos�c predic�on framework. The model retains the prac�cal advantage of composi�on -only inference, while it benefits from informa�on learned through both self -
+
+supervised composi�onal pretraining and ALIGNN -guided structural dis�lla�on. Conclusions 
+
+In this work, we presented DISTAL, a dual -prior framework for structure-agnos�c materials property predic�on. DISTAL combines self -supervised composi�onal pretraining with structure -
+
+aware knowledge dis�lla�on. The framework addresses a ce ntral tension in low-data materials 
+
+informa�cs. Composi�on -only models are well suited for early-stage screening, but structure-
+
+aware models can use richer physical priors. DISTAL bridges this gap by retaining composi�on -
+
+only inference and by incorpora�ng transferable composi�onal regulari�es and dis�lled structural informa�on within a unified predic�on pipeline. 
+
+Using a large virtual composi�on space and a 145 -dimensional composi�on -derived descriptor 
+
+representa�on, we first showed that raw composi�onal descriptors provide a strong baseline 
+
+across the 39-task benchmark. We then showed that self-supervised composi�onal pretraining improves downstream transfer in a representa�on -dependent manner. In parallel, ALIGNN -
+
+guided dis�lla�on produced the strongest standalone learned branch among the evaluated feature type s. Most importantly, the mul�modal analysis showed that these components are complementary rather than redundant. The best overall performance was obtained by integra�ng 
+
+explicit co mposi�onal descriptors, learned composi�onal features, and dis�lled structural features. Under the adopted evalua�on protocol, the final 𝑧𝑧 + 𝑥𝑥 + 𝑠𝑠 configura�on improved 
+
+over the reference benchmark on 37 of 39 tasks and achieved the lowest benchmark-wide mean 
+
+MAE among the evaluated feature modes. 
+
+These findings suggest that robust composi�on -only predic�on should not rely exclusively on handcra�ed descriptors, self -supervised composi�onal learning, or transferred structural priors. A more effec�ve route is to combine these sources in a way that preserves their dis�nct strengths. In this sense, DISTAL should not be viewed as a replacement for direct structure -aware modeling. 
+
+Instead, it provides a prac�cal route for transferring part of the va lue of structural supervision 
+
+into se�ngs where only composi�on is available at inference �me. This property is especially 
+
+relevant to early-stage materials screening, where rapid priori�za�on is needed before reliable 
+
+crystal structures are available. 
+
+Future work can extend DISTAL in several direc�ons. Chemically constrained virtual -composi�on genera�on may provide a more targeted pretraining space. Richer structural teacher networks 
+
+may provide more informa�ve dis�lla�on targets. Task -aware deployment workflows may further improve prac�cal screening under specific materials -design objec�ves. More broadly, this study 
+
+supports dual-prior learning as a useful direc�on for low -data materials property predic�on, where large-scale composi�onal pretraining and transferred structural bias can be combined within a composi�on -only inference framework. 
+
+# Acknowledgements 
+
+This work was supported by the Natural Science Founda�on of Jilin Province YDZJ202301ZYTS288 and the Fundamental Research Funds for the Central Universi�es (JLU). 
+
+# References 
+
+Chen, C. , et al. Graph networks as a universal machine learning framework for molecules and crystals. Chemistry of Materials 2019;31(9):3564 -3572. 
+
+Choudhary, K. and DeCost, B. Atomis�c line graph neural network for improved materials property predic�ons. npj Computational Materials 2021;7(1):185. 
+
+Choudhary, K. , et al. The joint automated repository for various integrated simula�ons (JARVIS) 
+
+for data-driven materials design. npj computational materials 2020;6(1):173. 
+
+Choudhary, K. , et al. JARVIS -Leaderboard: a large scale benchmark of materials design methods. 
+
+npj Computational Materials 2024;10(1):93. 
+
+Elfwing, S., Uchibe, E. and Doya, K. Sigmoid -weighted linear units for neural network func�on approxima�on in reinforcement learning. Neural networks 2018;107:3 -11. 
+
+Goodall, R.E. and Lee, A.A. Predic�ng materials proper�es without crystal structure: deep representa�on learning from stoichiometry. Nature communications 2020;11(1):6280. 
+
+Goodfellow, I.J. , et al. Genera�ve adversarial nets. Advances in neural information processing 
+
+systems 2014;27. 
+
+Gupta, V. , et al. Structure-aware graph neural network based deep transfer learning framework 
+
+for enhanced predic�ve analy�cs on diverse materials datasets. npj Computational Materials 
+
+2024;10(1):1. 
+
+Gupta, V. , et al. Cross-property deep transfer learning framework for enhanced predic�ve analy�cs on small materials data. Nature communications 2021;12(1):6595. 
+
+Gupta, V. , et al. Simultaneously improving accuracy and computa�onal cost under parame tric 
+
+constraints in materials property predic�on tasks. Journal of Cheminformatics 2024;16(1):17. 
+
+He, K. , et al. Deep residual learning for image recogni�on. In, Proceedings of the IEEE conference on computer vision and pattern recognition . 2016. p. 770 -778. 
+
+Hendrycks, D. and Gimpel, K. Gaussian error linear units (gelus). arXiv preprint arXiv:1606.08415 
+
+2016. 
+
+Huang, H., Magar, R. and Bara� Farimani, A. Pretraining strategies for structure agnos�c material property predic�on. Journal of chemical inform ation and modeling 2024;64(3):627 -637. Ioffe, S. and Szegedy, C. Batch normaliza�on: Accelera�ng deep network training by reducing internal covariate shi�. In, International conference on machine learning . pmlr; 2015. p. 448 -
+
+456. 
+
+Kingma, D.P. and Welling, M. Auto -encoding varia�onal bayes. arXiv preprint arXiv:1312.6114 
+
+2013. 
+
+Lee, N. , et al. Composi�onal Representa�on of Polymorphic Crystalline Materials. arXiv preprint arXiv:2312.13289 2023. 
+
+Loshchilov, I. and Huter, F. Decoupled weight decay regulariza�on. arXiv preprint arXiv:1711.05101 2017. 
+
+Merchant, A. , et al. Scaling deep learning for materials discovery. Nature 2023;624(7990):80 -85. 
+
+Niyongabo Rubungo, A. , et al. LLM4Mat -bench: benchmarking large language models for 
+
+materials property predic� on. Machine Learning: Science and Technology 2025;6(2):020501. 
+
+Ong, S.P. , et al. Python Materials Genomics (pymatgen): A robust, open -source python library for materials analysis. Computational Materials Science 2013;68:314 -319. 
+
+Pyzer -Knapp, E.O. , et al. Founda�on models for materials discovery –current state and future 
+
+direc�ons. Npj Computational Materials 2025;11(1):61. 
+
+Rahman, C.M.A., Romero, A.H. and Gyawali, P.K. Supervised pretraining for material property predic�on. Communications Materials 2025;6(1):271. 
+
+Rifai, S. , et al. Contrac�ve auto -encoders: Explicit invariance during feature extrac�on. In, 
+
+Proceedings of the 28th international conference on international conference on machine learning . 2011. p. 833 -840. 
+
+Srivastava, N. , et al. Dropout : a simple way to prevent neural networks from overfi�ng. The journal of machine learning research 2014;15(1):1929 -1958. 
+
+Vaswani, A. , et al. Aten�on is all you need. Advances in neural information processing systems 
+
+2017;30. 
+
+Vincent, P. , et al. Stacked denoising autoencoders: Learning useful representa�ons in a deep 
+
+network with a local denoising criterion. Journal of machine learning research 2010;11(12). 
+
+Ward, L. , et al. A general-purpose machine learning framework for predic�ng proper�es of 
+
+inorganic materials. npj Computational Materials 2016;2(1):16028. 
+
+Ward, L. , et al. Matminer: An open source toolkit for materials data mining. Computational Materials Science 2018;152:60 -69. 
+
+Xie, T. and Grossman, J.C. Crystal graph convolu�onal neural networks for an accurate and 
+
+interpretable predic�on of material proper�es. Physical review letters 2018;120(14):145301.

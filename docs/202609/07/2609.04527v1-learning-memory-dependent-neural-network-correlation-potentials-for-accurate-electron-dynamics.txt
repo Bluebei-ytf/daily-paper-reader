@@ -1,0 +1,1279 @@
+Title: Learning Memory-Dependent Neural Network Correlation Potentials for Accurate Electron Dynamics
+
+URL Source: https://arxiv.org/pdf/2609.04527v1
+
+Published Time: Mon, 07 Sep 2026 00:17:06 GMT
+
+Number of Pages: 16
+
+Markdown Content:
+# Learning Memory-Dependent Neural Network Correlation Potentials for Accurate Electron Dynamics 
+
+Harish S. Bhat 1, a) and Christine M. Isborn 2
+
+> 1)
+
+Department of Applied Mathematics, University of California Merced, Merced, California 95343, USA 
+
+> 2)
+
+Department of Chemistry and Biochemistry, University of California Merced, Merced, California 95343, USA 
+
+(Dated: 31 August 2026) 
+
+Time-dependent density functional theory, though exact in theory, is in practice applied in an adiabatic approximation using exchange-correlation functionals with only local temporal dependence. Simultaneously, the exact correlation potential formally depends on, among other quantities, the time-history of electron densities. Here we develop a framework to learn neural network models of correlation functionals that feature explicit memory-dependence. Our framework includes two different approaches, both linked through their use of adjoint-based optimization. One approach decouples the learning of the functional from inversion to find ground truth values of the correlation potential. The other approach learns the functional directly without requiring inversion. We apply these methods to modeling the electron dynamics of two-electron systems in two spatial dimensions. In both cases, our methods yield correlation functionals with low test set propagation error, outperforming standard local density and generalized gradient approximation functionals by one to two orders of magnitude. Overall, our framework points at one strategy to move beyond the adiabatic approximation and develop memory-dependent correlation functionals that yield accurate propagation for excited state and/or non-equilibrium dynamics. 
+
+I. INTRODUCTION 
+
+Electronic evolution is essential for many processes, from charge transfer to energy capture to nonequilib-rium chemical phenomena. Time-dependent density functional theory (TDDFT) is considered the workhorse for modeling molecular electronic excited states and ex-cited state properties within electronic structure the-ory due to its balance of accuracy and computational efficiency. 1–9 Although formally exact, and often ap-plied to simulate electron dynamics, 10–13 TDDFT is al-most always applied within an adiabatic approximation, in which the exchange-correlation potential only takes as input the properties of the instantaneous electron density. 14–21 This adiabatic approximation ignores the density at all previous points in time, and the potential therefore has no memory of the past state or density of the system, 22 leading to inaccurate electronic evolution, including incorrect descriptions of Rabi oscillations, 23 
+
+missing states with double excitation character, 24,25 in-correct pole structure in the quadratic response, 26,27 spu-riously shifting peaks and resonances, 28–30 and incom-plete charge transfer due to missing dynamical, sharp features in the potential. 25,31–33 Although the failures of the adiabatic approximation are likely more extreme for smaller systems, 34 and may be improved by a re-sponse reformulation based on linear response theory, 35 
+
+accurate TDDFT electron dynamics far from the ground state requires new approaches. Going beyond an adi-abatic approximation to the potential requires learning 
+
+> a) Electronic mail: hbhat@ucmerced.edu
+
+the memory-dependence that should be built into the po-tential. TDDFT can in principle produce exact electron den-sity dynamics by evolving non-interacting electrons within a one-body potential. These electrons generally reside within non-interacting Kohn-Sham (KS) orbitals 
+
+{φj (x, t )} that satisfy the time-dependent Kohn-Sham (TDKS) equation, stated here in atomic units: 
+
+i∂ tφj =
+
+
+
+− 12 ∇2 + vS
+
+
+
+φj , (1) with the one-body density ρ obtained by summing over occupied KS orbitals ρ = P 
+
+> j
+
+|φj |2. Here the KS poten-tial satisfies 
+
+vS = vext + vH + vX + vC , (2) where the potentials on the right-hand side are, respec-tively, external, Hartree, exchange, and correlation po-tentials. The correlation potential is unknown and must be approximated. It is known that the correlation po-tential vC formally depends on the initial KS state φ0,the initial interacting wave function Ψ 0, and the time-history of electron densities ρt, and thus has memory of the system at previous points in time. Attempts have been made to add this memory-dependence to the po-tential, with focus on the frequency-dependence of the exchange-correlation kernel within the linear response regime 24,36–38 and through adding dependence on the current-density. 39,40 
+
+Alternatively, if near-exact electron densities are avail-able, the time-history and spatial nonlocality of the density, can be incorporated into the potential by ei-ther directly learning a functional to accurately propa-gate the density or by generating accurate training data arXiv:2609.04527v1 [physics.chem-ph] 3 Sep 2026 2to learn such a functional. For a two-electron system in one spatial dimension, we have applied the direct learning approach previously by applying adjoints to de-velop efficient methods to compute gradients and numer-ically solving the time-dependent Schr¨ odinger equation (TDSE) to obtain electron densities suitable for training machine learning models of the correlation potential. 41 
+
+Note that with this direct learning method, there is no ground truth correlation potential involved in the learn-ing, only ground truth densities. Alternatively, for a two-electron system, the TDKS equations can be inverted us-ing the quantum hydrodynamics 42 approach explained in Appendix E of Ullrich 16 . This inversion yields spacetime values of the correlation potential, which can be used to machine learn a correlation functional. This invert-then-learn machine learning approach that can build mem-ory into the correlation potential has been pursued for a spatially one-dimensional electron-hydrogen scattering problem by Suzuki et al. 43 Inversion beyond one spa-tial dimension has been carried out by the Maitra group, where dynamical step and peak features in the potential were found for the 3D helium atom. 44 However, in this latter work, the computed vC was not used to propa-gate the TDKS equations, and therefore the accuracy of the resulting electronic evolution is unknown. For sys-tems with more than two electrons that require multiple Kohn-Sham orbitals, quantum hydrodynamics no longer furnishes a solution of the inversion problem. Thus, it is worth pursuing a more general constrained optimization approach to inversion and learning, that, in principle, could be generalized to many-electron systems. In this paper, we use a time series of exact 1-electron densities eρ from a two-electron system to learn memory-dependent neural network models of the unknown corre-lation potential vC . We explore two different and comple-mentary approaches. For the first, we invert the TDKS equations to solve for the spacetime values of the cor-relation potential such that when we solve the TDKS system (1) using this vC , the resulting solution yields a 1-electron density that minimizes the mismatch between 
+
+ρ and the ground truth value, eρ. For the second, we em-ploy direct learning to solve for a functional vC [ρt; θ], pa-rameterized by θ. For this latter direct learning problem, we have the ability to find one functional that minimizes the mismatch between multiple ρ trajectories and their ground truth counterparts eρ. We show how to couple constrained optimization and numerical solution of (1) with neural network models of the correlation potential. For conventional ground-state DFT (density functional theory), significant efforts have been made to learn exchange-correlation functionals. 45–60 Much of this work follows an invert-then-learn approach: (i) accurate refer-ence densities ρ are computed (typically via wave func-tion methods), (ii) these densities are fed into a Kohn-Sham inversion procedure that yields ground truth values of vXC , and (iii) supervised learning is applied to de-velop a functional vXC [ρ]. A notable recent extension of this procedure augments vXC with reference exchange-correlation energies EXC (computed using results of Kohn-Sham inversion and wave function data) to learn an EXC [ρ] functional constrained such that both EXC [ρ]and vXC [ρ] = δE XC /δρ match their respective reference values. 61 We also find recent work that directly learns a functional without employing Kohn-Sham inversion 62 ;here the data consists of reference densities ρ together with numerous physical observables across a large num-ber of systems. Because ground-state DFT is a time-independent theory, the issue of memory-dependence of 
+
+vXC never arises. Specifically within the context of TDDFT, to our knowledge, this is the first work to treat the problem of machine learning a correlation functional in more than one spatial dimension. The invert-then-learn approach we pursue here enables rapid training of models with long memory (in this case, up to M ∆t = 1 .28 a.u.); these models can then be fine-tuned using adjoint-based methods. The fine-tuned neural network yields a trained correlation functional that reproduces the large spatial gradients and non-local features present in the correla-tion potential obtained through highly accurate PDE-constrained optimization/inversion. The direct learn-ing approach, in which the neural network never sees ground truth or reference values of the correlation po-tential, yields L2 propagation error less than 3 × 10 −3
+
+on the test set despite being trained only on two tra-jectories. Overall, our trained neural network function-als yield test set propagation errors that are one to two orders of magnitude less than those obtained via stan-dard local density and generalized gradient density func-tionals. The methodological framework we establish is general and can be extended to larger training sets and three-dimensional systems with no substantive changes.  
+
+> II. METHODS
+
+Let us consider TDDFT for two-electron systems in two spatial dimensions. We will model these systems using a single, doubly occupied KS orbital φ(x, t ) with 
+
+ρ = 2 |φ|2. As we have only one doubly-occupied KS orbital, the exact exchange potential is −1/2 the Hartree potential. Using this, we can write 
+
+vS [ρt, φ 0, Ψ0] = vext + 12 vH [ρ] + vC [ρt, φ 0, Ψ0]. (3) Let Vα(r) = 1 /√r2 + α2 denote the soft-Coulomb po-tential with parameter α ≥ 0. When α = 0, we obtain 
+
+V0(r) = 1 /r , the standard Coulomb potential. In terms of this, we can write the Hartree potential as 
+
+vH [ρ]( x, t ) = 
+
+Z
+
+> Ω
+
+ρ(y, t )Vα(|x − y|) dy, (4) where |x − y| is the Euclidean distance between x and 
+
+y. For each of the model problems considered below, the 3external potential vext in (3) is known. The only unspec-ified term on the right-hand side of (3) is the correlation potential vC .To proceed, it is natural to discretize the TDKS prob-lem in space and time. We choose a split-step discretiza-tion of (1). Each time step consists of a half-step of the kinetic propagator, a full step of the potential propa-gator, and a second half-step of the kinetic propagator. Let ˆT = ( −1/2) ∇2 denote the kinetic operator and T a particular spatial discretization thereof. Then we can formulate our discretization of (1): 
+
+φk+1 = exp( −i∆tT/2) 
+
+· exp 
+
+
+
+−i∆tV Sk [ρ; θ]
+
+
+
+exp( −i∆tT/2) φk. (5) Here each φk is a complex N 2 × 1 vector. When we take the continuous space-time KS potential vS and evaluate it on our spatial grid at time k∆t, we obtain an N × N
+
+matrix, which we denote V Sk . We will use this capital-ization consistently, so that V ext  
+
+> k
+
+, V Hk , and V Ck denote matrices formed by evaluating the corresponding vext ,
+
+vH , and vC potentials on spatial grids at time k∆t. Let us abbreviate the kinetic and potential propagators: 
+
+K = exp( −i∆tT/2) (6) 
+
+V prop  
+
+> k
+
+[ρk; θ] = exp( −i∆tV Sk [ρk; θ]) . (7) If we think of φk as a complex vector of size N 2 × 1, then these propagators are matrices of size N 2 × N 2. In this representation, V prop  
+
+> k
+
+is a purely diagonal matrix. Details of kinetic propagator computation will be given in Section III. The goal of this paper is to use time series of 1-electron densities to learn memory-dependent neural net-work models of the correlation potential vC . As we detail in Sections III A and III B, for our two model systems, we solve the TDSE to generate reference data {eρk}Ns
+
+> k=0
+
+on a spatiotemporal grid. Here each eρk is a real, N × N
+
+matrix, corresponding to the values of the (nonnegative) density on an equispaced grid in two-dimensional space. The tilde on the eρ signifies that this is ground truth or ref-erence data computed from solutions of the TDSE (e.g., not computed via TDKS/TDDFT). We devise two approaches to achieve our goal. For clarity of exposition, we first formulate both in contin-uous time and space, assuming access to ground truth densities eρ(x, t ) defined on 0 ≤ t ≤ T and x ∈ Ω. The invert-then-learn approach proceeds in two stages. In the first stage (inversion), we solve for the space-time values vC (x, t ) of the correlation potential such that when we solve the TDKS system (1) using this vC , the resulting solution φ yields a 1-electron density ρ = 2 |φ|2
+
+that minimizes the mismatch between ρ and eρ, measured by the squared L2 norm in space, integrated over time: 12
+
+Z T
+
+> 0
+
+Z
+
+> Ω
+
+(ρ(x, t ) − eρ(x, t )) 2 dx dt. 
+
+In the inversion problem, each time we change the ground truth eρ, the optimal correlation potential evC (evaluated pointwise in spacetime) also changes. Equipped with enough pairs of the form ( eρ, evC ), we can machine learn a functional that maps time histories of densities to corre-lation potentials. The direct learning problem is identical to the in-version problem except that we solve for a functional 
+
+vC [ρt, φ 0, φ 0; θ], parameterized by θ. The only other dif-ference is that in the direct learning problem, we have the ability to find one functional that minimizes the mis-match between multiple ρ trajectories and their ground truth counterparts eρ.In both inversion and learning, we can simplify nota-tion by allowing V Ck and thus V Sk to depend on a set of parameters θ. In the inversion case, this allows one to represent V C as a contraction of θ against discretized basis functions. In this setting, our choice is to let θ be an Ns × N × N tensor, in which case V Ck = θk, :,:—the elements of θ are the values of the potential, or equiva-lently, we have represented V C in the discrete position basis. With this common framework, we can formulate and solve both inversion and learning as optimization problems constrained by the discretization of the TDKS equations. The adjoint method underpins both the invert-then-learn and direct learning strategies. Essentially, our loss function in both cases measures the error incurred by solving (1) with a fixed choice of parameters θ that de-termine either the values or the functional form of the correlation potential. Our formulation shares much in common with quantum optimal control, where adjoint methods have been used extensively. 63–66 We pursue the adjoint method here because (i) it enables calculation of exact gradients at a computational cost that scales (with problem size) at the same rate as TDKS propagation itself, (ii) almost all terms needed to evaluate the ad-joint systems (13) and (17) are computed during TDKS propagation, with the remaining ones easily evaluated via automatic differentiation, and (iii) direct automatic differentiation of the long-term propagation error fails to exploit the particular structure of TDKS propagation, leading to excessive computational effort.  
+
+> A. Inversion: Adjoint Method
+
+The first step of the invert-then-learn method is to carry out partial differential equation (PDE)-constrained optimization to solve for reference values of the correla-tion potential. A more precise formulation of the inver-sion problem is to find θ to minimize the loss 
+
+C(θ) = 12
+
+> Ns
+
+X
+
+> j=1
+
+∥ρj − eρj ∥2 (8) subject to the discretized equations of motion 
+
+φk+1 = KV prop  
+
+> k
+
+(ρk; θ)Kφ k. (9) 4We assume that we work with a fixed TDKS initial con-dition φ0 such that ρ0 = 2 φ0(φ0)∗ = eρ0. We form a Lagrangian that incorporates the loss and dynamical con-straints: 
+
+L(φ, Λ, θ ) = L1(φ, Λ, θ ) + L2(φ, Λ, θ ) (10a) 
+
+L1(φ, Λ, θ ) = 12
+
+> Ns
+
+X
+
+> j=1
+
+(ρj − eρj )†(ρj − eρj ) (10b) 
+
+L2(φ, Λ, θ )= −ℜ 
+
+> Ns−1
+
+X
+
+> j=0
+
+(λj+1 )†(φj+1 − KV prop  
+
+> j
+
+[ρj ; θ]Kφ j ). (10c) Here φ = {φj }Ns 
+
+> j=1
+
+is the collection of all TDKS states, while Λ = {λj }Ns 
+
+> j=1
+
+is the collection of all adjoint states. Lagrange multiplier theory tells us that a minimizer of the constrained problem must be a critical point of the Lagrangian. In our search for a critical point, let us begin with the gradient of L with respect to the adjoints Λ. Setting this to zero, we recover our equations of motion (9). We move on to take variations of L with respect to both φ and φ∗.To compute this, we will use variational notation. We have two options here: (i) take variations with respect to the real and imaginary parts of φ, separately, or (ii) take variations with respect to both φ and φ∗. Both (i) and (ii) are mathematically equivalent. We choose option (ii) as it is notationally simpler. We begin by noting that 
+
+ρ = 2 |φ|2 implies 
+
+δρ j = 2 φj (δφ j )∗ + 2( φj )∗δφ j = 4 ℜ[( φj )∗δφ j ].
+
+With this, 
+
+δL 1 =
+
+> Ns
+
+X
+
+> j=1
+
+(ρj − eρj )†δρ j = ℜ
+
+> Ns
+
+X
+
+> j=1
+
+4( ρj − eρj )†(φj )∗δφ j .
+
+Having computed the variation of L1, we turn to the variation of L2, but first we note that 
+
+δφ k+1 = KδV k(ρk; θ)Kφ k + KV k(ρk; θ)Kδφ k.
+
+As discussed above, we can treat V prop  
+
+> k
+
+as a diagonal matrix, in which case its ( a, a )-th element is 
+
+V prop  
+
+> k;aa
+
+(ρk; θ) = e−i∆t
+
+ V ext          
+
+> a+12VH[ρk]a+VCa(tk;θ)
+
+
+
+where a goes from 1 to N 2. The Hartree potential de-pends functionally on the electron density ρ. We can equivalently think of V H [ρj ] as an N × N matrix, which gives the value of the potential at each two-dimensional spatial grid point—or as a flattened vector of length N 2.In the expression V H [ρj ]a, we are implicitly choosing the flattened representation. We use ∂V Ha /∂ρ j to denote the 
+
+a-th component of the derivative of V H [ρ] with respect to ρ = ρj . Then 
+
+δV prop  
+
+> j;aa
+
+(ρj ; θ) = V prop  
+
+> j;aa
+
+(ρj ; θ)( −i∆t)
+
+ 12
+
+∂V Ha
+
+∂ρ j δρ j
+
+
+
+= V prop  
+
+> j;aa
+
+(ρj ; θ)( −i∆t)
+
+ ∂V Ha
+
+∂ρ j (( φj )∗δφ j + ( δφ j )∗φj )
+
+
+
+.
+
+(11) The remaining details of the derivation of the variation 
+
+δL 2 can be found in supplementary material. Here we note that after δL 2 has been computed, one can combine results to obtain ∆ L. Setting δL = 0 for all variations of φ and φ∗, we obtain the following backward-in-time system. At j = Ns, we have (λNs )† = 4( ρNs − eρNs )†(φNs )∗. (12) For j = Ns − 1, N s − 2, . . . , 1, we have (λj )† = 4( ρj − eρj )†(φj )∗ + ( λj+1 )†KV prop  
+
+> j
+
+(ρj ; θ)K
+
++ 2 ℜ
+
+"X
+
+> a
+
+wLa
+
+
+
+V prop  
+
+> j;aa
+
+(ρj ; θ)( −i∆t) ∂V Ha
+
+∂ρ j
+
+
+
+wRa
+
+#
+
+(φj )∗,
+
+(13) where wLa = P
+
+> k
+
+(λj+1  
+
+> k
+
+)∗Kka and wRa = P 
+
+> b
+
+Kab . There is only one remaining gradient to compute: 
+
+∇θ L = ℜ
+
+> Ns−1
+
+X
+
+> j=0
+
+X
+
+> k,a,b
+
+(λj+1  
+
+> k
+
+)∗Kka V prop  
+
+> j;aa
+
+(ρj ; θ)( −i∆t)
+
+· [∇θ V Cj,a ]Kab φjb (14) With the representation V Cj = θj, :,: mentioned above, we have ∂V Cj,a /∂θ ℓ,c = δjℓ δac , in which case 
+
+∂θℓ,c L = ℜ X
+
+> k,b
+
+(λℓ+1  
+
+> k
+
+)∗Kkc V prop  
+
+> ℓ;cc
+
+(ρℓ; θ)( −i∆t)Kcb φℓb.
+
+(15) The above induces an iterative algorithm, depicted in Figure 1, to solve the minimization problem formulated above. Suppose that at iteration ℓ we have a current best estimate θ(ℓ). Then we carry out the following steps: 1. With the initial condition φ0, we use (9) to propa-gate forward in time and compute φ. To evaluate 
+
+V C , we use our current iterate θ(ℓ).2. Now that we have φ (and by extension all electron densities ρj for j = 1 , . . . , N s), we initialize the adjoint system with the final condition (12) and then use (13) to propagate backwards in time and compute Λ. Again, whenever we evaluate V C or its derivatives, we use θ = θ(ℓ).3. Having computed both φ and Λ in the above fash-ion, the gradient of our Lagrangian L with respect to ( φ, Λ) is identically zero. Now we compute ∇θ L5Learning  𝑣 𝜃 𝐶  𝜌 𝑡  via the Adjoint Method 
+
+Ψ 𝑟 1, 𝑟 2, … , 𝑟 𝑁 , 𝑡 
+
+True wave function 
+
+෤𝜌(𝑟, 𝑡) 
+
+True electron density 
+
+Solve TDKS equations 
+
+𝜌(𝑟, 𝑡) 
+
+TDKS electron density 
+
+Loss 
+
+(mismatch) 
+
+Adjoint method 
+
+to compute gradient of loss 
+
+with respect to model parameters  𝜃 
+
+Gradient-based optimization 
+
+to step  𝜽  towards minimizer of loss 
+
+𝑖𝜕 𝑡 𝜑 =  − 12 ∇2 + 𝑣 ext + 𝑣 H 𝜌 + 𝑣 X 𝜌 + 𝑣 𝜃  
+
+> C
+
+𝜌 𝑡 𝜑 
+
+FIG. 1. This diagram gives a high-level overview of how we employ the adjoint method to solve either the inversion or direct learning problems. Both involve parameterizing the unknown correlation potential vC with parameters θ. On each iteration, we 
+
+propagate the TDKS equations with vC evaluated using our current iterate of θ, enabling us to compute the loss (the mismatch between true and TDKS densities). To minimize the loss, we must be able to compute its gradient. The adjoint method is designed to compute this gradient in an accurate, scalable way. 
+
+via (15). Using it in a gradient-based optimization algorithm (such as Adam or L-BFGS), we compute the next iterate θ(ℓ+1) . As we used (9) and (13) to compute φ and λ, Lagrange multiplier theory guar-antees that ∇θ L equals the total gradient of the loss with respect to θ, i.e., differentiating through all propagation steps (9). We iterate until the termination criterion ∥∇ θ L(θℓ)∥ < ϵ 
+
+is satisfied. In this way, we find a (numerically approx-imate) critical point ( φ⋆, Λ⋆, θ ⋆) of the Lagrangian. As a final step, we verify numerically that the resulting tra-jectory of electron densities is sufficiently close to the reference data. 
+
+B. Direct Learning of a Memory-Dependent Functional: Adjoint Method 
+
+The same framework just described enables us to di-rectly learn V C . The difference is that we explicitly allow 
+
+V C to depend on a time history of electron densities: 
+
+V C = V C (ρk−M , . . . , ρ k−1, ρ k; θ). (16) The optimization problem is then nearly identical: min-imize the loss (8) subject to (9) and a prescribed initial segment {φ−M , . . . , φ 0}. We reuse the Lagrangian (10) defined above and focus on taking variations with respect to φ and φ∗. We see that δL 1 is unchanged. For δL 2,because V C depends on the history of ρ, our earlier cal-culations become more involved: for a from 1 to N 2,
+
+V prop  
+
+> aa
+
+= e−i∆t
+
+ V ext           
+
+> a+12VHa(ρj)+ VCa(ρj−M,...,ρ j−1,ρ j;θ)
+
+
+
+.
+
+Varying φ and φ∗, we find that 
+
+δV prop  
+
+> aa
+
+= V prop  
+
+> aa
+
+(−i∆t)
+
+ 12
+
+∂V Ha
+
+∂ρ j δρ j
+
++
+
+> M
+
+X
+
+> m=0
+
+∂V Ca
+
+∂ρ j−m (ρj−M , . . . , ρ j ; θ)δρ j−m
+
+
+
+= −i∆t
+
+ ∂V Ha
+
+∂ρ j (( φj )∗δφ j + ( δφ j )∗φj )+
+
+> M
+
+X
+
+> m=0
+
+∂V Ca
+
+∂ρ j−m (2( φj−m)∗δφ j−m + 2( δφ j−m)∗φj−m)
+
+
+
+.
+
+In supplementary material, we show how the above cal-culation enables us to compute δL 2, set δL = 0 for all variations of φ and φ∗, and derive the backward-in-time system that governs λ. At step j = Ns, this system’s final condition is (λNs )† = 4( ρNs − eρNs )†φ∗ 
+
+> Ns
+
+.
+
+For j = Ns − 1, N s − 2, . . . , 1, we evolve λ backward in time via (λj )† = 4( ρj − eρj )†φ∗ 
+
+> j
+
++ ( λj+1 )†KV (θ)K
+
++
+
+> M
+
+X
+
+> m=0
+
+4ℜ
+
+
+
+(λj+m+1 )†K ∂V prop (ρj+m−M , . . . , ρ j+m; θ)
+
+∂ρ j
+
+· Kφ j+m
+
+
+
+(φj )∗Ij+m≤Ns−1. (17) Here IA denotes the indicator function that equals 1 if the condition A is true and 0 otherwise. The gradient of L with respect to θ is the same as in (14). However, 6because we are trying to learn a functional, we typically parameterize V C using a neural network. In this case, 
+
+θ represents the collection of all neural network weights. To compute ∇θ V C , we employ standard automatic dif-ferentiation. With these changes, the overall algorithm to minimize the loss (thereby training our V C model) remains the same as described above and as depicted in Figure 1.  
+
+> III. COMPUTATIONAL DETAILS
+
+We consider two model two-electron systems. The first is the hydrogen molecule H 2 in a 50/50 superposition of two states, and the second is the scattering of an elec-tron off a hydrogen atom. For both system, all electrons are treated in two-dimensional real space, implying that the interacting wave functions Ψ have an overall four-dimensional spatial dependence. We begin by describing how we numerically solved the TDSE for each interact-ing system to generate ground truth 1-electron data. We then describe additional steps taken to complete inver-sion and learning of V C for each system. Finally, we describe the density functionals from the literature that we use for a baseline comparison.    
+
+> A. Solving the TDSE for H2superposition
+
+For H 2, the domain of each coordinate is [ −5, 5]. We use N = 128 grid points with ∆ x = 10 /(N − 1); we also use the soft-Coulomb potential Vα(r) defined in Sec-tion I. We choose α = ∆ x so that bound states re-main well-localized on our domain Ω. We use a 4th-order finite-difference stencil with Neumann (zero-flux) bound-ary conditions to discretize first partial derivatives; if D1
+
+is the resulting finite-difference matrix in one spatial di-mension, we set D2 = −D†
+
+> 1
+
+D1, effectively a 9-point sten-cil that retains both 4th-order accuracy and negative-semidefiniteness. By using the highly sparse D2 in a tensorial fashion, we can compute the action of the four-dimensional Laplacian on a trial wave function, here rep-resented as a vector of length N 4 = 128 4. Note that the potential is a diagonal matrix in real space, hence simple to incorporate. Nuclei were separated by 1 .4 a.u. We then leverage the matrix-free, large-scale Krylov-Schur eigenvalue solver in SLEPc 67 to compute the first 14 eigenstates of H 2 to a tolerance of 10 −10 . With SLEPc operating on a GPU-enabled PETSc 68,69 back end, the calculation fits on one Nvidia H200 GPU. With this scheme, we find that the ground state energy of this model of H 2 is E0 = −3.721 Ha. As compared with the usual reference value for H 2 in three-dimensional space, this represents significantly more confinement of electron density near the nuclei. This is by design—we could have chosen the softening parameter α to reproduce the ground state energy −1.174 Ha, but we prioritized keeping electron density away from the boundary of the domain to reduce numerical artifacts that arise later in the inversion and learning process. We then formed two different 50/50 superpositions of the ground state Ψ 0 with an excited state: (Ψ 0 +Ψ 8)/√2and (Ψ 0 + Ψ 10 )/√2. These superpositions were chosen because Ψ 8 and Ψ 10 have the same total spin as Ψ 0,and also because the corresponding energies are well-separated from E0, i.e., E8 = −3.030 Ha and E10 =
+
+−2.911 Ha. Initializing in a superposition of the form (Ψ 0 + Ψ J )/√2, the exact time-evolution is simply Ψ( t) = 1
+
+√2
+
+ Ψ0e−iE 0t + Ψ J e−iE J t .
+
+We compute this on a temporal grid with ∆ t = 0 .005 a.u. for Ns = 4000 time steps (excluding t = 0). From each Ψ( t), it is straightforward to compute the 1-electron density eρ(t), its time-derivative ˙eρ(t), and the 1-electron current ej(t). We save these quantities to disk for the two superpositions mentioned above. We use the first Nt =2000 steps of each trajectory for training, and reserve the rest for our test sets.   
+
+> B. Solving the TDSE for H + e −scattering
+
+For the scattering problem, the domain of each coor-dinate is [ −2π, 2π). We use N = 128 grid points but now exclude the right-end point; we set ∆ x = 4 π/N 
+
+with two sets of grid points x1 
+
+> j
+
+, y 1 
+
+> j
+
+= −2π + j∆x and 
+
+x2 
+
+> j
+
+, y 2 
+
+> j
+
+= −2π + (∆ x)/2 + j∆x, both for j = 0 , . . . , 127. By using these staggered grids to treat the coordinates of each electron, we enable use of the Coulomb poten-tial V0(r) = 1 /r with no softening. We take two further steps: first, we place the H atom at a location equidis-tant from the nearest point on either grid; the particular choice is ( xH , y H ) = (2 .75∆ x, 0.25∆ x) ≈ (0 .27 , 0.0245). This ensures that electrons on either grid feel an equal electron-nuclear potential. Second, we initialize our sys-tem in the symmetric superposition Ψ = 1
+
+√2
+
+ Ψ0(r1) ⊗ ΨW P (r2) + Ψ W P (r1) ⊗ Ψ0(r2) ,
+
+(18) where r1 = ( x1, y 1), r2 = ( x2, y 2), Ψ 0(rj ) is the numer-ically obtained ground state of the H atom on grid j,and ΨW P (x, y ) = 
+
+r 5
+
+π exp  −2.5(( x − x0)2 + ( y − y0)2)+ i(px(x − x0) + py (y − y0)) 
+
+is a Gaussian wave packet representing the incident elec-tron centered at ( x0, y 0) with initial momentum ( px, p y ). Particular choices considered here are ( x0, y 0) = (2 .25 , 0) with ( px, p y ) = ( −3, 0), ( −2.75 , 0), and ( −3.25 , 0). The combination of the above steps restores exchange sym-metry to the extent allowed in our staggered grid formu-lation. Note that (18) is the higher-dimensional analogue of the superposition studied in prior work. 43 7Once we have specified the interacting system’s ini-tial state, we step the four-dimensional TDSE forward in time via operator splitting. The wave function is repre-sented as a vector of length N 4 = 128 4. Thus the exact kinetic propagator (unlike the potential propagator) in-volves the matrix exponential of a non-diagonal matrix of size N 4 ×N 4. We found through experimentation that sparse finite-difference approaches fail to maintain accu-racy over long integration times and thus arrived at a pseudospectral approach. Since the Laplacian is diagonal in Fourier space, the ki-netic propagator reduces to multiplication by a diagonal matrix, sandwiched by one FFT (fast Fourier transform) and one inverse FFT. On benchmark problems with ex-act solutions, this approach yields more than 8 digits of accuracy. As operator splitting involves only unitary ma-trices, normalization of Ψ is preserved to machine preci-sion throughout propagation. The only downside of this approach is the implied periodic boundary conditions. However, we have chosen system parameters, including a final time T , such that the wave function always remains negligible near the boundary of the domain. We propagate forward in time for Ns = 8000 steps using a time step of 4 .8 × 10 −21 seconds or 1 .984 × 10 −4
+
+a.u. Every 10 time steps, we save to disk the 1-electron density eρ(t), its time-derivative ˙eρ(t), and the 1-electron current current ej(t).   
+
+> C. Inversion and learning for H2
+
+For a 2-electron system described by a single KS orbital 
+
+φ, one can employ the Madelung transformation φ =pρ/ 2eiζ to derive the continuity equation div( ρ∇ζ) = − ˙ρ. (19) If ρ and ˙ρ are known, one can solve for ζ(x, t ). This enables determination of vS and then vC at each point in spacetime. 16 Note that if the 1-electron current j is known, one could employ ˙ ρ + div( j) = 0 to write div( ρ∇ζ) = div( j). (20) Thus we have inversion pathways from either ( ρ, ˙ρ) or (ρ, j) to the correlation potential vC . Because Madelung was an originator of quantum hydrodynamics (QHD), and because it is useful to have a label for this inver-sion procedure, we refer to it as the QHD approach. For molecular systems, ρ will decay to zero far from the nu-clei, rendering both (19) and (20) ill-posed. In prior work, this problem has been mentioned but not com-pletely resolved. 44,70 
+
+For our H 2 system, we begin the inversion and learn-ing process via QHD inversion from ( eρ, ˙eρ) to V C on our spacetime grid. Using this vC as an initial guess, we then employ PDE-constrained optimization with our ad-joint method (see Section II A) to generate a refined eV C .To compute the kinetic propagator K, we compute the exact matrix exponential using the finite-difference ma-trix D2 defined above together with the Kronecker-sum exponential identity. Here we add to our loss a smooth-ness penalty λS ∥∇ V C ∥2, with ∇ discretized using D1
+
+described above. We find that λS = 10 −8 is sufficient for accurate results. The adjoint method computes gra-dients of the loss; we must also choose an optimization method that uses those gradients to step towards a min-imizer. Here we employ the Adam optimizer with initial learning rate of 10 −2, exponentially decayed to decrease by one order of magnitude every 2000 steps. Having solved for eV C , we reshape it into a matrix V
+
+of size 4000 × 128 2 and then compute its singular value decomposition (SVD) V = U ΣB†. Based on the decay of singular values, we select the first 256 rows of B† (which in the thin SVD has size 4000 × 128 2) and save these as B†
+
+> 0
+
+. This B0 comprises a reduced-dimensional, data-driven basis in which we can represent V C .Carrying out the same procedure for snapshots of the electron density ρ, we obtain a matrix R† 
+
+> 0
+
+of size 4 ×128 2.Because ρ is smoother in space and time than V C , we can compress its dimensionality much more. All steps are carried out on each superposition trajectory in turn. The next step in our workflow is to train a V C model with explicit memory-dependence. As we have access both to ground truth eρ and eV C , this learning can proceed offline: propagation through the TDKS equations is not necessary, and thus the adjoint-based optimization loop can be bypassed. We use a neural network model that takes as input a reduced-dimensional representation of 
+
+M total snapshots of the electron density. That is, given 
+
+ρjM = ( ρ−M +1+ j , . . . , ρ j ), (21) reshaped to be of size M × N 2, we can multiply on the right by R0 to compress its dimensionality to M × 4, which we reshape into a vector of length 4 M . Given this vector, our neural network architecture is simple: we have four, dense, feedforward layers each consisting of the transformation z 7 → ϕ(zW ℓ + bℓ) where ϕ(z) = zI z≥0
+
+is the rectified linear unit. Our dense layers have 256 units each. The output from the final layer is passed through a final linear transformation z 7 → zW 5 + b5,right-multiplied by B†
+
+> 0
+
+, and finally reshaped to size 128 ×
+
+128 to yield V C [ρjM ; θ]. Let us define the single-trajectory density-weighted loss by 
+
+Leρ(θ) = 
+
+> Nt
+
+X 
+
+> j=M−1
+
+X
+
+> ab
+
+eρjab (V C [eρjM ; θ]ab − eV Cab )2. (22) But for the prefactor of eρjab , this would be the sum of squared errors between the V C predicted by our neural network and the eV C we obtained from PDE-constrained inversion. The prefactor encourages the neural network to focus on matching eV C in regions of the domain where there is more electron density. Here Nt is the number of 8steps used for training. Note also that the sum begins at j = M − 1, the smallest value of j such that (21) is well-defined. We sum this single-trajectory loss over both superposi-tion trajectories and minimize it using 20000 steps of the Adam optimizer followed by 120000 steps of L-BFGS. All gradients are computed via automatic differentiation. Once we have an offline trained V C model, we refine it by incorporating it into our adjoint-based optimiza-tion procedure. At each time step, we form the history (21) using the propagated TDKS states rather than the ground truth eρ snapshots. We apply the dimensional-ity reduction technique described above to compress this time history into a vector of length 4 M , pass this into the neural network, and use the resulting V C to propagate to the next step. We use the direct learning adjoint method from Section II B to compute gradients of the loss (8)— averaged over both training trajectories—with respect to the neural network parameters θ. Here we employ 10000 steps of the Adam optimizer followed by 10000 steps of L-BFGS. We call the resulting V C model our fine-tuned 
+
+neural network model. We must mention one final subtlety regarding phases. When we propagate the TDKS equations using amemory-based V C model, we must begin propagation at time step j = M − 1. Thus φM −1 is needed to be-gin propagation. We have found empirically that if we fix φM −1 equal to the QHD result (the first step in the procedure above) but change V C (either during offline or adjoint-based training), we obtain inaccurate results. This is because V C at time M − 1 and the phase ζM −1
+
+are closely interrelated, as the equations of QHD inver-sion make clear. In order to overcome this obstacle, when we train our models for H 2, we optimize over both θ and the phase ζM −1. To ensure that this training does not deviate substantially from the physics, we add to either (22) or (8) a penalty of the form 
+
+σ(ζM −1) = λP ∥ div( eρM −1∇ζM −1) + ˙eρM −1
+
+∥2, (23) with div and ∇ discretized using the D1 matrix described above. We choose λP = 10 3. The gradient of (23) with respect to ζM −1 is simple. Another contribution to this gradient arises because ζM −1 influences φM −1, the initial condition for our TDKS propagation; we compute this contribution via the adjoint method.   
+
+> D. Direct learning for H + e −scattering
+
+To train a memory-based V C model via direct learn-ing, we use a different kind of neural network than above. Because we avoid solving for spacetime values of V C in this approach, we have no ground truth eV C to use for di-mensionality reduction. Thus our neural network archi-tecture must be chosen more carefully to avoid blow-up in the number of parameters. For this reason, we have explored convolutional neu-ral network (CNN) architectures. Our model’s first layer takes as input a sequence of M snapshots of the density, in the form of an N ×N ×M tensor. We treat the last axis as the channel dimension. From there, each layer of the network applies sets of three-dimensional convolutional kernels in an effort to encode information from the input into low-dimensional objects. Our CNN uses four con-volutional layers to gradually transform the input from 128 ×128 ×M to shape 8 ×8×128. After applying a dense layer vertically in the channel/feature dimension, to mix these latent features, we apply four additional convolu-tional layers to transform or decode back to an output of size 128 × 128 × 1. Dropping the third axis yields our vC
+
+output. Each layer of the network includes a linear convolu-tion step followed by a nonlinear activation function, here chosen to be the scaled exponential linear unit. 71 The total parameter count is 361,697, far less than that of a dense feedforward network with the same input and out-put dimensions. The overall architecture we have used is known as a U-net 72 , minus skip connections, which we found do not improve predictive power in this case. Es-sentially, our network learns the encoding and decoding that was hardcoded (via the SVD matrices R0 and B0)in the model described above. For the scattering problem, we employed QHD inver-sion to compute initial phases ζM −1. Subsequently, we did not reoptimize these phases. For 2D TDKS propa-gation, we used an FFT-based approach to compute the kinetic propagator, matching the approach used to solve the 4D TDSE for the scattering problem. To compute the Hartree potential, however, we used free space or natural boundary conditions, thus avoiding periodic artifacts. To train, we used the trajectories with momenta (px, p y ) = ( −2.75 , 0) , (−3.25 , 0), reserving for the test set the ( −3, 0) trajectory. Training proceeded via 100000 steps of L-BFGS optimization. Because the training data was saved at a time step of ∆ t = 1 .984 × 10 −3 a.u. (ev-ery 10th step of the corresponding TDSE simulation), we use that as our time step for TDKS forward and ad-joint propagation. While the entire trajectory has length 
+
+Ns = 800 steps, we use only Nt = 400 steps for training.  
+
+> E. Density functionals for baseline comparison
+
+Here we use standard abbreviations for LDA (lo-cal density approximation), ALDA (adiabatic LDA), GGA (generalized gradient approximation), PBE 73 , and PRM. 74 Note that the latter two acronyms are named after the authors of the functionals, with the PRM LDA correlation functional designed for 2D electron systems. 74 
+
+These functionals were developed based on properties of ground state electron densities and are employed within the standard adiabatic approximation, taking no account of the past history of the density or initial state of the system. LDA functionals take as input only the value of the density on a spatial grid point; thus, they are consid-ered completely local. The GGA PBE vX also takes as 910 1 10 2 10 3 10 4
+
+iterations (PDE-constrained optimization) 5 × 10 4
+
+4 × 10 4
+
+10 3
+
+10 2
+
+> mean  TDKS  TDSE  2
+
+Superposition 1 Superposition 2 
+
+FIG. 2. Applying the adjoint-based inversion procedure from Section II A to the training data described in Section III A, we obtain the above mean L2 errors as a function of iteration count. The final eV C ’s found through this procedure, when used to solve the TDKS equations for our H 2 model, yield densities that match reference trajectories with time-averaged 
+
+L2 errors of roughly 5 × 10 −4 and 4 × 10 −4, respectively. 
+
+input the gradient of the density at a spatial grid point; thus, it is considered a semi-local density functional. We denote the three density functional models that we compare our results to as: 1. ALDA1: exact exchange vX plus LDA vC ,2. ALDA2: LDA vX plus LDA vC , and 3. GGA: PBE vX plus PRM (LDA) vC .Note that our GGA density functional model includes the PBE GGA exchange potential vX , but we have cho-sen the LDA PRM correlation potential for vC , think-ing that it may provide improved performance for these spatially 2D systems. In all settings, we use standard pylibxc/libxc implementations of these models in two spatial dimensions. 75 
+
+IV. RESULTS A. H2: invert-then-learn 
+
+As described in Section III C, we begin with PDE-constrained optimization to generate ground truth values of the correlation potential eV C on our spacetime grid. In Figure 2, we show the results of using the Adam opti-mizer in conjunction with our adjoint method to compute gradients of the loss. The metric here is 1
+
+NtNtX
+
+> j=1
+
+X
+
+> a,b
+
+(ρja,b − eρja,b )2(∆ x)2
+
+
+
+> 1/2
+
+. (24) 10 2 10 3 10 4 10 5
+
+> iterations (neural network training) 10 2
+> 10 3
+> 10 4
+> 10 5
+> 10 6
+> density-weighted sum of squared errors  memory = 0.01 a.u. memory = 0.02 a.u. memory = 0.04 a.u. memory = 0.08 a.u. memory = 0.16 a.u. memory = 0.32 a.u. memory = 0.64 a.u. memory = 1.28 a.u.
+
+FIG. 3. Using the eV C values obtained from PDE-constrained optimization, we employ offline training—see Section III C— to learn a V C model for H 2 that depends on a time history of M snapshots of the density ρ. Here we study how the loss (22) behaves during training as a function of M ∆t, the memory length in a.u. We see that the final optimized loss monotonically decreases as a function of M .
+
+The quantity inside the summation over time (index j) is the L2 norm in continuous space between the functions ρ
+
+and eρ. We average this over time to compute each error plotted in Figure 2. Recall that we initialized our PDE-constrained opti-mization with the results of QHD inversion. Thus the left endpoints on the two plotted curves tell us the mean 
+
+L2 propagation error (24) when we use the V C from QHD inversion. Even for a well-behaved two-electron system, QHD does not yield V C values that are accurate enough to train a machine learning model. By applying PDE-constrained optimization, we reduce the mean L2 error by roughly two orders of magnitude. Having found eV C , we use it for offline learning of memory-based V C [ρjM ; θ] neural network models. In Fig-ure 3, we show how the density-weighted sum of squared errors (22) depends on memory M ∆t measured in atomic units. Here the loss is summed over both superposition trajectories. By virtue of employing offline learning, in which we do not have to propagate through the TDKS equations on each optimization step, we can quickly train multiple long memory models. Each model is trained on both superposition trajectories at once. We find that in-creasing memory M strictly decreases the final optimized value of the loss function. For subsequent work in this paper, we choose the M = 256 model, corresponding to a memory of 1 .28 a.u. In prior work on a memory-based model to propagate 1-electron reduced density matrices, we found that for H 2 in two small basis sets, memory of 0.8 to 13 .0 a.u. was required for accurate propagation; the value chosen here is in this window. 76 
+
+As described in Section III C, we now fine-tune the 
+
+V C [ρjM ; θ] model by adapting the direct learning method from Section II B. We then run a training set comparison 10 2 4 6 8 10 time (a.u.) 10 4   
+
+> 10 3
+> 10 2
+> 10 1
+> density-weighted  L2 propagation error ALDA (Exact Exch + LDA Corr) ALDA (LDA Exch + LDA Corr) GGA (PBE Exch + PRM Corr) QHD Inversion Offline Neural Net Fine-Tuned Neural Net PDE-Constrained Inversion
+
+FIG. 4. Here we compare the density-weighted L2 propaga-tion error as a function of time for seven models for H 2: two in-version models we computed (QHD and PDE-Constrained In-version), two neural network models (offline-trained and fine-tuned), and three baseline density functional models (ALDA1, ALDA2, and GGA). This comparison is on the training set that spans Nt = 2000 points in time. The best models, the fine-tuned neural network and PDE-constrained optimization, are respectively two and three orders of magnitude more ac-curate than the baselines. 
+
+including all models we have trained along with three standard density functionals from the literature. For our model of H 2, we propagate the TDKS system with each of the models. For all models, we then compute the density-weighted L2 propagation error: 
+
+Ej =
+
+X
+
+> a,b
+
+12 eρja,b (ρja,b − eρja,b )2(∆ x)2
+
+
+
+> 1/2
+
+. (25) At each point in time, the integral of eρ/ 2 over space equals unity; hence this quantity is a valid probability density. Thus we can interpret (25) as the expected value of the L2 propagation error, where the expectation is taken with respect to the probability density in question. In Figure 4, we plot Ej —averaged over the two su-perposition trajectories—for four V C models developed in this paper along with the three baseline density func-tional comparison models. All models have stable errors over the training window. Starting from the density func-tional baseline models (all of which perform similarly), we pick up one order of magnitude of accuracy with either the QHD V C or the offline-trained neural network V C ,another order of magnitude with the fine-tuned neural network, and a further order of magnitude with the eV C
+
+from PDE-constrained optimization. Three points emerge from Figure 4. First, the offline-trained neural network does not capture enough signal 2.5 5.0 7.5 10.0 12.5 15.0 17.5 20.0 time (a.u.) 10 4   
+
+> 10 3
+> 10 2
+> 10 1
+> density-weighted  L2 propagation error ALDA (Exact Exch + LDA Corr) ALDA (LDA Exch + LDA Corr) GGA (PBE Exch + PRM Corr) Offline Neural Net Fine-Tuned Neural Net
+
+FIG. 5. Comparison of the density-weighted L2 propagation error as a function of time for five models applied to H 2:two neural network models (offline-trained and fine-tuned) and three baseline density functionals (ALDA1, ALDA2, and GGA). This comparison is on the entire data set; results after 
+
+t = 10 a.u. are test set results. The fine-tuned neural network retains an advantage over baseline models even when extrap-olating 2000 points beyond its training window. 
+
+from its training data, the eV C from PDE-constrained optimization, to match its performance. Second, though the fine-tuned neural network improves on the offline-trained model, there is still significant room for improve-ment. Third, the baseline density functional models lead to objectively inaccurate results for this 50/50 superpo-sition problem. As described above, we trained on the first Nt = 2000 time steps of our trajectories, reserving the final 2000 time steps as a test set. In Figure 5, we show test set results for our two neural network models (offline-trained and fine-tuned). We once again use the density-weighted metric (25), this time plotted from j = 1 to 
+
+j = Ns = 4000. The time 10 a.u. is the point at which results switch from training to test; as shown, the errors of our neural network models increase after this point. The offline-trained model performs poorly relative to the baselines. However, the fine-tuned neural network main-tains reasonable accuracy up until the final time of 20 a.u. This demonstrates that our fine-tuned neural net-work has learned at least some features of the true V C
+
+potential. In Figure 6, we visualize the potentials at time t =5.275 a.u., a point in the middle of the training window. We plot, from top to bottom, the reference density eρ, the 
+
+eV C correlation potential obtained from PDE-constrained inversion, the fine-tuned neural network potential V C
+
+(memory-based), and the adiabatic PRM (LDA) V C .The PDE-constrained eV C displays sharp gradients near the nuclei where the potential swings quickly from near 11 5.0 2.5 0.0 2.5 5.0 4
+
+2
+
+024
+
+> x2 (a.u.)
+> exact
+
+5.0 2.5 0.0 2.5 5.0 4
+
+2
+
+024
+
+> x2 (a.u.)
+
+vPDE-Constrained Inversion 
+
+> C
+
+5.0 2.5 0.0 2.5 5.0 4
+
+2
+
+024
+
+> x2 (a.u.)
+
+vFine-Tuned Neural Net 
+
+> C
+
+5.0 2.5 0.0 2.5 5.0 
+
+x1 (a.u.) 4
+
+2
+
+024
+
+> x2 (a.u.)
+
+vPRM (LDA) 
+
+> C
+
+0.2 0.4 0.6 0.8 
+
+0.5 
+
+0.0 0.5 
+
+0.5 
+
+0.0 0.5 
+
+0.10 
+
+0.05 
+
+0.00 0.05 0.10 
+
+t = 5.275 a.u. 
+
+FIG. 6. At t = 5 .275 a.u., we plot the reference density for H 2
+
+along with three correlation potentials. The neural network captures dynamical step features of the PDE-constrained eV C
+
+that are missed entirely by the nonnegative PRM V C . For further details, consult Section IV A. 
+
+Method Loss Mean 
+
+L2 Error Mean Density-Weighted 
+
+L2 Error 
+
+ALDA1 2.25 × 10 3 2.98 × 10 −1 1.69 × 10 −1
+
+ALDA2 2.29 × 10 3 3.00 × 10 −1 1.73 × 10 −1
+
+GGA 2.42 × 10 3 3.08 × 10 −1 1.83 × 10 −1
+
+U-Net 5.27 × 10 −1 4.81 × 10 −3 1.76 × 10 −3
+
+TABLE I. For the H + e − scattering problem, we compare loss and error metrics across different methods on the test set trajectory. We include in this table three baseline density functional methods explained fully in Section IV A; in sum-mary, ALDA1 involves exact exchange and LDA correlation, while ALDA2 uses LDA exchange and LDA correlation. All baseline methods are roughly two orders of magnitude worse than the trained U-Net V C .0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 time (a.u.) 5 × 10 4   
+
+> 10 3
+> 2 × 10 3
+> 3 × 10 3
+> density-weighted  L2 propagation error  Train 1 Train 2 Test
+
+FIG. 7. For the H + e − scattering problem, we use the adjoint-based method from Section II B to train one U-Net 
+
+V C model on two trajectories. Using this trained U-Net, we propagate with three different initial conditions correspond-ing to the training and test set trajectories. Plotted here is the density-weighted L2 propagation error between (i) densi-ties obtained from TDKS propagation with the U-Net V C and (ii) reference densities computed from accurate TDSE solu-tions. The test set error remains less than 3 ×10 −3 throughout propagation, indicating close agreement between densities. 
+
+−0.5 to near 0 .5, analogous to the step and peak fea-tures discussed in prior work. 44 In contrast, the PRM 
+
+V C is overly smooth and entirely nonnegative. Note that when we plot the fine-tuned neural network potential V C
+
+here, we mask out the region where eρ ≤ 10 −4. In this low-density region, the neural network V C displays oscil-lations that play no role in propagation. 12   
+
+> B. H + e −scattering: direct learning
+
+We train the U-Net model with memory M = 2 start-ing from a random initialization for all neural network weights. The initial value of the loss (8), averaged across two training trajectories, is 2 .23 × 10 3. After training, the loss is 4 .6 × 10 −1. Since the loss is half the sum of squared errors, this already indicates excellent training fit. Thus for the present work we did not explore U-Net models with memory M > 2. In Figure 7, we plot the density-weighted L2 propaga-tion error (25) over time for both training trajectories as well as the test set trajectory. Note that errors remain below 3 × 10 −3 during the entire propagation window. The test set error peaks when the incident electron in-teracts most directly with the hydrogen atom. In Figure 8, we display the time-evolution of densities and correlation potentials at three key points in time. Note that these results are for the test set trajectory. From left to right, each column shows results at t = ∆ t =1.984 × 10 −3 a.u. (just after propagation begins), t =201∆ t = 0 .399 a.u. (halfway through propagation), and 
+
+t = 400∆ t = 0 .794 a.u. (when propagation ends). The top and bottom rows show excellent agreement between reference densities and those produced by propagating with the U-Net V C .The middle two rows capture striking differences be-tween U-Net and PRM (LDA) correlation potentials. The single doubly occupied KS orbital for this system must somehow be able to capture the dynamics of both the incident electron and the electron bound to the H atom. In order for this KS orbital to evolve in time with sufficient accuracy so that the density matches that of the interacting system, the true V C must have large-magnitude steps/peaks. Though the U-Net was never trained using ground truth values of the correla-tion potential—not even those that we might obtain via QHD—we see evidence of dynamical steps and peaks, where the potential changes sign and swings from high to low magnitudes. In contrast, the PRM (LDA) V C is two orders of magnitude smaller and is also completely nonpositive (i.e., either negative or zero). Note in particular the especially large magnitude step in the U-Net V C at time t = 0 .399 a.u., corresponding to the time at which the test set error peaks in Figure 7. Though this error may seem relatively large on the scale of Figure 7, when we examine the densities at t = 0 .399 a.u. in Figure 8, they are indistinguishable. In Table I, we quantify test set errors for the trained U-Net and the three baseline models mentioned in Section IV A. In either propagation error metric, the U-Net cor-relation potential yields densities that are roughly 100 times more accurate than baseline methods. Note also that the mean density-weighted L2 error for the U-Net is less than half the mean L2 error, indicating that its errors are less pronounced when electron density is higher.  
+
+> V. CONCLUSION
+
+There are three main conclusions we draw from this work and the results. First, one of the most important in-gredients to accurate inversion and learning is the quality of the training data. Without accurate reference densi-ties, time-derivatives of these densities, and/or currents, inversion and learning are simply not possible. Here, by paying close attention to the numerical solution of inter-acting systems featuring two electrons both in two spatial dimensions, we generated highly accurate training data to begin the inversion and learning process. In a similar vein, we can see that QHD is too inaccurate to generate reference values of the correlation potential 
+
+V C that are suitable for learning correlation function-als. One can, however, use QHD as a starting point to solve for more accurate references values eV C via PDE-constrained optimization. The first adjoint method we described solves this problem and, for H 2, yields the best propagation error among all methods considered. The second conclusion is that, despite using only two training trajectories, we have learned correlation func-tionals that feature low test set error either when extrap-olating to unseen times (for H 2) or extrapolating to initial conditions not seen in the training data (for hydrogen-electron scattering). We also see that our trained func-tionals yield substantially lower TDKS propagation error (measured in either raw or density-weighted L2 norms) than standard functionals in two dimensions. This is true even in the direct learning case, where the neural network has never seen ground truth values of the correlation po-tential. We conjecture that if we were to retrain our models on much larger training sets, we would be able to learn a memory-dependent correlation functional that yields accurate propagation well outside the training set. Finally, our work points the way towards several ar-eas for improvement. This includes (i) improving the neural network architecture in the invert-then-learn ap-proach, so that we reduce the propagation error gap be-tween this approach and PDE-constrained optimization, (ii) studying methods to initialize propagation when us-ing correlation functionals with long memory (e.g., how do we obtain the initial segment of electron densities to begin propagation?), and (iii) understanding how to in-corporate known symmetries and exact conditions into our model functionals.  
+
+> VI. SUPPLEMENTARY MATERIAL
+
+In supplementary material, we give mathematical derivations of the adjoint systems (13) and (17). This in-cludes full details regarding variations of the Lagrangian (10) in both the inversion and direct learning cases. 13 5.0 
+
+2.5 
+
+0.0 2.5 5.0 
+
+> x2 (a.u.)
+
+## t = 0.002 a.u. 
+
+exact 
+
+## t = 0.399 a.u. 
+
+exact 
+
+## t = 0.794 a.u. 
+
+exact 
+
+5.0 
+
+2.5 
+
+0.0 2.5 5.0 
+
+> x2 (a.u.)
+
+## vNeural Net 
+
+C vNeural Net 
+
+C vNeural Net 
+
+C
+
+5.0 
+
+2.5 
+
+0.0 2.5 5.0 
+
+> x2 (a.u.)
+
+## vPRM (LDA) 
+
+C vPRM (LDA) 
+
+C vPRM (LDA) 
+
+C
+
+5 0 5
+
+x1 (a.u.) 5.0 
+
+2.5 
+
+0.0 2.5 5.0 
+
+> x2 (a.u.)
+
+Neural Net 
+
+5 0 5
+
+x1 (a.u.) 
+
+Neural Net 
+
+5 0 5
+
+x1 (a.u.) 
+
+Neural Net 
+
+0.0 0.5 1.0 1.5 2.0 
+
+10 
+
+010 
+
+0.10 
+
+0.05 
+
+0.00 0.05 0.10 
+
+0.0 0.5 1.0 1.5 2.0 
+
+FIG. 8. At three key times during propagation (beginning, middle, and end), reference densities (top row, computed via solution of the TDSE) closely agree with densities produced by propagating TDKS with our trained U-Net V C (bottom row). The middle two rows compare the U-Net V C against those computed via the PRM (LDA) functional. The U-Net captures dynamical step/peak features; the LDA is incorrect both in magnitude and in sign-definiteness (no positive values). 14 
+
+VII. ACKNOWLEDGMENTS 
+
+We are grateful for discussions of this work with N. Maitra, V. Gavini, B. Kanungo, and P. Zimmerman. This work was supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research and Office of Basic Energy Sci-ences, Scientific Discovery through Advanced Computing (SciDAC) program under Award Number DE-SC0026088 (TDKS inversion, machine learning of correlation po-tentials), and by the Office of Naval Research, Grant Number W911NF-23-1-0153 (4D TDSE implementation and optimization). This research used resources of the National Energy Research Scientific Computing Center (NERSC), a U.S. Department of Energy Office of Sci-ence User Facility located at Lawrence Berkeley Na-tional Laboratory, operated under Contract No. DE-AC02-05CH11231 using NERSC award BES-m5214. We also acknowledge computational time on the Pinnacles cluster, including CENVAL-ARC GPU nodes, at UC Merced, supported by NSF awards OAC-2019144 and OAC-2346744. 
+
+VIII. REFERENCES 
+
+> 1
+
+F. Furche and R. Ahlrichs, “Adiabatic time-dependent density functional methods for excited state properties,” J. Chem. Phys. 
+
+117 , 7433–7447 (2002). 
+
+> 2
+
+D. Jacquemin, V. Wathelet, E. A. Perp` ete, and C. Adamo, “Extensive TD-DFT benchmark: Singlet-excited states of or-ganic molecules,” Journal of Chemical Theory and Computa-tion 5, 2420–2435 (2009), https://pubs.acs.org/jctcce/article-pdf/5/9/2420/4233683/ct900298e.pdf. 
+
+> 3
+
+D. Jacquemin, B. Mennucci, and C. Adamo, “Excited-state cal-culations with TD-DFT: from benchmarks to simulations in com-plex environments,” Physical Chemistry Chemical Physics 13 ,16987–16998 (2011). 
+
+> 4
+
+A. D. Laurent and D. Jacquemin, “TD-DFT benchmarks: A review,” International Journal of Quantum Chemistry 113 , 2019–2039 (2013), https://onlinelibrary.wiley.com/doi/pdf/10.1002/qua.24438. 
+
+> 5
+
+C. Adamo and D. Jacquemin, “The calculations of excited-state properties with time-dependent density functional theory,” Chemical Society Reviews 42 , 845–856 (2013). 
+
+> 6
+
+Q. Ou, G. D. Bellchambers, F. Furche, and J. E. Subotnik, “First-order derivative couplings between excited states from adiabatic TDDFT response theory,” J. Chem. Phys. 142 , 064114 (2015). 
+
+> 7
+
+R. Sarkar, M. Boggio-Pasqua, P.-F. Loos, and D. Jacquemin, “Benchmarking TD-DFT and wave function methods for oscilla-tor strengths and excited-state dipole moments,” J. Chem. The-ory Comput. 17 , 1117–1132 (2021). 
+
+> 8
+
+J. Liang, X. Feng, D. Hait, and M. Head-Gordon, “Re-visiting the performance of time-dependent density func-tional theory for electronic excitations: Assessment of 43 popular and recently developed functionals from rungs one to four,” Journal of Chemical Theory and Computa-tion 18 , 3460–3473 (2022), https://pubs.acs.org/jctcce/article-pdf/18/6/3460/10255733/ct2c00160.pdf. 
+
+> 9
+
+D. Mester and M. K´ allay, “Charge-transfer excitations within density functional theory: How accurate are the most recom-mended approaches?” Journal of Chemical Theory and Compu-tation 18 , 1646–1662 (2022), https://pubs.acs.org/jctcce/article-pdf/18/3/1646/13175435/ct1c01307.pdf. 
+
+> 10
+
+M. R. Provorse and C. M. Isborn, “Electron dynamics with real-time time-dependent density functional theory,” Interna-tional Journal of Quantum Chemistry 116 , 739–749 (2016), https://onlinelibrary.wiley.com/doi/pdf/10.1002/qua.25096. 
+
+> 11
+
+X. Li, N. Govind, C. Isborn, I. DePrince, A. Eu-gene, and K. Lopata, “Real-time time-dependent electronic structure theory,” Chemical Reviews 120 ,9951–9993 (2020), https://pubs.acs.org/chreay/article-pdf/120/18/9951/17614372/cr0c00223.pdf. 
+
+> 12
+
+J. M. Herbert, “Density-functional theory for electronic ex-cited states,” in Theoretical and Computational Photochemistry ,edited by C. Garc´ ıa-Iriepa and M. Marazzi (Elsevier, 2023) pp. 69–118. 
+
+> 13
+
+J. Xu, T. E. Carney, R. Zhou, C. Shepard, and Y. Kanai, “Real-time time-dependent density functional theory for simulating nonequilibrium electron dynam-ics,” Journal of the American Chemical Society 146 ,5011–5029 (2024), https://pubs.acs.org/jacsat/article-pdf/146/8/5011/16521633/ja3c08226.pdf. 
+
+> 14
+
+E. Runge and E. K. U. Gross, “Density-functional theory for time-dependent systems,” Phys. Rev. Lett. 52 , 997–1000 (1984). 
+
+> 15
+
+E. K. U. Gross and W. Kohn, “Time-dependent density func-tional theory,” Adv. Quantum Chem. 21 , 255–291 (1990). 
+
+> 16
+
+C. A. Ullrich, Time-Dependent Density-Functional Theory: Concepts and Applications (OUP Oxford, 2011). 
+
+> 17
+
+L. O. Wagner, Z.-h. Yang, and K. Burke, “Exact conditions and their relevance in TDDFT,” in Fundamentals of Time-Dependent Density Functional Theory , edited by M. A. Marques, N. T. Maitra, F. M. Nogueira, E. Gross, and A. Rubio (Springer, Berlin, Heidelberg, 2012) pp. 101–123. 
+
+> 18
+
+E. K. Gross and N. T. Maitra, “Introduction to TDDFT,” in 
+
+Fundamentals of Time-Dependent Density Functional Theory ,Vol. 837, edited by M. A. Marques, N. T. Maitra, F. M. Nogueira, E. K. Gross, and A. Rubio (Springer, 2012) pp. 53–97. 
+
+> 19
+
+N. T. Maitra, K. Burke, H. Appel, and E. Gross, “Ten topi-cal questions in time-dependent density functional theory,” Rev. Mod. Quantum Chem. 2, 1186 (2002). 
+
+> 20
+
+N. T. Maitra, “Perspective: Fundamental aspects of time-dependent density functional theory,” J. Chem. Phys. 144 ,220901 (2016). 
+
+> 21
+
+C. A. Ullrich, “A snapshot of time-dependent density-functional theory,” APL Computational Physics 1, 020901 (2025). 
+
+> 22
+
+N. T. Maitra, “Memory: History, initial-state dependence and double excitations,” in Fundamentals of time-dependent density functional theory , Vol. 837, edited by M. A. Marques, N. T. Maitra, F. M. Nogueira, E. K. Gross, and A. Rubio (Springer, 2012) pp. 167–184. 
+
+> 23
+
+B. F. Habenicht, N. P. Tani, M. R. Provorse, and C. M. Isborn, “Two-electron Rabi oscillations in real-time time-dependent density-functional theory,” The Journal of Chemical Physics 
+
+141 , 184112 (2014), https://pubs.aip.org/aip/jcp/article-pdf/doi/10.1063/1.4900514/15487691/184112 1 online.pdf. 
+
+> 24
+
+N. T. Maitra, F. Zhang, R. J. Cave, and K. Burke, “Double excitations within time-dependent density functional theory lin-ear response,” The Journal of Chemical Physics 120 , 5932–5937 (2004). 
+
+> 25
+
+N. T. Maitra, “Double and charge-transfer excitations in time-dependent density functional theory,” Annu. Rev. Phys. Chem. 
+
+73 , 117–140 (2022). 
+
+> 26
+
+S. M. Parker, S. Roy, and F. Furche, “Unphysical divergences in response theory,” The Journal of Chemical Physics 145 , 134105 (2016). 
+
+> 27
+
+D. Dar, S. Roy, and N. T. Maitra, “Curing the diver-gence in time-dependent density functional quadratic re-sponse theory,” The Journal of Physical Chemistry Let-ters 14 , 3186–3192 (2023), https://pubs.acs.org/jpclcd/article-pdf/14/13/3186/3394969/jz3c00122.pdf. 
+
+> 28
+
+M. R. Provorse, B. F. Habenicht, and C. M. Isborn, “Peak-shifting in real-time time-dependent density func-tional theory,” Journal of Chemical Theory and Computa-15 
+
+tion 11 , 4791–4802 (2015), https://pubs.acs.org/jctcce/article-pdf/11/10/4791/8817873/ct5b00559.pdf. 
+
+> 29
+
+J. I. Fuks, K. Luo, E. D. Sandoval, and N. T. Maitra, “Time-resolved spectroscopy in time-dependent density functional the-ory: An exact condition,” Phys. Rev. Lett. 114 , 183002 (2015). 
+
+> 30
+
+K. Luo, J. I. Fuks, and N. T. Maitra, “Studies of spuriously shifting resonances in time-dependent density functional theory,” J. Chem. Phys. 145 (2016). 
+
+> 31
+
+K. Luo, P. Elliott, and N. T. Maitra, “Absence of dynamical steps in the exact correlation potential in the linear response regime,” Phys. Rev. A 88 , 042508 (2013). 
+
+> 32
+
+K. Luo, J. I. Fuks, E. D. Sandoval, P. Elliott, and N. T. Maitra, “Kinetic and interaction components of the exact time-dependent correlation potential,” J. Chem. Phys. 140 (2014), 10.1063/1.4867002. 
+
+> 33
+
+N. T. Maitra, “Charge transfer in time-dependent density func-tional theory,” J. Phys. Condens. Matter 29 , 423001 (2017). 
+
+> 34
+
+K. Ranka and C. M. Isborn, “Size-dependent errors in real-time electron density propagation,” The Journal of Chemical Physics 
+
+158 , 174102 (2023), https://pubs.aip.org/aip/jcp/article-pdf/doi/10.1063/5.0142515/17144057/174102 1 5.0142515.pdf. 
+
+> 35
+
+D. B. Dar, A. Baranova, and N. T. Maitra, “Reformulation of time-dependent density functional theory for nonperturbative dynamics: The rabi oscillation problem resolved,” Phys. Rev. Lett. 133 , 096401 (2024). 
+
+> 36
+
+E. K. U. Gross and W. Kohn, “Local density-functional theory of frequency-dependent linear response,” Phys. Rev. Lett. 55 ,2850–2852 (1985). 
+
+> 37
+
+M. Panholzer, M. Gatti, and L. Reining, “Nonlocal and nonadi-abatic effects in the charge-density response of solids: A time-dependent density-functional approach,” Phys. Rev. Lett. 120 ,166402 (2018). 
+
+> 38
+
+A. D. Kaplan, N. K. Nepal, A. Ruzsinszky, P. Ballone, and J. P. Perdew, “First-principles wave-vector- and frequency-dependent exchange-correlation kernel for jellium at all densities,” Phys. Rev. B 105 , 035123 (2022). 
+
+> 39
+
+G. Vignale and W. Kohn, “Current-dependent exchange-correlation potential for dynamical linear response theory,” Phys. Rev. Lett. 77 , 2037–2040 (1996). 
+
+> 40
+
+J. F. Dobson, M. J. B¨ unner, and E. K. U. Gross, “Time-dependent density functional theory beyond linear response: An exchange-correlation potential with memory,” Phys. Rev. Lett. 
+
+79 , 1905–1908 (1997). 
+
+> 41
+
+H. S. Bhat, K. Collins, P. Gupta, and C. M. Isborn, “Dy-namic learning of correlation potentials for a time-dependent kohn-sham system,” in Proceedings of The 4th Annual Learn-ing for Dynamics and Control Conference , Proceedings of Ma-chine Learning Research, Vol. 168, edited by R. Firoozi, N. Mehr, E. Yel, R. Antonova, J. Bohg, M. Schwager, and M. Kochenderfer (PMLR, 2022) pp. 546–558. 
+
+> 42
+
+We explain in Section III C why we use this term. 
+
+> 43
+
+Y. Suzuki, R. Nagai, and J. Haruyama, “Machine learn-ing exchange-correlation potential in time-dependent density-functional theory,” Phys. Rev. A 101 , 050501(R) (2020). 
+
+> 44
+
+D. Dar, L. Lacombe, J. Feist, and N. T. Maitra, “Exact time-dependent density-functional theory for nonperturbative dynam-ics of the helium atom,” Phys. Rev. A 104 , 032821 (2021). 
+
+> 45
+
+D. J. Tozer, V. E. Ingamells, and N. C. Handy, “Exchange-correlation potentials,” The Journal of Chemical Physics 105 ,9200–9213 (1996). 
+
+> 46
+
+R. Nagai, R. Akashi, and O. Sugino, “Completing density functional theory by machine learning hidden messages from molecules,” npj Computational Materials (2020). 
+
+> 47
+
+J. Schmidt, C. L. Benavides-Riveros, and M. A. L. Marques, “Machine learning the physical nonlocal ex-change–correlation functional of density-functional the-ory,” The Journal of Physical Chemistry Letters 10 ,6425–6431 (2019), https://pubs.acs.org/jpclcd/article-pdf/10/20/6425/6432174/jz9b02422.pdf. 
+
+> 48
+
+S. Dick and M. Fernandez-Serra, “Machine learning accurate ex-change and correlation functionals of the electronic density,” Na-ture communications 11 , 3509 (2020). 
+
+> 49
+
+E. Cuierrier, P.-O. Roy, and M. Ernzerhof, “Constructing and representing exchange–correlation holes through artificial neural networks,” The Journal of Chemical Physics 155 , 174121 (2021). 
+
+> 50
+
+M. F. Kasim and S. M. Vinko, “Learning the exchange-correlation functional from nature with fully differentiable den-sity functional theory,” Phys. Rev. Lett. 127 , 126403 (2021). 
+
+> 51
+
+J. Kirkpatrick, B. McMorrow, D. H. P. Turban, A. L. Gaunt, J. S. Spencer, A. G. D. G. Matthews, A. Obika, L. Thiry, M. Fortu-nato, D. Pfau, L. R. Castellanos, S. Petersen, A. W. R. Nel-son, P. Kohli, P. Mori-S´ anchez, D. Hassabis, and A. J. Co-hen, “Pushing the frontiers of density functionals by solving the fractional electron problem,” Science 374 , 1385–1389 (2021), https://www.science.org/doi/pdf/10.1126/science.abj6511. 
+
+> 52
+
+L. Li, S. Hoyer, R. Pederson, R. Sun, E. D. Cubuk, P. Riley, and K. Burke, “Kohn-Sham equations as regularizer: Building prior knowledge into machine-learned physics,” Phys. Rev. Lett. 126 ,036401 (2021). 
+
+> 53
+
+J. T. Margraf and K. Reuter, “Pure non-local machine-learned density functional theory for electron correlation,” Nature Com-munications 12 , 344 (2021). 
+
+> 54
+
+K. Bystrom and B. Kozinsky, “CIDER: An expressive, non-local feature set for machine learning density functionals with exact constraints,” Journal of Chemical Theory and Computa-tion 18 , 2180–2192 (2022), https://pubs.acs.org/jctcce/article-pdf/18/4/2180/13182499/ct1c00904.pdf. 
+
+> 55
+
+B. Kalita, R. Pederson, J. Chen, L. Li, and K. Burke, “How well does Kohn–Sham regularizer work for weakly cor-related systems?” The Journal of Physical Chemistry Let-ters 13 , 2540–2547 (2022), https://pubs.acs.org/jpclcd/article-pdf/13/11/2540/17637477/jz2c00371.pdf. 
+
+> 56
+
+Y. Liu, C. Zhang, Z. Liu, D. G. Truhlar, Y. Wang, and X. He, “Supervised learning of a chemistry functional with damped dis-persion,” Nature Computational Science 3, 48–58 (2023). 
+
+> 57
+
+K. Bystrom and B. Kozinsky, “Nonlocal machine-learned ex-change functional for molecules and solids,” Phys. Rev. B 110 ,075130 (2024). 
+
+> 58
+
+R. Akashi, M. Sogal, and K. Burke, “Can machines learn density functionals? Past, present, and future of ML in DFT,” (2025), arXiv:2503.01709 [physics.comp-ph]. 
+
+> 59
+
+E. Polak, H. Zhao, and S. Vuckovic, “Real-space machine learning of correlation density functionals,” Nature Communications 16 ,11306 (2025). 
+
+> 60
+
+N. Gao, E. Eberhard, and S. G¨ unnemann, “Learning equivariant non-local electron density functionals,” in International Confer-ence on Learning Representations , Vol. 2025 (2025) pp. 50197– 50221. 
+
+> 61
+
+B. Kanungo, J. Hatch, P. M. Zimmerman, and V. Gavini, “Learning local and semi-local density functionals from exact exchange-correlation potentials and energies,” Science Advances 11 , eady8962 (2025), https://www.science.org/doi/pdf/10.1126/sciadv.ady8962. 
+
+> 62
+
+G. Luise, C.-W. Huang, T. Vogels, D. P. Kooi, S. Ehlert, S. La-nius, K. J. H. Giesbertz, A. Karton, D. Gunceler, S. Battaglia, G. N. C. Simm, P. B. Szab´ o, M. Stanley, W. P. Bruinsma, L. Huang, X. Wei, J. G. Torres, A. Katbashev, R. C. Zavaleta, B. M´ at´ e, S.-O. Kaba, R. Sordillo, Y. Chen, D. B. Williams-Young, C. M. Bishop, J. Hermann, R. van den Berg, and P. Gori-Giorgi, “Accurate and scalable exchange-correlation with deep learning,” (2026), arXiv:2506.14665 [physics.chem-ph]. 
+
+> 63
+
+A. P. Peirce, M. A. Dahleh, and H. Rabitz, “Optimal control of quantum-mechanical systems: Existence, numerical approxima-tion, and applications,” Phys. Rev. A 37 , 4950–4964 (1988). 
+
+> 64
+
+A. Borz` ı, G. Ciaramella, and M. Sprengel, Formulation and Nu-merical Solution of Quantum Control Problems (SIAM, 2017). 
+
+> 65
+
+H. S. Bhat, H. Bassi, and C. M. Isborn, “Nonlinear optimal control of electron dynamics within Hartree-Fock theory,” in 
+
+2025 SICE International Symposium on Control Systems (SICE 16 
+
+ISCS) (2025) pp. 51–58. 
+
+> 66
+
+H. S. Bhat, “Second-order adjoint method for quantum optimal control,” in 2025 IEEE International Conference on Quantum Control, Computing and Learning (qCCL) (2025) pp. 149–154. 
+
+> 67
+
+V. Hernandez, J. E. Roman, and V. Vidal, “SLEPc: A scalable and flexible toolkit for the solution of eigenvalue problems,” ACM Trans. Math. Softw. 31 , 351–362 (2005). 
+
+> 68
+
+S. Balay, S. Abhyankar, M. F. Adams, S. Benson, J. Brown, P. Brune, K. Buschelman, E. M. Constantinescu, L. Dal-cin, A. Dener, V. Eijkhout, J. Faibussowitsch, W. D. Gropp, V. Hapla, T. Isaac, P. Jolivet, D. Karpeev, D. Kaushik, M. G. Knepley, F. Kong, S. Kruger, D. A. May, L. C. McInnes, R. T. Mills, L. Mitchell, T. Munson, J. E. Roman, K. Rupp, P. Sanan, J. Sarich, B. F. Smith, S. Zampini, H. Zhang, H. Zhang, and J. Zhang, “PETSc Web page,” https://petsc.org/ (2026). 
+
+> 69
+
+S. Balay, W. D. Gropp, L. C. McInnes, and B. F. Smith, “Ef-ficient management of parallelism in object oriented numerical software libraries,” in Modern Software Tools in Scientific Com-puting , edited by E. Arge, A. M. Bruaset, and H. P. Langtangen (Birkh¨ auser Press, 1997) pp. 163–202. 
+
+> 70
+
+M. Ruggenthaler, M. Penz, and R. Van Leeuwen, “Existence, uniqueness, and construction of the density-potential mapping in time-dependent density-functional theory,” Journal of Physics: Condensed Matter 27 , 203202 (2015). 
+
+> 71
+
+G. Klambauer, T. Unterthiner, A. Mayr, and S. Hochreiter, “Self-normalizing neural networks,” Advances in Neural Information Processing Systems 30 (2017). 
+
+> 72
+
+O. Ronneberger, P. Fischer, and T. Brox, “U-net: Convolu-tional networks for biomedical image segmentation,” in Interna-tional Conference on Medical Image Computing and Computer-Assisted Intervention (Springer, 2015) pp. 234–241. 
+
+> 73
+
+J. P. Perdew, K. Burke, and M. Ernzerhof, “Generalized gradient approximation made simple,” Phys. Rev. Lett. 77 , 3865–3868 (1996). 
+
+> 74
+
+S. Pittalis, E. R¨ as¨ anen, and M. A. L. Marques, “Local correlation functional for electrons in two dimensions,” Phys. Rev. B 78 ,195322 (2008). 
+
+> 75
+
+S. Lehtola, C. Steigemann, M. J. Oliveira, and M. A. Mar-ques, “Recent developments in Libxc — A comprehensive library of functionals for density-functional theory,” SoftwareX 7, 1–5 (2018). 
+
+> 76
+
+H. S. Bhat, H. Bassi, K. Ranka, and C. M. Isborn, “Incorpo-rating memory into propagation of 1-electron reduced density matrices,” Journal of Mathematical Physics 66 , 023503 (2025).

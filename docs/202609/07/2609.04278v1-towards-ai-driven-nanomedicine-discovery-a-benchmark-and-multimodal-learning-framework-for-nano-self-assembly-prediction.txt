@@ -1,0 +1,407 @@
+Title: Towards AI-Driven Nanomedicine Discovery: A Benchmark and Multimodal Learning Framework for Nano Self-Assembly Prediction
+
+URL Source: https://arxiv.org/pdf/2609.04278v1
+
+Published Time: Mon, 07 Sep 2026 00:06:22 GMT
+
+Number of Pages: 13
+
+Markdown Content:
+# Towards AI-Driven Nanomedicine Discovery: A Benchmark and Multimodal Learning Framework for Nano Self-Assembly Prediction 
+
+# Quan Hao ∗
+
+haoquan@emails.bjut.edu.cn The School of Information Science and Technology, Beijing University of Technology Beijing, China 
+
+# Mengyue Fan ∗
+
+fmengyue0927@163.com Artemisinin Research Center, China Academy of Chinese Medical Sciences Beijing, China 
+
+# Zifan Dong 
+
+dongzifan@emails.bjut.edu.cn College of Computer Science, Beijing University of Technology Beijing, China 
+
+# Jianduo Zhao 
+
+zhao18210930562@163.com Artemisinin Research Center, China Academy of Chinese Medical Sciences Beijing, China 
+
+# Changhao Xiao 
+
+xiaochanghao@stu.gzy.edu.cn Artemisinin Research Center, China Academy of Chinese Medical Sciences Beijing, China 
+
+# Shangqing Jiao 
+
+Jiaoshangqing@emails.bjut.edu.cn The School of Information Science and Technology, Beijing University of Technology Beijing, China 
+
+# Hao Zhang 
+
+z5753441@ad.unsw.edu.au School of Computer Science and Engineering, University of New South Wales Sydney, Australia 
+
+# Yudong Wang 
+
+yudong.wang@ia.ac.cn Institute of Automation, Chinese Academy of Sciences, University of Chinese Academy of Sciences Beijing, China 
+
+# Fei Xia 
+
+fxia@icmm.ac.cn Artemisinin Research Center, China Academy of Chinese Medical Sciences Beijing, China 
+
+# Jigang Wang 
+
+jgwang@icmm.ac.cn Artemisinin Research Center, China Academy of Chinese Medical Sciences Beijing, China 
+
+# Liguo Zhang †
+
+zhangliguo@bjut.edu.cn The School of Information Science and Technology, Beijing University of Technology Beijing, China 
+
+# Chong Qiu †
+
+cqiu@icmm.ac.cn Artemisinin Research Center, China Academy of Chinese Medical Sciences Beijing, China 
+
+## Abstract 
+
+Nano self-assembly organizes molecular components into bioac-tive nanoscale structures. Self-assembled nanoparticles (NAPs) de-rived from Chinese herbal formulas and applications such as anti-lung-cancer therapy demonstrate the substantial potential of self-assembly for nanomedicine discovery. Yet discovery still relies on costly wet-lab screening, while existing machine learning ap-proaches lack standardized tasks, effective pairwise compatibility modeling, and public benchmarks with unified evaluation. To ad-dress these limitations, we formalize NSA prediction as a binary classification task for predicting self-assembly between molecular pairs and then establish NSA-Bench, the first public benchmark 
+
+> Permission to make digital or hard copies of all or part of this work for personal or classroom use is granted without fee provided that copies are not made or distributed for profit or commercial advantage and that copies bear this notice and the full citation on the first page. Copyrights for components of this work owned by others than the author(s) must be honored. Abstracting with credit is permitted. To copy otherwise, or republish, to post on servers or to redistribute to lists, requires prior specific permission and/or a fee. Request permissions from permissions@acm.org.
+> KDD ’27, San Jose, CA, USA
+> © 2027 Copyright held by the owner/author(s). Publication rights licensed to ACM. ACM ISBN 978-x-xxxx-xxxx-x/YYYY/MM https://doi.org/XXXXXXX.XXXXXXX
+
+with curated molecular combinations, experimental conditions, self-assembly labels, and standardized evaluation protocols. We further develop NSA-Net, an interaction-aware multimodal framework that integrates complementary molecular evidence from graph topol-ogy, sequence semantics, and physicochemical descriptors to learn molecular-pair representations for self-assembly prediction. Exten-sive experiments on NSA-Bench show that NSA-Net achieves a ROC-AUC of 0 .9470 ± 0.0112 (Small) and 0 .9492 ± 0.0062 (Large). On the Small track, it surpasses the strongest machine-learning and graph-based baselines by 3.9 and 17.1 percentage points, re-spectively. Representation analyses reveal interpretable molecular characteristics associated with self-assembly prediction captured by the learned representations. Moreover, an NSA-Agent case study further demonstrates how NSA-Net predictions can support formu-lation refinement through experimental-condition-aware reasoning. Our code is available at https://github.com/developer-hq/NSA-Net. 
+
+## Keywords 
+
+Nano Self-Assembly Prediction, Multimodal Molecular Learning, Benchmark Dataset arXiv:2609.04278v1 [q-bio.QM] 3 Sep 2026 KDD ’27, August 1–5, 2027, San Jose, CA, USA Hao et al.   
+
+> ACM Reference Format:
+> Quan Hao, Mengyue Fan, Zifan Dong, Jianduo Zhao, Changhao Xiao, Shangqing Jiao, Hao Zhang, Yudong Wang, Fei Xia, Jigang Wang, Liguo Zhang, and Chong Qiu. 2027. Towards AI-Driven Nanomedicine Discovery: A Benchmark and Multimodal Learning Framework for Nano Self-Assembly Prediction. In Proceedings of ACM SIGKDD Conference on Knowledge Dis-covery and Data Mining (KDD ’27). ACM, New York, NY, USA, 13 pages. https://doi.org/XXXXXXX.XXXXXXX
+
+## 1 Introduction 
+
+Nano self-assembly organizes molecular components into bioactive nanoscale structures and offers a promising route for new-drug development by controlling how molecular constituents are com-bined and presented [32, 41]. In traditional Chinese medicine (TCM), Chinese herbal formula compatibility and aqueous decoction can generate supramolecular structures distinct from simple mixtures, and the resulting self-assembled nanoparticles constitute a mate-rial basis associated with bioactivity [38]. The application of such nano-assembly particles derived from Chinese herbal formulas to anti-lung-cancer therapy further illustrates the value of nano self-assembly for drug development [14]. Predicting whether molecular components will self-assemble under specified formulation con-ditions is therefore a scientifically and translationally important AI-for-Science task [37, 38]. However, discovery remains dominated by costly wet-lab screen-ing [36]. Expanding a molecular library combinatorially increases candidate pairs, while component ratios, concentration, pH, tem-perature, and incubation time multiply formulation choices per pair [7, 9, 32]. Every combination requires preparation and observation, and the same pair may yield different outcomes across conditions [3, 11, 21]. This joint molecular–condition space makes exhaustive exploration impractical and reusable, standardized learning data scarce [7, 9, 12]. Existing molecular AI extracts informative repre-sentations from molecular graphs, chemical strings, and physico-chemical descriptors [7, 23, 24, 29, 34]. However, as illustrated in Fig. 1, the self-assembly of traditional Chinese medicine compounds into nanoparticles is cooperatively driven by hydrogen bonding, hydrophobic interactions, and van der Waals forces—complex in-termolecular interactions that remain difficult for current methods to capture adequately. These gaps remain unresolved because dedicated computational work on nano-self-assembly prediction is still scarce. The absence of this shared infrastructure prevents experimentally informative records from supporting reproducible comparison, while the ab-sence of explicit pair-level and context modeling leaves the central scientific relations underspecified [12, 31, 35, 41]. To establish a com-mon task and evaluation basis, we formalize nano-self-assembly prediction as binary classification over molecular pairs and intro-duce NSA-Bench. Through its publicly released NSA-Bench-Small protocol, NSA-Bench is, to our knowledge, the first public bench-mark for this task, providing curated molecular pairs, formulation conditions, outcomes, provenance, fixed partitions, and unified metrics. To address the pairwise compatibility gap, we develop NSA-Net, an interaction-aware multimodal framework that learns a com-patibility representation for each molecular pair. As illustrated in 
+
+Figure 1: Self-assembly-driven nanoparticle formation from a traditional Chinese medicine compound. Driven coopera-tively by hydrogen bonding, hydrophobic interactions, and van der Waals forces, the compound molecules self-organize into nanoscale supramolecular architectures. 
+
+Fig. 2, its primary structure-only configuration enables bidirec-tional information exchange between the two molecules in the SMILES and graph views, constructs order-invariant pair states, and complements them with physicochemical descriptors through GNN-anchored feature integration. A matched condition-aware extension further uses formulation variables to modulate cross-molecular graph interaction, allowing the same molecular pair to be interpreted differently across experimental settings. Thus, rather than encoding each molecule independently and combin-ing the resulting embeddings only at prediction time, NSA-Net constructs multimodal evidence through the partner relation it-self and, when conditions are available, qualifies that relation by the experimental context in which assembly is observed. In this way, NSA-Net addresses the pairwise compatibility gap by making partner-dependent molecular relations, rather than two isolated molecular summaries, the basis of prediction, while allowing ex-perimental context to qualify the resulting compatibility estimate. Extensive experiments on NSA-Bench show that NSA-Net achieves a ROC-AUC of 0 .9470 ± 0.0112 (Small) and 0 .9492 ± 0.0062 (Large). On the Small track, it surpasses the strongest machine-learning baseline (SVM) and graph-based baseline (Gramord) by 3.9 and 17.1 percentage points, respectively, while representation analyses identify interpretable molecular characteristics associated with self-assembly prediction. As an experimental extension, we further conduct an NSA-Agent case study on a specific Baicalin– Geniposide pair. Starting from a failed wet-lab experiment, the Agent analyzes the conditions and uses NSA-Net-based scores to refine ratio–time proposals over five rounds of 64 candidates, con-tracting the search space into a compact high-probability region. Its wet-lab recommendations cover conditions associated with qualified self-assembly observations in the existing experiments, showing that our framework can effectively translate predictions into actionable experimental guidance for nano-self-assembly. The resulting contributions are: 
+
+• We formalize NSA prediction as pairwise binary classifica-tion and establish NSA-Bench—to our knowledge, the first public benchmark for this task—with curated molecular pairs, experimental conditions, labels, and standardized evaluation. 
+
+• We introduce NSA-Net, an interaction-aware multimodal framework that captures microscopic self-assembly patterns Towards AI-Driven Nanomedicine Discovery: A Benchmark and Multimodal Learning Framework for Nano Self-Assembly Prediction KDD ’27, August 1–5, 2027, San Jose, CA, USA 
+
+by integrating graph topology, sequence semantics, and physicochemical descriptors to learn molecular-pair repre-sentations. 
+
+• Experiments establish predictive effectiveness and in-terpretable molecular associations, while an NSA-Agent case study demonstrates the practical value of condition-aware reasoning for formulation refinement and nano-self-assembly development. 
+
+## 2 Related Work 2.1 Nano-Molecular Self-Assembly Prediction and Computational Modeling 
+
+Nano self-assembly organizes molecular components into bioactive nanoscale structures with potential for nanomedicine development. In traditional Chinese medicine (TCM), Chinese herbal formulas contain bioactive compounds [38] that may spontaneously form self-assembled nanoparticles (NAPs) [42], with potential benefits for drug solubility, stability, bioavailability, and therapeutic efficacy [22, 25]. Their application to anti-lung-cancer therapy illustrates this value [14]. However, identifying compatible molecular combi-nations and the formulation conditions under which they assemble remains experimentally intensive, motivating computational ap-proaches to self-assembly prediction [32, 41]. Early computational studies mainly adopted structure-based strategies from drug discovery, including molecular docking, simi-larity search, and pharmacophore matching [18]. Subsequent ma-chine learning approaches relied on molecular fingerprints and handcrafted descriptors [29, 33]. Qu et al. [31] combined simi-larity search, pharmacophore matching, and random forests for self-assembly screening, while Shan et al. [35] integrated graph convolutional networks [17] with Mordred descriptors [29]. How-ever, these methods remain limited by manual feature design and insufficient modeling of molecular cooperation [8, 31, 35]. Recent molecular representation learning approaches, including GNNs and molecular language models such as ChemBERTa [10, 24, 27], have enabled more powerful molecular modeling. Neverthe-less, nano-molecular self-assembly prediction remains an emerg-ing task, lacking public benchmarks and unified task definitions [12, 31, 35, 40, 41]. Existing methods rarely exploit modern molecu-lar representations or explicitly model the coupled effects of molec-ular compatibility, intermolecular cooperation, and formulation conditions [2, 7, 35]. 
+
+## 2.2 Multimodal Molecular Interaction Modeling and LLM-based Chemical Explanation 
+
+Multimodal learning integrates molecular sequences, graph struc-tures, and physicochemical descriptors for biomedical prediction [8, 24, 26, 27], typically through concatenation, attention, or gating [30, 39], including gating-based molecular interaction models [15]. Yet current methods insufficiently model partner-dependent molec-ular interactions jointly with the formulation conditions required for nano-molecular self-assembly [7, 12, 35]. Large Language Mod-els (LLMs) have also been explored for molecular design, chemical knowledge retrieval, and scientific assistance [4–6], but molecular predictors typically provide numerical outputs with limited inter-pretable reasoning [19, 28]. Grounded LLM assistance for nano-molecular self-assembly remains underexplored and must connect molecular evidence, experimental conditions, and predictive out-comes [1, 16, 28]. 
+
+## 3 NSA-Bench 
+
+NSA-Bench establishes nano-self-assembly as a standardized AI-for-Science prediction task grounded in formulation experiments. Each record links a molecular pair and its preparation conditions to dynamic light scattering measurements, a curated binary outcome, and source provenance. To our knowledge, NSA-Bench is the first public benchmark for this task, with standardized records, fixed partitions, and unified evaluation. 
+
+## 3.1 Task Definition 
+
+For the evaluated two-component setting, observation 𝑖 is repre-sented as 
+
+D𝑖 = (𝑚 𝐴 𝑖 , 𝑚 𝐵 𝑖 , 𝑐 𝑖 , 𝑦 𝑖 ), 𝑐 𝑖 = (𝑟 𝐴 𝑖 , 𝑟 𝐵 𝑖 , 𝑞 𝑖 , pH 𝑖 ,𝑇 𝑖 , 𝑡 𝑖 ), (1) where 𝑚 𝐴 𝑖 and 𝑚 𝐵 𝑖 denote the molecular components; 𝑟 𝐴 𝑖 and 𝑟 𝐵 𝑖 are their ratio entries; 𝑞 𝑖 , pH 𝑖 , 𝑇 𝑖 , and 𝑡 𝑖 denote total concentration, pH, temperature, and reaction or incubation time; and 𝑦 𝑖 ∈ { 0, 1} is the curated experimental outcome. The standardized condition-aware task is 
+
+(𝑚 𝐴 𝑖 , 𝑚 𝐵 𝑖 , 𝑐 𝑖 ) ↦ −→ 𝑦 𝑖 . (2) A positive target denotes observed assembly under the recorded set-ting, whereas a negative target denotes an unsuccessful formulation. Because pair identity is order-independent, (𝑚 𝐴 , 𝑚 𝐵 ) and (𝑚 𝐵 , 𝑚 𝐴 )
+
+form the same unordered group while retaining component-aligned ratios. The benchmark supports two evaluation settings: 
+
+𝑃 (𝑦 = 1 | 𝑚 𝐴 , 𝑚 𝐵 ) (structure-only) , (3) 
+
+𝑃 (𝑦 = 1 | 𝑚 𝐴 , 𝑚 𝐵 , 𝑐 ) (condition-aware) . (4) The two settings respectively evaluate molecular compatibility alone and compatibility qualified by experimental context, while remaining representation-agnostic. 
+
+## 3.2 Benchmark Construction and Standardization 
+
+NSA-Bench integrates traceable literature records with measure-ments from our wet-lab program and provides two tracks: NSA-Bench-Small contains 97 observations with 40 positive outcomes, while NSA-Bench-Large contains 270 observations with 106 posi-tive outcomes. Compared with prior collections, which contain at most 200 observations and omit reusable data and experimental conditions, NSA-Bench offers greater scale and richer experimental context (Tab. 1; Fig. 3A). Its extensive condition annotations include component ratio, concentration, pH, temperature, and time (Fig. 3B), while its compounds span multiple ClassyFire ChemOnt[13] su-perclasses (Fig. 3C). These properties support condition-qualified prediction that prioritizes both molecular pairs and formulation-space regions, reducing otherwise costly trial-and-error in wet-lab experimentation. KDD ’27, August 1–5, 2027, San Jose, CA, USA Hao et al. 
+
+Figure 2: Overview of NSA-Bench, NSA-Net, and NSA-Agent, spanning benchmark construction, multimodal condition-aware prediction, and agent-guided experimental optimization. 
+
+All records are standardized by molecular identity, SMILES, for-mulation conditions, binary outcome, and provenance. NSA-Bench-Small comprises 47 training observations (20 positive) and 50 held-out test observations (20 positive); NSA-Bench-Large comprises 220 training observations (86 positive) and 50 held-out test observations (20 positive). To control leakage, records sharing a source DOI or the same unordered standardized-SMILES pair are assigned to one partition, preventing direct source- and pair-level overlap between training and test data. ROC-AUC and AP evaluate discrimination and positive-class retrieval from continuous scores, while Precision and F1 evaluate thresholded prediction quality. NSA-Bench-Small is the released track; NSA-Bench-Large remains under restricted research access with delayed release planned. 
+
+## 4 Method 
+
+As illustrated by the self-assembly of a traditional Chinese medicine compound in Fig. 1, nano self-assembly is cooperatively driven by hydrogen bonding, hydrophobic interactions, and van der Waals forces—microscopic intermolecular forces that existing meth-ods struggle to capture. To address this, NSA-Net models nano self-assembly through partner-dependent molecular semantics, topology–physicochemical compatibility, and wet-lab conditions. Fig. 2 organizes these signals into semantic interaction, compatibil-ity interaction, condition learning, and multimodal fusion. Each branch yields a pair representation and a perception signal, which are aggregated to predict the assembly outcome. 
+
+## 4.1 Molecular Semantic Interaction Learning 
+
+The predictive meaning of a molecular motif depends on its counter-part. Given semantic states 𝐻 sem  
+
+> 𝐴
+
+and 𝐻 sem  
+
+> 𝐵
+
+from a shared molecular-sequence encoder, the interaction operator Isem performs bidi-rectional information exchange as depicted in Fig. 2, producing counterpart-aware states e𝐻 sem  
+
+> 𝐴
+
+and e𝐻 sem  
+
+> 𝐵
+
+.
+
+𝜙 (𝑎, 𝑏 ) = [𝑎 + 𝑏, |𝑎 − 𝑏 |, 𝑎 ⊙ 𝑏 ] ,𝑍 sem = 𝑃 sem 
+
+ 𝜙 (𝑢 sem  
+
+> 𝐴
+
+, 𝑢 sem  
+
+> 𝐵
+
+) . (5) The three terms encode shared activation, complementary variation, and feature co-activation. Since 𝜙 (𝑎, 𝑏 ) = 𝜙 (𝑏, 𝑎 ), 𝑍 sem is invariant to the input order. The Semantic Perception Head maps this state to semantic decision evidence. 
+
+## 4.2 Molecular Compatibility Interaction Learning 
+
+Assembly compatibility reflects both partner-aware structural or-ganization and global physicochemical properties. Given structural states 𝐻 struct  
+
+> 𝐴
+
+and 𝐻 struct  
+
+> 𝐵
+
+from a shared molecular-graph encoder, 
+
+Istruct performs bidirectional information exchange as depicted in Fig. 2, producing counterpart-aware states e𝐻 struct  
+
+> 𝐴
+
+and e𝐻 struct  
+
+> 𝐵
+
+. Their readouts 𝑢 struct  
+
+> 𝑘
+
+= Pool ( e𝐻 struct  
+
+> 𝑘
+
+) are combined by the same symmet-ric relation as 𝑍 top = 𝑃 struct (𝜙 (𝑢 struct  
+
+> 𝐴
+
+, 𝑢 struct  
+
+> 𝐵
+
+)) . The resulting state summarizes cross-molecular atom–bond organization. Towards AI-Driven Nanomedicine Discovery: A Benchmark and Multimodal Learning Framework for Nano Self-Assembly Prediction KDD ’27, August 1–5, 2027, San Jose, CA, USA 
+
+Table 1: Comparison of NSA-Bench with existing nano-self-assembly studies and datasets.                              
+
+> Article Title Method Pairs Public Data Samples Pos./Neg. Exp. Cond.
+> “Machine Learning-Driven Prediction, Preparation, and Evaluation of Functional Nanomedicines Via Drug–Drug Self-Assembly” Machine Learning 87 NO 59/28 NO “A Computational Strategy for Identifying Self-Assembling Food-Derived Molecules for Antiparasitic Nanotherapy” Computational Screening NR NO NR NO “AI-Assisted Engineering of Glycyrrhizic Acid/Simvastatin Nanocrystals for Multifunctional Treatment of Bacterial Osteomyelitis” Machine Learning 200 NO 83/117 NO “An AI-Assisted Designed Supramolecularly Engineered Nanoplatform Reverses Pigmentation by Triggering an Ineffective Compensatory Melanin Production Program” Neural Network 159 NO NR NO
+> NSA-Bench-Small Machine Learning 97 YES 40/57 YES NSA-Bench-Large Machine Learning 270 YES 106/164 YES
+
+Figure 3: Characterization of NSA-Bench. (A) Comparison of NSA-Bench with prior nano-self-assembly studies interms of molecular-pair observations and positive samples; NR denotesnot reported. (B) Completeness of the experimental-condition annotations in NSA-Bench-Small and NSA-Bench-Large. (C) Chemical diversity of NSA-Bench 
+
+Each molecule is also represented by a standardized Mordred descriptor vector 𝑑 𝑘 , encoded as ℎpc  
+
+> 𝑘
+
+. Its symmetric pair relation enriches the topology state through 
+
+𝑍 struct = LN 𝑍 top + 𝛾𝑃 pc 
+
+ 𝜙 (ℎpc  
+
+> 𝐴
+
+, ℎ pc  
+
+> 𝐵
+
+) , (6) where 𝑃 pc projects physicochemical evidence into the structural space and the learned scalar 𝛾 controls its contribution. This residual retains topology as the identity path while incorporating pair-level evidence related to size, polarity, and hydrogen-bond capacity. The Structural Perception Head maps 𝑍 struct to compatibility evidence. 
+
+## 4.3 Experimental Condition Learning 
+
+The assembly outcome of the same molecular pair can change with its formulation. The condition module encodes the component-aligned ratios, total concentration, pH, temperature, and reaction or incubation time, written as 𝑐 = (𝑟 𝐴 , 𝑟 𝐵 , 𝑞, pH ,𝑇 , 𝑡 ). A learned map-ping 𝛼 transforms these six variables into the condition state 𝑍 env ,preserving their joint formulation pattern in a common latent space. The Condition Perception Head extracts environment-sensitive ev-idence, while condition-aware fusion uses this state to qualify the molecular-pair representation. Consequently, identical molecular inputs can yield condition-specific evidence as the recorded wet-lab setting changes. 
+
+## 4.4 Multimodal Fusion and Prediction 
+
+NSA-Net applies the two Fusion blocks sequentially. For an anchor representation 𝑥 and incoming evidence 𝑦 , the fusion operation is defined as 
+
+𝑔 = 𝜎  𝑊 𝑔 [𝑥 ∥𝑦 ] + 𝑏 𝑔 
+
+ ,
+
+Fuse (𝑥, 𝑦 ) = LN  𝑊 𝑥 𝑥 + 𝑔 ⊙ 𝑊 𝑦 𝑦  ,𝑍 sem-struct = Fuse (𝑍 struct , 𝑍 sem ),𝑍 fuse = Fuse (𝑍 sem-struct , 𝑍 env ).
+
+(7) Here, 𝑊 𝑔 learns the feature-wise gate, while 𝑊 𝑥 and 𝑊 𝑦 project the two inputs into a common space. The first application enriches structural–physicochemical compatibility with semantic evidence, and the second incorporates the recorded wet-lab setting into the final pair representation. The Semantic, Structural, Condition, and Fusion Perception Heads next translate their respective representations into two-dimensional decision-evidence vectors, y𝑘 = P𝑘 (𝑍 𝑘 ) for 𝑘 ∈{sem , struct , env , fuse }. Their normalized weights satisfy 𝜔 𝑘 ≥ 0and Í𝑘 𝜔 𝑘 = 1. The Weighted Logit Ensemble and final assembly score are 
+
+ℓ =∑︁ 
+
+> 𝑘
+
+𝜔 𝑘 y𝑘 , ˆ𝑝 = [softmax (ℓ)] 𝑦 =1 . (8) Here, 𝜔 𝑘 controls the contribution of each perception signal and ˆ 𝑝 
+
+is the positive assembly score. KDD ’27, August 1–5, 2027, San Jose, CA, USA Hao et al. 
+
+## 4.5 NSA-Agent Construction 
+
+A promising molecular pair still spans a large formulation space. NSA-Agent automates this search through the LLM–NSA-Net loop in Fig. 2. At round 𝑡 , the Agent proposes a batch C𝑡 = {𝑐 𝑡,𝑗 }64  
+
+> 𝑗 =1
+
+of feasible conditions, evaluates all candidates with the fixed condition-aware scoring pipeline, and records scores 𝑝 𝑡,𝑗 = 𝑓 NSA (𝑐 𝑡,𝑗 ). The accumulated condition–score history then guides the Agent to con-tract the next ratio–time region around higher-ranked candidates, producing a propose–score–contract loop rather than sequential manual trial-and-error. Convergence requires both the candidate conditions and their scores to concentrate within a high-ranking region. Let ¯ 𝑐 𝑡 and ¯ 𝑝 𝑡 
+
+denote the batch means, and let 𝐷 normalize the explored condition ranges. We summarize convergence at round 𝑡 with 
+
+𝜁 𝑡 = 𝜆 𝑐 max  
+
+> 𝑗
+
+𝐷 −1 (𝑐 𝑡,𝑗 − ¯𝑐 𝑡 ) 2
+
++ 𝜆 𝑝 √︄ 164 ∑︁ 𝑗 
+
+(𝑝 𝑡,𝑗 − ¯𝑝 𝑡 )2
+
++ 𝜆 𝑠 (1 − ¯𝑝 𝑡 ),
+
+(9) where 𝜆 𝑐 , 𝜆 𝑝 , and 𝜆 𝑠 are nonnegative coefficients for condition dispersion, score dispersion, and ranking quality, respectively, with 
+
+𝜆 𝑐 + 𝜆 𝑝 + 𝜆 𝑠 = 1. Thus, 𝜆 𝑐 , 𝜆 𝑝 , 𝜆 𝑠 ∈ [ 0, 1]; increasing one coefficient makes convergence more sensitive to its corresponding criterion. The search is regarded as converged when 𝜁 𝑡 falls below a protocol-defined tolerance, while a maximum-round budget bounds the exploration. The converged batch is returned as a focused set of conditions for wet-lab follow-up, with model scores used for relative prioritization. 
+
+## 5 Experiments 5.1 Experimental Setup 
+
+We report ROC-AUC, average precision (AP), Precision, and F1 on fixed, leakage-controlled splits. Each configuration is independently trained with five random seeds under an identical protocol and eval-uated once after training, without test-based selection. Precision and F1 use a fixed 0.5 threshold; results are reported as mean ±
+
+sample standard deviation across seeds. 
+
+## 5.2 Comparison with Baselines 
+
+Under matched structure-only inputs, NSA-Net achieves the best average rank (1.25) on both tracks (Tab. 2). On NSA-Bench-Small, it leads in ROC-AUC (0 .9470 ± 0.0112), AP, and F1, exceeding the strongest conventional and graph-based baselines in ROC-AUC by 3.87 and 17.12 percentage points. SVM has slightly higher Precision, but its markedly lower F1 indicates a conservative operating point that misses more positives. On NSA-Bench-Large, NSA-Net leads in ROC-AUC, Precision, and F1, while LR has marginally higher AP (0 .8804 versus 0 .8775), consistent with a stable linear ranking signal that does not yield the best thresholded decisions. Following its reported graph-encoding, Mordred, and late-fusion design, Gramord performs less consis-tently and shows substantial run-to-run variation, plausibly because independently encoded high-dimensional branches are difficult to fit with limited data. In contrast, NSA-Net constructs symmetric, partner-conditioned relations and integrates physicochemical com-plementarity at the pair level, yielding more consistent ranking and classification performance. 
+
+## 5.3 Component Ablation and Condition Study 
+
+The ablation study examines semantic interaction, compatibility interaction, physicochemical enhancement, and fusion. Semantic-only and compatibility-only variants isolate the two interaction paths; their equal- and anchored-fusion variants test evidence in-tegration; the compatibility-plus-physicochemical variant isolates descriptor enhancement; and the full structure-only NSA-Net com-bines all molecular evidence. Every variant follows the same 65-epoch, five-seed protocol. Physicochemical enhancement produces the clearest cross-track gains. Relative to compatibility interaction alone, adding physicochemical evidence raises ROC-AUC/AP by 0.1590/0.2401 on NSA-Bench-Small and 0.0227/0.0424 on NSA-Bench-Large. Adding it to anchored semantic–compatibility fusion yields further gains of 0.0830/0.0744 and 0.0520/0.0661, establishing pair-level physic-ochemical complementarity as a strong enhancement to learned structural evidence. Semantic interaction and anchored fusion provide additional value. On NSA-Bench-Small, the full structure-only NSA-Net im-proves over compatibility plus physicochemical evidence by 0.0187 ROC-AUC, 0.0110 AP, and 0.0739 F1. On NSA-Bench-Large, the full structure-only NSA-Net further improves all metrics over compatibility plus physicochemical evidence, with gains of 0.0085 ROC-AUC, 0.0026 AP, 0.0143 Precision, and 0.0030 F1, showing that semantic integration strengthens balanced classification. Equal and anchored fusion further emphasize complementary ranking and thresholded-decision behavior across the two tracks. 
+
+## 5.4 Representation and Feature Analysis 
+
+To verify that NSA-Net captures the kind of microscopic interac-tions illustrated in Fig. 1 (e.g., hydrogen bonding, hydrophobic interactions, and van der Waals forces), we examine the exper-imentally confirmed self-assembling pair Rosuvastatin Calcium (molecule A) and Ursodeoxycholic acid (molecule B) [20] through its learned representations. Fig. 5 unfolds the extracted features into pairwise heat sequences (molecule B on the x-axis, molecule A on the y-axis), where brighter cells contribute more strongly to the pair representation. Mapping these regions back to SMILES fragments reveals that NSA-Net highlights hydroxyl-containing re-gions in Rosuvastatin Calcium and the carboxyl-containing region in Ursodeoxycholic acid—a hydroxyl–carboxyl association pattern judged chemically plausible by domain experts. The heatmap fur-ther shows several distributed high-response regions rather than a single isolated coordinate, consistent with the many-to-many nature of nano self-assembly: multiple copies of the two molecules may adopt different relative arrangements, allowing several hy-droxyl and carboxyl sites to participate. This partner-dependent perception demonstrates that NSA-Net jointly determines feature relevance across molecules and integrates multiple complemen-tary regions into the pair representation. The correspondence be-tween model-perceived regions and chemically plausible functional Towards AI-Driven Nanomedicine Discovery: A Benchmark and Multimodal Learning Framework for Nano Self-Assembly Prediction KDD ’27, August 1–5, 2027, San Jose, CA, USA 
+
+Table 2: Performance comparison of machine learning baselines, graph-based methods, and our NSA-Net on the NSA-Bench-Small and NSA-Bench-Large tracks. Avg. Rank is computed over the four reported metrics within each track; lower is better, and ties receive average ranks. 
+
+Track Method Avg. Rank ↓ ROC-AUC ↑ AP ↑ Precision ↑ F1 ↑
+
+Small RF 5.50 0.8790 ± 0.0048 0.8242 ± 0.0055 0.6522 ± 0.0000 0.6977 ± 0.0000 Small GBDT 6.75 0.7673 ± 0.0095 0.6826 ± 0.0146 0.6650 ± 0.0434 0.7396 ± 0.0353 Small KNN 5.50 0.8673 ± 0.0230 0.8110 ± 0.0255 0.8746 ± 0.0410 0.6236 ± 0.0870 Small MLP 4.50 0.8577 ± 0.0338 0.8209 ± 0.0197 0.8667 ± 0.0000 0.7429 ± 0.0000 Small SVM 2.75 0.9083 ± 0.0000 0.8861 ± 0.0000 0.9077 ± 0.0237 0.7060 ± 0.0397 Small LR 3.50 0.8767 ± 0.0000 0.8466 ± 0.0000 0.8667 ± 0.0000 0.7429 ± 0.0000 Small Gramord 6.25 0.7758 ± 0.0151 0.7754 ± 0.0226 0.8001 ± 0.0221 0.7106 ± 0.0299 Small NSA-Net (Ours) 1.25 0.9470 ± 0.0112 0.8925 ± 0.0158 0.9014 ± 0.0420 0.8522 ± 0.0365 
+
+Large RF 5.25 0.8907 ± 0.0025 0.7800 ± 0.0119 0.6641 ± 0.0057 0.7606 ± 0.0120 Large GBDT 6.50 0.8723 ± 0.0035 0.7478 ± 0.0040 0.6667 ± 0.0000 0.6829 ± 0.0000 Large KNN 6.50 0.8525 ± 0.0156 0.7472 ± 0.0295 0.6818 ± 0.0000 0.7143 ± 0.0000 Large MLP 2.75 0.9358 ± 0.0116 0.8621 ± 0.0237 0.7600 ± 0.0524 0.8222 ± 0.0263 Large SVM 3.75 0.8917 ± 0.0000 0.7862 ± 0.0000 0.7637 ± 0.0384 0.7448 ± 0.0140 Large LR 2.50 0.9333 ± 0.0000 0.8804 ± 0.0000 0.7308 ± 0.0000 0.8261 ± 0.0000 Large Gramord 7.50 0.7958 ± 0.2003 0.7178 ± 0.2100 0.6510 ± 0.2391 0.7207 ± 0.1485 Large NSA-Net (Ours) 1.25 0.9492 ± 0.0062 0.8775 ± 0.0250 0.8416 ± 0.0213 0.8697 ± 0.0115 
+
+Table 3: Ablation study of NSA-Net on the NSA-Bench-Small and NSA-Bench-Large tracks, evaluating the contribution of molecular evidence and experimental conditions. Values are five-seed mean ± sample SD. Bold marks the best reported mean within each track and metric. 
+
+Track LM GNN Mordred Fusion ROC-AUC ↑ AP ↑ Precision ↑ F1 ↑
+
+Small ✓ – – – 0.8233 ± 0.0446 0.7881 ± 0.0331 0.8504 ± 0.0439 0.7780 ± 0.0160 Small – ✓ – – 0.7693 ± 0.0135 0.6414 ± 0.0568 0.6751 ± 0.0234 0.6910 ± 0.0490 Small ✓ ✓ – equal 0.8127 ± 0.0325 0.7849 ± 0.0404 0.8400 ± 0.0149 0.7802 ± 0.0208 Small ✓ ✓ – anchored 0.8640 ± 0.0366 0.8181 ± 0.0269 0.8372 ± 0.0461 0.7283 ± 0.0449 Small – ✓ ✓ – 0.9283 ± 0.0305 0.8815 ± 0.0297 0.8383 ± 0.0265 0.7783 ± 0.0592 Small ✓ ✓ ✓ anchored 0.9470 ± 0.0112 0.8925 ± 0.0158 0.9014 ± 0.0420 0.8522 ± 0.0365 
+
+Large ✓ – – – 0.9180 ± 0.0058 0.8275 ± 0.0301 0.7403 ± 0.0189 0.7949 ± 0.0464 Large – ✓ – – 0.9180 ± 0.0185 0.8325 ± 0.0211 0.7862 ± 0.0254 0.7975 ± 0.0361 Large ✓ ✓ – equal 0.9187 ± 0.0097 0.8400 ± 0.0230 0.7320 ± 0.0065 0.7734 ± 0.0158 Large ✓ ✓ – anchored 0.8972 ± 0.0100 0.8114 ± 0.0184 0.7332 ± 0.0209 0.7776 ± 0.0514 Large – ✓ ✓ – 0.9407 ± 0.0141 0.8749 ± 0.0385 0.8273 ± 0.0203 0.8667 ± 0.0213 Large ✓ ✓ ✓ anchored 0.9492 ± 0.0062 0.8775 ± 0.0250 0.8416 ± 0.0213 0.8697 ± 0.0115 
+
+Condition ✓ ✓ ✓ anchored 0.9470 ± 0.0079 0.8821 ± 0.0151 0.8491 ± 0.0321 0.8684 ± 0.0106 groups thus provides interpretable evidence that NSA-Net captures interaction characteristics relevant to self-assembly. 
+
+## 5.5 Iterative Experimental Condition-Space Exploration 
+
+We examine whether NSA-Agent can translate condition-aware predictions into focused formulation choices for the Baicalin– Geniposide pair. As shown in Fig. 4, the case starts from an unsuccessful experiment at A:B = 2:2, 15 min, pH 7, and 25 ◦C. Keeping molecular identity, pH, and temperature fixed, the Agent explores ratio and reaction time over five rounds of 64 candidates. The search contracts from broad coverage to a compact high-scoring region, while the mean candidate score rises from 22.7% to 87.7%. The ranked trajectories likewise converge across rounds, illustrating how NSA-Net scores can narrow the experimental search space. The resulting suggestions increase A:B ratios to 2 .1:2–2 .5:2 and extend reaction times to 25–60 min. These directions include A:B 
+
+= 2.5:2 at 25 min, a region associated with qualified observations in the existing records; the displayed DLS distribution also shifts from 2805 .67 ± 264 .40 to 215 .17 ± 26 .67 d.nm. Thus, NSA-Agent narrows a broad condition space into experimentally relevant regions for focused wet-lab follow-up. KDD ’27, August 1–5, 2027, San Jose, CA, USA Hao et al. 
+
+Figure 4: NSA-Agent uses NSA-Net-based qualification scores to refine the Baicalin–Geniposide formulation space. Five rounds of 64 ratio–time candidates progressively contract the search region and identify A:B ≈ 2.209:2 at 31.86 min as the highest-scoring proposal (83.12%). The Agent also prioritizes the nearby 2.5:2 setting represented in the wet-lab records. The upper DLS panels show the displayed particle-size distributions before and after experimental optimization ( 2805 .67 ± 264 .40 and 215 .17 ± 26 .67 
+
+d.nm). Model scores guide candidate prioritization rather than represent wet-lab success rates, and the exact 31.86-min proposal remains to be tested. 
+
+Figure 5: Feature analysis of top-ranked candidate interac-tion sites between Rosuvastatin Calcium and Ursodeoxy-cholic acid. 
+
+## 6 Conclusion 
+
+This work establishes a reproducible foundation for AI-driven nano self-assembly. NSA-Bench standardizes formulation–condition ob-servations and evaluation, with NSA-Bench-Small providing, to our knowledge, the first public benchmark for this task. NSA-Net learns interaction-aware molecular-pair representations and achieves a five-seed ROC-AUC of 0.9470, exceeding the strongest conven-tional and graph-based comparisons by 3.9 and 17.1 percentage points. Ablations support physicochemical complementarity and condition-qualified prediction. A retrospective NSA-Agent case fur-ther illustrates focused ratio–time prioritization consistent with existing wet-lab records, while its exact recommendation remains unmeasured. Together, these results provide a basis for prospective formulation testing. 
+
+## 7 Limitations and Ethical Considerations 
+
+NSA-Bench remains limited in scale and condition coverage, so estimates may be sensitive to sampling, provenance, and class balance. NSA-Agent provides retrospective, direction-level con-cordance with existing 25-min records not used at runtime; the exact recommendation and broader local ratio–time space require prospective testing. No human-subject or identifiable personal data are used. No identifiable personal data, human participants, or ani-mal experiments were involved. 
+
+## 8 Generative AI Usage 
+
+Generative AI assisted with language polishing. The research de-sign, analysis, interpretation, and final decisions were developed and verified by the authors, who take full responsibility for the content. Towards AI-Driven Nanomedicine Discovery: A Benchmark and Multimodal Learning Framework for Nano Self-Assembly Prediction KDD ’27, August 1–5, 2027, San Jose, CA, USA 
+
+## References 
+
+[1] Islambek Ashyrmamatov, Su Ji Gwak, Su-Young Jin, Ikhyeong Jun, Umit V. Ucak, Jay-Yoon Lee, and Juyong Lee. 2026. A Survey on Large Language Models in Biology and Chemistry. Experimental & Molecular Medicine 58, 4 (2026), 970–980. doi:10.1038/s12276-025-01583-1 [2] D. M. Azagury et al. 2023. Prediction of Cancer Nanomedicines Self-Assembled from Meta-Synergistic Drug Pairs. Journal of Controlled Release 360 (2023), 418–432. doi:10.1016/j.jconrel.2023.06.040 [3] T. Bethiana, A. Aljabbari, Y. Li, H. Mitra, M. Baghbanbashi, G. S. Harris, S. R. Dasaro, F. Masoomi, F. S. Vago, S. L. Hartzler, M. Figueiredo, L. A. Metskas, P. Vlachos, A. M. Ardekani, Y. Yeo, and K. Ristroph. 2026. Effects of Different Mixing Techniques on mRNA Lipid Nanoparticle Physicochemistry and Biological Perfor-mance. Nature Communications 17 (2026), 5890. doi:10.1038/s41467-026-72499-1 [4] Daniil A. Boiko, Robert MacKnight, Ben Kline, and Gabe Gomes. 2023. Au-tonomous Chemical Research with Large Language Models. Nature 624, 7992 (2023), 570–578. doi:10.1038/s41586-023-06792-0 [5] Andres M. Bran et al. 2026. Chemical Reasoning in LLMs Unlocks Strategy-Aware Synthesis Planning and Reaction Mechanism Elucidation. Matter 9, 5 (2026), 102812. doi:10.1016/j.matt.2026.102812 [6] Andres M. Bran, Sam Cox, Oliver Schilter, Carlo Baldassari, Andrew D. White, and Philippe Schwaller. 2024. Augmenting Large Language Models with Chemistry Tools. Nature Machine Intelligence 6 (2024), 525–535. doi:10.1038/s42256-024-00832-8 [7] Alvin Chan, Ameya R. Kirtane, et al. 2025. Designing Lipid Nanoparticles Using a Transformer-Based Neural Network. Nature Nanotechnology 20 (2025), 1491–1501. doi:10.1038/s41565-025-01975-4 [8] Mengjie Chen, Ming Zhang, and Cunquan Qu. 2025. Towards Interpretable Drug-Drug Interaction Prediction: A Graph-Based Approach with Molecular and Network-Level Explanations. In Proceedings of the 31st ACM SIGKDD Conference on Knowledge Discovery and Data Mining . 203–214. doi:10.1145/3711896.3737163 [9] Alex K. Chew, Mohammad Atif Faiz Afzal, Zach Kaplan, Eric M. Collins, Suraj Gattani, Mayank Misra, Anand Chandrasekaran, Karl Leswing, and Mathew D. Halls. 2025. Leveraging High-Throughput Molecular Simulations and Machine Learning for the Design of Chemical Mixtures. npj Computational Materials 11 (2025), 72. doi:10.1038/s41524-025-01552-2 [10] Seyone Chithrananda, Gabriel Grand, and Bharath Ramsundar. 2020. Chem-BERTa: Large-Scale Self-Supervised Pretraining for Molecular Property Predic-tion. ML4Molecules Workshop at NeurIPS 2020; arXiv:2010.09885. doi:10.48550/ arXiv.2010.09885 [11] Michael C. Chung, Hector R. Mendez-Gomez, Dhruvkumar Soni, Reagan McGin-ley, Alen Zacharia, Jewel Ashbrook, Brian Stover, Adam J. Grippin, Elias J. Sayour, and Juan Guan. 2025. Multi-Step Assembly of an RNA-Liposome Nanoparti-cle Formulation Revealed by Real-Time, Single-Particle Quantitative Imaging. 
+
+Advanced Science 12, 12 (2025), e2414305. doi:10.1002/advs.202414305 [12] Evan Collins, Jungyong Ji, Sung-Gwang Kim, Jacob Witten, Seonghoon Kim, Richard Zhu, Peter Park, Minjun Jung, Aron Park, Rajith S. Manan, Arnab Rudra, Gyochang Keum, Eun-Kyoung Bang, Jun-O Jin, William J. Jeang, Robert Langer, Daniel G. Anderson, and Wonpil Im. 2026. Lipid Nanoparticle Database towards Structure–Function Modeling and Data-Driven Design for Nucleic Acid Delivery. 
+
+Nature Communications 17 (2026), 2464. doi:10.1038/s41467-026-68818-1 [13] Yannick Djoumbou Feunang, Roman Eisner, Craig Knox, Leonid Chepelev, Janna Hastings, Gareth Owen, Eoin Fahy, Christoph Steinbeck, Shankar Subramanian, Evan Bolton, Russell Greiner, and David S. Wishart. 2016. ClassyFire: auto-mated chemical classification with a comprehensive, computable taxonomy. J. Cheminform. 8, 1 (Nov. 2016), 61. doi:10.1186/s13321-016-0174-y [14] Yuanfeng Fu et al. 2025. Anti-Lung Cancer Therapy Using Nano-Assembly Particles of Traditional Chinese Medicine Formula. Materials Today Bio 35 (2025), 102502. doi:10.1016/j.mtbio.2025.102502 [15] Yang Hua, Zhenhua Feng, Xiaoning Song, Xiao-Jun Wu, and Josef Kittler. 2025. MMDG-DTI: Drug–Target Interaction Prediction via Multimodal Feature Fusion and Domain Generalization. Pattern Recognition 157 (2025), 110887. doi:10.1016/j. patcog.2024.110887 [16] Kexin Huang, Serena Zhang, Hanchen Wang, et al. 2026. Autonomous Biomedical Research with an Artificial Intelligence Agent. Science (2026), eadz4351. doi:10. 1126/science.adz4351 [17] Thomas N. Kipf and Max Welling. 2017. Semi-Supervised Classification with Graph Convolutional Networks. In International Conference on Learning Repre-sentations . doi:10.48550/arXiv.1609.02907 [18] Ashutosh Kumar and Kam Y. J. Zhang. 2015. Hierarchical Virtual Screening Approaches in Small Molecule Drug Discovery. Methods 71 (2015), 26–37. doi:10. 1016/j.ymeth.2014.07.007 [19] Antonio Lavecchia. 2025. Explainable Artificial Intelligence in Drug Discovery: Bridging Predictive Power and Mechanistic Insight: Bridging Predictive Power and Mechanistic Insight. WIREs Computational Molecular Science 15, 5 (2025), e70049. doi:10.1002/wcms.70049 [20] Kyoung Jin Lee, Young Min Lee, Seung Bo Yang, Ji Hye Lee, Hye Rin Kim, Jae Hyun Lim, and Jae Park. 2024. A novel chemically engineered multifunctional statin conjugate as self-assembled nanoparticles inhibiting bile acid transporters. J. Control. Release 372 (Aug. 2024), 885–900. doi:10.1016/j.jconrel.2024.07.008 [21] Haopeng Li, Xuliang Qian, Harini Mohanram, Xiao Han, et al. 2024. Self-Assembly of Peptide Nanocapsules by a Solvent Concentration Gradient. Nature Nanotech-nology 19 (2024), 1141–1149. doi:10.1038/s41565-024-01654-w [22] Qiao Li et al. 2024. Self-Assembled Nanodrug Delivery Systems for Anti-Cancer Drugs from Traditional Chinese Medicine. Biomaterials Science 12, 7 (2024), 1662–1692. doi:10.1039/D3BM01451G [23] Shuqi Li, Shufang Xie, Hongda Sun, Yuhan Chen, Tao Qin, Tianjun Ke, and Rui Yan. 2025. MIN: Multi-Channel Interaction Network for Drug-Target Interaction with Protein Distillation. IEEE/ACM Transactions on Computational Biology and Bioinformatics 22 (2025), 1118–1127. doi:10.1109/TCBBIO.2025.3549588 [24] Yibo Li, Yuan Fang, Mengmei Zhang, and Chuan Shi. 2025. Advancing Molecular Graph-Text Pre-Training via Fine-Grained Alignment. In Proceedings of the 31st ACM SIGKDD Conference on Knowledge Discovery and Data Mining . 1589–1599. doi:10.1145/3711896.3736834 [25] Haifan Liu et al. 2025. Recent Advances in Self-Targeting Natural Product-Based Nanomedicines. Journal of Nanobiotechnology 23 (2025), 31. doi:10.1186/s12951-025-03092-9 [26] Xin Lu et al. 2024. Multimodal Fused Deep Learning for Drug Property Prediction: Integrating Chemical Language and Molecular Graph. Computational and Struc-tural Biotechnology Journal 23 (2024), 1666–1679. doi:10.1016/j.csbj.2024.04.030 [27] Yizhen Luo, Kai Yang, Massimo Hong, Xing Yi Liu, Zikun Nie, Hao Zhou, and Zaiqing Nie. 2024. Learning Multi-View Molecular Representations with Struc-tured and Unstructured Knowledge. In Proceedings of the 30th ACM SIGKDD Conference on Knowledge Discovery and Data Mining . 2082–2093. doi:10.1145/ 3637528.3672043 [28] Mirza et al. 2025. A Framework for Evaluating the Chemical Knowledge and Reasoning Abilities of Large Language Models against the Expertise of Chemists. 
+
+Nature Chemistry 17 (2025), 1027–1034. doi:10.1038/s41557-025-01815-x [29] Hirotomo Moriwaki, Yu-Shi Tian, Norihito Kawashita, and Tatsuya Takagi. 2018. Mordred: A Molecular Descriptor Calculator. Journal of Cheminformatics 10 (2018), 4. doi:10.1186/s13321-018-0258-y [30] L. Peng et al. 2024. MGNDTI: A Drug–Target Interaction Prediction Frame-work Based on Multimodal Representation Learning and the Gating Mecha-nism. Journal of Chemical Information and Modeling 64, 16 (2024), 6684–6698. doi:10.1021/acs.jcim.4c00957 [31] Shenye Qu et al. 2026. A Computational Strategy for Identifying Self-Assembling Food-Derived Molecules for Antiparasitic Nanotherapy. Advanced Science 13, 39 (2026), e24297. doi:10.1002/advs.202524297 [32] Daniel Reker et al. 2021. Computationally Guided High-Throughput Design of Self-Assembling Drug Nanoparticles. Nature Nanotechnology 16 (2021), 725–733. doi:10.1038/s41565-021-00870-y [33] David Rogers and Mathew Hahn. 2010. Extended-Connectivity Fingerprints. 
+
+Journal of Chemical Information and Modeling 50, 5 (2010), 742–754. doi:10.1021/ ci100050t [34] Jerret Ross, Brian Belgodere, Vijil Chenthamarakshan, Inkit Padhi, Youssef Mroueh, and Payel Das. 2022. Large-Scale Chemical Language Representations Capture Molecular Structure and Properties. Nature Machine Intelligence 4 (2022), 1256–1264. doi:10.1038/s42256-022-00580-7 [35] Yiming Shan et al. 2026. Deep Learning-Driven Co-Assembly of Naturally Sourced Compound Nanoparticles for Potentiated Cancer Immunotherapy. Advanced Functional Materials 36, 15 (2026), e19567. doi:10.1002/adfm.202519567 [36] Wei Wang, Kepan Chen, Ting Jiang, Yiyang Wu, et al. 2024. Artificial Intelligence-Driven Rational Design of Ionizable Lipids for mRNA Delivery. Nature Commu-nications 15 (2024), 10804. doi:10.1038/s41467-024-55072-6 [37] Yinan Wang et al. 2026. Supramolecular Self-Assembly in Traditional Chinese Medicine: Molecular Mechanisms, Material Basis of Decoction Efficacy, Com-patibility Interpretation, and Biomedical Applications: Molecular Mechanisms, Material Basis of Decoction Efficacy, Compatibility Interpretation, and Biomedical Applications. Chinese Medicine 21 (2026), 36. doi:10.1186/s13020-026-01326-y [38] Y.-L. Wang et al. 2025. Accessible and Effective Nanomedicines: Self-Assembly Products from Chinese Herbal Medicines (CHMs). Advanced Functional Materials 
+
+35 (2025), 2416151. doi:10.1002/adfm.202416151 [39] Z. Wei et al. 2025. DACMF-DTI: Dual Attention Embedded Cross-Modality Fusion for Drug–Target Interaction Prediction. Knowledge-Based Systems 326 (2025), 114063. doi:10.1016/j.knosys.2025.114063 [40] Z. Yang, S. K. Yorke, T. P. J. Knowles, and M. J. Buehler. 2025. Learning the Rules of Peptide Self-Assembly through Data Mining with Large Language Models. 
+
+Science Advances 11, 13 (2025), eadv1971. doi:10.1126/sciadv.adv1971 [41] Chengyuan Zhang, Yuchuan Yuan, Qiong Xia, Junjie Wang, Kangkang Xu, Zhiwei Gong, Jie Lou, Gen Li, Lu Wang, Li Zhou, Zhirui Liu, Kui Luo, and Xing Zhou. 2025. Machine Learning-Driven Prediction, Preparation, and Evaluation of Functional Nanomedicines Via Drug–Drug Self-Assembly. Advanced Science 12, 9 (2025), e2415902. doi:10.1002/advs.202415902 [42] Hongzheng Zhu, Mingyuan Liu, Zemin Wang, Ting Mao, Yuanyuan Wu, Zhonghong Wei, Xiaoman Li, and Yin Lu. 2026. Self-Assembly of Self-Assembly of Plant-Derived Bioactive Nanostructures in Traditional Chinese Medicine. iScience KDD ’27, August 1–5, 2027, San Jose, CA, USA Hao et al. 
+
+> 29, 2 (2026), 114667. doi:10.1016/j.isci.2026.114667
+
+## A NSA-Bench Supplimentary Material A.1 Overview of NSA-Bench 
+
+Table 4 presents representative records from NSA-Bench with verified literature provenance. The selected entries span diverse molecular combinations, including natural products (e.g., oleanolic acid, berberine, quercetin), synthetic drugs (e.g., paclitaxel, met-formin), and functional agents (e.g., chlorin e6, indocyanine green). Self-assembly outcomes are labeled with three-part annotations (DLS/UV-Vis/TEM), reflecting multi-evidence experimental vali-dation rather than single-metric judgment. Successful assemblies (labels 1/1/1) typically exhibit particle sizes between 87.8 and 200.0 nm with PDI values below 0.3, indicating uniform nanoparticle formation. In contrast, records with at least one negative label (e.g., 0/1/0 or 1/0/0) show either excessively large sizes (341.0–736.0 nm) or high polydispersity (PDI up to 1.150), consistent with failed or poorly controlled assembly. The conditions further illustrate the practical formulation space: ratios range from 1:5 to 54.4:75, temperatures from 2 to 70 ◦C, and incubation times from 5 to 480 min, underscoring the combinatorial complexity that motivates condition-aware prediction. Together, these representative records demonstrate the diversity, standardization, and practical relevance of NSA-Bench as a benchmark for nano self-assembly prediction. 
+
+## A.2 Benchmark tracks and release boundary 
+
+NSA-Bench represents each sample as a formulation–condition ob-servation. A row records two molecular components, their aligned formulation ratios, available experimental conditions, dynamic light scattering outcomes, component labels, a curated final binary tar-get, and source provenance. The same unordered molecular pair may occur in multiple rows when its ratio or environment changes. NSA-Bench-Small is the current public protocol. Public47 con-tains 47 training records (20 positive and 27 negative), and the fixed Benchmark50 test set contains 50 records (20 positive and 30 nega-tive), for 97 observations in total. Its split manifest, derived inputs, and multi-run result summaries are included in the public release. NSA-Bench-Large contains 220 training observations (86 positive and 134 negative) and a fixed 50-observation test protocol (20 posi-tive and 30 negative); this track is planned for future public release to facilitate reproducibility and broader community benchmarking. 
+
+## A.3 Training Settings and Training Dynamics 
+
+NSA-Net is implemented in PyTorch and trained with AdamW. The batch size is 16, the weight decay is 0.07, and the maximum gradient norm is clipped to 10. For multi-seed experiments, we report the mean and standard deviation across different random seeds. We report ROC-AUC, AR, Precision, and F1. 
+
+## B Reproducibility and Release Notes 
+
+The public NSA-Bench-Small result package provides the split man-ifest, run-level predictions from five runs, and aggregated summary metrics. These artifacts document the evaluated sample assignment, expose run-to-run variation, and support recomputation of the re-ported results from the released prediction outputs. ROC-AUC and 
+
+Figure 6: Intensity-weighted DLS particle-size distribution of the Baicalin–Geniposide formulation under the initial ex-perimental condition. The measured hydrodynamic size is 
+
+2805 .67 ± 264 .40 d.nm, indicating a particle population domi-nated by micron-scale aggregates. 
+
+Figure 7: Intensity-weighted DLS particle-size distribution of the Baicalin–Geniposide formulation after experimental-condition refinement. The measured hydrodynamic size de-creases to 215 .17 ± 26 .67 d.nm, indicating that the dominant particle population shifts from the micrometer scale to the nanometer scale. 
+
+AP are computed directly from continuous scores, while threshold-dependent classification metrics use a fixed cutoff of 0.5. Results across the five runs are summarized as the mean with sample SD. 
+
+## C Wet-Lab Results Appendix: Experimental Preparation and DLS Characterization 
+
+Baicalin and Geniposide were separately dissolved in phosphate-buffered saline (PBS) to obtain clear solutions or uniform disper-sions. The two drug solutions were then combined in a round-bottom flask at the prescribed formulation ratio. The solvent was Towards AI-Driven Nanomedicine Discovery: A Benchmark and Multimodal Learning Framework for Nano Self-Assembly Prediction KDD ’27, August 1–5, 2027, San Jose, CA, USA 
+
+Table 4: Representative NSA-Bench records with verified data sources. 
+
+ID Molecule A Molecule B Ratio Size PDI Conc. pH Temp./time Labels (nm) (mM) (◦C/min) self_00177 (s)-10-hydroxycamptothecin chlorin e6 4:1 200.0 0.194 – 7.4 25 / 9.5 1/1/1 self_00192 Indocyanine Green Paclitaxel 1:5 176.0 0.331 0.5 7.4 25 / 60 1/1/1 self_00174 oleanolic acid chlorin e6 2.5:1 103.0 0.290 – 7.0 25 / – 1/1/1 self_00139 Camptothecine Fe(III) porphyrin complex 1:1 87.8 0.200 1.0 7.4 25 / 10 1/1/1 self_00210 Gambogic acid glycyrrhizic acid 1:0.5 197.8 – – 7.0 4 / 30 1/1/1 self_00220 metformin epigallocatechin gallate 54.4:75 190.0 – 0.5590 7.0 25 / 480 1/1/1 self_00130 Berberine oleanolic acid 1:1 129.6 0.1723 1.0 7.5 60 / 30 1/1/1 self_00156 quercetin Poly(ethylene glycol) 5:1 146.0 0.258 – 7.4 25 / 5 1/1/1 self_00214 Luteolin 18-Beta-Glycyrrhetinic acid 2:1 251.0 0.135 – 7.4 25 / – 1/1/1 self_00209 oleanolic acid Evodiamine 5:3 380.0 0.220 – 7.0 2 / 480 0/1/0 self_00212 Celastrol Curcumin 1:1 736.0 – – 7.0 30 / 120 0/1/0 self_00164 Berberine (+)-catechin hydrate 2:1 341.0 0.158 – 7.4 60 / 60 0/1/0 self_00136 7-Ethyl-10-hydroxycamptothecin Hydroxy Chloroquine 1:5 55.0 1.150 – 7.4 70 / 40 1/0/0 
+
+Table 5: NSA-Bench field dictionary. Component C is an optional source-schema field. 
+
+Field family Source columns Role and reporting rule Record identity self_id Internal traceability identifier; provider names are excluded from manuscript tables. Molecular identity chem_A , chem_B , optional chem_C ;corresponding CAS fields Links each component name to a chemical identifier. Optional C fields do not expand the evaluated A/B task. Formulation ratio A, B, and optional C ratio fields Records the supplied component proportions for a formulation observation while main-taining alignment between each ratio and molecule. Molecular structure A, B, and optional C SMILES fields Supplies structure strings for language and graph processing. Long SMILES are omitted from printed tables but remain in the data schema. Formulation environ-ment Total concentration, pH, tempera-ture, and reaction/incubation time Supplies experimental Condition variables for the condition-aware model. These variables are distinct from Mordred molecular descriptors. DLS outcomes Particle size (nm) and PDI Records observed size and dispersity measurements when available. Provenance Supplied DOI or empty publication field Distinguishes DOI-backed literature records from in-house wet-lab observations. No DOI is inferred for an empty field. Labels label_nm , label_pdi , and final la-bel Stores curated size and PDI components and the final binary benchmark target. 
+
+Table 6: DOI provenance corresponding to Table 4. 
+
+ID Source DOI Provenance type self_00177 https://doi.org/10.2147/IJN.S224704 DOI-backed self_00192 https://doi.org/10.1039/c9tb00687g DOI-backed self_00174 https://doi.org/10.1016/j.phymed.2021.153788 DOI-backed self_00139 https://doi.org/10.1016/j.nantod.2022.101732 DOI-backed self_00210 https://doi.org/10.1016/j.mtbio.2025.102278 DOI-backed self_00220 https://doi.org/10.1016/j.mtbio.2025.102052 DOI-backed self_00130 https://doi.org/10.1016/j.molstruc.2025.144577 DOI-backed self_00156 https://doi.org/10.1016/j.cej.2023.142697 DOI-backed self_00214 https://doi.org/10.1016/j.cclet.2025.111325 DOI-backed self_00209 https://doi.org/10.1016/j.jddst.2025.107230 DOI-backed self_00212 https://doi.org/10.1016/j.ijpharm.2025.125289 DOI-backed self_00164 https://doi.org/10.1016/j.colsurfa.2024.134555 DOI-backed self_00136 https://doi.org/10.1016/j.biomaterials.2022.121458 DOI-backed 
+
+removed under reduced pressure by rotary evaporation, allowing the drug mixture to form a uniform thin film on the inner wall of the flask. Fresh PBS was subsequently added to hydrate the film, fol-lowed by ultrasonication to obtain the self-assembled nanoparticle dispersion. KDD ’27, August 1–5, 2027, San Jose, CA, USA Hao et al. 
+
+Table 7: Representative in-house wet-lab observations from the author-verified source table. No publication DOI is assigned.                                                                                                                      
+
+> ID Molecule A Molecule B Ratio Size (nm) PDI Conc. (mM) pH Temp./time (◦C/min) Labels self_00291 Emodin Shikonin 1:3 158.9 0.133 20 7.0 25 / 3 1/0/0 self_00292 Emodin Shikonin 1:4 325.9 0.119 20 7.0 25 / 3 0/0/0 self_00294 Artesunate baicalin 2:1 9999 –30 7.4 40 / 3 0/1/0 self_00298 Artesunate Ginsenoside Rb1 1:1 335.3 0.603 20 7.4 40 / 3 0/0/0 self_00317 Artesunate Ginsenoside Rg1 1:2 116.7 0.407 30 7.4 40 / 3 1/0/0 self_00318 Artesunate Ginsenoside Rg1 1:2.5 115.7 0.444 35 7.4 40 / 3 1/0/0 self_00319 Artesunate Ginsenoside Rg3 2:1 9999 –30 7.4 40 / 3 0/1/0 self_00324 Shikonin Ginsenoside Rb1 1:1 9999 –20 7.4 40 / 3 0/1/0 self_00251 Chlorogenic acid Artemisinin 1:0.25 3689 0.622 7.5 7.0 45 / 15 0/0/0 self_00006 Artesunate Puerarin 1:1 7600 0.820 20 7.0 37 / 5 0/0/0 self_00036 Chlorogenic Acid Eupalinolide B 0.6:0.25 256.0 0.220 20 7.0 25 / 5 1/1/1 self_00045 gallic acid paeonol 1:2 261.7 0.394 20 7.0 40 / 10 1/1/1
+
+Table 8: Supplied physicochemical profile used to formulate the NSA-Agent follow-up hypothesis.                      
+
+> Property Baicalin Geniposide Possible relevance to this case Molecular formula C21 H18 O11 C17 H24 O10 Both are oxygen-rich glycosides with multiple potential hydrogen-bonding sites. Molecular weight 446.4 388.4 Similar molecular weights allow a near-1:1 formulation without a large molar imbalance. XLogP3 1.1 −2.3Baicalin has greater hydrophobic/aromatic character, whereas Geni-poside is more hydrophilic. Topological polar sur-face area 183 Å 2155 Å 2Both molecules are highly polar, although their hydrophobic-core/hydrophilic-glycoside balances differ. H-bond donors/accep-tors 6/11 5/10 Both molecules can participate in multivalent hydrogen bonding and hydration-shell reorganization. Structural feature Planar flavone scaffold linked to glucuronic acid Iridoid glycoside scaffold linked to glucose Baicalin may provide an aromatic association surface, while Geni-poside may contribute hydration and interfacial stabilization.
+
+This film-hydration procedure was used as the common prepa-ration protocol for the Baicalin–Geniposide case study. Consistent with the condition-aware prediction task defined in the main text, the molecular identities and the general preparation procedure were kept unchanged throughout the condition-space exploration. NSA-Agent varied only the component-aligned A:B ratio and the recorded reaction or incubation time, while pH and temperature were fixed at 7 and 25 ◦C, respectively. Therefore, NSA-Agent does not redesign the experimental prepa-ration procedure itself. Instead, it uses NSA-Net-based qualification scores to rank candidate settings within a predefined and experi-mentally feasible formulation space. Particle size and PDI are mea-sured after sample preparation and are used to characterize the resulting dispersion and determine the experimental outcome. Nei-ther particle size nor PDI is supplied to NSA-Net or NSA-Agent as a runtime input. The intensity-weighted dynamic light scattering (DLS) distri-butions provide experimental characterization of the Baicalin– Geniposide formulations before and after condition refinement. As shown in Figure 6, the formulation prepared under the initial con-dition exhibits an apparent hydrodynamic size of 2805 .67 ± 264 .40 d.nm. This micron-scale particle population indicates the presence of large aggregates or an insufficiently dispersed formulation rather than a compact nanoscale dispersion. After adjustment of the formulation conditions, the dominant hydrodynamic size decreases to 215 .17 ± 26 .67 d.nm, as shown in Figure 7. The substantial reduction in apparent particle size is consistent with reduced coarse aggregation and the formation of a smaller nanoparticle population. The dominant particle population is therefore shifted from the micrometer scale to the nanometer scale. This comparison supports the condition-aware premise of NSA-Net and NSA-Agent: even when the molecular pair and the general preparation procedure remain unchanged, variations in compo-nent ratio and reaction or incubation time can materially alter the physical state of the resulting dispersion. The DLS observations provide experimental support for prioritizing formulation condi-tions rather than treating molecular compatibility as independent of the preparation environment. Nevertheless, the DLS measurements do not independently estab-lish the specific molecular mechanism responsible for self-assembly. Because intensity-weighted DLS is particularly sensitive to large particles, the peak heights in Figures 6 and 7 should not be di-rectly compared, especially because the two plots use different vertical-axis scales. In addition, dispersion uniformity should be Towards AI-Driven Nanomedicine Discovery: A Benchmark and Multimodal Learning Framework for Nano Self-Assembly Prediction KDD ’27, August 1–5, 2027, San Jose, CA, USA 
+
+evaluated together with the corresponding PDI rather than inferred solely from the apparent width of the particle-size distribution. Complementary characterization and prospective experiments are therefore required to validate the intermolecular interactions and the exact condition selected by NSA-Agent.

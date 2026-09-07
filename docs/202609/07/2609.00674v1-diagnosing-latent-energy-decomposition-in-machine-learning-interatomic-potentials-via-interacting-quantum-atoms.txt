@@ -1,0 +1,665 @@
+Title: Diagnosing Latent Energy Decomposition in Machine-Learning Interatomic Potentials via Interacting Quantum Atoms
+
+URL Source: https://arxiv.org/pdf/2609.00674v1
+
+Published Time: Wed, 02 Sep 2026 00:41:00 GMT
+
+Number of Pages: 29
+
+Markdown Content:
+# Diagnosing Latent Energy Decomposition in Machine-Learning Interatomic Potentials via Interacting Quantum Atoms 
+
+Kohei Shimamura ∗
+
+Department of Physics, Kumamoto University, Kumamoto, Japan 
+
+Ken-ichi Nomura 
+
+Collaboratory for Advanced Computing and Simulations, University of Southern California, Los Angeles, California, USA 
+
+Abstract 
+
+Machine-learning interatomic potentials (MLIPs) can reproduce potential energies and forces accurately, but their internal energy allocation is often difficult to interpret. E3D-IQA is introduced as a diagnostic framework connecting the latent edge-energy representation of an Allegro-type MLIP with Interacting Quantum Atoms (IQA) energy decomposition. The Allegro edge-energy path is retained as a latent pair contribution, while a node-energy path is trained against the IQA intra-atomic energy. IQA interatomic energies are not direct training targets; instead, the learned edge energies are evaluated after training against the IQA pair terms. Tests on H/C/N/O organic reaction structures show that intra-atomic supervision is essential: energy and force training alone does not recover an IQA-like one-body/two-body allocation. With intra-atomic supervision, node energies reproduce IQA intra-atomic terms, and latent edge energies show meaningful correspondence with IQA interatomic terms. Residual errors are concentrated in positive or weak pair interactions, exposing internal allocation failures that remain hidden in total-energy and force metrics. Adding structures labeled only with energies and forces improves transfer to larger molecules and reduces decomposition errors. E3D-IQA therefore provides a route for diagnosing and guiding latent scientific representations using partially labeled quantum-chemical datasets. 
+
+# 1 Introduction 
+
+Machine-learning interatomic potentials (MLIPs) have become an essential tool for molecular and materials simulations because they can approximate first-principles potential-energy surfaces at a much lower computational cost [1, 2]. Modern equivariant architectures, including NequIP, Allegro, MACE, and related models, achieve high accuracy by constructing expressive many-body representations of local atomic environments [3–7]. At the same time, the nonlinear latent representations that make these models accurate also make their internal energy decomposition difficult to interpret [8, 9]. In most applications, the model is judged by the total potential energy and the total force on each atom, whereas the chemically meaningful allocation of the energy among atoms and atom pairs remains hidden. This issue is closely related to the non-uniqueness of atom-wise or pair-wise energy assignments in first-principles calculations. A total molecular energy is well defined, but its decomposition into atomic or interatomic contributions is not unique unless an additional theoretical prescription is 
+
+> ∗
+
+Corresponding author: shimamura@kumamoto-u.ac.jp 
+
+1arXiv:2609.00674v1 [physics.chem-ph] 1 Sep 2026 introduced [8, 10]. Consequently, ordinary MLIPs are trained mainly against total energies and forces, and when a model makes an error, it is difficult to identify which atom, bond, or interaction is responsible for the failure. This limits the use of MLIPs not only as fast predictors, but also as tools for chemical analysis. Recent work suggests that chemically meaningful information can nevertheless emerge in latent representations of MLIPs [11]. In particular, emergent energy decomposition (E3D) analysis used the edge-energy structure of Allegro to monitor a latent pair-energy contribution [12]. In an Allegro-type model, the cohesive energy can be written as 
+
+Ecoh = X
+
+> i
+
+X
+
+> j>i
+
+Dij , , (1) where Dij is not a fixed classical pair potential, but an edge contribution generated from a many-body local environment. The E3D study showed that this latent edge energy can exhibit bond-dissociation-energy-like behavior even without direct supervision of pairwise energies. This result motivated the question addressed here: can a quantum-chemical energy decomposition be used to diagnose, and partially guide, such latent MLIP energy representations? To answer this question, we introduce the Interacting Quantum Atoms (IQA) energy decom-position into the E3D framework. IQA is based on the quantum theory of atoms in molecules (QTAIM) [13] and partitions the total energy into intra-atomic and interatomic contributions [14, 15]. In the present notation, 
+
+E = X
+
+> i
+
+Eintra (i) + X
+
+> i
+
+X
+
+> j>i
+
+Einter (i, j ). (2) IQA is particularly informative for interaction analysis because its energy partition is defined in real space by QTAIM atomic basins and does not require atom pairs to be designated as chemical bonds in advance. The intra-atomic term Eintra measures the energetic deformation or strain of an atom relative to its isolated state, whereas Einter quantifies pairwise interactions between both bonded and nonbonded atoms, including stabilizing and destabilizing contributions. These terms can be further resolved, in principle, into kinetic, electrostatic, exchange, and correlation components. IQA can therefore address not only how strongly two atoms interact, but also which physical contributions underlie that interaction, making it useful for analyzing covalent bonding, noncovalent interactions, atomic strain, and changes in bonding along chemical reactions [14–17]. This detailed decomposition comes at substantial computational cost [15]. In addition to the underlying electronic-structure calculation, IQA requires the construction of QTAIM basins and numerical integration of atomic and interatomic energy contributions, commonly through wavefunction-analysis programs such as AIMAll [18]. Repeating this analysis for the large num-bers of structures encountered in reaction datasets or molecular-dynamics trajectories is therefore considerably more demanding than evaluating only reference energies and forces. In this study, we develop E3D-IQA to bridge the detailed but expensive IQA analysis and the rapid inference of an MLIP. E3D-IQA adds an IQA-inspired node-energy path to Allegro while retaining the original edge-energy path. The node energy is trained against Eintra , whereas the edge energy Dij is not directly trained against Einter . Once trained on a limited set of IQA-labeled structures, the model can provide approximate IQA-informed node and pair diagnostics without repeating the Psi4/AIMAll workflow for every new structure. E3D-IQA is not intended here as an exact replacement for IQA; rather, it is a scalable framework for transferring part of the information contained in expensive IQA labels to larger structural datasets. The design also follows the E3D observation that meaningful edge energies may emerge without direct pair supervision, while avoiding 2the instability that could arise from simultaneously constraining total energy, forces, one-body terms, and two-body terms. In addition, it accommodates the practical mismatch between IQA Einter ,which is defined for all atom pairs, and MLIP edge energies, which exist only within a finite cutoff. The goal of this work is to diagnose latent energy decomposition in MLIPs through an IQA-based quantum-chemical reference and to test whether partial interpretability labels can guide the internal representation toward a physically meaningful decomposition. We evaluate E3D-IQA on organic reaction structures containing H, C, N, and O from the Transition1x dataset [19]. We show that intra-atomic IQA supervision is necessary for obtaining an IQA-like decomposition, that latent pair energies can correlate with IQA interatomic energies even without direct pair supervision, and that residual errors identify concrete directions for model improvement. We further examine whether conventional energy/force data without IQA labels can extend the learned decomposition to a broader structural domain. This perspective complements existing approaches that use atomistic neural networks for energy decomposition or QTAIM-related learning [10, 20–23]. Energy-resolved latent representations may also be useful for reactive molecular dynamics analysis. Existing trajectory-analysis tools such as ChemTraYzer, ReacNetGenerator, ReaxANA, and ChemXDyn identify bond formation and dissociation events primarily from geometric or connectivity criteria [24–27]. E3D and E3D-IQA offer a complementary possibility: bond rearrangements could be monitored not only by distances or bond orders, but also by learned energetic contributions associated with atoms and atom pairs. 
+
+# 2 Methods 
+
+2.1 IQA Reference Data and Energy Decomposition 
+
+We used organic molecular structures composed of 4-23 atoms containing H, C, N, and O from the Transition1x dataset [19]. Transition1x contains 10,072 reaction pathways, each consisting of a reactant structure, a transition-state structure, and a product structure. In this work, IQA labels were generated for 4-9 atom structures and for a smaller 20-23 atom external validation set. Structures containing 10-19 atoms were used only as energy/force-labeled data in mixed training experiments. For the 4-9 atom IQA-labeled subset, the data were split by reaction pathway rather than by individual structure. Therefore, if the reactant structure of a given pathway was assigned to the training set, the corresponding transition-state and product structures were also assigned to the same split. This avoids leakage between reaction states. The 4-9 atom subset contained 1,287 training structures, 159 validation structures, and 165 test structures, corresponding to 429, 53, and 55 reaction pathways, respectively. The 10-19 atom E/F-only subset contained 22,653 training structures, 2,817 validation structures, and 2,865 test structures. The 20-23 atom IQA-labeled external validation set contained 91 reactant, 91 transition-state, and 91 product structures. Reference electronic-structure calculations for the IQA-labeled data were performed with Psi4 at the B3LYP/def2-TZVPPD level [28–31], followed by AIMAll analysis to obtain QTAIM atomic basins and IQA energy terms [18, 32, 33]. Although our previous E3D work used a different density-functional level, B3LYP was chosen here because of compatibility with the IQA workflow used in AIMAll. For each structure, IQA decomposes the total energy into an intra-atomic term Eintra (i) and an interatomic term Einter (i, j ), as shown in eq 2. The IQA framework can in principle further decompose these terms into kinetic, electron-nuclear, electron-electron, exchange, and correlation contributions. The present study focuses on the total intra-atomic and interatomic IQA terms, while leaving this finer decomposition as a future extension. 3The total energy used for model training and evaluation was the cohesive energy obtained by subtracting isolated-atom energies from the electronic energy. The IQA intra-atomic energy was treated consistently by subtracting the isolated-atom intra-atomic reference: 
+
+∆Eintra (i) = Eintra (i) − Eiso atom (Zi), (3) where Zi denotes the chemical species of atom i, and Eiso atom (Zi) is the isolated-atom intra-atomic energy for that species. In the remainder of the paper, Eintra refers to this isolated-atom-referenced quantity. With this convention, Eintra is typically positive and can be interpreted as an atomic deformation or strain-like contribution. 
+
+2.2 E3D-IQA Model 
+
+E3D-IQA was implemented on top of Allegro [4]. Allegro constructs equivariant edge features for atom pairs within a local cutoff and maps these edge features to scalar edge-energy contributions. In this work, the cutoff radius was set to 5.0 Å for all main E3D-IQA models. Let xij denote the learned edge feature for atom pair (i, j ). The original edge-energy route is retained and written as 
+
+DML  
+
+> ij
+
+= MLP edge (xij ). (4) This quantity is treated as the model’s latent pair-energy contribution. E3D-IQA adds a node-level route by aggregating the edge features around each atom, 
+
+xi = X 
+
+> j∈N (i;rcut )
+
+xij , (5) and mapping the resulting node feature to an intra-atomic energy, 
+
+EML intra (i) = MLP node (xi). (6) The total model energy is then 
+
+EML = X
+
+> i
+
+EML intra (i) + X
+
+> i
+
+X
+
+> j>i
+
+DML  
+
+> ij
+
+. (7) Both the node and edge routes therefore use the same local neighbor graph and the same cutoff. Forces are obtained by differentiating the total energy with respect to atomic coordinates, 
+
+FML  
+
+> i
+
+= − ∂E ML 
+
+∂Ri
+
+, (8) where Ri denotes the Cartesian coordinate vector of atom i. For analysis, the implementation can also output the force components arising from the node and edge energy paths. The force used for training, however, is always the total force from eq 8, and the sum of the node and edge force components is constructed to be consistent with this total force. To avoid introducing an additional species-dependent energy origin into the decomposition, the per-type energy shift was set to zero. The detailed Allegro and E3D-IQA hyperparameters used in this work are summarized in the Supporting Information. The models used SiLU activation functions and were optimized with Adam [34, 35]. 42.3 Training Targets and Model Variants 
+
+All models were trained against total energies and forces. The explicit loss definition is given in Supporting Note 2. E3D-IQA models were additionally trained against IQA Eintra when that label was available. The IQA interatomic energy Einter was not used as a training target in the main models. Instead, the learned latent edge energy DML  
+
+> ij
+
+was compared with IQA Einter after training. The model variants are denoted as follows. Baseline-4-9 is the original Allegro baseline trained on 4-9 atom structures using only energy and force labels. Baseline-4-19 is the corresponding Allegro baseline trained on both the 4-9 atom and 10-19 atom energy/force data. IQA-4-9-λ denotes an E3D-IQA model trained on the 4-9 atom IQA-labeled subset, where λ is the loss coefficient for the 
+
+Eintra term. IQA+EF-4-19-λ0.1 denotes an E3D-IQA model trained on the 4-9 atom IQA-labeled subset together with the 10-19 atom energy/force-only subset. For the IQA-4-9-λ series, the Eintra loss coefficient was varied systematically over λ = 0.0, 0.01, 0.05, 0.1, 1.0, and 10.0. The λ = 0.0 model serves as a negative control: it contains the E3D-IQA architecture, including the node-energy path, but the node energy is not supervised by IQA labels. This model tests whether an IQA-like decomposition emerges from energy and force training alone. In the mixed IQA+EF-4-19-λ0.1 training, the 4-9 atom structures contributed total energy, force, and Eintra losses, whereas the 10-19 atom structures contributed only total energy and force losses. The Eintra loss was skipped for structures without IQA labels. This setting mimics a practical semi-supervised scenario in which a small number of expensive IQA labels are combined with a larger set of standard energy/force data. 
+
+2.4 Evaluation Metrics 
+
+Model accuracy was evaluated using mean absolute error (MAE). Total energy errors are reported in eV per structure, force errors in eV Å −1, and decomposition-energy errors in eV per atom or per pair. For comparison with conventional MLIP metrics, per-atom energy MAEs are also provided in the Supporting Information. For E3D-IQA models, EML intra was compared with the IQA Eintra reference, and DML  
+
+> ij
+
+was compared with the IQA Einter (i, j ) reference. Because Allegro and E3D-IQA use a finite cutoff, DML  
+
+> ij
+
+exists only for atom pairs included in the model graph. IQA Einter (i, j ), by contrast, is defined for all atom pairs. Therefore, the main 
+
+Einter parity plots and MAEs were computed for atom pairs that are present as model edges. The contribution from cutoff-excluded IQA pairs was analyzed separately. For pair-resolved error analysis, the Einter absolute error was separated into three categories: pairs with negative reference and negative prediction, pairs with positive reference but negative prediction, and all other cases. This decomposition helps distinguish scale errors in attractive or bonding interactions from sign-allocation errors in positive or destabilizing IQA pair terms. Parity plots were used together with MAE to assess correlations, systematic deviations from the y = x
+
+line, sign mismatches, and scale errors. Force parity plots were constructed from Cartesian force components. 
+
+# 3 Results and Discussion 
+
+3.1 Overview of the E3D-IQA Framework 
+
+Figure 1 summarizes the E3D-IQA concept. The model retains the Allegro edge-energy route, which provides a latent pair-energy contribution DML  
+
+> ij
+
+, and adds a node-energy route trained against IQA 
+
+Eintra . The total energy is the sum of the node and edge contributions, and forces are obtained from 5this total energy. The central question is whether the IQA-labeled node supervision can guide the latent edge-energy representation toward an IQA-like interatomic energy without directly training against Einter .This study treats E3D-IQA primarily as a diagnostic framework. The aim is not only to reproduce total energies and forces, but also to determine whether the internal energy allocation learned by the MLIP is chemically meaningful. In this sense, the model’s failures are also informative: they reveal which latent components require additional labels, constraints, or architectural bias. 
+
+3.2 Intra-Atomic Supervision Is Required for IQA-Like Decomposition 
+
+Table 1 summarizes the MAEs of the baseline Allegro model and the IQA-4-9-λ series for total energy, forces, Eintra , and Einter . The baseline model provides the reference accuracy of an ordinary Allegro potential trained only on total energies and forces. On the validation and test sets, Baseline-4-9 achieved energy MAEs of 0.890 and 0.942 eV and force MAEs of 0.077 and 0.083 eV Å −1, respectively. The negative-control model IQA-4-9-λ0 achieved E/F errors similar to Baseline-4-9, with valida-tion/test energy MAEs of 0.902/0.955 eV and force MAEs of 0.077/0.082 eV Å −1. However, the same model gave very large decomposition errors: validation/test Eintra MAEs of 12.210/12.291 eV and Einter MAEs of 4.566/4.592 eV. This shows that adding node and edge energy channels to the architecture is not sufficient for an IQA-like decomposition to emerge from total-energy and force training alone. The molecular example in Figure 2(a,b) further illustrates this failure mode. In the IQA reference, the selected C, C, and O atoms have positive intra-atomic energies of 5.7, 16.9, and 5.8 eV, respectively. In contrast, IQA-4-9-λ0 assigns negative node energies of -4.9, -5.0, and -3.3 eV to the corresponding atoms. The pair contributions also fail to reproduce the IQA interatomic pattern: for example, the C-C interaction of -6.6 eV in the IQA reference becomes -0.4 eV in IQA-4-9-λ0, and the two C-N interactions of -13.8 and -19.4 eV are reduced to -0.5 and -0.6 eV. Thus, the λ0 model can learn the total energy and force while using an internal energy allocation that is chemically inconsistent with IQA. 
+
+3.3 Dependence on the Intra-Atomic Loss Weight 
+
+Because IQA-4-9-λ0 did not recover an IQA-like energy allocation, we next examined whether direct supervision of only the intra-atomic term can guide the decomposition. Introducing a nonzero Eintra 
+
+loss immediately reduced the Eintra error. For example, the validation Eintra MAE decreased from 12.210 eV at λ0 to 0.442 eV at λ0.01 and to 0.229 eV at λ0.1. The test Eintra MAE likewise decreased from 12.291 eV to 0.217 eV at λ0.1. Increasing λ further improved Eintra itself, but at the cost of force accuracy. IQA-4-9-λ10 achieved the lowest validation/test Eintra MAEs of 0.112/0.131 eV, but its force MAEs increased to 0.171/0.177 eV Å −1. By contrast, IQA-4-9-λ0.1 preserved force accuracy close to the baseline while still providing accurate intra-atomic energies. Its validation/test force MAEs were 0.079/0.084 eV Å−1, close to Baseline-4-9 values of 0.077/0.083 eV Å −1, while its Eintra errors were much smaller than those of λ0. Therefore, IQA-4-9-λ0.1 was selected as the representative balanced model. Figure 2(c) shows that IQA-4-9-λ0.1 recovers the molecular energy allocation far more closely than IQA-4-9-λ0. For example, the reference intra-atomic values of approximately 5.7, 16.9, and 5.8 eV for the selected C, C, and O atoms are predicted as 5.6, 16.3, and 5.9 eV. Several pair terms also become close to the IQA reference: the central C-C term remains near -6.6 eV, and the two C-N terms change from reference values of -13.8 and -19.4 eV to predicted values of -12.6 and -17.2 eV. These improvements are obtained even though Einter was not included in the loss function. 63.4 Parity Analysis of Total and Decomposed Energies 
+
+Figure 3 compares parity plots for Baseline-4-9 and the representative E3D-IQA model, IQA-4-9-
+
+λ0.1. For total energy and forces, IQA-4-9-λ0.1 retains accuracy comparable to Baseline-4-9. The correlation coefficients for Baseline-4-9 were 0.962 for energy and 0.831 for force, whereas those for IQA-4-9-λ0.1 were 0.959 and 0.831, respectively. Thus, adding IQA intra-atomic supervision did not substantially degrade the ordinary E/F prediction accuracy in the 4-9 atom validation and test data. The decomposition parity plots provide the key diagnostic information. Eintra is directly su-pervised and shows an almost one-to-one relationship with the IQA reference, with a correlation coefficient of 0.999. More importantly, DML  
+
+> ij
+
+also shows a meaningful correlation with IQA Einter ,with a correlation coefficient of 0.933, despite the absence of direct pair-energy supervision. This supports the central premise of E3D-IQA: constraining the one-body side of the energy decomposition can guide the remaining latent edge energy toward an IQA-like pair representation. At the same time, Figure 3 reveals systematic deviations in the pair-energy allocation. Some weakly negative IQA pair terms are mapped to DML  
+
+> ij
+
+values close to zero, and some positive or destabilizing IQA pair terms are not reproduced with the correct sign. To verify that this behavior is not dominated by missing long-range pairs, we estimated the cutoff-excluded contribution by assigning DML  
+
+> ij
+
+= 0 outside the model graph. For IQA-4-9-λ0.1 on the 4-9 atom validation and test data, the edge-pair Einter MAE was 2.098 eV, whereas the outside-cutoff zero-assignment MAE was 0.491 eV. The main Einter /D ML  
+
+> ij
+
+discrepancy in Figure 3(b) therefore originates from latent energy allocation within the modeled graph, rather than from omitted cutoff-excluded IQA interactions. Increasing the cutoff to 5.5 Å did not monotonically improve the correspondence (Figure S1). 
+
+3.5 Reaction-State Dependence of Energy-Allocation Errors 
+
+We next examined whether the decomposition errors depend on reaction state. Figure 4 summarizes MAEs for the 4-9 atom validation and test structures separated into Reaction, Transition, and Product states. The total-energy MAEs were 0.949, 1.233, and 0.711 eV for Reaction, Transition, and Product, respectively. Force errors showed a stronger state dependence, with MAEs of 0.030, 0.123, and 0.091 eV Å −1, indicating that transition-state structures are the most challenging for force prediction. The intra-atomic and interatomic terms behave differently across reaction states. Eintra MAEs were 0.104, 0.311, and 0.253 eV for Reaction, Transition, and Product, respectively. Thus, the intra-atomic term is more sensitive to reaction-state changes, likely reflecting atomic deformation and electronic rearrangement during bond formation, bond breaking, and product relaxation. By contrast, Einter MAEs remained nearly constant across the three states: 2.111, 2.116, and 2.065 eV. The decomposed Einter error further clarifies the source of the pair-energy discrepancy. For Reaction, Transition, and Product states, the absolute-error contributions from negative reference and negative prediction were 1.244, 1.228, and 1.193 eV, respectively. The contributions from positive reference but negative prediction were also comparable, 0.829, 0.855, and 0.827 eV. The remaining "other" category was small, 0.038, 0.033, and 0.045 eV. Cases where both the reference and prediction are positive are included in this small "other" contribution, indicating that the present E3D-IQA model rarely expresses positive IQA pair terms explicitly. These results suggest that Einter errors arise from both sign-allocation errors for destabilizing pair terms and scale errors for attractive pair terms. Because the total energy is a sum of node and edge contributions, reducing the sign-allocation error may also change the scale error through compensation between Eintra and DML  
+
+> ij
+
+.A molecular example along a Reaction, Transition, and Product sequence is provided in Figure S2. The example illustrates that the learned intra-atomic energies remain close to the IQA reference 7across the reaction sequence. The Reaction structure retains the main C-H, C-C, C-N, and N-O pair-energy pattern, whereas the Transition and Product structures show larger magnitude errors for N/O-centered rearranging pairs, including N-N, N-O, and C-N terms. Thus, the pair-energy error is not uniformly distributed over the molecule, but is localized to specific pairwise allocations. The pair-type dependence of these errors is analyzed next. 
+
+3.6 Species- and Pair-Resolved Error Analysis 
+
+Figure 5 further decomposes the decomposition-energy errors: Eintra errors are grouped by atomic species, whereas Einter /D ML  
+
+> ij
+
+errors are grouped by pair type. The species-resolved Eintra errors were small for all elements, with MAEs of 0.107 eV for H, 0.216 eV for O, 0.288 eV for N, and 0.312 eV for C. This indicates that the effect of intra-atomic supervision is retained across all H, C, N, and O species in the organic subset. The pair-resolved Einter errors were substantially larger and more heterogeneous. O-O had the largest MAE of 5.697 eV, almost entirely from positive reference terms predicted as negative DML 
+
+> ij
+
+values (5.683 eV). N-O showed a similar pattern, with a total MAE of 4.213 eV and a positive-reference-to-negative-prediction contribution of 3.851 eV. These pair types are not necessarily covalent bonds; all atom pairs within the model cutoff are included. Therefore, large O-O and N-O errors likely reflect close nonbonded or destabilizing contacts that require positive IQA pair terms. Other pair types show a different balance of errors. C-O and C-N had MAEs of 3.937 and 3.540 eV, dominated by cases where both reference and prediction were negative, with contributions of 3.838 and 3.350 eV, respectively. In these cases, the sign is often correct but the magnitude is not. C-C pairs had a mixed character, with a total MAE of 3.973 eV, including 1.417 eV from negative-reference/negative-prediction cases and 2.548 eV from positive-reference/negative-prediction cases. These results show that a single pair type can contain chemically different situations, including covalent bonds, stretched bonds, and nonbonded contacts within the cutoff. The remaining pair types, such as N-N, C-H, H-O, H-N, and H-H, followed the same qualitative error modes, namely sign-allocation errors for positive IQA pair terms and magnitude errors for negative pair terms. This analysis highlights the value of IQA-based diagnostics. From total energy and force errors alone, it would be difficult to identify whether the model fails because of attractive pair scaling, missing positive pair contributions, or compensating one-body/two-body allocation. The IQA decomposition exposes these error modes directly and suggests concrete improvements, such as weak pair-energy supervision, sign-aware constraints, or distance-dependent inductive bias. Further decomposition of the parity plots in Figure 3(b) by element and atom-pair type provides a practical tool for tracing aggregate decomposition errors to specific chemical classes, reference-energy ranges, and sign-mismatch patterns (Figures S3 and S4). 
+
+3.7 Transfer with Energy/Force-Only Data 
+
+Many large atomistic datasets do not contain IQA decomposition labels, but they do contain standard energy and force labels. We therefore tested whether E/F-only structures can improve E3D-IQA transfer while retaining the IQA-derived interpretability learned from the smaller labeled subset. In IQA+EF-4-19-λ0.1, the 4-9 atom data provide E/F/ Eintra labels, whereas the 10-19 atom data provide only E/F labels. The resulting performance is summarized in Table 2. For compact comparison, the 4-9 atom results in Table 2 combine the validation and test subsets. Adding E/F-only data improved both ordinary prediction accuracy and decomposition diagnostics. On the 4-9 atom data, IQA+EF-4-19-λ0.1 reduced the total-energy MAE from 0.964 to 0.422 eV and the force MAE from 0.082 to 0.063 eV Å −1 relative to IQA-4-9-λ0.1. On the 20-23 atom data, the 8improvement was larger: the total-energy MAE decreased from 1.656 to 0.706 eV, and the force MAE decreased from 0.249 to 0.036 eV Å −1. IQA+EF-4-19-λ0.1 also achieved E/F accuracy comparable to Baseline-4-19 on both datasets, while retaining IQA-type decomposition diagnostics. The mixed model also improved the IQA-related diagnostics. On the 4-9 atom data, the Eintra 
+
+MAE decreased from 0.223 to 0.143 eV, and the Einter MAE decreased from 2.098 to 1.890 eV. On the 20-23 atom data, Eintra improved from 0.291 to 0.268 eV, and Einter improved from 0.326 to 0.247 eV. Thus, E/F-only data can improve not only total energy and force transfer, but also the latent decomposition learned from a smaller IQA-labeled subset. The molecular example in Figure 2(d) is consistent with this trend. IQA+EF-4-19-λ0.1 preserves the IQA-like intra-atomic energy allocation and maintains pair energies close to the reference for several chemically important pairs. For example, the selected C, C, and O intra-atomic energies are predicted as 5.6, 16.9, and 5.8 eV, close to the IQA values of 5.7, 16.9, and 5.8 eV. 
+
+3.8 Current Limitations 
+
+E3D-IQA should not be viewed as a complete surrogate model for IQA at this stage. Rather, it provides a way to examine whether the internal energy allocation of an MLIP is consistent with a quantum-chemical decomposition, and to identify which model components require additional information. The present results show that total-energy and force accuracy alone does not guarantee a meaningful one-body/two-body decomposition. The first limitation is that Einter was not directly supervised. This staged design was intentional: because the total energy is already the sum of one-body and two-body contributions, simultaneously constraining total energy, forces, Eintra , and Einter could overconstrain the model or introduce training instability. The E3D result also motivated the possibility that pair-like information could emerge in the latent edge energy. The present study shows that this emergence is partial but incomplete. The second limitation concerns the signs and scales of the decomposed terms. Because the isolated-atom-referenced Eintra is typically positive, the node-energy path may require explicit positivity or scale-aware inductive bias for more stable decomposition. For the pair-energy path, the most important remaining problem is the treatment of positive IQA interatomic terms and weak interactions. These errors are not evidence that MLIPs cannot learn repulsion; rather, they indicate that the internal allocation of the total energy does not automatically match the IQA allocation. This limitation points to the need for additional constraints, such as weak or partial 
+
+Einter supervision, sign-aware losses, distance-dependent constraints, or long-range terms. Implementing direct or partial Einter supervision is also a practical limitation. Unlike Eintra ,which is an atom-wise label, Einter is a pair-wise label. Therefore, extxyz or database formats, data loaders, Allegro edge outputs, and loss functions must be extended to handle pair labels consistently. 
+
+# 4 Conclusions 
+
+We introduced E3D-IQA, an Allegro-based MLIP framework that connects latent edge-energy decomposition with IQA quantum-chemical energy decomposition. The model retains the original Allegro edge-energy route and adds a node-energy route trained against IQA Eintra . The IQA interatomic energy is not used as a training target; instead, the learned latent edge energy is evaluated as a post-training representation corresponding to IQA Einter .The results show that intra-atomic supervision is essential. A model with the E3D-IQA architec-ture but without Eintra supervision can reproduce total energies and forces, yet fails to produce an IQA-like decomposition. Once Eintra supervision is introduced, the node energy closely follows the 9IQA intra-atomic reference, and the latent edge energy exhibits a meaningful correspondence with IQA Einter even without direct pair-energy supervision. The IQA decomposition also exposes internal model errors that are hidden in ordinary energy and force metrics. In particular, positive or destabilizing IQA pair terms are often assigned negative latent edge energies, and attractive pair terms can have incorrect magnitudes. These findings turn the apparent weaknesses of the model into actionable diagnostics: they indicate where additional labels, sign-aware constraints, long-range terms, or pair-wise data formats are required. Adding 10-19 atom structures with energy and force labels but without IQA labels improved transfer to larger molecules and reduced both ordinary E/F errors and IQA-related decomposition errors. This result suggests that expensive IQA labels do not need to be available for all structures. Instead, a smaller IQA-labeled subset can be combined with larger standard E/F datasets to guide and regularize latent energy decomposition. Overall, E3D-IQA provides a route for diagnosing and guiding latent energy allocation in MLIPs using quantum-chemical decomposition labels. Although the present study focused on H/C/N/O organic reactions, the underlying IQA framework is more general and is not restricted to covalent molecules. Extending this strategy to ionic systems, metallic systems, molecule-surface interfaces, and broader reactive datasets, together with pair-wise IQA supervision and sign-aware constraints, may enable energy-resolved MLIPs that support both accurate simulation and chemically interpretable analysis of reactive processes. 
+
+# Author Contributions 
+
+Kohei Shimamura: Conceptualization; methodology; software; formal analysis; data curation; visualization; writing–original draft; writing–review and editing. Ken-ichi Nomura: Methodology; software; writing–review and editing. 
+
+# Acknowledgments 
+
+This work was supported by Taiwan Semiconductor Manufacturing Company (TSMC) / Japan Advanced Semiconductor Manufacturing (JASM). 
+
+# Conflict of Interest 
+
+The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper. However, this study was funded by Taiwan Semiconductor Manufacturing Company (TSMC) and/or its manufacturing subsidiary, Japan Advanced Semiconductor Manufacturing (JASM). 
+
+# Data Availability Statement 
+
+The code and data supporting the findings of this study will be made publicly available in a GitHub repository. 10 References 
+
+[1] Jörg Behler and Michele Parrinello. Generalized neural-network representation of high-dimensional potential-energy surfaces. Phys. Rev. Lett. , 98:146401, 2007. doi: 10.1103/ PhysRevLett.98.146401. [2] Felix Musil, Andrea Grisafi, Albert P. Bartók, Christoph Ortner, Gábor Csányi, and Michele Ceriotti. Physics-inspired structural representations for molecules and materials. Chem. Rev. ,121(16):9759–9815, 2021. doi: 10.1021/acs.chemrev.1c00021. [3] Simon Batzner, Albert Musaelian, Lixin Sun, Mario Geiger, Jonathan P. Mailoa, Mordechai Kornbluth, Nicola Molinari, Tess E. Smidt, and Boris Kozinsky. E(3)-equivariant graph neural networks for data-efficient and accurate interatomic potentials. Nat. Commun. , 13(1):2453, May 2022. doi: 10.1038/s41467-022-29939-5. [4] Albert Musaelian, Simon Batzner, Anders Johansson, Lixin Sun, Cameron J. Owen, Mordechai Kornbluth, and Boris Kozinsky. Learning local equivariant representations for large-scale atomistic dynamics. Nat. Commun. , 14(1):579, Feb 2023. doi: 10.1038/s41467-023-36329-y. [5] Ken-ichi Nomura, Shinnosuke Hattori, Satoshi Ohmura, Ikumi Kanemasu, Kohei Shimamura, Nabankur Dasgupta, Aiichiro Nakano, Rajiv K. Kalia, and Priya Vashishta. Allegro-fm: Toward an equivariant foundation model for exascale molecular dynamics simulations. J. Phys. Chem. Lett. , 16(25):6637–6644, 06 2025. doi: 10.1021/acs.jpclett.5c00605. [6] Ilyes Batatia, Dávid Péter Kovács, Gregor N. C. Simm, Christoph Ortner, and Gábor Csányi. Mace: Higher order equivariant message passing neural networks for fast and accurate force fields, 2023. [7] Ilyes Batatia, Philipp Benner, Yuan Chiang, Alin M. Elena, Dávid P. Kovács, Janosh Riebesell, Xavier R. Advincula, Mark Asta, Matthew Avaylon, William J. Baldwin, Fabian Berger, Noam Bernstein, Arghya Bhowmik, Filippo Bigi, Samuel M. Blau, Vlad Cărare, Michele Ceriotti, Sanggyu Chong, James P. Darby, Sandip De, Flaviano Della Pia, Volker L. Deringer, Rokas Elijošius, Zakariya El-Machachi, Edvin Fako, Fabio Falcioni, Andrea C. Ferrari, John L. A. Gardner, Mikołaj J. Gawkowski, Annalena Genreith-Schriever, Janine George, Rhys E. A. Goodall, Jonas Grandel, Clare P. Grey, Petr Grigorev, Shuang Han, Will Handley, Hendrik H. Heenen, Kersti Hermansson, Cheuk Hin Ho, Stephan Hofmann, Christian Holm, Jad Jaafar, Konstantin S. Jakob, Hyunwook Jung, Venkat Kapil, Aaron D. Kaplan, Nima Karimitari, James R. Kermode, Panagiotis Kourtis, Namu Kroupa, Jolla Kullgren, Matthew C. Kuner, Domantas Kuryla, Guoda Liepuoniute, Chen Lin, Johannes T. Margraf, Ioan-Bogdan Magdău, Angelos Michaelides, J. Harry Moore, Aakash A. Naik, Samuel P. Niblett, Sam Walton Norwood, Niamh O’Neill, Christoph Ortner, Kristin A. Persson, Karsten Reuter, Andrew S. Rosen, Louise A. M. Rosset, Lars L. Schaaf, Christoph Schran, Benjamin X. Shi, Eric Sivonxay, Tamás K. Stenczel, Christopher Sutton, Viktor Svahn, Thomas D. Swinburne, Jules Tilly, Cas van der Oord, Santiago Vargas, Eszter Varga-Umbrich, Tejs Vegge, Martin Vondrák, Yangshuai Wang, William C. Witt, Thomas Wolf, Fabian Zills, and Gábor Csányi. A foundation model for atomistic materials chemistry. J. Chem. Phys. , 163(18):184110, 11 2025. doi: 10.1063/5.0297006. [8] Kristof T. Schütt, Farhad Arbabzadah, Stefan Chmiela, Klaus R. Müller, and Alexandre Tkatchenko. Quantum-chemical insights from deep tensor neural networks. Nat. Commun. , 8: 13890, 2017. doi: 10.1038/ncomms13890. 11 [9] Felipe Oviedo, Juan Lavista Ferres, Tonio Buonassisi, and Keith T. Butler. Interpretable and explainable machine learning for materials science and chemistry. Acc. Mater. Res. , 3(6): 597–607, 2022. doi: 10.1021/accountsmr.1c00244. [10] Frederik Ø. Kjeldal and Janus J. Eriksen. Decomposing chemical space: Applications to the machine learning of atomic energies. J. Chem. Theory Comput. , 19(7):2029–2038, 2023. doi: 10.1021/acs.jctc.2c01290. [11] Sathya Edamadaka, Soojung Yang, Ju Li, and Rafael Gómez-Bombarelli. Universally converging representations of matter across scientific foundation models, 2025. URL https://arxiv.org/ abs/2512.03750 .[12] Shinnosuke Hattori, Kohei Shimamura, Ken-ichi Nomura, Aiichiro Nakano, Rajiv K. Kalia, and Priya Vashishta. Chemical intuition on bond-dissociation energies as an emergent ability of universal machine-learning interatomic potentials. Nat. Commun. , jul 2026. ISSN 2041-1723. doi: 10.1038/s41467-026-74919-8. [13] R. F. W. Bader. Atoms in molecules. Acc. Chem. Res. , 18(1):9–15, 1985. doi: 10.1021/ ar00109a003. [14] M. A. Blanco, A. Martín Pendás, and E. Francisco. Interacting quantum atoms: A correlated energy decomposition scheme based on the quantum theory of atoms in molecules. J. Chem. Theory Comput. , 1(6):1096–1109, 08 2005. doi: 10.1021/ct0501093. [15] José Manuel Guevara-Vela, Evelio Francisco, Tomás Rocha-Rinza, and Ángel Martín Pendás. Interacting quantum atoms—a review. Molecules , 25(17), 2020. doi: 10.3390/molecules25174028. [16] Benjamin C. B. Symons, David J. Williamson, Chloe M. Brooks, Antonia L. Wilson, and Paul L. A. Popelier. Does the intra-atomic deformation energy of interacting quantum atoms represent steric energy? ChemistryOpen , 8(5):560–570, 2019. doi: 10.1002/open.201800275. [17] Jesús Jara-Cortés, Edith Leal-Sánchez, Evelio Francisco, José A. Pérez-Pimienta, Ángel Martín Pendás, and Jesús Hernández-Trujillo. Implementation of the interacting quantum atom energy decomposition using the CASPT2 method. Phys. Chem. Chem. Phys. , 23(48): 27508–27519, 2021. doi: 10.1039/D1CP02837E. [18] Todd A. Keith. AIMAll (Version 19.10.12). https://aim.tkgristmill.com/ , 2019. [19] Mathias Schreiner, Arghya Bhowmik, Tejs Vegge, Jonas Busk, and Ole Winther. Transi-tion1x - a dataset for building generalizable reactive machine learning potentials. Sci. Data. ,9(1):779, dec 2022. doi: 10.1038/s41597-022-01870-w. URL https://doi.org/10.1038/ s41597-022-01870-w .[20] Dylan M. Anstine, Roman Zubatyuk, and Olexandr Isayev. Aimnet2: a neural network potential to meet your neutral, charged, organic, and elemental-organic needs. Chem. Sci. , 16 (23):10228–10244, 06 2025. doi: 10.1039/d4sc08572h. [21] Hoje Chun, Minjoon Hong, Seung Hyo Noh, and Byungchan Han. Learning pairwise interaction for extrapolative and interpretable machine learning interatomic potentials with physics-informed neural network. J. Chem. Theory Comput. , 21(8):4030–4039, 2025. doi: 10.1021/acs.jctc.5c00090. 12 [22] Miguel Gallegos, José Manuel Guevara-Vela, and Ángel Martín Pendás. Nnaimq: A neural network model for predicting qtaim charges. J. Chem. Phys. , 156(1):014112, 01 2022. doi: 10.1063/5.0076896. [23] So Takamoto, Satoshi Izumi, and Ju Li. Teanet: Universal neural network interatomic potential inspired by iterative electronic relaxations. Comput. Mater. Sci. , 207:111280, 2022. ISSN 0927-0256. doi: https://doi.org/10.1016/j.commatsci.2022.111280. [24] Malte Döntgen, Marie-Dominique Przybylski-Freund, Leif C. Kröger, Wassja A. Kopp, Ahmed E. Ismail, and Kai Leonhard. Automated discovery of reaction pathways, rate constants, and transition states using reactive molecular dynamics simulations. J. Chem. Theory Comput. , 11 (6):2517–2524, 2015. doi: 10.1021/acs.jctc.5b00201. [25] Jinzhe Zeng, Liqun Cao, Chih-Hao Chin, Haisheng Ren, John Z. H. Zhang, and Tong Zhu. Reac-NetGenerator: an automatic reaction network generator for reactive molecular dynamics simu-lations. Physical Chemistry Chemical Physics , 22(2):683–691, 2020. doi: 10.1039/C9CP05091D. [26] Hong Zhu, Xin Chen, and Jiali Gao. ReaxANA: Analysis of reactive dynamics trajectories for reaction network generation. J. Chem. Inf. Model. , 65(16):8549–8562, 2025. doi: 10.1021/acs. jcim.5c00521. [27] Raj Maddipati, Dhruthi Boddapati, Elangannan Arunan, Phani Motamarri, and Konduri Aditya. ChemXDyn: Dynamics-informed species and reaction detection methodology from atomistic simulations. J. Chem. Theory Comput. , 22(9):4247–4258, 2026. doi: 10.1021/acs.jctc.6c00242. [28] Axel D. Becke. Density-functional thermochemistry. III. the role of exact exchange. J. Chem. Phys. , 98(7):5648–5652, 1993. doi: 10.1063/1.464913. [29] Chengteh Lee, Weitao Yang, and Robert G. Parr. Development of the Colle–Salvetti correlation-energy formula into a functional of the electron density. Phys. Rev. B , 37(2):785–789, 1988. doi: 10.1103/PhysRevB.37.785. [30] Florian Weigend and Reinhart Ahlrichs. Balanced basis sets of split valence, triple zeta valence and quadruple zeta valence quality for H to Rn: Design and assessment of accuracy. Phys. Chem. Chem. Phys. , 7:3297–3305, 2005. doi: 10.1039/B508541A. [31] Dmitrij Rappoport and Filipp Furche. Property-optimized gaussian basis sets for molecular response calculations. J. Chem. Phys. , 133(13):134105, 2010. doi: 10.1063/1.3484283. [32] Daniel G. A. Smith et al. Psi4 1.4: Open-source software for high-throughput quantum chemistry. 
+
+J. Chem. Phys. , 152(18):184108, 2020. doi: 10.1063/5.0006002. [33] Peter Maxwell, Ángel Martín Pendás, and Paul L. A. Popelier. Extension of the interacting quantum atoms (IQA) approach to B3LYP level density functional theory (DFT). Phys. Chem. Chem. Phys. , 18:20986–21000, 2016. doi: 10.1039/C5CP07021J. [34] Stefan Elfwing, Eiji Uchibe, and Kenji Doya. Sigmoid-weighted linear units for neural network function approximation in reinforcement learning. Neural Netw. , 107:3–11, 2018. doi: 10.1016/j. neunet.2017.12.012. [35] Diederik P. Kingma and Jimmy Ba. Adam: A method for stochastic optimization, 2017. 13 Table 1: MAEs of Baseline-4–9 and the IQA-4–9-λ series. Energy and decomposition-energy errors are in eV, and force errors are in eV Å −1. All models were trained against total energies E and forces F . For E3D-IQA models with λintra > 0, IQA Eintra was included as an additional training target. IQA Einter was not included in the loss for any model and was used only for post-training evaluation of DML  
+
+> ij
+
+on model edges. Train Validation Test Model λintra E F Eintra Einter E F Eintra Einter E F Eintra Einter 
+
+Baseline-4–9 – 0.837 0.057 – – 0.890 0.077 – – 0.942 0.083 – –IQA-4–9-λ0 0 0.847 0.058 12.619 4.909 0.902 0.077 12.210 4.566 0.955 0.082 12.291 4.592 IQA-4–9-λ0.01 0.01 0.871 0.058 0.431 2.337 0.920 0.076 0.442 2.143 0.980 0.077 0.457 2.161 IQA-4–9-λ0.05 0.05 0.815 0.057 0.230 2.233 0.871 0.080 0.261 2.059 0.934 0.086 0.245 2.061 IQA-4–9-λ0.1 0.1 0.895 0.060 0.201 2.281 0.945 0.079 0.229 2.090 0.983 0.084 0.217 2.105 IQA-4–9-λ1 1 0.758 0.061 0.090 2.234 0.813 0.106 0.137 2.078 0.870 0.118 0.150 2.064 IQA-4–9-λ10 10 0.697 0.064 0.031 2.185 0.801 0.171 0.112 2.022 0.817 0.177 0.131 2.015 Table 2: Effect of adding 10–19 atom E/F-only data. The 4–9 columns summarize the validation and test data, and the 20–23 columns summarize the external validation data. Energy and decomposition-energy errors are in eV, and force errors are in eV Å −1.4–9 atom data 20–23 atom data Model λintra E F Eintra Einter E F Eintra Einter 
+
+Baseline-4–19 – 0.287 0.057 – – 0.471 0.034 – –IQA-4–9-λ0.1 0.1 0.964 0.082 0.223 2.098 1.656 0.249 0.291 0.326 IQA+EF-4–19-λ0.1 0.1 0.422 0.063 0.143 1.890 0.706 0.036 0.268 0.247 14 HAtomistic structure CCNCOHHHHHHHHAllegro / GNN interaction blocks E3D-IQA decomposition Eintra Dij EML = ∑ iEintra ML + ∑ i<j Dij ML Training targets: E,F,Eintra No Einter loss backpropagation Post-hoc check Dij vs IQA Einter interaction blocks HCCNCOHHHHHHHHDij Eintra Eintra Eintra Eintra Eintra Eintra Dij Dij Dij Dij Figure 1: Conceptual overview of E3D-IQA. Allegro edge features are used in two routes: an edge route that produces the latent pair contribution DML 
+
+ij , and a node route that aggregates edge features around each atom and predicts EML intra . The model is trained against total energy, forces, and IQA 
+
+Eintra , whereas IQA Einter is used only for post-training diagnosis of the latent edge energy. 15 -6.5 
+
+# (a) IQA Reference 
+
+-6.5 -6.6 -13.8 -13.2 -9.2 -10.2 -19.4 1.3 5.7 5.8 1.3 1.3 16.9 7.0 8.5 9.7 
+
+-0.6 
+
+# (b) IQA-4-9-λ0 
+
+-0.6 -0.6 -0.4 -0.5 -0.6 -0.5 -0.5 -0.6 -2.8 -4.9 -3.3 -2.8 -2.8 -5.0 -3.6 -3.1 -3.5 
+
+-6.2 -6.1 -6.6 -12.6 -9.9 -7.9 -9.0 -17.2 1.3 5.6 5.9 1.3 1.3 16.3 7.2 8.5 9.1 
+
+# (c) IQA-4-9-λ0.1 
+
+-6.1 -6.0 -6.1 -7.5 -13.5 -10.5 -7.8 -18.7 1.3 5.6 5.8 1.2 1.3 16.9 7.0 8.4 9.6 
+
+# (d) IQA+EF-4-19-λ0.1 Figure 2: Molecular-level comparison of IQA reference decomposition and model-predicted de-composition for a representative structure. White, cyan, blue, and red spheres represent H, C, N, and O atoms, respectively. Yellow labels denote Eintra , and black labels denote IQA Einter or model-predicted latent pair energy DML  
+
+> ij
+
+. The unit is eV. (a) IQA reference. (b) IQA-4-9-λ0. (c) IQA-4-9-λ0.1. (d) IQA+EF-4-19-λ0.1. 16 -45 -40 -35 -30 -25 -20 -15 
+
+Reference / eV 
+
+-45 -40 -35 -30 -25 -20 -15 
+
+> Prediction / eV
+
+r = 0.962 
+
+r = 0.831 
+
+r = 0.831 
+
+r = 0.959 
+
+r = 0.999 r= 0. 933 
+
+Total energy 
+
+-2 -1 0 1 2 3
+
+Reference / eV A -1 
+
+-2 -1 0123
+
+> Prediction / eV A -1
+
+Force components 
+
+-45 -40 -35 -30 -25 -20 -15 
+
+Reference / eV 
+
+-45 -40 -35 -30 -25 -20 -15 
+
+> Prediction / eV
+
+Total energy 
+
+-2 -1 0 1 2 3
+
+Reference / eV A -1 
+
+-2 -1 0123
+
+> Prediction / eV A -1
+
+Force components 
+
+-10 0 10 20 30 40 50 
+
+Reference / eV 
+
+-10 010 20 30 40 50 
+
+> Prediction / eV
+
+Intra-atomic energy 
+
+-60 -40 -20 0 20 
+
+Reference / eV 
+
+-60 -40 -20 020 
+
+> Prediction / eV
+
+Interatomic / edge energy 
+
+(a) Baseline-4-9 (b) IQA-4-9-λ0.1 Figure 3: Parity plots for (a) Baseline-4-9 and (b) IQA-4-9-λ0.1 on the 4-9 atom validation and test data. Baseline-4-9 is evaluated for total energy and force only. IQA-4-9-λ0.1 is evaluated for total energy, force, Eintra , and Einter , where the latter compares DML  
+
+> ij
+
+with IQA Einter .17 0123
+
+> MAE / eV
+
+Eintra 
+
+> n=108 n=917 n=3397 n=108 n=917 n=3434 n=108 n=917 n=3371
+
+## Energy decomposition by reaction state 
+
+> 1049 2118 1116 2113 1064 2035
+
+EEintra Einter: Ref<0, Pred<0 Einter: Ref>0, Pred<0 Einter: other 
+
+Reaction Transition Product 
+
+Reaction state 
+
+0.0 0.1 0.2 
+
+> MAE / eV A -1
+> n=2751 n=2751 n=2751
+
+## Force components 
+
+# (a) (b) 
+
+E int er 
+
+Reaction 
+
+E int er 
+
+Eintra 
+
+EE
+
+Transition 
+
+E int er 
+
+Eintra 
+
+E
+
+Product Figure 4: Reaction-state-resolved MAEs for IQA-4-9-λ0.1 on the 4-9 atom validation and test data. The bars are ordered from left to right as Reaction, Transition, and Product states. (a) Energy-related errors. (b) Force-component errors. For Einter , the absolute-error contribution is decomposed into negative reference and negative prediction, positive reference but negative prediction, and all other cases. The value n above each bar denotes the number of evaluation points used for that MAE. For the decomposed Einter bars, the yellow numbers within the blue and red segments denote the numbers of pairwise evaluation points in the Eref inter < 0, DML  
+
+> ij
+
+< 0 and Eref inter > 0, DML  
+
+> ij
+
+< 0
+
+categories, respectively. 18 C H N O
+
+Atomic species 
+
+01234567   
+
+> MAE / eV
+> n=903 n=981 n=543 n=324
+
+## Intra-atomic energy 
+
+> O-O N-O C-C C-O C-N N-N C-H H-O H-N H-H
+
+Atom pair 
+
+01234567 
+
+> MAE / eV
+> n=103 n=349 n=921 n=935 n=1266 n=450 n=2704 n=905 n=1515 n=1054
+
+Ref<0, Pred<0 Ref>0, Pred<0 other 
+
+## Interatomic / edge energy (a) (b) 
+
+> 265 101 339 571 857 1140 234 1473 200 855 1286
+
+Figure 5: Species- and pair-resolved MAEs for IQA-4-9-λ0.1 on the 4-9 atom validation and test data. (a) Eintra errors grouped by element. (b) Einter /D ML  
+
+> ij
+
+errors grouped by pair type and decomposed into negative reference and negative prediction, positive reference but negative prediction, and all other cases. The value n above each Eintra bar denotes the number of atomic evaluation points for that element, whereas n above each Einter bar denotes the number of pairwise evaluation points for that pair type. For the decomposed Einter bars, the yellow numbers within the blue and red segments denote the numbers of pairwise evaluation points in the Eref inter < 0, DML  
+
+> ij
+
+< 0 and Eref inter > 0,
+
+DML  
+
+> ij
+
+< 0 categories, respectively. 19 Supporting Information for “Diagnosing Latent Energy Decomposition in Machine-Learning Interatomic Potentials via Interacting Quantum Atoms” 
+
+Kohei Shimamura and Ken-ichi Nomura 
+
+This section provides per-atom energy errors, model and training hyperparameters, the loss-function definition, cutoff-radius analysis, reaction-state-resolved molecular examples, and element- and pair-resolved parity diagnostics. 20 S1 Per-Atom Energy MAEs for the IQA-4-9-λ Series 
+
+The main text reports total-energy MAEs in eV per structure to keep the total-energy error directly comparable with the one-body and pairwise energy-allocation errors. For comparison with conventional MLIP reporting, Table S1 lists the corresponding per-atom energy MAEs. The values were computed as the mean of |Epred − Eref |/N atom over structures in each split. Table S1: Per-atom energy MAEs for the IQA-4–9-λ series. The values were computed as the mean of |Epred − Eref |/N atom over structures in each split. Model λintra Train E Validation E Test E
+
+Baseline-4–9 – 0.101 0.106 0.112 IQA-4–9-λ0 0 0.102 0.107 0.113 IQA-4–9-λ0.01 0.01 0.105 0.109 0.116 IQA-4–9-λ0.05 0.05 0.098 0.103 0.111 IQA-4–9-λ0.1 0.1 0.108 0.112 0.117 IQA-4–9-λ1 1 0.091 0.096 0.103 IQA-4–9-λ10 10 0.084 0.095 0.097 21 S2 Per-Atom Energy MAEs for the Mixed E/F-Only Training Com-parison 
+
+Table S2 lists the per-atom energy MAEs corresponding to the model comparison in Table 2 of the main text. The 4-9 atom values combine the validation and test splits, and the 20-23 atom values correspond to the external validation set. Table S2: Per-atom energy MAEs for the mixed E/F-only training comparison. The 4–9 atom values combine the validation and test splits, and the 20–23 atom values correspond to the external validation set. Model λintra 4–9 E 20–23 E
+
+Baseline-4–19 – 0.034 0.023 IQA-4–9-λ0.1 0.1 0.114 0.080 IQA+EF-4–19-λ0.1 0.1 0.050 0.034 22 S3 Supporting Note 1. Model and Training Hyperparameters 
+
+The main Allegro and E3D-IQA hyperparameters used in this work are summarized below. Unless otherwise noted, the same architecture and training settings were used for Baseline-4-9, Baseline-4-19, the IQA-4-9-λ series, and IQA+EF-4-19-λ0.1. The baseline models omit the E3D-IQA node-energy loss and do not output IQA-type decomposition channels. • Chemical species: H, C, N, and O. • Data type and precision: ASE-readable extxyz input, float32 model dtype. • Random seed: 456 for both data handling and model initialization. • Cutoff radius: 5.0 Å for the main models. The cutoff test in Figure S1 used 5.5 Å. • Neighbor list: generated using the same cutoff radius as the model edge graph. • Spherical harmonics: maximum rotation order lmax = 2 .• Number of Allegro layers: 3. • Scalar features: 64. • Tensor features: 32. • Radial-chemical embedding: two-body Bessel scalar embedding with 8 Bessel functions, non-trainable Bessel basis, and polynomial cutoff power 6. • Scalar embedding MLP: one hidden layer, width 64, SiLU nonlinearity. • Allegro latent MLPs: one hidden layer, width 64, SiLU nonlinearity. • Readout MLP: one hidden layer, width 64, SiLU nonlinearity. • Parity: enabled. • Tensor-product path-channel coupling: enabled. • E3D-IQA node-energy route: edge features were summed over neighbors of each atom and passed to the node-energy MLP to produce EML intra .• Edge-energy route: the original Allegro edge readout was retained and interpreted as the latent pair energy DML  
+
+> ij
+
+.• Edge-sum normalization: avg_num_neighbors was set from the training-data estimate of the mean number of neighbors. • Per-type energy shifts: fixed to 0.0. • Per-type energy scales: set from the training-data force RMS and kept non-trainable. • Loss function: total energy coefficient 1.0 and force coefficient 1.0. For E3D-IQA models, the 
+
+Eintra loss coefficient was λ, with λ = 0.0, 0.01, 0.05, 0.1, 1.0, or 10.0 for the IQA-4-9-λ series. The representative IQA+EF-4-19 model used λ = 0.1. • Energy loss normalization: per-atom energy loss was enabled during training. 23 • Optimizer: Adam with learning rate 1.0 × 10 −3.• Weight decay: Adam default, corresponding to no explicit weight decay. • Batch size: 10 for training, validation, and testing. • Training length: 2000 epochs. • Checkpoint selection: the best checkpoint was selected by the validation weighted-sum metric; the last checkpoint was also saved. • Compilation: PyTorch compile mode was enabled for the model during training. 24 S4 Supporting Note 2. Loss Function 
+
+The E3D-IQA model parameters were optimized using a joint loss function containing total energy, atomic forces, and the IQA intra-atomic energy when available. For a structure with N atoms, the loss can be written schematically as 
+
+L = λE
+
+Eref − EML 
+
+N
+
+> 2
+
++ λF
+
+13N
+
+> N
+
+X
+
+> i=1
+
+X
+
+> α=x,y,z
+
+F ref  
+
+> iα
+
+− F ML 
+
+> iα
+> 2
+
++ λintra 
+
+1
+
+N
+
+> N
+
+X
+
+> i=1
+
+Eref intra (i) − EML intra (i) 2
+
+.
+
+(S1) Here, EML is the total predicted energy defined in eq 7 of the main text, and F ML  
+
+> iα
+
+is obtained by automatic differentiation of EML with respect to atomic coordinates. The coefficients for total energy and force were fixed to λE = 1 .0 and λF = 1 .0. The intra-atomic coefficient λintra was varied as 0.0, 0.01, 0.05, 0.1, 1.0, and 10.0 in the IQA-4-9-λ series. The representative IQA-4-9-λ0.1 and IQA+EF-4-19-λ0.1 models used λintra = 0 .1.For structures without IQA labels, such as the 10-19 atom E/F-only data used in the mixed training, the Eintra term was omitted from the loss. The IQA interatomic energy Einter and the corresponding latent edge energy DML  
+
+> ij
+
+do not appear explicitly in the loss function. Therefore, the comparison between DML  
+
+> ij
+
+and IQA Einter is a post-training diagnostic of the latent edge-energy representation, not a result of direct pair-energy supervision. 25 S5 Effect of increasing the cutoff radius -45 -40 -35 -30 -25 -20 -15      
+
+> Reference / eV
+> -45 -40 -35 -30 -25 -20 -15
+> Prediction / eV
+> r= 0.962 r= 0.803
+> r= 0.933
+> r= 0.999
+
+Total energy      
+
+> -2 -1 0123
+> Reference / eV A -1
+> -2 -1 0123
+> Prediction / eV A -1
+
+Force components       
+
+> -10 010 20 30 40 50
+> Reference / eV
+> -10 010 20 30 40 50
+> Prediction / eV
+
+Intra-atomic energy     
+
+> -60 -40 -20 020
+> Reference / eV
+> -60 -40 -20 020
+> Prediction / eV
+
+Interatomic / edge energy 
+
+Figure S1: Parity plots for the model trained with an increased cutoff radius of 5.5 Å. The model is otherwise analogous to IQA-4-9-λ0.1. For the combined 4-9 atom validation and test data, the correlation coefficients were 0.962 for total energy, 0.803 for force components, 0.999 for Eintra , and 0.933 for Einter /D ML  
+
+> ij
+
+. Extending the cutoff from 5.0 to 5.5 Å did not monotonically improve the correspondence between DML  
+
+> ij
+
+and IQA Einter . This result suggests that the cutoff radius changes not only the presence or absence of weak long-range pairs, but also the entire neighbor graph and the resulting latent energy allocation. 26 S6 Reaction-state-resolved molecular example -6.5 
+
+(a) IQA Reference       
+
+> -6.5 -6.5 -6.6 -13.8 -13.2 -9.2 -10.2 -19.4 1.3 5.7 5.8 1.3 1.3 16.9 7.0 8.5 9.7
+> -6.2 -6.1 -6.2 -6.6 -12.6 -9.9 -7.9 -9.0 -17.2 1.3 5.6 5.9 1.3 1.3 16.3 7.2 8.5 9.1
+
+(b) IQA-4-9-λ0.1    
+
+> -6.1 -6.0 -6.1 -7.5 -13.5 -10.5 -7.8 -9.4 -18.7 1.3 5.6 5.8 1.2 1.3 16.9 7.0 8.4 9.6
+
+(c) IQA+EF-4-19-λ0.1          
+
+> 1.3 1.3 1.3 6.0 14.5 13.8 5.0 -18.0 -21.3 9.5 3.5 -6.4 -16.4 -6.7 -6.6 -6.6 -6.6 1.3 1.3 1.3 5.7 15.4 13.9 5.3 -14.5 -19.9 9.3 2.6 -10.1 -12.4 -7.0 -6.2 -6.2 -6.1 1.3 1.3 1.3 5.7 14.6 13.8 5.3 -13.9 -20.2 9.6 3.6 -11.3 -11.8 -7.1 -6.0 -6.0 -5.9
+> 12.5 5.5 2.8 8.7 14.8 5.9 1.3 1.3 1.2 -6.6 -6.5 -6.5 -6.6 -14.1 -10.0 -18.7 -18.5
+> 12.9 5.4 2.7 9.4 15.9 5.5 1.3 1.3 1.3 -6.1 -6.2 -6.1 -7.1 -11.4 -12.8 -14.6 -17.6
+> 12.6 5.6 2.9 8.7 14.7 5.9 1.3 1.3 1.3 -5.9 -6.0 -6.0 -7.2 -10.3 -13.1 -14.6 -18.0
+> Reaction Transition Product
+
+Figure S2: Molecular-level comparison of the IQA reference decomposition and the corresponding E3D-IQA predictions along a representative Reaction, Transition, and Product sequence from the 4-9 atom training subset. Columns show the IQA reference, IQA-4-9-λ0.1, and IQA+EF-4-19-λ0.1. White, cyan, blue, and red spheres represent H, C, N, and O atoms, respectively. Yellow labels denote 
+
+Eintra , and black labels denote IQA Einter or model-predicted latent pair energy DML 
+
+ij . The unit is eV. The learned intra-atomic contribution follows the IQA reference closely in all three states. In the Reaction structure, the main C-H, C-C, C-N, and N-O pair-energy pattern is largely retained. In the Transition and Product structures, larger deviations appear for N/O-centered rearranging pairs, including N-N, N-O, and C-N terms, indicating that the remaining pairwise errors are associated with the sign and magnitude allocation of specific interatomic terms. 27 S7 Element- and pair-resolved parity diagnostics 
+
+To complement the species- and pair-resolved MAEs in Figure 5 of the main text, the decomposition-energy parity plots in Figure 3(b) were separated by element and atom-pair type. This representation shows the reference-energy range, systematic bias, sign mismatch, and outlier structure within each chemical class, thereby helping to identify which classes contribute to the aggregate decomposition errors. Figure S3 shows that predictions for H, C, N, and O remain concentrated near the identity line over their sampled energy ranges. Thus, the effect of intra-atomic supervision is retained across the element-specific environments represented in the evaluation data. -10 0 10 20 30 40 50 -10 010 20 30 40 50 
+
+> Prediction / eV
+
+H      
+
+> -10 010 20 30 40 50 -10 010 20 30 40 50
+
+C      
+
+> -10 010 20 30 40 50
+> Reference / eV
+> -10 010 20 30 40 50
+> Prediction / eV
+
+N      
+
+> -10 010 20 30 40 50
+> Reference / eV
+> -10 010 20 30 40 50
+
+O
+
+Figure S3: Element-resolved parity plots of the predicted node energy EML intra against the IQA Eintra 
+
+reference for IQA-4-9-λ0.1 on the combined 4-9 atom validation and test data. The H, C, N, and O panels use common axes and include the identity line. 28 Figure S4 reveals pair-dependent error modes that are obscured by the aggregate Einter MAE. Strongly negative interactions can retain a monotonic relationship while exhibiting magnitude bias, whereas weak and positive reference interactions are frequently compressed toward zero or assigned negative latent edge energies. The broad C-C reference-energy range and the failure to reproduce positive, destabilizing O-O terms illustrate these distinct error modes. -60 -40 -20 0 20 -60 -40 -20 020 
+
+> Prediction / eV
+
+H-H     
+
+> -60 -40 -20 020 -60 -40 -20 020
+
+C-H     
+
+> -60 -40 -20 020 -60 -40 -20 020
+> Prediction / eV
+
+H-N     
+
+> -60 -40 -20 020 -60 -40 -20 020
+
+H-O     
+
+> -60 -40 -20 020 -60 -40 -20 020
+> Prediction / eV
+
+C-C     
+
+> -60 -40 -20 020 -60 -40 -20 020
+
+C-N     
+
+> -60 -40 -20 020 -60 -40 -20 020
+> Prediction / eV
+
+C-O     
+
+> -60 -40 -20 020 -60 -40 -20 020
+
+N-N     
+
+> -60 -40 -20 020
+
+Reference / eV 
+
+> -60 -40 -20 020
+> Prediction / eV
+
+N-O          
+
+> AAAAAA AAAAAAA A AAAAAA AAAAAAAA AA A AAAAAAAAAAAAAAAAAAAA A AA A AAAAAAA A AAA AAAA AAAAAA AAAAA A AAAAA AAA AAAAAAAAAA AAA
+> -60 -40 -20 020
+
+Reference / eV 
+
+> -60 -40 -20 020
+
+O-O 
+
+Figure S4: Pair-resolved parity plots of the latent edge energy DML 
+
+ij against the IQA Einter reference for IQA-4-9-λ0.1 on the combined 4-9 atom validation and test data. All panels use common axes and include the identity line. Each panel contains all corresponding atom pairs connected by model edges within the 5.0 Å cutoff, including both bonded and nonbonded pairs. 29

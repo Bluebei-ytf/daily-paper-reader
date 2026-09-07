@@ -1,0 +1,867 @@
+Title: A Generalized Approach for Incorporating Geometry and Directionality into Coarse-Grained Machine-Learned Potentials
+
+URL Source: https://arxiv.org/pdf/2609.01911v1
+
+Published Time: Thu, 03 Sep 2026 00:24:10 GMT
+
+Number of Pages: 16
+
+Markdown Content:
+# A Generalized Approach for Incorporating Geometry and Directionality into Coarse-Grained Machine-Learned Potentials 
+
+Arthur Y. Lin, 1 Tejas Dahiya, 2 and Rose K. Cersonsky 1, 3, 4, a) 
+
+> 1)
+
+Department of Chemical and Biological Engineering, University of Wisconsin - Madison, Madison, WI, USA 
+
+> 2)
+
+Department of Computer Science, University of Wisconsin - Madison, Madison, WI, USA 
+
+> 3)
+
+Department of Materials Science and Engineering, University of Wisconsin - Madison, Madison, WI, USA 
+
+> 4)
+
+Data Science Institute, University of Wisconsin - Madison, Madison, WI, USA 
+
+I. INTRODUCTION 
+
+Machine-learned interatomic potentials (MLIPs) have dramatically expanded the scope of molecular simulation, enabling the prediction of atomic energies and forces with near ab initio accuracy at costs compatible with large-scale molecular dynamics. 1–3 As these models continue to mature, the principal obstacle to computational discovery is increasingly shifting from the accuracy of atomistic interactions to the challenge of accessing the larger length and time scales associated with collective behavior, self-assembly, and phase transitions. Coarse-graining (CG), in which groups of atoms are mapped onto effective particles with reduced degrees of freedom, remains one of the most powerful approaches for bridging this gap. 4–8 
+
+For any MLIP, its capabilities are determined jointly by the quality of the underlying data, the choice of repre-sentation X, and the architecture f (X), where X varies from simple forms (e.g., distance matrices or graphs) to more complex descriptors (e.g., Smooth Overlap of Atomic Positions [SOAP] 9 or Behler-Parinello symme-try functions 10 ). A representation is complete if distinct data objects map to distinct data points; in the atomistic MLIP community there has been considerable discussion on what constitutes a complete descriptor, as this has direct implications to the ceiling of predictive accuracy in subsequent models. 11–14 . Simply put, while expressive architectures can approximate complex functions f (X),they cannot recover information that is not encoded in 
+
+X, and degeneracy in data representation can explicitly limit model performance. However, unlike atomistic machine-learned potentials, the variables describing a coarse-grained system are not fixed, but instead chosen. Historically, much of coarse-graining has therefore been built around isotropic particles. 4 This choice is attractive for both concep-tual and computational reasons. Interactions become functions of intermolecular separation alone, simulation methodologies are well-established, and many successful coarse-grained models have been developed within this framework. 15 Such approaches have proven remarkably 
+
+> a) Electronic mail: rose.cersonsky@wisc.edu
+
+successful, particularly in biomolecular systems where coarse-graining has enabled simulations inaccessible at atomistic resolution. 15 Yet there are also many examples where isotropic descriptions struggle to reproduce experi-mentally observed behavior, particularly in systems whose organization is governed by packing, local structure, or directional interactions. 16,17 
+
+One possible explanation of these difficulties is that geometry itself carries critical information. Consider two molecular configurations possessing similar intermolecular separations but different relative orientations. Depending on the system, these configurations may exhibit substan-tially different interaction energies. When orientation is removed from the coarse-grained representation, how-ever, both are represented by the same set of variables 
+
+R. The resultant coarse-grained configuration is there-fore associated not with a single underlying interaction energy, but with a distribution of possible interaction en-ergies. As this distribution broadens, the construction of a coarse-grained potential becomes increasingly difficult, as distinct molecular environments become indistinguishable within the representation. This observation naturally suggests retaining orienta-tional and geometric information within coarse-grained models. However, doing so raises a separate question: how should such information be represented? While atomistic machine-learned potentials have undergone rapid develop-ment over the past decade, the overwhelming majority of descriptor frameworks and architectures were developed for collections of isotropic atoms. Extending these ap-proaches to anisotropic particles requires representations that remain sensitive to particle geometry while preserv-ing the rotational and translational symmetries of the underlying problem. Several recent approaches have begun to address this challenge through anisotropic extensions to machine-learning architectures. 18 ? ,19 Of particular interest are many-body density expansion methods, which have proven highly successful in atomistic machine learning due to their systematic improvability and clear connection to local structure. 9,20,21 AniSOAP extended the SOAP formal-ism to non-spherical particles through anisotropic density expansions, enabling the explicit incorporation of particle shape and orientation into a many-body descriptor, 22,23 ,and similar efforts expanded the Chebyshev polynomial arXiv:2609.01911v1 [physics.chem-ph] 1 Sep 2026 2suite for nanoscale particles. 24–26 .In this work, we demonstrate the strategies and subse-quent trade-offs for incorporating geometric information into MLIPs. First, we show how incorporating geometric tensors, both through AniSOAP and as node features in MACE, compare to their isotropic analogs as a function of molecular symmetry and objective weighting. Then, we demonstrate how to successfully incorporate geometric in-formation into MACE-style potentials for arbitrary molec-ular symmetries, in ways that extend to coarse-graining at any resolution, even that of rigid composite bodies typically found in the nanoscale community. We do so for single-bead coarse-grained systems with minimal mapping entropy in order to demonstrate the limitations of poten-tial energy fitting for coarse-graining, but will note that analogous schemes can be applied to learn the potential of mean force. Our coinciding packages, AniSOAP 23 and MACE-CG are also included open-source, to allow for adoption of this pipeline for new coarse-graining tasks.    
+
+> II. METHODS A. AniSOAP Descriptors
+
+Many-body density expansions provide a natural frame-work for constructing machine-learning representations of local environments. In conventional SOAP-based ap-proaches, each particle is represented by an isotropic Gaussian density centered at its position. AniSOAP 22,23 
+
+extends this formalism to anisotropic particles by replac-ing isotropic densities with ellipsoidal density fields that explicitly depend on particle geometry and orientation. Each coarse-grained particle is described by a position 
+
+ri, an orientation matrix Ri, and geometric parameters corresponding to its principal semiaxes (ai, b i, c i). The particle geometry is encoded through the matrix 
+
+Σi = Ri
+
+a2 
+
+> i
+
+0 00 b2 
+
+> i
+
+00 0 c2
+
+> i
+
+ RTi . (1) The local density surrounding particle i is then written as 
+
+ρi(r) = X
+
+> j
+
+exp 
+
+
+
+− 12 (r − rij )T Σ−1 
+
+> j
+
+(r − rij )
+
+
+
+, (2) where rij = rj − ri denotes the position of neighboring particle j relative to particle i. Following the SOAP formalism, the density is expanded in a basis of radial functions and spherical harmonics, 
+
+ρi(r) = X
+
+> nlm
+
+c(i)
+
+> nlm
+
+gn(r)Ylm (ˆ r), (3) producing a set of rotationally equivariant coefficients 
+
+c(i)
+
+> nlm
+
+. Rotationally invariant features are subsequently ob-tained through contractions of these coefficients. Through-out this work, we employ the AniSOAP power spectrum, 
+
+p(i) 
+
+> nn ′l
+
+= X
+
+> m
+
+c(i)
+
+> nlm
+
+c(i)∗
+
+> n′lm
+
+, (4) which forms the descriptor vector xi used for regression. By construction, the descriptor is invariant to global rotations and translations while remaining sensitive to particle geometry and local orientational environments. We can consider linear energy models acting on the 
+
+AniSOAP power spectrum written as 
+
+E = X
+
+> i
+
+xTi w (5) where xi denotes the AniSOAP descriptor associated with particle i and w is a learned coefficient vector.  
+
+> B. Incorporating Rigid-Body Orientation into MACE
+
+As a complementary approach to AniSOAP , we extended the MACE equivariant message-passing framework to de-scribe coarse-grained particles with explicit rigid-body orientation. The central objective was to preserve the existing MACE treatment of translational geometry while augmenting each intermolecular edge with orientational information. In this construction, the molecular symme-try is incorporated into the representation of the body orientation before that representation enters the MACE interaction network.  
+
+> 1. Standard MACE edge geometry
+
+For a pair of coarse-grained particles i and j, conven-tional MACE begins from the relative displacement 
+
+rij = rj − ri, (6) which is decomposed into the scalar separation 
+
+rij = ∥rij ∥ (7) and the unit edge direction 
+
+ˆrij = rij 
+
+rij 
+
+. (8) The distance is expanded in a radial basis, while the angular dependence is represented by spherical harmonics, 
+
+Yℓm (ˆ rij ). (9) Under a global rotation S ∈ SO (3) , these functions trans-form according to the ℓth irreducible representation, 
+
+Yℓ(Sˆrij ) = D(ℓ)(S)Yℓ(ˆ rij ), (10) 3
+
+FIG. 1: Workflow for incorporating molecular geometry and directionality into MACE-style potentials. which allows the edge geometry to be coupled to node features through the Clebsch–Gordan tensor products used throughout MACE. For an atomistic system, the combination of particle identity and relative positions is sufficient to define the local geometry. This is no longer true when an entire molecule is mapped to a single coarse-grained site. Two molecular configurations can possess identical center-of-mass positions, and therefore identical rij and Yℓm (ˆ rij ),while differing substantially in molecular orientation and interaction energy. A single-site rigid-body model there-fore requires an additional orientational degree of freedom.  
+
+> 2. Rigid-body state and orientation
+
+Each coarse-grained molecule is represented by 
+
+(ri, R i, s i) , (11) where ri is the molecular center-of-mass position, Ri ∈
+
+SO (3) is a rotation matrix mapping a fixed molecular body frame to the simulation frame (we will call this the “simulation-frame” rotation), and si denotes molec-ular species. In practice, orientations are stored as unit quaternions and converted to rotation matrices before constructing equivariant features. Writing the columns of Ri as the simulation-frame body axes, 
+
+Ri =
+
+ | | |
+
+ai bi ci
+
+| | |
+
+ , (12) a global rotation S acts as 
+
+ri → Sri, Ri → SR i. (13) The body axes therefore transform as ordinary equivariant vectors and can, in principle, be coupled directly to the spherical-harmonic edge features using the same tensor-product machinery already present in MACE. A full-frame rigid-body representation can consequently be constructed from the equivariant product 
+
+Y (ˆ rij ) ⊗ Ri ⊗ Rj , (14) where the three columns of each rotation matrix are treated as ℓ = 1 features. Clebsch–Gordan tensor prod-ucts decompose this product into irreducible SO (3) chan-nels, which are subsequently projected into a chosen set of edge irreducible representations. Although Eq. 14 preserves complete body-frame infor-mation, it contains a redundancy whenever the molecule possesses a nontrivial rotational point-group symmetry.  
+
+> 3. Molecular symmetry and the orientation quotient
+
+Let G ⊂ SO (3) denote the proper rotational symmetry group of a molecule. For any g ∈ G, the two body-frame orientations 
+
+Ri and Rig (15) describe the same physical molecular configuration. The physical orientational degree of freedom therefore belongs to the quotient space 
+
+[Ri] ∈ SO (3) /G. (16) An orientational feature map ΦG(R) should accordingly satisfy two distinct transformation properties. First, a rotation of the entire physical system should act equivari-antly, 
+
+ΦG(SR ) = D(S)Φ G(R), (17) where D(S) denotes the appropriate direct sum of irre-ducible representations. Second, a molecular symmetry operation should leave the feature unchanged, 
+
+ΦG(Rg ) = Φ G(R), g ∈ G. (18) 4Equations 17 and 18 distinguish a global rotation, which must be handled equivariantly by the network, from a body-frame symmetry operation, which represents no physical change in the molecular configuration. More generally, symmetry-adapted body features may be constructed by projecting each angular-momentum representation onto its G-invariant subspace. For angular momentum ℓ, the group-averaging projector is 
+
+P (ℓ) 
+
+> G
+
+= 1
+
+|G|
+
+X
+
+> g∈G
+
+D(ℓ)(g). (19) If Bℓ denotes a basis for the image of P (ℓ) 
+
+> G
+
+, a symmetry-adapted equivariant feature is 
+
+Φℓ(R) = D(ℓ)(R)Bℓ. (20) Because vectors in Bℓ are invariant under G,
+
+Φℓ(Rg ) = D(ℓ)(R)D(ℓ)(g)Bℓ = Φ ℓ(R), (21) while a global rotation gives 
+
+Φℓ(SR ) = D(ℓ)(S)Φ ℓ(R). (22) Thus the molecular symmetry is removed without sacrific-ing the global rotational equivariance required by MACE.  
+
+> 4. Example: A symmetry-adapted representation for water
+
+Water provides an important example because its proper rotational symmetry group is C2. We choose a molecular body frame (a, b, c) in which a is the physical two-fold symmetry axis. The nontrivial C2 operation is then a rotation by π about a,
+
+(a, b, c) → (a, −b, −c). (23) The symmetry-adapted water representation used here contains one ℓ = 1 contribution and one ℓ = 2 contribu-tion. The ℓ = 1 feature is the oriented C2 axis itself, 
+
+Φ(1)  
+
+> C2
+
+(Ri) = ai. (24) Because a is unchanged under Eq. 23, this feature is in-variant to the molecular C2 operation while transforming as an ordinary vector under global rotations. The remaining transverse orientation is encoded by an ℓ = 2 feature. In spherical-harmonic notation, the body-frame construction is 
+
+Φ(2)  
+
+> C2
+
+(Ri) = Y2(bi) − Y2(ci)
+
+√2 . (25) Equivalently, its Cartesian structure may be understood through the quadrupolar tensor 
+
+Qi = bibTi − cicTi . (26) Under the physical C2 operation, bi → − bi and ci → − ci,so 
+
+Qi → (−bi)( −bi)T − (−ci)( −ci)T = Qi. (27) The water body representation can therefore be written schematically as 
+
+ΦC2 (Ri) = Φ (1)  
+
+> C2
+
+(Ri) ⊕ Φ(2)  
+
+> C2
+
+(Ri), (28) corresponding to the e3nn irreducible representation con-tent 
+
+1o ⊕ 2e. (29) Importantly, physically equivalent orientations satisfy 
+
+ΦC2 (Rig) = Φ C2 (Ri), g ∈ C2, (30) so the network is not required to learn the molecular C2
+
+symmetry from training data. This symmetry treatment differs from using a molecu-lar inertia tensor as the orientation descriptor. A generic triaxial second-rank tensor is invariant under π rotations about each of its three principal axes and therefore has the proper rotational stabilizer D2. Such a representation identifies orientations according to SO (3) /D 2. Water, however, requires SO (3) /C 2. Since C2 is a strict sub-group of D2, an inertia-tensor representation introduces additional, nonphysical orientation identifications. The symmetry-adapted C2 representation instead retains the transverse orientational information needed to distinguish these configurations.  
+
+> 5. Rigid-body pair features
+
+The symmetry-adapted molecular features are intro-duced into MACE at the pair-interaction level. For an edge connecting molecules i and j, the rigid-body branch constructs the equivariant tensor product 
+
+Zrigid  
+
+> ij
+
+= Y (ˆ rij ) ⊗ ΦGi (Ri) ⊗ ΦGj (Rj ). (31) For the C2 water representation, Eq. 31 therefore contains couplings between the ordinary edge spherical harmonics and the ℓ = 1 and ℓ = 2 body features of both interacting molecules. Schematically, these include products of the form 
+
+Yℓ(ˆ rij ) ⊗ Φ(1)  
+
+> i
+
+⊗ Φ(1)  
+
+> j
+
+, (32) 
+
+Yℓ(ˆ rij ) ⊗ Φ(1)  
+
+> i
+
+⊗ Φ(2)  
+
+> j
+
+, (33) 
+
+Yℓ(ˆ rij ) ⊗ Φ(2)  
+
+> i
+
+⊗ Φ(2)  
+
+> j
+
+. (34) The tensor products are decomposed into irreducible rep-resentations using the standard Clebsch–Gordan coupling rules. In component notation, a representative coupling may be written schematically as 
+
+Z(L) 
+
+> M
+
+= X
+
+> m,μ i,μ j
+
+CLM ℓm,μ i,μ j Yℓm (ˆ rij )Φ i,μ i Φj,μ j , (35) 5where the effective coefficient CLM ℓm,μ i,μ j denotes the se-quence of Clebsch–Gordan contractions required to couple the three input irreducible representations to total angular momentum L.Because each factor in Eq. 31 has a known transforma-tion law, the resulting edge features remain equivariant under global rotation, 
+
+Z(L) 
+
+> ij
+
+→ D(L)(S)Z(L) 
+
+> ij
+
+. (36) At the same time, an independent molecular symmetry operation applied to either body leaves the rigid-pair feature unchanged, 
+
+Zrigid  
+
+> ij
+
+(Rigi, R j gj ) = Zrigid  
+
+> ij
+
+(Ri, R j ), gi ∈ Gi, g j ∈ Gj .
+
+(37) The resulting rigid-body tensor products are projected into copies of the same angular-momentum irreducible representations used by the ordinary MACE edge spheri-cal harmonics. The complete edge attribute supplied to the MACE interaction stack is then 
+
+eang  
+
+> ij
+
+= Y (ˆ rij ) ⊕ eZrigid  
+
+> ij
+
+, (38) where eZrigid  
+
+> ij
+
+denotes the projected rigid-body edge repre-sentation. Thus the modification leaves the central MACE message-passing architecture unchanged. Rather than replacing the interaction model, the rigid-body extension enlarges the geometric information available on each edge: 
+
+Y (ˆ rij )
+
+| {z } 
+
+> standard MACE
+
+−→ Y (ˆ rij )
+
+| {z } 
+
+> positional geometry
+
+⊕ eZrigid 
+
+> ij
+
+| {z } 
+
+> relative orientational geometry
+
+. (39) These expanded edge irreducible representations are sub-sequently used by the standard MACE interaction blocks to construct higher-order, many-body equivariant features and ultimately a scalar energy prediction.   
+
+> C. Datasets
+> 1. Generation of the random Gay-Berne dimer dataset
+
+The dataset gay_berne.xyz was generated as an ex-tended XYZ trajectory of isolated two-particle Gay-Berne dimers. The displacement vectors between particles were sampled independently from a uniform distribution over 
+
+rα ∼ U (σ0, 2σ0), α ∈ { x, y, z },
+
+where 
+
+σ0 = 1 .
+
+The two particle orientations were sampled indepen-dently and uniformly over the rotation group using 
+
+scipy.spatial.transform.Rotation.random() . Each ellipsoid had principal dimensions 
+
+(a0, b 0, c 0) = (1 , 1.5, 2) ,
+
+The characteristic Gay–Berne length was taken to be the smallest principal dimension, 
+
+σ0 = min( a0, b 0, c 0) = 1 .
+
+The orientation-dependent energy-anisotropy parameters were constructed from the particle dimensions as 
+
+ea = σ0
+
+a0
+
+b0c0
+
+, eb = σ0
+
+b0
+
+a0c0
+
+, ec = σ0
+
+c0
+
+b0a0
+
+,
+
+The same shape and energy-anisotropy parameters were used for both particles. Potential energies were computed via LAMMPS 27 and reported in reduced units. Forces and torques were computed via centered finite differences on particle positions and orientations, respectively, with all energy calls conducted by LAMMPs. After energy, forces, and torques were computed, configurations were retained only if U < 0.1. This filter removed strongly repulsive configurations while retaining attractive and weakly re-pulsive structures. Each computed frame contains the simulation cell, particle positions, scalar energy, forces, torques, quaternions, and the three ellipsoid-diameter arrays.  
+
+> 2. Generation and evaluation of formamide, benzene, and water clusters
+
+Dimer and trimer configurations were generated us-ing a custom Python workflow built with the Atomic Simulation Environment (ASE). A near-planar gas-phase geometry was obtained from the experimental gas-phase structure(s) compiled in the NIST Computational Chem-istry Comparison and Benchmark Database, Standard Reference Database 101 28 .To introduce limited intramolecular flexibility, each molecule was independently perturbed by small random Cartesian displacements. The displacement amplitudes were approximately mass weighted, such that hydrogen atoms underwent larger displacements than the heavier atoms. Additional correlated displacements were applied along bond directions to sample small bond-stretching and bending distortions. The resulting perturbation was scaled to a target root-mean-square atomic displacement 6of 0.035Å, with the displacement of any individual atom capped at 0.10Å. The original molecular center of mass was restored after distortion. These perturbations were intended to provide controlled sampling near the equilib-rium geometry and were not treated as an exact thermal normal-mode distribution. Cluster geometries were generated by independently rotating each distorted monomer using uniformly sam-pled three-dimensional rotation matrices and placing the molecular centers of mass at randomly selected relative positions. Both compact and weakly interacting configu-rations were included. Center-of-mass separations were sampled using a mixture distribution that preferentially sampled compact arrangements near typical π-stacking or hydrogen-bonding distances while retaining a broader tail of more weakly interacting configurations. For trimers, the third molecule was placed relative to either the first or second molecule, thereby producing triangular, chain-like, and partially dissociated arrangements. Configurations containing severe intermolecular atomic overlaps were rejected using minimum allowed interatomic distances. After assembly, each complete cluster was translated so that its total center of mass was located at the origin. All calculations were performed under nonperiodic boundary conditions. For each separate chemistry, a total of 10,000 clus-ter configurations were generated; a fixed pseudorandom seed was used to make the configuration generation re-producible. Potential energies and atomic forces were evaluated using the open-source FAIR Chemistry implementa-tion of the UMA universal machine-learned interatomic potential 29 . The ‘uma-s-1p2’ pretrained checkpoint was used with the OMol task through the ‘FAIRChemCalcu-lator’ interface. Each cluster was treated as a neutral singlet with total charge zero and spin multiplicity one. For each evaluated cluster, the total potential energy and Cartesian atomic forces were stored using an ASE ‘SinglePointCalculator’. Molecular centers of mass were calculated from the instantaneous distorted atomic coor-dinates and atomic masses. The Cartesian inertia tensor of each molecule was calculated about its instantaneous center of mass Rm as 
+
+Im = X
+
+> i∈m
+
+mi
+
+h
+
+∥ri − Rm∥2 I − (ri − Rm) ( ri − Rm)Ti
+
+.
+
+(40) where mi and ri are the mass and Cartesian position of atom (i), respectively. I is the 3 × 3 identity tensor. Diagonalization of Im yielded the three principal moments of inertia and the corresponding principal axes. The net force acting on each molecule was obtained by summing the atomic forces belonging to that molecule, 
+
+Fm = X
+
+> i∈m
+
+Fi. (41) The molecular torque was calculated with respect to the instantaneous molecular center of mass, 
+
+τ m = X
+
+> i∈m
+
+(ri − Rm) × Fi. (42) Because the torque was evaluated relative to the molecular center of mass, it was invariant under an arbitrary global translation of the cluster. When energy decomposition was enabled, each distorted monomer was also evaluated in isolation without changing its internal geometry. For a cluster containing N molecules, the total interaction energy was defined as 
+
+Eint = E1...N −
+
+> N
+
+X
+
+> i=1
+
+Ei. (43) Here, E1...N is the energy of the complete cluster and 
+
+Ei is the energy of isolated distorted monomer i. For a dimer composed of molecules i and j, the pair interaction energy was calculated as 
+
+E(2)  
+
+> ij
+
+= Eij − Ei − Ej . (44) For a trimer, the nonadditive three-body contribution was calculated as 
+
+E(3) 123 = E123 − E12 − E13 − E23 + E1 + E2 + E3. (45) Here, E123 is the energy of the complete trimer, Eij is the energy of the distorted dimer containing molecules i and 
+
+j, and Ei is the energy of isolated distorted monomer i.  
+
+> III. RESULTS A. Random Gay-Berne Dimers
+
+As a first pass, we evaluated how each model can be used to predict energies, forces, and torques for the ran-dom Gay-Berne dimer data set. All models in this section use the same fixed train/validation/test split. The split contains 1570 training configurations, 316 validation con-figurations, and 388 held-out test configurations. Feature selection, feature scaling, and target normalization were fit using only the training set. Model parameters were tuned on the validation set, after which each model was refit on the combined training and validation sets and evaluated once on the held-out test set. First, we demonstrate the equivalence of computing forces and torques through finite-difference of the learned scalar energy and through direct contraction of descrip-tor derivatives with the learned linear coefficients (Ta-ble I). Both models use (βE , β F , β τ ) = (1 , 0, 0) (i.e. the β
+
+weights indicate only training on energies) and give nearly identical held-out performance. The finite-difference evaluation achieves R2 
+
+> E
+
+= 0 .9938 , R2 
+
+> F
+
+= 0 .7479 , and 
+
+R2 
+
+> τ
+
+= 0 .7460 , while the descriptor-derivative evaluation gives R2 
+
+> E
+
+= 0 .9913 , R2 
+
+> F
+
+= 0 .7485 , and R2 
+
+> τ
+
+= 0 .7441 .This agreement shows that, for the linear AniSOAP model, 7
+
+FIG. 2: Energy, force, and torque tradeoff in performance (through l2 ≡ || ytrue −ypred || || ytrue || ) for the linear SOAP and 
+
+AniSOAP models for the two-particle Gay-Berne dataset. As isotropic models (e.g., SOAP) cannot provide angular derivatives, the torque error will always be l2 = 1 . Scatter points indicate weights that were explicitly tested, the background colors indicate the interpolated values. Each weight was tested for 5 independent train/test splits; values shown are performance metrics for the test set averaged across all splits. 
+
+TABLE I: Comparison of two derivative-evaluation procedures for the linear AniSOAP model trained on energies. Both models use (βE , β F , β τ ) = (1 , 0, 0) . In the finite-difference evaluation, forces and torques are obtained by finite differences of the learned scalar energy. In the descriptor-derivative evaluation, forces and torques are obtained by contracting precomputed descriptor derivatives with the learned linear coefficients. 
+
+Derivative evaluation R2 
+
+> E
+
+R2 
+
+> F
+
+R2 
+
+> τ
+
+RMSE E (ε) RMSE F (ε/σ 0) RMSE τ (ε)Finite differences of learned energy 0.9938 0.7479 0.7460 9.93 × 10 −4 0.03424 0.01098 Descriptor derivatives 0.9913 0.7485 0.7441 1.18 × 10 −3 0.03420 0.01103 
+
+forces and torques can be evaluated from descriptor deriva-tives without loss of accuracy relative to finite-differencing the learned energy. At the same time, both models predict energies more accurately than derivatives, indicating that accurate interpolation of the scalar energy surface alone does not fully learn the force and torque fields. As expected, the representative isotropic model per-forms poorly in the learning of energies and forces, with the former optimized at (βE , β F , β τ ) = (1 , 0, 0) with 
+
+l2 
+
+> E
+
+≡ || Etrue −Epred || || Etrue || = 0 .8, and the latter at (βE , β F , β τ ) = (0 , 1, 0) with l2 
+
+> F
+
+= 0 .62 . Isotropic models, fundamentally, cannot provide angular derivatives, and thus the torque error will always be l2 
+
+> τ
+
+= 1 . With the anisotropic model (AniSOAP ), we see improvement in all three metrics, with 
+
+min (l2 
+
+> E
+
+) = 0 .09 , min (l2 
+
+> F
+
+) = 0 .13 and min (l2 
+
+> τ
+
+) = 0 .21 ,all at their respective independent learning exercises. Varying the learning weights (βE , β F , β τ ) reveals a clear tradeoff between energy accuracy and derivative accu-racy (Fig. 2). Increasing the relative contribution of force and torque labels improves the mean force/torque test 
+
+l2 ≡ || ytrue −ypred || || ytrue || . The intermediate weighting regime provides a useful compromise, improving both forces and torques relative to the energy-trained model while main-taining moderate l2 
+
+> E
+
+. The force-trained and torque-trained single-observable models achieve high accuracy for the observable included in the objective, but poor perfor-mance on the others, emphasizing that balanced energy, force, and torque prediction requires fitting a shared scalar model with multiple observables. Full error tables are provided in the Supporting Information. 8   
+
+> (a) Benzene
+> (b) Water
+> (c) Formamide
+
+FIG. 3: Energy (left), force (center), and torque (right) tradeoff in performance for molecular targets. For each plot, the energy, force, and torque training weights vary in the same way as Fig. 2, with the same colorscales.    
+
+> B. Linear AniSOAP baselines on molecular dimers and trimers
+
+We next evaluated the same linear AniSOAP framework on a chemically realistic coarse-grained data sets. In contrast to the Gay–Berne dimers, where the target en-ergies, forces, and torques are generated from an ana-lytic anisotropic pair potential, these targets are obtained by first evaluating atomistic cluster energies and atomic forces and then projecting those quantities onto molecular centers of mass. Our goal in this section is not to identify the most expressive possible potential, but to establish what in-formation is recoverable from the chosen coarse-grained variables using a simple, interpretable conservative model. These linear AniSOAP models therefore serve as a representation-level baseline for the more expressive anisotropic MACE models considered below. If the lin-ear models fail completely, this would suggest that the retained coarse-grained variables do not encode the rele-vant molecular information. Conversely, nontrivial linear performance indicates that the position, orientation, and geometry variables contain recoverable energy, force, and torque signal, even if a more flexible architecture is needed to exploit that signal fully. Within each dataset, each molecule was represented as a single anisotropic coarse-grained particle located at its molecular center of mass. Particle orientations were defined by the principal axes of the molecular inertia tensor, and ellipsoid diameters were inferred from the cor-responding principal moments. Unless otherwise stated, the AniSOAP descriptor used nmax = 10 , lmax = 10 , cutoff radius rcut = 8 .0 , radial Gaussian width 2.5 , and a uniform ellipsoid-diameter scale factor of 0.7. These de-scriptor parameters define a physically constrained, mod-erately smoothed representation of the molecular shape. All models were trained and evaluated on the same fixed train/validation/test split, with feature selection, feature scaling, and target normalization fit using only the train-ing set. Figure 3 compares the energy, force, and torque er-rors obtained with isotropic SOAP and AniSOAP across benzene, formamide, and water. As in the Gay–Berne benchmark, the vertices of each triangle correspond to models trained exclusively on energy, force, or torque, while interior points correspond to joint fits with mixed learning weights. The interpolated surfaces therefore il-lustrate both the best performance available for each observable and the tradeoff between fitting energies and their translational and rotational derivatives. The benefit of explicitly retaining molecular anisotropy is strongest for benzene. At the single-observable limits, the normalized energy error decreases from l2 
+
+> E
+
+= 0 .81 
+
+with SOAP to 0.17 with AniSOAP , while the force error decreases from l2 
+
+> F
+
+= 0 .71 to 0.19 . More importantly, isotropic SOAP contains no orientational degree of free-dom and consequently gives l2 
+
+> τ
+
+= 1 throughout the torque panel. AniSOAP , in contrast, recovers substantial torque information, reaching l2 
+
+> τ
+
+= 0 .33 when trained directly on torques and l2 
+
+> τ
+
+= 0 .38 even at the energy-trained ver-tex. The broad low-error regions in the AniSOAP energy and force surfaces further indicate that the anisotropic descriptor retains information useful to more than one mechanical observable simultaneously. Formamide shows the same qualitative behavior, al-though with substantially larger residual errors. The energy-only error decreases from 0.94 for SOAP to 0.64 
+
+for AniSOAP , and the force-optimized error decreases from 9
+
+0.81 to 0.51 . The anisotropic representation again intro-duces recoverable rotational information: whereas SOAP is constrained to l2 
+
+> τ
+
+= 1 , the torque-trained AniSOAP 
+
+model reaches l2 
+
+> τ
+
+= 0 .67 . Thus, even for the more chemi-cally heterogeneous formamide clusters, molecular shape and orientation provide information that is absent from a center-of-mass-only isotropic representation. At the same time, the higher errors relative to benzene indicate that an ellipsoidal model does not capture the projected molecular interaction surface equally well for all chemistries. Water provides an interesting case. AniSOAP provides only modest improvements, with energy-trained errors of 
+
+0.88 and 0.83 for SOAP and AniSOAP , respectively. The force-optimized errors are likewise similar, 0.55 for SOAP and 0.51 for AniSOAP . Moreover, the torque information recovered by AniSOAP is weak: even direct torque training gives l2 
+
+> τ
+
+= 0 .91 , only slightly below the isotropic value of unity. The water results therefore show that intro-ducing an anisotropic density alone does not guarantee that the chosen coarse-grained geometry provides a useful representation of molecular orientation. Taken together, these three systems establish a hierar-chy in the usefulness of the ellipsoidal AniSOAP represen-tation. Benzene, which is reasonably approximated by ellipsoidal symmetry, shows a large gain from retaining anisotropy, formamide, with no symmetry, shows a clear but more moderate gain, and water shows little improve-ment over the isotropic baseline. These results reinforce the role of AniSOAP as a representation-level diagnostic: the descriptor can expose energy, force, and torque infor-mation when that information is captured by the chosen molecular geometry, but additional representational or architectural structure is required when it is not. This observation motivates the equivariant rigid-body MACE construction considered in the following section.  
+
+> C. Rigid-body equivariant MACE models
+
+We next tested whether explicit rigid-body informa-tion could be incorporated directly into an equivari-ant message-passing potential, taking the clearest case of failure for AniSOAP , water, as our test case. For each molecular system, we compared five representations: the best linear AniSOAP model, an isotropic MACE model using only center-of-mass positions and species, MACE augmented with moment-of-inertia (MOI) features, MACE augmented with orientation-dependent rigid-pair features, and MACE containing both MOI and orientation-dependent features. For water, the orientational features use the symmetry-adapted C2 representation described in Sec. II B; benzene and formamide use the full molecular frame. Unless otherwise stated, the MACE models were opti-mized using energy and force labels. Molecular torques therefore provide a particularly stringent test of whether the learned scalar energy has acquired the correct orienta-tional dependence: a model whose energy is independent of molecular orientation cannot produce a nonzero con-servative torque.  
+
+> D. Water: molecular orientation resolves a representation bottleneck
+
+Water exhibits the clearest dependence on the retained orientational degrees of freedom, as shown in Figure 4. The isotropic MACE model performs similarly to the linear SOAP baseline for energies and forces, but con-tains essentially no torque signal. The isotropic MACE model gives test scores of R2 
+
+> E
+
+= 0 .243 , R2 
+
+> F
+
+= 0 .668 , and 
+
+R2 
+
+> τ
+
+≈ 0, with corresponding relative ℓ2 errors of 0.870, 0.576, and 1.000. Similar to the difference between SOAP and AniSOAP models, adding the MOI features alone pro-duces almost no improvement: R2 
+
+> E
+
+= 0 .273 , R2 
+
+> F
+
+= 0 .671 ,and R2 
+
+> τ
+
+= 0 .050 . Thus, despite encoding a second-rank description of molecular geometry, the inertia tensor does not provide sufficient orientational information to repro-duce the water interaction surface in this benchmark. The behavior changes qualitatively when explicit rigid-pair orientation is introduced. The symmetry-adapted C2
+
+pair representation increases the test scores to R2 
+
+> E
+
+= 0 .874 ,
+
+R2 
+
+> F
+
+= 0 .840 , and R2 
+
+> τ
+
+= 0 .642 , reducing the energy RMSE from 45.28 to 18.46 meV (per bead) and the torque RMSE from 120.02 to 71.80 meV (per bead). The combined MOI and C2-orientation model performs substantially better still, reaching R2 
+
+> E
+
+= 0 .982 , R2 
+
+> F
+
+= 0 .978 , and R2 
+
+> τ
+
+= 0 .937 .Its RMSE values are 7.06 meV for energy, 31.14 meV/Å for force components, and 30.16 meV for torque compo-nents. Relative to isotropic MACE, these correspond to reductions in RMSE of approximately 84%, 74%, and 75% for energies, forces, and torques, respectively. The contrast between the MOI-only and orientation-aware models is particularly important. A generic inertia tensor possesses a D2 rotational stabilizer, whereas the proper rotational symmetry of water is only C2. MOI therefore identifies physically inequivalent water orienta-tions and cannot represent the complete rigid-water ori-entation space. The C2 representation explicitly removes only the physical molecular equivalence while retaining the orientational distinctions required by the interaction energy. The production results are therefore consistent with the controlled water benchmark, in which isotropic and MOI representations were indistinguishable while full-frame and symmetry-adapted orientational features resolved the missing energy variation. Interestingly, the production model containing both MOI and C2 pair features performs better than the C2
+
+pair representation alone. This does not imply that MOI becomes a complete orientation representation. Rather, the low-order tensor features appear to provide a useful complementary geometric signal once the false orientation aliases have already been resolved by the C2 pair repre-sentation. Thus, the two feature classes play different roles: the symmetry-adapted frame establishes orienta-tional completeness, while the MOI channels provide an 10 
+
+FIG. 4: Parity plots of the energy, force, and torque learning tasks for water clusters. Models were trained solely on energy and force data. The left column displays the best AniSOAP results, and the other columns are the MACE models. As MACE incorporates additional features (MOI, C2 symmetry, and MOI+ C2 symmetry), the regressions systematically improve. economical low-order description that can facilitate learn-ing. 
+
+IV. CONCLUSIONS 
+
+Machine-learned interatomic potentials have become increasingly powerful and accurate for atomistic systems, but are still limited in accurately describing the inter-actions between coarse-grained sites, especially if the molecules grouped into sites exhibit anisotropic interac-tions. In this work, we demonstrated that incorporat-ing molecular anisotropy into the SOAP and MACE for-malisms ( AniSOAP , MACE-CG) can systematically learn the energies, forces, and torques of various single-site anisotropic coarse-grained particles. AniSOAP serves as a simpler baseline, utilizing linear models on the anisotropic features to predict the targets. AniSOAP incorporates Dv
+
+(ellipsoidal) molecular symmetry, enabling the accurate learning of ellipsoidal bodies, such as benzene molecules and Gay-Berne particles. However, for molecules with other molecular symmetries, such as water, the AniSOAP formalisms fail to accurately learn the targets. The flexibility of the MACE formalism enables the inte-gration of different molecular geometries as node features. As a baseline comparison, we demonstrate that MACE alone cannot accurately reproduce energies, forces, and torques for water molecules, as MACE is designed for isotropic particles. We incorporated moment-of-inertia features into the MACE model, which is analogous to defining the ellipsoidal geometry in AniSOAP , and obtain similar performance as the AniSOAP models. However, incorporating water’s C2 point-group symmetry into our MACE-CG model dramatically improved the models, indi-cating the importance of including molecular point-group symmetry when performing single-site coarse-graining. By its nature, coarse-grained models incur inaccuracy in exchange for simpler, more computationally efficient models. This work has demonstrated that for single-site coarse-graining, we can systematically increase CG models’ accuracy by incorporating the molecular geometry. This suggests future directions for coarse-graining, where model accuracy can be tuned in two ways - the usual way of tuning the resolution of the coarse-grained models (how many beads are utilized to represent the molecular system), as well the amount of geometric/symmetry priors to incorporate for each bead.   
+
+> 1J. Behler and M. Parrinello, “Generalized Neural-Network Repre-sentation of High-Dimensional Potential-Energy Surfaces,” Phys. Rev. Lett. 98 , 146401–146401 (2007).
+> 2O. T. Unke, S. Chmiela, H. E. Sauceda, M. Gastegger, I. Poltavsky, K. T. Schutt, A. Tkatchenko, and K.-R. Mueller, “Machine Learn-ing Force Fields,” Chem. Rev. 121 , 10142–10186 (2021).
+> 3I. Batatia, P. Benner, Y. Chiang, A. M. Elena, D. P. Kovács, J. Riebesell, X. R. Advincula, M. Asta, M. Avaylon, W. J. Bald-win, F. Berger, N. Bernstein, A. Bhowmik, F. Bigi, S. M. Blau, V. Cărare, M. Ceriotti, S. Chong, J. P. Darby, S. De, F. Della Pia, V. L. Deringer, R. Elijošius, Z. El-Machachi, E. Fako, F. Falcioni, A. C. Ferrari, J. L. A. Gardner, M. J. Gawkowski, A. Genreith-Schriever, J. George, R. E. A. Goodall, J. Grandel, C. P. Grey,
+
+11 
+
+P. Grigorev, S. Han, W. Handley, H. H. Heenen, K. Hermansson, C. H. Ho, S. Hofmann, C. Holm, J. Jaafar, K. S. Jakob, H. Jung, V. Kapil, A. D. Kaplan, N. Karimitari, J. R. Kermode, P. Kourtis, N. Kroupa, J. Kullgren, M. C. Kuner, D. Kuryla, G. Liepuoniute, C. Lin, J. T. Margraf, I.-B. Magdău, A. Michaelides, J. H. Moore, A. A. Naik, S. P. Niblett, S. W. Norwood, N. O’Neill, C. Ort-ner, K. A. Persson, K. Reuter, A. S. Rosen, L. A. M. Rosset, L. L. Schaaf, C. Schran, B. X. Shi, E. Sivonxay, T. K. Stenczel, C. Sutton, V. Svahn, T. D. Swinburne, J. Tilly, C. van der Oord, S. Vargas, E. Varga-Umbrich, T. Vegge, M. Vondrák, Y. Wang, W. C. Witt, T. Wolf, F. Zills, and G. Csányi, “A foundation model for atomistic materials chemistry,” The Journal of Chemi-cal Physics 163 , 184110 (2025). 
+
+> 4
+
+W. G. Noid, R. J. Szukalo, K. M. Kidder, and M. C. Lesniewski, “Rigorous Progress in Coarse-Graining,” Annual Review of Physi-cal Chemistry 75 , 21–45 (2024). 
+
+> 5
+
+W. G. Noid, J.-W. Chu, G. S. Ayton, V. Krishna, S. Izvekov, G. A. Voth, A. Das, and H. C. Andersen, “The multiscale coarse-graining method. I. A rigorous bridge between atomistic and coarse-grained models,” The Journal of Chemical Physics 128 ,244114 (2008). 
+
+> 6
+
+I. Zadok and S. Srebnik, “Coarse-Grained Simulation of Protein-Imprinted Hydrogels,” The Journal of Physical Chemistry B 122 ,7091–7101 (2018). 
+
+> 7
+
+F. Görlich and J. Zavadlav, “Mapping Still Matters: Coarse-Graining with Machine Learning Potentials,” Journal of Chemical Information and Modeling 66 , 2166–2176 (2026). 
+
+> 8
+
+J. Wang, S. Olsson, C. Wehmeyer, A. Perez, N. E. Charron, G. De Fabritiis, F. Noe, and C. Clementi, “Machine Learning of Coarse-Grained Molecular Dynamics Force Fields,” ACS Central Science 5, 755–767 (2019). 
+
+> 9
+
+A. P. Bartok, R. Kondor, and G. Csanyi, “On representing chemi-cal environments,” Phys. Rev. B 87 , 184115 (2013). 
+
+> 10
+
+J. Behler, “Neural network potential-energy surfaces in chemistry: A tool for large-scale simulations,” Physical Chemistry Chemical Physics 13 , 17930–17955 (2011). 
+
+> 11
+
+D. M. Anstine and O. Isayev, “Machine Learning Interatomic Potentials and Long-Range Physics,” The Journal of Physical Chemistry A 127 , 2417–2431 (2023). 
+
+> 12
+
+S. N. Pozdnyakov and M. Ceriotti, “Incompleteness of graph neural networks for points clouds in three dimensions,” Machine Learning: Science and Technology 3, 045020 (2022). 
+
+> 13
+
+S. Pozdnyakov and M. Ceriotti, “Smooth, exact rotational sym-metrization for deep learning on point clouds,” Advances in Neural Information Processing Systems 36 , 79469–79501 (2023). 
+
+> 14
+
+S. N. Pozdnyakov, M. J. Willatt, A. P. Bartók, C. Ortner, G. Csányi, and M. Ceriotti, “Incompleteness of Atomic Struc-ture Representations,” Physical Review Letters 125 (2020), 10.1103/PhysRevLett.125.166001. 
+
+> 15
+
+S. J. Marrink, H. J. Risselada, S. Yefimov, D. P. Tieleman, and A. H. De Vries, “The MARTINI Force Field: Coarse Grained Model for Biomolecular Simulations,” The Journal of Physical Chemistry B 111 , 7812–7824 (2007). 
+
+> 16
+
+A. N. Hosseini and D. van der Spoel, “Martini on the Rocks: Can a Coarse-Grained Force Field Model Crystals?” The Journal of Physical Chemistry Letters 15 , 1079–1088 (2024). 
+
+> 17
+
+T. D. Loose, P. G. Sahrmann, T. S. Qu, and G. A. Voth, “Changing Your Martini Can Still Give You a Hangover,” Journal of Chemical Theory and Computation 20 , 9190–9208 (2024). 
+
+> 18
+
+H. T. L. Nguyen and D. M. Huang, “Systematic bottom-up molecu-lar coarse-graining via force and torque matching using anisotropic particles,” The Journal of Chemical Physics 156 , 184118 (2022). 
+
+> 19
+
+M. O. Wilson and D. M. Huang, “Anisotropic molecular coarse-graining by force and torque matching with neural networks,” The Journal of Chemical Physics 159 (2023). 
+
+> 20
+
+R. Drautz, “Atomic cluster expansion for accurate and transferable interatomic potentials,” Phys. Rev. B 99 , 014104 (2019). 
+
+> 21
+
+I. Batatia, D. P. Kovacs, G. Simm, C. Ortner, and G. Csanyi, “MACE: Higher Order Equivariant Message Passing Neural Net-works for Fast and Accurate Force Fields,” NeurIPs 35 , 11423– 11436 (2022). 
+
+> 22
+
+A. Lin, K. K. Huguenin-Dumittan, Y.-C. Cho, J. Nigam, and R. K. Cersonsky, “Expanding density-correlation machine learning representations for anisotropic coarse-grained particles,” J. Chem. Phys. 161 , 074112 (2024). 
+
+> 23
+
+A. Y. Lin, L. Ortengren, S. Hwang, Y.-C. Cho, J. Nigam, and R. K. Cersonsky, “AniSOAP: Machine Learning Representations for Coarse-grained and Non-spherical Systems,” Journal of Open Source Software 10 , 7954 (2025). 
+
+> 24
+
+M. Fakhraei, C. A. Kieslich, and M. P. Howard, “Approximation of Anisotropic Pair Potentials Using Multivariate Interpolation,” The Journal of Physical Chemistry B 129 , 6985–6996 (2025). 
+
+> 25
+
+M. Fakhraei, M. Bush, C. A. Kieslich, and M. P. Howard, “Ap-proximation of forces and torques from anisotropic pairwise inter-actions using multivariate polynomials,” The Journal of Chemical Physics 164 , 144117 (2026). 
+
+> 26
+
+M. Y. Zhang, S. K. Lee, S. C. Glotzer, and R. Lindsey, “Aniso-Chimes: A Generalized Machine-Learned Interaction Model for Anisotropic Nanoparticles,” (AIChE, 2026). 
+
+> 27
+
+A. P. Thompson, H. M. Aktulga, R. Berger, D. S. Bolintineanu, W. M. Brown, P. S. Crozier, P. J. In ’T Veld, A. Kohlmeyer, S. G. Moore, T. D. Nguyen, R. Shan, M. J. Stevens, J. Tranchida, C. Trott, and S. J. Plimpton, “LAMMPS - a flexible simulation tool for particle-based materials modeling at the atomic, meso, and continuum scales,” Comp. Phys. Comm. 271 , 108171 (2022). 
+
+> 28
+
+R. Johnson, “Computational chemistry comparison and bench-mark database, nist standard reference database 101,” (2002). 
+
+> 29
+
+B. M. Wood, M. Dzamba, X. Fu, M. Gao, M. Shuaibi, L. Barroso-Luque, K. Abdelmaqsoud, V. Gharakhanyan, J. R. Kitchin, D. S. Levine, K. Michel, A. Sriram, T. Cohen, A. Das, A. Rizvi, S. J. Sahoo, Z. W. Ulissi, and C. L. Zitnick, “UMA: A Family of Universal Models for Atoms,” (2025), arXiv:2506.23971 [cs]. 12 
+
+TABLE A1: SOAP and AniSOAP descriptor hyperparameters used for all datasets. The α grid gives the minimum and maximum ridge parameters followed by the number of grid points. 
+
+Dataset Descriptor nmax ℓmax rc σr sd rcond tbasis α grid Benzene 
+
+AniSOAP 10 10 8 2.5 0.7 1 × 10 −6 0.01 [1 × 10 −8, 1 × 10 3] (24) SOAP 10 10 8 2.5 0.7 1 × 10 −6 0.01 [1 × 10 −8, 1 × 10 3] (24) Formamide 
+
+AniSOAP 10 10 8 2.5 0.7 1 × 10 −6 0.01 [1 × 10 −8, 1 × 10 3] (24) SOAP 10 10 8 2.5 0.7 1 × 10 −6 0.01 [1 × 10 −8, 1 × 10 3] (24) Gay–Berne 
+
+AniSOAP 10 10 5 2 1 1 × 10 −6 0.01 [1 × 10 −12 , 0.01] (41) SOAP 10 10 5 2 1 1 × 10 −6 0.01 [1 × 10 −12 , 0.01] (41) Water 
+
+AniSOAP 10 10 8 2.5 0.7 1 × 10 −6 0.01 [1 × 10 −8, 1 × 10 3] (24) SOAP 10 10 8 2.5 0.7 1 × 10 −6 0.01 [1 × 10 −8, 1 × 10 3] (24) 13 
+
+TABLE A2: Errors for linear SOAP and AniSOAP models for Gay–Berne on the test set. Loss weights are reported as (wE , w F , w τ ). Each error entry is (ℓ2, RMSE , R 2). Torque errors are reported for AniSOAP and omitted for isotropic SOAP. Values are mean ± standard deviation over equivalent runs. Values less than 0.001 are denoted by ϵ and greater than 100 .0 are denoted by Ω.
+
+(wE , w F , w τ ) E : ( ℓ2, RMSE , R 2) F : ( ℓ2, RMSE , R 2) τ : ( ℓ2, RMSE , R 2)
+
+> AniSOAP
+
+(0 , 0, 1) (Ω , Ω, ≪ 0) (Ω , Ω, ≪ 0) (0 .21 ± ϵ, 0.0045 ± ϵ, 0.957 ± ϵ)(0 , 1, 0) (4 .7 ± 5.2, 0.15 ± 0.013 , ≪ 0) (0 .13 ± 0.0011 , 0.0089 ± ϵ, 0.983 ± ϵ) (5 .6 ± 6.5, 0.21 ± 0.019 , ≪ 0) (0 , 12 , 12 ) (1 , 0.013 , −0.105) (0 .13 , 0.0089 , 0.983) (0 .22 , 0.0047 , 0.953) (0 , 13 , 23 ) (1 , 0.013 , −0.109) (0 .13 , 0.0089 , 0.983) (0 .21 , 0.0047 , 0.954) (0 , 23 , 13 ) (1 , 0.013 , −0.108) (0 .13 , 0.0091 , 0.982) (0 .22 , 0.0049 , 0.95) (1 , 0, 0) (0 .078 ± 0.023 , 0.0012 ± ϵ, 0.991 ± ϵ) (0 .5 ± ϵ, 0.034 ± ϵ, 0.749 ± ϵ) (0 .51 ± ϵ, 0.011 ± ϵ, 0.744 ± ϵ)( 12 , 0, 12 ) (0 .52 , 0.0066 , 0.73) (0 .45 , 0.031 , 0.794) (0 .23 , 0.005 , 0.947) ( 12 , 12 , 0) (0 .61 , 0.0077 , 0.632) (0 .24 , 0.017 , 0.941) (0 .44 , 0.0097 , 0.803) ( 12 , 14 , 14 ) (0 .6, 0.0077 , 0.634) (0 .27 , 0.018 , 0.929) (0 .28 , 0.0062 , 0.919) ( 13 , 0, 23 ) (0 .6, 0.0076 , 0.635) (0 .46 , 0.031 , 0.793) (0 .21 , 0.0046 , 0.955) ( 13 , 13 , 13 ) (0 .75 , 0.0094 , 0.443) (0 .21 , 0.014 , 0.955) (0 .26 , 0.0056 , 0.935) ( 13 , 23 , 0) (0 .72 , 0.0091 , 0.487) (0 .2, 0.013 , 0.961) (0 .42 , 0.0092 , 0.821) ( 14 , 12 , 14 ) (0 .83 , 0.01 , 0.314) (0 .18 , 0.012 , 0.969) (0 .26 , 0.0057 , 0.931) ( 14 , 14 , 12 ) (0 .79 , 0.01 , 0.372) (0 .2, 0.013 , 0.962) (0 .23 , 0.005 , 0.947) ( 23 , 0, 13 ) (0 .42 , 0.0053 , 0.825) (0 .46 , 0.031 , 0.788) (0 .27 , 0.0059 , 0.927) ( 23 , 13 , 0) (0 .49 , 0.0061 , 0.765) (0 .3, 0.02 , 0.91) (0 .46 , 0.01 , 0.785) ( 910 , 0.009 , 0.09) (0 .21 , 0.0027 , 0.954) (0 .47 , 0.032 , 0.779) (0 .39 , 0.0086 , 0.846) ( 910 , 0.09 , 0.009) (0 .26 , 0.0033 , 0.93) (0 .42 , 0.029 , 0.822) (0 .47 , 0.01 , 0.778) 
+
+> SOAP
+
+(0 , 0, 1) (0 .83 ± 0.24 , 0.013 ± ϵ, −0.000207 ± ϵ) (1 ± ϵ, 0.068 ± ϵ, 0 ± ϵ)(0 , 1, 0) (0 .89 ± 0.16 , 0.015 ± ϵ, −0.388 ± ϵ) (0 .62 ± 0.0011 , 0.042 ± ϵ, 0.621 ± 0.0013) (0 , 12 , 12 ) (1 , 0.015 , −0.387) (0 .61 , 0.042 , 0.624) (0 , 13 , 23 ) (1 , 0.015 , −0.387) (0 .61 , 0.042 , 0.624) (0 , 23 , 13 ) (1 , 0.015 , −0.389) (0 .62 , 0.042 , 0.621) (1 , 0, 0) (0 .66 ± 0.19 , 0.01 ± ϵ, 0.365 ± 0.0025) (0 .76 ± 0.0042 , 0.052 ± ϵ, 0.417 ± 0.0064) ( 12 , 0, 12 ) (0 .8, 0.01 , 0.362) (0 .77 , 0.052 , 0.409) ( 12 , 12 , 0) (0 .96 , 0.012 , 0.0812) (0 .57 , 0.039 , 0.671) ( 12 , 14 , 14 ) (0 .9, 0.011 , 0.19) (0 .6, 0.041 , 0.644) ( 13 , 0, 23 ) (0 .79 , 0.01 , 0.369) (0 .76 , 0.052 , 0.428) ( 13 , 13 , 13 ) (0 .94 , 0.012 , 0.116) (0 .58 , 0.04 , 0.662) ( 13 , 23 , 0) (1 , 0.013 , −0.0793) (0 .57 , 0.039 , 0.677) ( 14 , 12 , 14 ) (1 , 0.013 , −0.0789) (0 .57 , 0.039 , 0.678) ( 14 , 14 , 12 ) (0 .96 , 0.012 , 0.0805) (0 .57 , 0.039 , 0.671) ( 23 , 0, 13 ) (0 .79 , 0.01 , 0.37) (0 .75 , 0.051 , 0.431) ( 23 , 13 , 0) (0 .89 , 0.011 , 0.215) (0 .59 , 0.04 , 0.651) ( 910 , 0.009 , 0.09) (0 .76 , 0.0096 , 0.426) (0 .68 , 0.046 , 0.537) ( 910 , 0.09 , 0.009) (0 .78 , 0.0099 , 0.388) (0 .64 , 0.044 , 0.586) 14 
+
+TABLE A3: Errors for linear SOAP and AniSOAP models for Benzene on the test set. Loss weights are reported as 
+
+(wE , w F , w τ ). Each error entry is (ℓ2, RMSE , R 2). Torque errors are reported for AniSOAP and omitted for isotropic SOAP. Values are mean ± standard deviation over equivalent runs. Values less than 0.001 are denoted by ϵ and greater than 100 .0 are denoted by Ω.
+
+(wE , w F , w τ ) E : ( ℓ2, RMSE , R 2) F : ( ℓ2, RMSE , R 2) τ : ( ℓ2, RMSE , R 2)
+
+> AniSOAP
+
+(0 , 0, 1) (1 ± ϵ, Ω, ≪ 0) (1 ± ϵ, Ω, ≪ 0) (0 .35 ± 0.016 , 1.1 ± 0.028 , 0.88 ± 0.01 (0 , 1, 0) (0 .89 ± 0.24 , 10 ± 8.6, ≪ 0) (0 .2 ± 0.0099 , 0.57 ± 0.027 , 0.96 ± 0.004) (0 .89 ± 0.24 , 28 ± 24 , ≪ 0) (0 , 12 , 12 ) (0 .8 ± 0.27 , 0.87 ± 0.46 , −0.633 ± 1.4) (0 .2 ± 0.0097 , 0.58 ± 0.029 , 0.959 ± 0.004) (0 .35 ± 0.016 , 1.1 ± 0.029 , 0.88 ± 0.01 (0 , 13 , 23 ) (0 .88 ± 0.2, 1.1 ± 0.5, −1.31 ± 1.7) (0 .2 ± 0.0097 , 0.58 ± 0.029 , 0.959 ± 0.004) (0 .35 ± 0.016 , 1.1 ± 0.029 , 0.88 ± 0.01 (0 , 23 , 13 ) (0 .77 ± 0.31 , 0.73 ± 0.4, −0.171 ± 1) (0 .2 ± 0.0096 , 0.58 ± 0.028 , 0.959 ± 0.0039) (0 .35 ± 0.016 , 1.1 ± 0.029 , 0.879 ± 0.01 (1 , 0, 0) (0 .17 ± 0.0098 , 0.13 ± 0.0065 , 0.97 ± 0.0034) (0 .27 ± 0.011 , 0.77 ± 0.051 , 0.927 ± 0.0061) (0 .4 ± 0.011 , 1.3 ± 0.041 , 0.839 ± 0.008 ( 12 , 0, 12 ) (0 .22 ± 0.017 , 0.16 ± 0.01 , 0.953 ± 0.0076) (0 .21 ± 0.0077 , 0.6 ± 0.029 , 0.956 ± 0.0032) (0 .35 ± 0.015 , 1.1 ± 0.028 , 0.88 ± 0.01 ( 12 , 12 , 0) (0 .21 ± 0.016 , 0.16 ± 0.0093 , 0.955 ± 0.0068) (0 .2 ± 0.0088 , 0.58 ± 0.027 , 0.959 ± 0.0036) (0 .36 ± 0.015 , 1.1 ± 0.028 , 0.874 ± 0.01 ( 12 , 14 , 14 ) (0 .21 ± 0.017 , 0.16 ± 0.01 , 0.954 ± 0.0075) (0 .2 ± 0.0093 , 0.58 ± 0.029 , 0.958 ± 0.0038) (0 .35 ± 0.015 , 1.1 ± 0.03 , 0.879 ± 0.01 ( 13 , 0, 23 ) (0 .22 ± 0.018 , 0.17 ± 0.011 , 0.951 ± 0.0081) (0 .21 ± 0.0082 , 0.6 ± 0.029 , 0.956 ± 0.0034) (0 .35 ± 0.015 , 1.1 ± 0.028 , 0.88 ± 0.01 ( 13 , 13 , 13 ) (0 .22 ± 0.018 , 0.17 ± 0.011 , 0.951 ± 0.008) (0 .2 ± 0.0094 , 0.58 ± 0.029 , 0.959 ± 0.0038) (0 .35 ± 0.016 , 1.1 ± 0.029 , 0.88 ± 0.01 ( 13 , 23 , 0) (0 .22 ± 0.017 , 0.17 ± 0.01 , 0.951 ± 0.0076) (0 .2 ± 0.0096 , 0.58 ± 0.028 , 0.959 ± 0.0039) (0 .36 ± 0.015 , 1.1 ± 0.027 , 0.873 ± 0.01 ( 14 , 12 , 14 ) (0 .22 ± 0.018 , 0.17 ± 0.011 , 0.95 ± 0.0083) (0 .2 ± 0.0095 , 0.58 ± 0.028 , 0.959 ± 0.0039) (0 .35 ± 0.016 , 1.1 ± 0.03 , 0.879 ± 0.01 ( 14 , 14 , 12 ) (0 .22 ± 0.018 , 0.17 ± 0.011 , 0.95 ± 0.0083) (0 .2 ± 0.0095 , 0.58 ± 0.029 , 0.959 ± 0.0039) (0 .35 ± 0.016 , 1.1 ± 0.029 , 0.88 ± 0.01 ( 23 , 0, 13 ) (0 .21 ± 0.016 , 0.16 ± 0.0098 , 0.957 ± 0.0069) (0 .21 ± 0.006 , 0.61 ± 0.026 , 0.955 ± 0.0026) (0 .35 ± 0.015 , 1.1 ± 0.03 , 0.878 ± 0.01 ( 23 , 13 , 0) (0 .2 ± 0.014 , 0.15 ± 0.0083 , 0.959 ± 0.0059) (0 .21 ± 0.0077 , 0.59 ± 0.024 , 0.958 ± 0.0032) (0 .36 ± 0.014 , 1.1 ± 0.03 , 0.873 ± 0.01 ( 910 , 0.009 , 0.09) (0 .19 ± 0.014 , 0.14 ± 0.0079 , 0.965 ± 0.0052) (0 .22 ± 0.0075 , 0.64 ± 0.029 , 0.95 ± 0.0034) (0 .36 ± 0.014 , 1.1 ± 0.03 , 0.87 ± 0.01 ( 910 , 0.09 , 0.009) (0 .18 ± 0.013 , 0.14 ± 0.0074 , 0.966 ± 0.0049) (0 .22 ± 0.0087 , 0.64 ± 0.03 , 0.95 ± 0.0038) (0 .37 ± 0.014 , 1.2 ± 0.034 , 0.864 ± 0.0
+
+> SOAP
+
+(0 , 0, 1) (1 ± ϵ, 0.75 ± 0.032 , −8.14 × 10 −5 ± ϵ) (1 ± ϵ, 2.8 ± 0.064 , −5.55 × 10 −17 ± ϵ)(0 , 1, 0) (0 .99 ± 0.0089 , 0.77 ± 0.06 , −0.0578 ± 0.099) (0 .71 ± 0.0091 , 2 ± 0.068 , 0.494 ± 0.013) (0 , 12 , 12 ) (0 .99 ± 0.016 , 0.77 ± 0.06 , −0.047 ± 0.094) (0 .71 ± 0.0091 , 2 ± 0.068 , 0.494 ± 0.013) (0 , 13 , 23 ) (0 .99 ± 0.0089 , 0.77 ± 0.06 , −0.0578 ± 0.099) (0 .71 ± 0.0091 , 2 ± 0.068 , 0.494 ± 0.013) (0 , 23 , 13 ) (1 ± 0.0045 , 0.78 ± 0.057 , −0.069 ± 0.098) (0 .71 ± 0.0091 , 2 ± 0.068 , 0.494 ± 0.013) (1 , 0, 0) (0 .81 ± 0.013 , 0.61 ± 0.033 , 0.343 ± 0.021) (0 .8 ± 0.034 , 2.3 ± 0.13 , 0.358 ± 0.055) ( 12 , 0, 12 ) (0 .81 ± 0.014 , 0.61 ± 0.033 , 0.343 ± 0.022) (0 .8 ± 0.03 , 2.3 ± 0.12 , 0.363 ± 0.049) ( 12 , 12 , 0) (0 .87 ± 0.02 , 0.66 ± 0.032 , 0.236 ± 0.035) (0 .72 ± 0.01 , 2 ± 0.074 , 0.482 ± 0.015) ( 12 , 14 , 14 ) (0 .85 ± 0.023 , 0.64 ± 0.034 , 0.274 ± 0.039) (0 .73 ± 0.023 , 2.1 ± 0.1, 0.465 ± 0.034) ( 13 , 0, 23 ) (0 .81 ± 0.013 , 0.61 ± 0.033 , 0.343 ± 0.021) (0 .8 ± 0.034 , 2.3 ± 0.13 , 0.358 ± 0.055) ( 13 , 13 , 13 ) (0 .87 ± 0.02 , 0.66 ± 0.032 , 0.237 ± 0.035) (0 .72 ± 0.012 , 2 ± 0.077 , 0.481 ± 0.017) ( 13 , 23 , 0) (0 .89 ± 0.019 , 0.67 ± 0.031 , 0.202 ± 0.034) (0 .72 ± 0.0082 , 2 ± 0.069 , 0.489 ± 0.012) ( 14 , 12 , 14 ) (0 .89 ± 0.018 , 0.67 ± 0.031 , 0.201 ± 0.033) (0 .71 ± 0.0082 , 2 ± 0.068 , 0.49 ± 0.012) ( 14 , 14 , 12 ) (0 .87 ± 0.021 , 0.66 ± 0.032 , 0.237 ± 0.036) (0 .72 ± 0.013 , 2 ± 0.08 , 0.479 ± 0.019) ( 23 , 0, 13 ) (0 .81 ± 0.014 , 0.61 ± 0.034 , 0.344 ± 0.023) (0 .8 ± 0.027 , 2.3 ± 0.12 , 0.364 ± 0.044) ( 23 , 13 , 0) (0 .85 ± 0.022 , 0.64 ± 0.033 , 0.273 ± 0.038) (0 .73 ± 0.02 , 2.1 ± 0.093 , 0.468 ± 0.029) ( 910 , 0.009 , 0.09) (0 .81 ± 0.013 , 0.61 ± 0.033 , 0.343 ± 0.022) (0 .79 ± 0.034 , 2.2 ± 0.13 , 0.374 ± 0.055) ( 910 , 0.09 , 0.009) (0 .82 ± 0.018 , 0.62 ± 0.033 , 0.328 ± 0.029) (0 .76 ± 0.037 , 2.2 ± 0.13 , 0.42 ± 0.057) 15 
+
+TABLE A4: Errors for linear SOAP and AniSOAP models for Water on the test set. Loss weights are reported as 
+
+(wE , w F , w τ ). Each error entry is (ℓ2, RMSE , R 2). Torque errors are reported for AniSOAP and omitted for isotropic SOAP. Values are mean ± standard deviation over equivalent runs. Values less than 0.001 are denoted by ϵ and greater than 100 .0 are denoted by Ω.
+
+(wE , w F , w τ ) E : ( ℓ2, RMSE , R 2) F : ( ℓ2, RMSE , R 2) τ : ( ℓ2, RMSE , R 2)
+
+> AniSOAP
+
+(0 , 0, 1) (1 ± ϵ, 0.24 ± 0.024 , ≪ 0) (1 ± ϵ, 1.4 ± 0.11 , ≪ 0) (0 .92 ± 0.0022 , 0.11 ± 0.0058 , 0.158 ±
+
+(0 , 1, 0) (0 .97 ± 0.067 , 0.09 ± 0.038 , −2.37 ± 2.6) (0 .52 ± 0.012 , 0.11 ± 0.0051 , 0.73 ± 0.012) (1 ± ϵ, 2.4 ± 0.57 , ≪ 0) (0 , 12 , 12 ) (0 .92 ± 0.011 , 0.048 ± 0.0015 , 0.151 ± 0.021) (0 .52 ± 0.012 , 0.11 ± 0.0053 , 0.732 ± 0.013) (0 .92 ± 0.0021 , 0.11 ± 0.0057 , 0.157 ±
+
+(0 , 13 , 23 ) (0 .9 ± 0.027 , 0.047 ± 0.0024 , 0.191 ± 0.049) (0 .52 ± 0.012 , 0.11 ± 0.0052 , 0.731 ± 0.013) (0 .92 ± 0.0024 , 0.11 ± 0.0057 , 0.157 ±
+
+(0 , 23 , 13 ) (0 .94 ± 0.034 , 0.049 ± 0.0029 , 0.124 ± 0.064) (0 .52 ± 0.012 , 0.11 ± 0.0053 , 0.731 ± 0.012) (0 .92 ± 0.0022 , 0.11 ± 0.0058 , 0.156 ±
+
+(1 , 0, 0) (0 .84 ± 0.0035 , 0.044 ± 0.0012 , 0.292 ± 0.0058) (1 ± ϵ, 1.2 ± 0.99 , ≪ 0) (1 ± ϵ, 1.4 ± 1, ≪ 0) ( 12 , 0, 12 ) (0 .84 ± 0.015 , 0.044 ± 0.0016 , 0.292 ± 0.025) (0 .53 ± 0.014 , 0.11 ± 0.0057 , 0.716 ± 0.015) (0 .92 ± 0.0015 , 0.11 ± 0.0058 , 0.155 ±
+
+( 12 , 12 , 0) (0 .84 ± 0.013 , 0.044 ± 0.0015 , 0.291 ± 0.022) (0 .52 ± 0.013 , 0.11 ± 0.0051 , 0.73 ± 0.014) (1 ± ϵ, 1.6 ± 0.47 , ≪ 0) ( 12 , 14 , 14 ) (0 .84 ± 0.015 , 0.044 ± 0.0016 , 0.293 ± 0.025) (0 .52 ± 0.013 , 0.11 ± 0.0053 , 0.73 ± 0.014) (0 .92 ± 0.0011 , 0.11 ± 0.0058 , 0.156 ±
+
+( 13 , 0, 23 ) (0 .84 ± 0.016 , 0.044 ± 0.0017 , 0.291 ± 0.027) (0 .54 ± 0.012 , 0.11 ± 0.006 , 0.711 ± 0.012) (0 .92 ± 0.0018 , 0.11 ± 0.0058 , 0.156 ±
+
+( 13 , 13 , 13 ) (0 .84 ± 0.016 , 0.044 ± 0.0016 , 0.291 ± 0.027) (0 .52 ± 0.013 , 0.11 ± 0.0053 , 0.731 ± 0.013) (0 .92 ± 0.0014 , 0.11 ± 0.0058 , 0.156 ±
+
+( 13 , 23 , 0) (0 .84 ± 0.014 , 0.044 ± 0.0016 , 0.288 ± 0.024) (0 .52 ± 0.013 , 0.11 ± 0.005 , 0.731 ± 0.013) (1 ± ϵ, 1.9 ± 0.52 , ≪ 0) ( 14 , 12 , 14 ) (0 .84 ± 0.016 , 0.044 ± 0.0016 , 0.29 ± 0.026) (0 .52 ± 0.012 , 0.11 ± 0.0053 , 0.731 ± 0.013) (0 .92 ± 0.0016 , 0.11 ± 0.0058 , 0.156 ±
+
+( 14 , 14 , 12 ) (0 .84 ± 0.016 , 0.044 ± 0.0017 , 0.291 ± 0.028) (0 .52 ± 0.013 , 0.11 ± 0.0052 , 0.731 ± 0.013) (0 .92 ± 0.0017 , 0.11 ± 0.0058 , 0.156 ±
+
+( 23 , 0, 13 ) (0 .84 ± 0.013 , 0.044 ± 0.0015 , 0.293 ± 0.022) (0 .53 ± 0.014 , 0.11 ± 0.0053 , 0.718 ± 0.015) (0 .92 ± 0.0013 , 0.11 ± 0.0058 , 0.153 ±
+
+( 23 , 13 , 0) (0 .84 ± 0.012 , 0.044 ± 0.0015 , 0.293 ± 0.021) (0 .52 ± 0.013 , 0.11 ± 0.0052 , 0.729 ± 0.014) (1 ± ϵ, 1.4 ± 0.5, ≪ 0) ( 910 , 0.009 , 0.09) (0 .84 ± 0.0096 , 0.044 ± 0.0014 , 0.297 ± 0.016) (0 .53 ± 0.017 , 0.11 ± 0.0058 , 0.715 ± 0.018) (0 .92 ± 0.0015 , 0.11 ± 0.0058 , 0.147 ±
+
+( 910 , 0.09 , 0.009) (0 .84 ± 0.009 , 0.044 ± 0.0014 , 0.297 ± 0.015) (0 .53 ± 0.014 , 0.11 ± 0.0052 , 0.722 ± 0.015) (0 .93 ± 0.0022 , 0.11 ± 0.0059 , 0.14 ±
+
+> SOAP
+
+(0 , 0, 1) (1 ± ϵ, 0.052 ± ϵ, −2.11 × 10 −5 ± ϵ) (1 ± ϵ, 0.21 ± 0.0035 , −1.48 × 10 −16 ± ϵ)(0 , 1, 0) (0 .87 ± 0.012 , 0.045 ± 0.0014 , 0.243 ± 0.021) (0 .54 ± 0.023 , 0.11 ± 0.0044 , 0.707 ± 0.026) (0 , 12 , 12 ) (0 .87 ± 0.012 , 0.045 ± 0.0014 , 0.243 ± 0.021) (0 .54 ± 0.024 , 0.11 ± 0.0045 , 0.708 ± 0.026) (0 , 13 , 23 ) (0 .87 ± 0.012 , 0.045 ± 0.0014 , 0.243 ± 0.021) (0 .54 ± 0.024 , 0.11 ± 0.0045 , 0.708 ± 0.026) (0 , 23 , 13 ) (0 .87 ± 0.012 , 0.045 ± 0.0014 , 0.243 ± 0.021) (0 .54 ± 0.023 , 0.11 ± 0.0044 , 0.707 ± 0.025) (1 , 0, 0) (0 .87 ± 0.012 , 0.045 ± 0.0014 , 0.244 ± 0.021) (0 .55 ± 0.023 , 0.12 ± 0.0048 , 0.692 ± 0.026) ( 12 , 0, 12 ) (0 .87 ± 0.012 , 0.045 ± 0.0014 , 0.244 ± 0.021) (0 .55 ± 0.024 , 0.12 ± 0.005 , 0.693 ± 0.027) ( 12 , 12 , 0) (0 .87 ± 0.012 , 0.045 ± 0.0015 , 0.245 ± 0.022) (0 .54 ± 0.024 , 0.11 ± 0.0045 , 0.707 ± 0.026) ( 12 , 14 , 14 ) (0 .87 ± 0.013 , 0.045 ± 0.0015 , 0.245 ± 0.022) (0 .54 ± 0.024 , 0.11 ± 0.0045 , 0.707 ± 0.026) ( 13 , 0, 23 ) (0 .87 ± 0.012 , 0.045 ± 0.0014 , 0.244 ± 0.021) (0 .55 ± 0.023 , 0.12 ± 0.0048 , 0.692 ± 0.026) ( 13 , 13 , 13 ) (0 .87 ± 0.012 , 0.045 ± 0.0015 , 0.245 ± 0.022) (0 .54 ± 0.023 , 0.11 ± 0.0044 , 0.707 ± 0.026) ( 13 , 23 , 0) (0 .87 ± 0.012 , 0.045 ± 0.0014 , 0.245 ± 0.022) (0 .54 ± 0.024 , 0.11 ± 0.0044 , 0.707 ± 0.026) ( 14 , 12 , 14 ) (0 .87 ± 0.012 , 0.045 ± 0.0014 , 0.245 ± 0.022) (0 .54 ± 0.023 , 0.11 ± 0.0044 , 0.707 ± 0.026) ( 14 , 14 , 12 ) (0 .87 ± 0.012 , 0.045 ± 0.0015 , 0.245 ± 0.022) (0 .54 ± 0.023 , 0.11 ± 0.0044 , 0.707 ± 0.025) ( 23 , 0, 13 ) (0 .87 ± 0.012 , 0.045 ± 0.0014 , 0.243 ± 0.02) (0 .56 ± 0.021 , 0.12 ± 0.0047 , 0.691 ± 0.024) ( 23 , 13 , 0) (0 .87 ± 0.013 , 0.045 ± 0.0015 , 0.245 ± 0.022) (0 .54 ± 0.024 , 0.11 ± 0.0045 , 0.707 ± 0.026) ( 910 , 0.009 , 0.09) (0 .87 ± 0.012 , 0.045 ± 0.0014 , 0.245 ± 0.022) (0 .55 ± 0.023 , 0.11 ± 0.0046 , 0.698 ± 0.026) ( 910 , 0.09 , 0.009) (0 .87 ± 0.013 , 0.045 ± 0.0015 , 0.246 ± 0.022) (0 .54 ± 0.025 , 0.11 ± 0.0046 , 0.705 ± 0.027) 16 
+
+TABLE A5: Errors for linear SOAP and AniSOAP models for Formamide on the test set. Loss weights are reported as (wE , w F , w τ ). Each error entry is (ℓ2, RMSE , R 2). Torque errors are reported for AniSOAP and omitted for isotropic SOAP. Values are mean ± standard deviation over equivalent runs. Values less than 0.001 are denoted by ϵ and greater than 100 .0 are denoted by Ω.
+
+(wE , w F , w τ ) E : ( ℓ2, RMSE , R 2) F : ( ℓ2, RMSE , R 2) τ : ( ℓ2, RMSE , R 2)
+
+> AniSOAP
+
+(0 , 0, 1) (1 ± ϵ, 9.5 ± 5.4, ≪ 0) (1 ± ϵ, 22 ± 12 , ≪ 0) (0 .67 ± 0.0097 , 0.5 ± 0.032 , 0.558 ± 0.013 (0 , 1, 0) (0 .95 ± 0.086 , 0.56 ± 0.63 , ≪ 0) (0 .51 ± 0.011 , 0.46 ± 0.025 , 0.74 ± 0.011) (0 .85 ± 0.17 , 1.5 ± 1.6, −5.99 ± 11) (0 , 12 , 12 ) (0 .95 ± 0.082 , 0.22 ± 0.082 , −0.472 ± 1.1) (0 .51 ± 0.011 , 0.46 ± 0.025 , 0.739 ± 0.011) (0 .67 ± 0.009 , 0.5 ± 0.032 , 0.557 ± 0.012) (0 , 13 , 23 ) (1 ± ϵ, 0.25 ± 0.046 , −0.701 ± 0.51) (0 .51 ± 0.011 , 0.46 ± 0.025 , 0.738 ± 0.011) (0 .66 ± 0.009 , 0.5 ± 0.031 , 0.558 ± 0.012) (0 , 23 , 13 ) (0 .94 ± 0.11 , 0.24 ± 0.11 , −0.763 ± 1.5) (0 .51 ± 0.0098 , 0.46 ± 0.024 , 0.739 ± 0.01) (0 .67 ± 0.0088 , 0.5 ± 0.031 , 0.555 ± 0.012 (1 , 0, 0) (0 .64 ± 0.012 , 0.12 ± 0.0054 , 0.593 ± 0.015) (0 .63 ± 0.015 , 0.57 ± 0.029 , 0.598 ± 0.019) (0 .75 ± 0.019 , 0.56 ± 0.043 , 0.443 ± 0.028 ( 12 , 0, 12 ) (0 .68 ± 0.019 , 0.13 ± 0.0032 , 0.537 ± 0.026) (0 .53 ± 0.014 , 0.48 ± 0.028 , 0.714 ± 0.015) (0 .67 ± 0.013 , 0.5 ± 0.035 , 0.551 ± 0.018) ( 12 , 12 , 0) (0 .69 ± 0.018 , 0.13 ± 0.0042 , 0.53 ± 0.025) (0 .52 ± 0.015 , 0.47 ± 0.029 , 0.729 ± 0.016) (0 .69 ± 0.013 , 0.52 ± 0.036 , 0.53 ± 0.018) ( 12 , 14 , 14 ) (0 .68 ± 0.017 , 0.13 ± 0.0034 , 0.532 ± 0.024) (0 .52 ± 0.016 , 0.47 ± 0.029 , 0.728 ± 0.016) (0 .67 ± 0.013 , 0.51 ± 0.035 , 0.548 ± 0.017 ( 13 , 0, 23 ) (0 .69 ± 0.021 , 0.13 ± 0.003 , 0.52 ± 0.028) (0 .53 ± 0.014 , 0.48 ± 0.028 , 0.719 ± 0.015) (0 .67 ± 0.012 , 0.5 ± 0.034 , 0.554 ± 0.016) ( 13 , 13 , 13 ) (0 .7 ± 0.019 , 0.13 ± 0.0032 , 0.514 ± 0.026) (0 .52 ± 0.014 , 0.47 ± 0.028 , 0.733 ± 0.015) (0 .67 ± 0.012 , 0.5 ± 0.034 , 0.553 ± 0.015) ( 13 , 23 , 0) (0 .7 ± 0.02 , 0.13 ± 0.0043 , 0.513 ± 0.027) (0 .52 ± 0.013 , 0.47 ± 0.027 , 0.734 ± 0.014) (0 .68 ± 0.014 , 0.51 ± 0.036 , 0.536 ± 0.019 ( 14 , 12 , 14 ) (0 .7 ± 0.019 , 0.13 ± 0.0032 , 0.505 ± 0.027) (0 .51 ± 0.014 , 0.46 ± 0.028 , 0.736 ± 0.015) (0 .67 ± 0.011 , 0.5 ± 0.034 , 0.552 ± 0.015) ( 14 , 14 , 12 ) (0 .7 ± 0.02 , 0.13 ± 0.003 , 0.506 ± 0.028) (0 .52 ± 0.014 , 0.47 ± 0.028 , 0.734 ± 0.014) (0 .67 ± 0.011 , 0.5 ± 0.034 , 0.555 ± 0.015) ( 23 , 0, 13 ) (0 .67 ± 0.018 , 0.13 ± 0.0035 , 0.557 ± 0.023) (0 .54 ± 0.014 , 0.49 ± 0.028 , 0.703 ± 0.015) (0 .68 ± 0.015 , 0.51 ± 0.037 , 0.543 ± 0.02) ( 23 , 13 , 0) (0 .67 ± 0.016 , 0.13 ± 0.0043 , 0.548 ± 0.022) (0 .53 ± 0.015 , 0.48 ± 0.029 , 0.721 ± 0.016) (0 .69 ± 0.013 , 0.52 ± 0.036 , 0.52 ± 0.018) ( 910 , 0.009 , 0.09) (0 .64 ± 0.014 , 0.12 ± 0.0045 , 0.588 ± 0.018) (0 .58 ± 0.014 , 0.52 ± 0.03 , 0.668 ± 0.016) (0 .7 ± 0.018 , 0.53 ± 0.04 , 0.506 ± 0.025) ( 910 , 0.09 , 0.009) (0 .65 ± 0.012 , 0.12 ± 0.0046 , 0.577 ± 0.016) (0 .56 ± 0.016 , 0.51 ± 0.03 , 0.687 ± 0.018) (0 .71 ± 0.016 , 0.54 ± 0.039 , 0.49 ± 0.022) 
+
+> SOAP
+
+(0 , 0, 1) (1 ± ϵ, 0.19 ± 0.014 , −0.000537 ± ϵ) (1 ± ϵ, 0.91 ± 0.062 , 2.78 × 10 −17 ± ϵ)(0 , 1, 0) (1 ± ϵ, 0.22 ± 0.054 , −0.318 ± 0.52) (0 .82 ± 0.0083 , 0.75 ± 0.054 , 0.334 ± 0.013) (0 , 12 , 12 ) (1 ± ϵ, 0.2 ± 0.016 , −0.075 ± 0.056) (0 .82 ± 0.0083 , 0.75 ± 0.054 , 0.334 ± 0.014) (0 , 13 , 23 ) (1 ± ϵ, 0.22 ± 0.054 , −0.319 ± 0.52) (0 .82 ± 0.0083 , 0.75 ± 0.054 , 0.334 ± 0.013) (0 , 23 , 13 ) (1 ± ϵ, 0.2 ± 0.026 , −0.148 ± 0.16) (0 .82 ± 0.0083 , 0.75 ± 0.054 , 0.334 ± 0.014) (1 , 0, 0) (0 .94 ± 0.0064 , 0.18 ± 0.012 , 0.121 ± 0.012) (0 .9 ± 0.073 , 0.83 ± 0.13 , 0.186 ± 0.14) ( 12 , 0, 12 ) (0 .94 ± 0.0063 , 0.18 ± 0.012 , 0.12 ± 0.012) (0 .9 ± 0.074 , 0.82 ± 0.13 , 0.19 ± 0.14) ( 12 , 12 , 0) (0 .96 ± 0.016 , 0.18 ± 0.011 , 0.0761 ± 0.031) (0 .82 ± 0.0091 , 0.75 ± 0.054 , 0.332 ± 0.015) ( 12 , 14 , 14 ) (0 .96 ± 0.015 , 0.18 ± 0.011 , 0.0854 ± 0.029) (0 .82 ± 0.0093 , 0.75 ± 0.055 , 0.331 ± 0.015) ( 13 , 0, 23 ) (0 .94 ± 0.0062 , 0.18 ± 0.012 , 0.121 ± 0.012) (0 .9 ± 0.073 , 0.82 ± 0.12 , 0.188 ± 0.14) ( 13 , 13 , 13 ) (0 .96 ± 0.016 , 0.18 ± 0.011 , 0.0762 ± 0.031) (0 .82 ± 0.0091 , 0.75 ± 0.054 , 0.332 ± 0.015) ( 13 , 23 , 0) (0 .97 ± 0.017 , 0.18 ± 0.011 , 0.0675 ± 0.033) (0 .82 ± 0.0089 , 0.75 ± 0.054 , 0.333 ± 0.014) ( 14 , 12 , 14 ) (0 .97 ± 0.017 , 0.18 ± 0.011 , 0.0675 ± 0.033) (0 .82 ± 0.0089 , 0.75 ± 0.054 , 0.333 ± 0.015) ( 14 , 14 , 12 ) (0 .96 ± 0.016 , 0.18 ± 0.011 , 0.0762 ± 0.031) (0 .82 ± 0.0091 , 0.75 ± 0.054 , 0.332 ± 0.015) ( 23 , 0, 13 ) (0 .94 ± 0.0063 , 0.18 ± 0.012 , 0.121 ± 0.012) (0 .9 ± 0.073 , 0.83 ± 0.12 , 0.187 ± 0.14) ( 23 , 13 , 0) (0 .96 ± 0.015 , 0.18 ± 0.011 , 0.0855 ± 0.029) (0 .82 ± 0.0092 , 0.75 ± 0.054 , 0.331 ± 0.015) ( 910 , 0.009 , 0.09) (0 .94 ± 0.0076 , 0.18 ± 0.012 , 0.118 ± 0.014) (0 .85 ± 0.024 , 0.78 ± 0.075 , 0.276 ± 0.041) ( 910 , 0.09 , 0.009) (0 .95 ± 0.013 , 0.18 ± 0.011 , 0.105 ± 0.024) (0 .82 ± 0.0095 , 0.75 ± 0.056 , 0.321 ± 0.016)

@@ -1,0 +1,1203 @@
+Title: Recovering molecules from coarse-grained beads: free-energy-conditioned generative backmapping across chemical space
+
+URL Source: https://arxiv.org/pdf/2609.04432v1
+
+Published Time: Mon, 07 Sep 2026 00:17:21 GMT
+
+Number of Pages: 38
+
+Markdown Content:
+# Recovering molecules from coarse-grained beads: free-energy-conditioned generative backmapping across chemical space 
+
+Luis Itza Vazquez-Salazar 1, Tristan Bereau 1,21Institute for Theoretical Physics, Heidelberg University, Heidelberg, Germany. 
+
+> 2
+
+Interdisciplinary Center for Scientific Computing (IWR), Heidelberg University, Heidelberg, Germany. Transferable coarse-grained (CG) force fields compress chemical space: by aggregating atoms into a reduced set of interaction beads, models such as MARTINI reduce the number of distinguishable compounds by roughly three orders of magnitude, making high-throughput screening of thermodynamic properties tractable across soft matter, with drug–membrane permeability as a well-developed example. The compression is lossy and, so far, one-way: a screen returns a combination of beads, with no established route back to the compounds it stands for. Recovering those compounds— compositional 
+
+backmapping—is a one-to-many inverse map, distinct from the better-studied conformational problem of rebuilding atomic coordinates from a known mapping. Here we formulate compositional backmapping as conditional graph generation by introducing juniper , a discrete denoising diffusion model over molecular graphs conditioned on the octanol–water partition free energy ∆GW7 →O, the principal driver of MARTINI bead type assignment and hence a proxy for bead identity. Trained on molecules of up to 9 heavy atoms mapped onto one or two beads, juniper generates molecules that are 93% valid and 92% unique for two-bead targets, and whose ∆GW7 →O distributions track the target ∆GCG W7 →O
+
+linearly ( r2 ≥ 0.96 ), departing only in the hydrophobic and hydrophilic tails. Although the model receives no chemical information beyond a single scalar, the functional groups shift systematically with the imposed free energy, from branched hydrocarbons at the apolar end to amides, imides, and isocyanates at the polar end. A bead combination flagged by a CG screen can therefore be turned into candidate molecules for atomistic study or synthesis.  
+
+> Correspondence:
+
+LIVS ( l.i.vazquez-salazar@thphys.uni-heidelberg.de )
+
+1 Introduction 
+
+Chemical compound space is the set of all possible molecules or materials [1]. Given its definition, chemical space is vast: after applying physical constraints and restricting the possible composition to the elements C, N, O, P, S, F, Cl, Br, and I with a molecular weight of less than 1000 Da, its size has been hypothesised to be around 10 200 [2, 3]. Even after considering that only one in 10 20 compounds is stable, the size of this “constrained” chemical space is reduced to 10 180 , which is still larger than the estimated total amount of information in the visible universe ( 10 123 ) [4]. If chemical space exploration continues at the present rate, discovering the compounds of even this constrained set would take on the order of 10,000 years [2]. Enumeration is therefore not a strategy, and the practical question becomes one of search: how to impose a target property and recover the compounds that satisfy it. An alternative for exploring this large space is the use of coarse-grained (CG) models, which lower the dimensionality of the problem by aggregating atomistic degrees of freedom (DOF) into interaction centres called beads [5]. For transferable CG models—such as MARTINI [6] and SIRAH [7]—the reduction of DOF produces a reduction in the size of chemical space (Figure 1). This reduction greatly aids the exploration of chemical space [8–10]: a decrease by roughly three orders of magnitude makes studies involving high-throughput screening considerably faster, since one combination of beads represents multiple chemical compounds, which in practice translates to the testing of multiple compounds at once. The same compression underpins molecular design, since a search space small enough to be traversed iteratively admits active learning over CG chemical 1arXiv:2609.04432v1 [physics.chem-ph] 3 Sep 2026 space [11] and Bayesian optimisation across levels of resolution [12], both of which propose bead combinations that optimise a target property instead of ranking an enumeration fixed in advance. The reduction is also lossy. A bead combination stands for a whole family of molecules, and the map from compounds to beads discards the chemical detail that a chemist needs in order to act on a screening or optimisation result. Beyond this compression, popular CG force fields enable the simulation of a wide range of systems in the biomolecular and materials sciences [13, 14]. Among the existing force fields, MARTINI has established itself as one of the most widely used, because of its flexibility and its large range of applications in biomolecular processes [15–18] and materials science [19, 20]. MARTINI uses a mixture of top-down and bottom-up parametrisation, tuning the Lennard-Jones parameters to match experimental partition coefficients and fitting the bonded potentials to all-atom (AA) simulations [14, 21, 22]. One reason for the popularity of MARTINI is that generating a new parametrised molecule is relatively straightforward, because of its simple construction principles. However, the inverse process, called “backmapping,” in which the molecules corresponding to a certain number of beads are obtained, is far more difficult (Figure 1). This difficulty has two main sources. Let M
+
+denote the coarse-graining operator, so that the M−1 operator reconstructs an all-atom (AA) configuration from a CG one. (i) A one-to-many transformation is in general necessary, M−1 : Rbeads 7 → Ratoms with 
+
+dim(atoms) > dim(beads) , so that the dimension of the AA representation always exceeds that of the CG one, implying that certain information needs to be guessed. (ii) In transferable CG models—and in chemical space—the transformation is non-injective and probabilistic, M−1 : Rbeads ⇒ Ratoms , which implies that each CG representation corresponds to multiple AA molecules. Two distinct problems travel under the single term “backmapping.” Conformational backmapping reconstructs atomic coordinates from a CG configuration whose mapping M is already known; it has absorbed most of the methodological effort and is by now well developed [23, 24]. Compositional backmapping asks the prior question—which molecules correspond to a given combination of beads—and has remained largely unexplored: the non-injectivity of point (ii) has been sidestepped rather than solved. A high-throughput screen or a CG optimisation loop returns a bead combination, and without the compositional map such a combination cannot be turned into a chemical compound to study atomistically or to synthesise. Compositional backmapping therefore closes the multiscale discovery loop: after chemical space is compressed and screened at low resolution, it recovers the atomistic molecules corresponding to the optimal CG candidates. This work addresses such a compositional problem. In this work, we propose to tackle the problem of backmapping in chemical space by using methodologies of generative machine learning (ML). These models aim to learn the underlying statistical distribution of a set of data to later generate new samples that resemble those in the training dataset [25, 26]. By construction, generative ML offers an elegant solution for the backmapping problem in chemical space because, by learning the underlying data distribution, it is possible to obtain a general map between beads and atoms from a subset of curated samples. Furthermore, because the model generates a distribution that resembles the training dataset, it allows us to generate multiple compounds starting from a single label, effectively bypassing the one-to-many problem. Previous work has successfully used generative ML models to backmap spatial coordinates from CG to AA, both for condensed-phase molecular liquids and polymer melts [27–29] and, predominantly, for peptides and proteins [23, 24, 30–35]. The MARTINI model parametrisation is mainly driven by two aspects: hydrophobicity and preserving the volume, shape, and symmetry of the underlying AA representation. By considering these principles, in this work, we focus on the backmapping of small molecules with up to 9 heavy atoms that are mapped onto one or two MARTINI beads, according to MARTINI guidelines of a maximum of 4 heavy atoms per bead and a maximum mismatch of 1 heavy atom. The setting is deliberately controlled: it isolates the compositional problem from the conformational one, leaving chemistry as the only thing the model must learn. The restrictions carry two consequences. First, the admissible MARTINI representations for the considered molecules are reduced to only two possible geometries: a point particle (one bead) or a straight line (two beads). This reduction diminishes the importance of the CG spatial representation and allows us to formulate the problem in molecular graph space rather than as a 3D coordinate problem. The 3D representation nevertheless has a large impact on the use of the MARTINI model [36]; the restriction was imposed to simplify the problem of backmapping across chemical space. The second consequence, and the most 2C-C  C-N  N-P 
+
+> Resolution
+
+P-P Figure 1 Backmapping in chemical space. Four combinations of the main set of MARTINI beads are shown. The C bead (blue) is apolar, N (green) is intermediate, and P (red) is polar. The horizontal axis orders the combinations by the octanol–water partition free energy ( ∆GW7 →O), from the apolar C-C pair on the left to the polar P-P pair on the right; the vertical axis indicates resolution, with the bead pair at the bottom of each panel and the corresponding molecules above. Because each bead type comprises several subtypes, the four combinations are representatives placed schematically along the ∆GW7 →O axis rather than at their nominal values. The backmapping procedure converts each bead combination into a set of molecules with defined physicochemical properties, through a generative process constrained by the value of ∆GW7 →O. Molecular examples are selected at random for each combination. 
+
+important for the present study, is that the octanol–water partition free energy ∆GW7 →O (the hydrophobicity descriptor) emerges as the principal parameter controlling how MARTINI compresses chemical space. We accordingly adopt ∆GCG W7 →O both as a constraint for molecular generation and as a proxy for the MARTINI CG mapping. However, ∆GW7 →O has limitations in separating chemical space [37], and degeneracies (i.e. multiple bead combinations can be mapped to the same value of ∆GCG W7 →O) are expected. A complementary reason for choosing ∆GW7 →O as a driver for our backmapping procedure is the large number of studies that use ∆GW7 →O or log P (the logarithm of the octanol–water partition coefficient) for molecule generation and optimisation [38–42] given the importance of hydrophobicity in drug design and discovery [43, 44]. Many of the existing generative models conditioned on ∆GW7 →O are based on variational autoencoders (VAEs) [45], a generative algorithm that maps a variable to a low-dimensional space and later reconstructs the original variable from it. During training, the model learns the reduction and reconstruction processes. Because of their simplicity, VAEs are highly flexible; however, this flexibility comes at the cost of problems such as posterior collapse, difficulty capturing complex distributions, or incomplete reconstructions [26]. As an alternative to VAEs, diffusion-based models have emerged [46–49]. Diffusion models follow the same strategy as VAEs, except that the forward process (transformation to a simple latent space) is dictated by non-equilibrium statistical mechanics, while the reconstruction process is also learned, making training more stable, providing better reconstructions, and enabling easier conditioning. A few models conditioning diffusion on log P can be found in the literature [50–52]. It should be noted that the objective of this work differs from the mentioned previous uses of ∆GW7 →O-conditional generation in the literature, which were oriented toward optimising a chemical structure with respect to an arbitrary target property. Our goal is fundamentally different: to recover a distribution of molecules consistent with a MARTINI representation, in both ∆GW7 →O and chemical diversity. The conditioning value ∆GCG W7 →O is therefore treated as (approximately) the mean of that distribution, rather than as a target to be hit by an individual molecule. Because we are concerned here with small molecules represented as chemical graphs, a graph-based diffusion model whose generation is constrained by ∆GCG W7 →O is 3a natural choice. The model used here for such a purpose is called juniper (see the SI for an explanation of the name). In the rest of the text, we present the details of the constructed model and the training procedure. Furthermore, we describe how chemical space was sampled based on the value of ∆GCG W7 →O, which ultimately corresponds to MARTINI beads. We analyse the generated results in terms of physicochemical properties, such as the distribution of ∆GW7 →O, and the chemical space explored. In Section 3, the unconditional generation results are discussed first, followed by the conditional generation of molecules. Finally, we draw conclusions and outline avenues for further research. 
+
+2 Methods 
+
+2.1 Diffusion models in graphs 
+
+For the purpose of this work, we consider molecules at the AA level as graphs G composed of nodes and edges, G = ( X , E), where X denotes the nodes (atom types) and E the corresponding edges (bond types). Furthermore, to each graph a global label y is assigned, here the hydrophobicity represented by the scalar value ∆GCG W7 →O, so that each molecule is represented as G = ( X , E, y ). In the rest of the text, the terms “molecule” and “graph” are used as synonyms. The diffusion model used in this work operates on the discrete space created by the nodes and edges of the molecules. Because of the discrete nature of the problem, typical diffusion methods, such as denoising diffusion probabilistic models [48], are not directly applicable. Instead, here the discrete denoising diffusion methodology introduced by Vignac et al. [53] in the DiGress model is used. ... 
+
+> Atoms (Nodes)
+> Bonds (Edges)
+
+Co nvert 
+
+to g raph          
+
+> Figure 2 Diffusion model for backmapping. An initial molecule is transformed into a graph G= ( X,E). The obtained graph is passed through the forward process (left to right), in which noise is progressively added to nodes and edges over Tsteps, updating the marginal distributions of nodes and edges in the training dataset. The inverse process involves obtaining denoising probabilities from a transformer model conditioned on ∆GCG W7→O.
+
+Training proceeds in two stages, summarised in Figure 2. In the forward process, noise is added to the nodes and edges of the input graph over T steps, with transition matrices constructed so that the corrupted graph converges to the marginal distributions of atom and bond types in the training dataset rather than to a uniform distribution. In the reverse process, a graph transformer [54] Φθ is trained to iteratively recover the clean graph from a noisy one, conditioned on the global label y. The network uses 5 layers with 8 attention heads and input channels of size 256, 128, and 128 for X, E, and y, respectively. There are different ways of computing the denoising probabilities; here, the classifier-free procedure introduced by Ninniri et al. [55] was used, which rests on the separation of conditional probabilities formulated by Dhariwal and Nichol [56]. The full formulation is given in the SI, Section “Discrete graph diffusion: full formulation”. The strength of the conditioning enters through a single hyperparameter, which the Results examine in detail. Following Ho and Salimans [57], the network output is expressed as a barycentric combination of conditional and unconditional predictions, 4ˆPθ (Gt−1 | Gt, y ) = (1 − γ) · pθ (G0 | Gt, y ∅)
+
+| {z }
+
+> unconditional
+
++ γ · pθ (G0 | Gt, y )
+
+| {z }
+
+> conditional
+
+. (1) Here, γ ≥ 0 is the guidance strength. To make the unconditional branch available and prevent the model from ignoring the conditioning [55, 57], the conditioning value y is replaced during training by a learnable null value y∅ with probability ρ, set here to 0.2. 
+
+2.2 Training 
+
+The model was trained using the unimer (one bead) and dimer (two beads) datasets obtained from Ref. 9, consisting of molecules with up to 9 heavy atoms (C, N, O, F) mapped to 28 beads of the MARTINI CG force field v2 [6], corresponding to the polar (P), intermediate (N), and apolar (C) blocks in normal and small sizes. Within the apolar and polar blocks, a numerical subtype running from 1 to 5 denotes increasing polarity, so that C1 is the most apolar bead of the set and P5 the most polar. The intermediate block is instead labelled by hydrogen-bonding character: acceptor (Na), donor (Nd), both (Nda), or neither (N0). A pair such as C1-C1 therefore denotes the most hydrophobic two-bead representation available, and P5-P5 the most hydrophilic. The datasets were generated from the GDB database [58] using Auto-Martini [59]. The values of ∆GW7 →O used as global labels correspond to those obtained for the individual CG beads and to their sum in the multiple-bead case. The training database was curated to meet specific thresholds for the CG molecular representation. For single-bead representations, each bead contained at most 5 heavy atoms. For two-bead representations, only molecules with 6 to 9 heavy atoms were considered. Given the distribution of chemical space and the inherent biases in the parent database of our training set [60, 61], an imbalance among bead representations was expected (see Figure S1). During the training process, the following loss function was optimised: 
+
+L(X, E, y ) = CE( X0, ˆPθ (Xt)) + λ · CE( E0, ˆPθ (Et)) + η · MSE( y0, ˆPθ (y)) , (2) where CE denotes the cross-entropy loss, MSE the mean squared error, and λ and η are hyperparameters that weight the influence of the different parts of the graph, set to λ = 5 and η = 1 . The training process was run for 1000 epochs, each with T = 500 diffusion steps, with a cosine diffusion schedule. The optimiser used was AdamW [62] with a learning rate of 10 −4 and a weight decay of 10 −9.
+
+2.3 Generation 
+
+The obtained model was used to generate molecules with a given value of ∆GCG W7 →O starting from random noise. The denoising procedure is also conditioned on the number of nodes in the graph (i.e., the number of atoms), which is drawn from the node distribution in the training dataset for either unimers or dimers. As a baseline, 1000 samples were generated without guidance. Unless otherwise stated, 100 molecules were generated for each bead combination present in the training dataset. In total, 1,200 samples were generated for unimers and 38,600 samples for dimers. The analysis that follows concentrates on dimers; the unimer results are limited by their much smaller population, though the behaviour observed for dimers is expected to carry over to them. For the analysis, the labels were treated as permutation-invariant (i.e., A-B and B-A were considered equivalent) and the bead size was ignored. This process was repeated for multiple values of γ ∈ { 0.5, 1, 2} in Eq. 1. The values of γ were picked to illustrate the different regimes of generation. In the case of γ = 1 , the model directly samples the conditional distribution, ˆPθ(Gt−1 | Gt, y ). For γ = 0 .5, there is an equal contribution from the conditional and unconditional probabilities. Finally, for γ = 2 , the weight of the conditional distribution is doubled, and the unconditional distribution works as a correction to the former. Ho and Salimans report improved sample quality for γ > 1 [57]. 52.4 Analysis  
+
+> 2.4.1 Basic metrics
+
+To evaluate the performance of a generative model, we use a set of standard metrics. In this work, we consider a generated molecule valid if all its fragments are connected and it can be reconstructed from its graph representation by RDKit [63]. From the valid molecules, we measure the number of unique generated molecules as Nunique = |{ Mols valid }| , the number of distinct valid molecules after removing duplicates, where 
+
+| · | denotes cardinality (i.e., the number of unique elements in a set). Similarly, the number of novel molecules is obtained as Nnovel = |Mols unique \ Mols train |, where \ represents the set difference (i.e., the elements of one set that do not belong to the other). Based on the number of valid, unique, and novel molecules, it is possible to define quantities that characterise the performance of the generative model in chemical space. Here, the following quantities were studied [64]: • Repetition rate : this metric quantifies the number of duplicates generated by the model. It is defined as 
+
+Rrepeat = Nvalid − Nunique 
+
+Nunique 
+
+. (3) • Coverage : this quantity measures how much of the chemical space of the training dataset is reproduced by the generative model. It is defined as 
+
+Cov = Nunique − Nnovel 
+
+Ndataset 
+
+. (4) where Ndataset is the total number of samples in the training dataset. • Novelty rate : this quantity measures the proportion of molecules produced by the generative model that were absent from its training set. It is defined as 
+
+Rnovel = Nnovel 
+
+Nunique 
+
+. (5)  
+
+> 2.4.2 Distribution analysis
+
+The generated samples were analysed to evaluate the physicochemical characteristics of the molecules and their chemical space coverage. The molecules were generated using the scalar partition free energy between octanol and water ( ∆GCG W7 →O), one of the main drivers of MARTINI model parametrisation. This property therefore serves to evaluate our procedure. The determination of ∆GW7 →O is challenging; here, two estimators of the octanol–water partition coefficient log P were used. The first is the Wildman–Crippen method [65] as implemented in RDKit [63], an additive scheme that sums contributions assigned to individual atoms. The second is ALOGPS [66], an associative neural network whose mapping to log P is not constrained to be additive, accessed through its web interface. We quote ALOGPS values throughout, on the grounds that partitioning is a collective property of the solute and its solvation shell and is therefore poorly served by an additive atom-contribution scheme; the corresponding RDKit results are collected in the Supporting Information. Regardless of the model, the value of log P is related to ∆GW7 →O by the following expression: 
+
+∆GW7 →O = −RT ln(10) log P, (6) where R = 1 .987 × 10 −3 kcal mol −1 K−1 and T = 300 K. The values of ∆GAA W7 →O were computed for all generated samples and, in the case of the Wildman–Crippen method, recomputed for the molecules in the training dataset. The generated and training distributions of ∆GAA W7 →O were compared using the Jensen–Shannon divergence (DJS ). This quantity is symmetric and measures the total divergence from the mean distribution, as it equals the average divergence of each distribution from the arithmetic mean of the distributions [67]. DJS is defined as 6DJS [ptrain ∥ qgen ] = 12 DKL 
+
+h
+
+ptrain ptrain +qgen 
+
+> 2
+
+i
+
++ 12 DKL 
+
+
+
+qgen 
+
+ptrain + qgen 
+
+2
+
+
+
+= 12
+
+Z
+
+dx
+
+h
+
+ptrain (x) ln 
+
+ 2ptrain (x)
+
+> ptrain (x)+ qgen (x)
+
+
+
++ qgen (x) ln 
+
+ 2qgen (x)
+
+> qgen (x)+ ptrain (x)
+
+i 
+
+,
+
+(7) where DKL is the Kullback–Leibler divergence. The distributions were also compared using the maximum mean discrepancy (MMD) [68]. In this approach, the probability distribution is transformed using a kernel function into a reproducing kernel Hilbert space (RKHS). In the RKHS, the difference between distributions is obtained as the difference between the mean embeddings, 
+
+MMD 2(p, q ) = ∥μp − μq ∥2
+
+> H
+
+. (8) Here H is the RKHS, and the mean embedding of the distributions (also known as kernel embedding) is given by: 
+
+μp = Ex∼p[k(·, x )] = 
+
+Z
+
+dp(x) k(·, x ).
+
+A similar expression can be derived for q. Here, we used an empirical estimate of the MMD with a Gaussian kernel [68]. We also obtained the “witness function” of the MMD metric; this function shows how the distributions change over the evaluated range of ∆GW7 →O. 
+
+> 2.4.3 Functional-group and diversity analysis
+
+To analyse the chemical space of the generated molecules, we identified functional groups with Ertl’s algorithm [69], as implemented by Colmenarejo [70] in RDKit. The number and types of functional groups are used to compare the chemical space explored by a given bead combination. Complementary to the calculation of functional groups, the Fréchet ChemNet distance (FCD) [71] is a metric inspired by the Fréchet inception distance [72] commonly used to evaluate generative models. The FCD uses the activations of the penultimate layer of the ChemNet model [73], trained to predict bioactivity using major drug-discovery databases. ChemNet was chosen because its representation encodes both chemical and biological information. The mean and covariance of the activations are then computed, under the assumption that they follow a multidimensional Gaussian distribution. Then, the reference distribution of molecules ( Pref )and the one generated by the model ( Pgen ) are compared using the Fréchet distance between the resulting multidimensional normal distributions, given by 
+
+FCD( Pref , P gen ) = ∥μgen − μref ∥22 + Tr 
+
+h
+
+Σgen + Σ ref − 2(Σ gen Σref )1/2i
+
+, (9) where μgen /ref is the mean of the generated or reference distribution, and Σgen /ref is the corresponding covariance matrix. Because we are assuming multidimensional normal distributions to describe the ChemNet embeddings, the Fréchet distance equals the L2-Wasserstein distance. Lastly, the chemical diversity of the generated molecules is evaluated by the internal chemical diversity (ICD) metric defined by Benhenda [74] as 
+
+ICD = 2
+
+N 2gen 
+
+X
+
+> i
+
+X 
+
+> j̸=i
+
+[1 − JT(mol i, mol j )] . (10) Here, JT denotes the Jaccard–Tanimoto similarity between all pairs of generated molecules; the factor 2 accounts for the symmetry of the i, j pairs. 7Valid Unique Novel 
+
+> Rrepeat
+> Cov
+> Rnovel
+> 0% 25% 50% 75% 100%
+
+## A       
+
+> Juniper - No guidance Juniper - Dimers guidance CVAE Mult. Prop. - No guidance CVAE Sing. Prop. - No guidance Juniper - No guidance Juniper - Dimers guidance CVAE Mult. Prop. - No guidance CVAE Sing. Prop. - No guidance
+> 642024
+> GWO(kcal/mol)
+> 240 260 280 300 320 340 360 380 400
+> Solvent Accessible Surface Area ( Å2)
+
+## B Training distribution Juniper - No guidance Figure 3 Basic metrics and unconditional generation. (A) Radar chart for the basic performance metrics of the model trained with the coarse-grained dataset. The performance of juniper for generating samples without guidance (blue line). For comparison, we also report the performance of the conditional variational autoencoder (CVAE) in Ref. 39 on the same dataset for unconditional generation: models trained with information on multiple properties (purple line) and only with ∆GW7 →O (red line). Finally, the performance for the mean of the generated samples using guidance (green line) for molecules that can be mapped to MARTINI bead dimers is reported. (B) 2D kernel density representation of the chemical space in terms of the octanol–water partition free energy and the solvent-accessible surface area of the training dataset (black line). Samples generated without explicit guidance are shown as blue points. 
+
+3 Results 
+
+3.1 Unconditional generation 
+
+We first tested juniper ’s generative capabilities without explicit guidance, with the aim of observing how the trained model samples the property space defined by ∆GCG W7 →O. To this end, we generated 1000 samples and evaluated a set of basic metrics (Figure 3A). The unconditional juniper model performs well at generating valid and unique compounds, with a low repetition rate. The novelty of the generated molecules is high (∼50%), albeit at the cost of reduced coverage of the training dataset. The results were benchmarked in two ways. First, the performance was compared with other state-of-the-art models for molecular graph generation, and juniper performs on par with them (Table S1). This comparison is only indicative, as those models were trained on a different dataset. A second, more direct, comparison was made with the conditional variational autoencoder (CVAE) of Ref. 39 (details in the SI). Two CVAE models were trained with our dataset: CVAE Mult. Prop., conditioned on molecular weight, ∆GCG W7 →O, hydrogen-bond donors, hydrogen-bond acceptors, and topological polar surface area; and CVAE Sing. Prop., conditioned on ∆GCG W7 →O alone. Each variant generated 1000 unguided samples to evaluate the same performance metrics. The comparison in Figure 3A shows that juniper outperforms both CVAE models across all metrics except those related to novelty. In particular, the percentage of valid and unique molecules is ∼20% higher for 
+
+juniper than for the CVAE models, with the single-property CVAE performing slightly better than the multi-property one. For the reproduction of the training distributions of ∆GCG W7 →O and solvent-accessible surface area, all models yield small Jensen–Shannon divergences ( DJS ∼ 10 −3), indicating good agreement between distributions. The values are of comparable magnitude for the two properties. In both cases, juniper 
+
+attains the lowest value among the models (Table S2). A subtler point is that the juniper distributions resemble those of CVAE Mult. Prop. more than those of CVAE Sing. Prop., despite juniper having been trained on ∆GCG W7 →O alone. Because of the improved performance of juniper with respect to the CVAE models in unconditional generation, only the former is used for the rest of this work. Figure 3B projects the chemical space onto the ∆GW7 →O values and the solvent-accessible surface area (SASA). The training distributions of these two properties are drawn as 2D kernel density estimates, and the molecules 8generated without guidance in blue. The results show that the generated samples uniformly sample the training space, including low-density regions, and reach both high and low ∆GW7 →O, with uniform coverage across the range of SASA values. In comparison, the CVAE models are biased towards the more populated regions; see Figure S2. Together, these results show that the model generates molecules of varied shape (characterised by SASA), spanning a range of functional groups and, consequently, different parts of chemical space (as characterised by ∆GW7 →O). 
+
+3.2 Conditional generation with ∆GW7 →O
+
+Having validated the general performance of the trained model, we sampled chemical space at given values of 
+
+∆GW7 →O, which correspond to the backmapping of MARTINI CG bead combinations. As for the unconditional generation, we evaluated the basic performance metrics (validity, uniqueness, novelty, repetition rate, and coverage). The results are reported in Figures S3 and S4. In all cases, the performance of juniper was strong, with 93% of conditionally generated graphs valid and 92% unique, as well as low repetition rates; see Figure 3A. An important aspect of the conditional generation of graphs is that the generated chemical compounds map to specific parts of the chemical space, in contrast to the non-guided sampling that uniformly samples the training distribution, as seen in Figure 3B. Using the low-dimensional representation of chemical space created by ∆GW7 →O and SASA, Figure 4 illustrates, for γ = 1 , the constrained generation of molecules at the ∆GW7 →O
+
+values of three limiting bead combinations. The selected beads were C1-C1, very hydrophobic with a large negative value, ∆GW7 →O = −6.79 kcal mol −1; Na-Nda, an intermediate value ( −1.19 kcal mol −1) near the overall mean of the distribution; and P3-P4, very hydrophilic with a positive value, ∆GW7 →O = 4 .33 kcal mol −1.The generated samples illustrate how the model selects specific regions of chemical space characterised by ∆GW7 →O and SASA values. Starting with C1-C1, the mean of the ∆GW7 →O distribution shifts toward negative values, indicating that the generated samples are hydrophobic. A corresponding shift towards larger SASA values indicates that the generated molecules have larger accessible surface areas. Both trends can be explained by the presence of saturated hydrocarbons in the generated molecules, which are known for their hydrophobicity and also contribute more apolar surface area. As expected, the model therefore generates large molecules with saturated hydrocarbons to satisfy the hydrophobicity requirement; see Figure S5A. C1-C1 lies at the extreme hydrophobic tail of the training distribution, where data are sparse. As a consequence, some of the generated samples lie outside the training distribution, showing that the model interpolates from the nearest, more populated regions. The shift of the distribution mean toward the high-population region is further evidence, at the cost of a large difference between ∆GCG W7 →O and the mean ∆GAA W7 →O of the generated samples (see Figure 5B). Similar results are observed for the Na-Nda and P3-P4 combinations. For the intermediate pair, the distribution peak is near the mean of the training distribution; however, most generated molecules lie within a narrow range of −3 to 2 kcal mol −1, localised at the centre of the ∆GW7 →O distribution. The SASA value for this combination indicates that molecules are generated across the full range of values, as there is no need to emphasise the presence of hydrophobic fragments in these samples. This is visible in the example molecules for the Na-Nda combination (Figure S5B), which are characterised by a mixture of hydrocarbon fragments, multiple bonds, and heteroatoms (N, O). Finally, the polar case illustrated by the P3-P4 combination shows the mirror image of its apolar counterpart, with a distribution of ∆GW7 →O values shifted to the right of the training distribution mean and the largest fraction of values between ∼0.7 and 3 kcal mol −1. This case also displays possible overlaps in the ∆GW7 →O values of different bead combinations. This is expected, given the limited ability of ∆GW7 →O to separate chemical space [37]. However, distribution overlap can help generate stable chemical compounds in poorly populated classes. Interestingly, the SASA values for these molecules are smaller than those for the other two sets. This results from the formation of small rings and highly polar fragments that meet the hydrophilicity requirement and have small surface areas (Figure S5C). The previous analysis illustrated juniper ’s ability to generate molecules given a value of ∆GW7 →O, which traces back to the corresponding MARTINI bead combination. A key aspect of this work is that, for each 
+
+∆GW7 →O value corresponding to a MARTINI representation, the model is trained to recognise that value as a global graph label. We can then generate a distribution of molecules around the provided value. In other words, the value of ∆GCG W7 →O should be near the mean of the distribution of ∆GAA W7 →O of molecules with similar 98 6 4 2 0 2 4
+
+GW O (kcal/mol) 
+
+240 260 280 300 320 340 360 380 400 
+
+> Solvent Accessible Surface Area ( Å2)
+
+Bead types C1-C1 (-6.79) Na-Nda (-1.19) P3-P4 (4.33) Bead types C1-C1 (-6.79) Na-Nda (-1.19) P3-P4 (4.33) Generated Train Generated Train Figure 4 Sampling in chemical space. 2D kernel density estimate of the joint distribution of ∆GW7 →O and the solvent-accessible surface area (SASA). The figure margins show 1D kernel density estimates for each quantity. Solid lines and filled contours refer to generated molecules, dash-dotted lines to the training data. The grey dash-dotted contours in the background show the full training dataset. The filled contours and scattered points represent the conditional samples generated for three cases: C1-C1 (very hydrophobic), Na-Nda (intermediate), and P3-P4 (hydrophilic); the coloured dash-dotted lines in the margins give the training distributions for the same bead combinations, and the vertical dashed lines mark the conditioning value ∆GCG W7 →O of each. The effect of the conditioning on the sampling is visible in all three cases. Values of ∆GW7 →O were obtained with ALOGPS. In the SI, Figure S5 shows examples of the molecules generated for the ∆GW7 →O value corresponding to each bead combination. 
+
+10 chemical structures. In Figure 5A, the correlation plot between the values of ∆GCG W7 →O and the mean value of 
+
+∆GAA W7 →O of the generated samples obtained with ALOGPS is shown for all values of γ evaluated in this work. A clear linear relationship between the two values is observed, with r2 ≥ 0.96 for all values of γ. Furthermore, for values of γ = 1 , 2, the slope of the linear fit is near 0.8, indicating that ∆GCG W7 →O is correctly approximated by the mean of the generated molecules. In contrast, systematic deviations are observed, with overestimation of the values of ∆GW7 →O in the hydrophobic region ( ∼ − 3 kcal mol −1) and a corresponding underestimation for the hydrophilic values ( ∼ 2 kcal mol −1); see Figure S8. Part of this systematic deviation is attributable to the estimator. Repeating the analysis with RDKit gives larger differences in both tails (Figures S6 and S7), as expected of an additive scheme: the Wildman–Crippen method accumulates errors for highly hydrophobic compounds [75], and for highly hydrophilic ones the absence of corrections for intramolecular interactions underestimates the hydrophobicity [76]. The residual plot in Figure 5B more clearly reveals the systematic shortcomings of the ∆GW7 →O predictor in extreme cases. Regardless of the value of γ used, the residuals adopt a slightly parabolic shape, with the smallest values of ∆GCG W7 →O − ⟨ ∆ ˆGAA W7 →O⟩ occurring near intermediate values of ∆GCG W7 →O. Despite this systematic error, most bead combinations satisfy our hypothesised relationship between ∆GCG W7 →O and the mean ∆GAA W7 →O, with the central block (C-N and N-N combinations) showing differences below 1 kcal mol −1.A further aspect of the ∆GW7 →O estimator’s shortcomings is how they are amplified by the value of γ. For example, when considering the P-P combinations, the largest deviations are observed for the smallest value of γ tested (0.5), with P5-P5 having the largest deviation overall (2.9 kcal mol −1). In this regard, Figure 5 provides a few insights about the effect of γ. First, γ has a negligible influence for bead combinations near the centre of the distribution, but for combinations in the tails the effect is more pronounced. As expected, a small value of γ leads to large differences for the extreme cases and flattens the slope in Figure 5A. On the contrary, a large value of γ helps in sampling extreme values, with a considerable reduction of the difference for the P-P combinations. Returning to the P5-P5 combination, a reduction of 1 kcal mol −1 in the difference 
+
+∆GCG W7 →O − ⟨ ∆ ˆGAA W7 →O⟩ is observed when going from γ = 0 .5 to γ = 1 ; a further increase in γ leads to a moderate reduction of 0.3 kcal mol −1 when going from γ = 1 to 2. The rest of the bead combinations show a similar pattern: a considerable change when γ goes from 0.5 to 1 and a moderate/negligible change when going from 1 to 2. Because the benefit of larger γ is largely recovered by γ = 1 , we adopt this value for the remainder of our discussion. Further analysis of the generated distributions of ∆GAA W7 →O was also performed to confirm that the generated samples match not only the average quantity but also the overall distribution of values used as reference. The objective of this analysis was to confirm that juniper captures the underlying data distribution of ∆GAA W7 →O.This can also be understood as the model generating similar molecules for a specific value of ∆GW7 →O and, in consequence, for the corresponding combination of MARTINI beads. The metrics used for this purpose were 
+
+DJS and MMD 2 (see Section 2.4.2 for details). Results by value of ∆GCG W7 →O and bead combination are shown in Figure S9. First, many bead combinations, particularly those containing beads of the intermediate class (Na, Nd, Nda), share the same ∆GW7 →O value (Figure 5). In those cases, we took the average distance for each combination and highlighted it in magenta in the plot. Values of DJS follow a trend similar to that of the residuals in Figure 5B. Most combinations have a small DJS value, with a mean of 0.07 and most evaluated samples within one standard deviation (0.07) of this value. Nevertheless, the parabolic trend described above is noticeable for combinations of the P5 bead. In the case of P5 combined with beads of the C category, the value of DJS 
+
+decreases as C reduces its hydrophobicity; the opposite is observed for the P family, where DJS increases with hydrophilicity. The complementary MMD 2 values show a picture similar to that of DJS , though they resolve changes in the width of the distribution more clearly, which can be verified with the use of the witness function (Figure S10). In particular, the MMD 2 values for combinations of C1 and C2 with beads from the intermediate class are larger because of the width of the generated distributions, which are more spread out in comparison with the training values, which are more concentrated. In contrast, the large values in samples with P5 and the apolar beads (C) are mainly due to mean shifts, except for C1-P5, which shows a bimodal profile for the generated molecules. Finally, the combinations of P5 with P4 or P5 give the largest values for both metrics, again because of mean shifts. We next analysed the chemical functional groups in the generated graphs. First, Figure S11 shows a chemical 11 6 4 2 0 2 4
+
+GCG W O (kcal/mol) 
+
+6
+
+4
+
+2
+
+024
+
+> GAA W O (kcal/mol)
+
+# A
+
+Bead family C-C C-N C-P N-N N-P P-P Multiple (markers) 
+
+= 0.5 
+
+= 1.0 
+
+= 2.0 
+
+(markers) 
+
+= 0.5 
+
+= 1.0 
+
+= 2.0 
+
+6 4 2 0 2 4
+
+GCG W O (kcal/mol) 
+
+0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 
+
+> GCG W O GAA W O (kcal/mol)
+
+# B (trend line) 
+
+= 0.5 
+
+= 1.0 
+
+= 2.0 
+
+0.00 0.02 0.04 0.06 0.08 0.10  
+
+> Probability Figure 5 Comparison between
+
+∆GCG W7 →O and ∆GAA W7 →O. (A) Scatter plot of the value of ∆GCG W7 →O versus the mean value of 
+
+∆GAA W7 →O for the generated molecules. The markers are coloured by bead family, except for values of ∆GW7 →O that can correspond to multiple bead combinations, which are coloured in magenta. (B) Residual plot of the absolute difference between the mean of ∆GAA W7 →O and the value of ∆GCG W7 →O for all combinations; the signed version is available in the SI. A trend line fitted to a second-order polynomial is shown for each value of γ. The background shows the histogram of the training dataset. 
+
+12 network representation of the functional groups (FGs) that are present in the generated molecules for at least 50 bead combinations. The FGs overlap substantially with those of the training dataset. In some cases, the model gives more weight to certain FGs, which nevertheless remain very similar to those in the training set. With the aim of connecting the values of ∆GW7 →O with the presence of FGs, an analysis of the latter by MARTINI bead family is shown in Figure 6. This figure indicates the presence of specific FGs with respect to the value of ∆GW7 →O that was used as a constraint. Homogeneous combinations of bead classes show the best separation in the ∆GW7 →O distribution. Conversely, cross combinations show values that interpolate between the ∆GW7 →O of the beads that compose them, which is a consequence of considering the values of ∆GCG W7 →O
+
+as the sum of individual beads. The figure also shows that the C-P class has the broadest distribution, with three peaks near the mean values of the homogeneous combinations. This agrees with the changes in DJS and 
+
+MMD 2 discussed earlier. From a chemical perspective, the most common FGs identified by Ertl’s algorithm show clear trends. Starting with the molecules of the C-C bead family, the most common FGs are long branched hydrocarbons containing multiple carbon–carbon double or triple bonds. Most fragments contain only carbon atoms, with few substitutions by F and a few carbonyls, as could be expected for highly hydrophobic compounds. Moving on to the C-N bead family, the fragments retain the high proportion of hydrocarbons but also show an increase in the number of heteroatoms (N, O), which introduce fragments such as nitriles (R – C – –– N), imines (R 1R2C – – N – R 3), aldehydes (R – CH – – O), and ketones (R 1R2C – – O). Continuing with the N-N bead family, the FGs increase the number of oxygen-containing fragments—ketones, aldehydes, ethers (R 1 – O – R 2), and acid anhydrides (R 1C( – – O) – O – C( – – O)R 2)—as well as nitrogen-containing fragments—azo compounds (R 1 – N – – N – R 2), amides (R – C( – – O)NH 2), and imines—while the number of carbon atoms decreases relative to that of heteroatoms. For the N-P family, the FGs are more complex and polar. In particular, we observe the same fragments as in the other families, as well as imides (R 1C( – – O) – NH – C( – – O)R 2), isocyanates (R – N – – C – – O), and ethyleneimine rings. The P-P family is characterised by heteroatoms at the core of the FGs, together with all the previously described fragments. Hydrocarbon moieties are minimal and are found only at the termini of the FGs. Multiple C – C bonds are absent, replaced by N – N or C – N bonds. Finally, the C-P family shows a large diversity of FGs: hydrocarbon fragments appear at almost the same rate as fragments containing N, O, and F, and the same holds for the number of multiple C – C bonds. Notably, most of the identified FGs are very large, reflecting the large, stable molecules the model generates for this family. In summary, the FG analysis shows that each family has distinct chemistry, with identifiable fragments that map directly onto the values of ∆GW7 →O. It also confirms that the values of ∆GW7 →O and, consequently, the backmapping are, on average, correct, because the generated molecules contain FGs appropriate to the imposed constraint. Complementary quantitative metrics to analyse the chemical space, described in Section 2.4.3, are presented in Figures S12 and S14. The internal chemical diversity (ICD) in Figure S12 takes large values, with a minimum of 0.7 and, in most cases, between 0.8 and 0.9. This indicates that the generated samples differ substantially from one another. The C-C family is of particular interest: the intrinsically low diversity of hydrophobic fragments, mainly hydrocarbons, explains the reduced diversity of the generated samples. The ICD can also be examined as a function of γ. In general, large values of γ reduce diversity in the generated samples, although they strengthen the conditioning [77]. Previous applications in the prediction of HOMO–LUMO gaps [55] made use of large values of γ with the aim of enforcing the property more strongly. This is not ideal for our work, because we want to preserve a wide diversity of compounds while still enforcing the condition. The results in Figure S13 show, in general, a small but consistent decrease of the average ICD as the value of γ increases. The largest ICD decreases occur for bead combinations with low population in the training dataset, while the combinations with the largest population are the least affected. The fraction of valid graphs follows the same pattern: high and nearly uniform across bead combinations at γ = 0 .5 and γ = 1 , it degrades at γ = 2 towards both ends of the hydrophobicity scale, most visibly for the P3–P5 combinations and to a lesser extent for those built from C1–C3 (Figure S3). These are the sparsely populated regions in which the conditioning is hardest to satisfy, and enforcing it more strongly there yields a larger fraction of graphs that are disconnected or cannot be resolved into a molecule by RDKit. For this work, sampling from the conditional distribution provides the best results, as smaller values of γ reduce the impact of the condition while larger values cost both diversity and validity. The other quantitative metric studied in this work is the FCD, shown in Figure S14. This metric is equivalent 13 8 6 4 2 0 2 4 
+
+> 0.0
+> 0.1
+> 0.2
+> 0.3
+> 0.4
+> 0.5 Martini bead family
+> C-C
+> C-N
+> C-P
+> N-N
+> N-P
+> P-P
+> P( GW O)
+
+GW O(kcal/mol) Figure 6 Functional groups by bead family. In the centre, the probability distribution of ∆GW7 →O coloured with respect to the main MARTINI family. The surrounding insets show the ten most common functional-group fragments identified by Ertl’s algorithm. Bonds shown in light grey denote query bonds whose order is not fully specified; by default, these match either single or double bonds. 
+
+14 to the L2-Wasserstein distance between the distribution of the molecules in the training dataset and that of the generated ones. The results indicate that the generated molecules are consistent with those in the training dataset, with small FCD values. Once more, molecules generated for combinations of the P5 bead show the largest distances. Combinations of members of the intermediate family have intermediate FCD values, while the rest are small. Notably, FCD increases for ∆GW7 →O values with low populations in the training dataset. Although this may seem contradictory, FCD and ICD differ: FCD measures how different the generated molecules are from the training samples, while ICD measures how different they are from one another. This can be understood as the model efficiently sampling within the distribution created for each value of ∆GW7 →O.
+
+4 Conclusions 
+
+This work introduces a generative machine learning model called juniper that bridges CG representations in the MARTINI model with AA molecules through a graph diffusion model constrained by the value of 
+
+∆GCG W7 →O. By leveraging the relationship between bead assignment and ∆GW7 →O, and by using ∆GCG W7 →O as a proxy for the mapping of chemical space by the MARTINI force field, the model can generate multiple samples and thereby bypass the major complications of compositional backmapping. The two representations are connected by the hypothesis that ∆GCG W7 →O is approximately equal to the average ∆GAA W7 →O value of molecules mapped to a given bead combination. The results show that juniper can be efficiently conditioned to generate samples whose ∆GW7 →O follows the value of ∆GCG W7 →O; other physicochemical properties of interest, such as the solvent-accessible surface area, are recovered from the training dataset as well. Analysis of the differences between the mean ∆GAA W7 →O and the constrained ∆GCG W7 →O passed to juniper shows a linear relationship between these quantities, with deviations for the most hydrophobic and hydrophilic samples due to limitations in the ∆GW7 →O predictor. Furthermore, comparing the ∆GW7 →O distributions for training and generated samples shows strong agreement. A study of functional groups, and hence of the chemical content of the generated samples, provides further evidence that the bead combinations translate into AA samples under the conditioning on ∆GCG W7 →O. The fact that the functional groups are separated by bead family, with no previous chemical information given to the model beyond a single free energy, suggests that ∆GW7 →O carries more of the chemistry of the MARTINI mapping than its role as one fitting target among several would imply. Several of our results hold more generally for generative chemistry. We analysed the effect of the hyperparameter 
+
+γ, which controls the balance between conditioned and unconditioned probabilities for sample generation. Large values of γ improve the generation of samples with property values near the desired value, at the cost of the diversity and, in the tails of the distribution, the validity of the generated molecules. The effect of γ is also more pronounced there than at the mean. Finally, the choice of estimator for the conditioning property matters, and matters most in the tails: an additive atom-contribution scheme is a poor instrument for a property as collective as partitioning. The work presented here is limited to small molecules with a maximum of 9 heavy atoms that map onto a two-bead MARTINI v2 representation. Unimers entered the training set, but the 1,200 samples generated for them—against 38,600 for dimers—are too few to support a dedicated analysis, and the results reported above therefore concern dimers alone. For backmapping compounds with more than two beads, it is necessary to include additional information on the topology of the CG representation. Relatedly, this work does not consider the effect of bonded parameters (i.e., the distance between two beads). We expect that incorporating such information will improve the performance of the backmapping process. A further restriction is that we assess the generated compounds on validity, hydrophobicity, and chemical composition, but not on synthetic accessibility; a generated graph is a well-formed molecule, not necessarily a preparable one, and coupling the conditioning to a retrosynthetic score is a natural extension. We plan to address these aspects in future work. More broadly, this work is a step toward closing the screening or optimisation loop in chemical compound space using CG models. Using the model developed here, promising bead combinations identified at the CG level can be converted back to AA resolution, so that the generated candidate molecules match the CG-level hydrophobicity and carry chemistries distinguishable by functional-group composition. These candidates can then be inspected or simulated at the AA level. For the dimers studied here, this return step is feasible, so the compression of chemical space that makes low-resolution screening cheap no longer ends at a bead string: 15 that string can now be carried back to real molecules. 
+
+Author contributions 
+
+LIVS and TB conceived the study and designed the methodology. LIVS implemented the software, performed the training and generation, carried out the formal analysis and validation, curated the data, produced the figures, and wrote the original draft. TB provided supervision and computational resources. Both authors acquired funding, and reviewed and edited the manuscript. 
+
+Conflicts of interest 
+
+There are no conflicts to declare. 
+
+Data availability 
+
+An interactive deployment of juniper is available at https://livazquezs-juniper-dg.hf.space/ . The source code and the scripts used to generate molecules can be found at https://github.com/LIVazquezS/juniper_dg .The trained model weights can be found at https://doi.org/10.5281/zenodo.22282325 . Scripts to analyse the results are available at https://github.com/LIVazquezS/Juniper_analysis . The unimer and dimer training sets are those of Ref. 9 and are not redistributed here. The generated molecules underlying the analyses reported here are deposited at https://doi.org/10.5281/zenodo.22259586 . Supplementary figures, tables, and further methodological detail are provided in the electronic supplementary information (ESI). 
+
+Acknowledgements 
+
+The authors thank Sander Hummerich and Luis Walter for critical reading and for their valuable feedback on the manuscript. LIVS acknowledges funding from the Swiss National Science Foundation (Grant P500PN_-222297). The authors acknowledge support by the state of Baden-Württemberg through bwHPC and the German Research Foundation (DFG) through grant INST 35/1597-1 FUGG. 
+
+Declaration of AI-assisted tools 
+
+During the preparation of this manuscript, the authors used Claude (Anthropic; Opus 4.8 and Opus 5, accessed August 2026) for language editing, structural revision of the text, and L ATEX preparation of the manuscript and electronic supplementary information. All data, analyses, and figures are the authors’ own. The authors reviewed, edited, and approved all text and take full responsibility for the content. 16 References 
+
+[1] Coley, C. W. Defining and exploring chemical spaces. Trends Chem. 2021 , 3, 133–145. [2] Restrepo, G. Chemical space: limits, evolution and modelling of an object bigger than our universal library. Digit. Discov. 2022 , 1, 568–585. [3] Gorse, A.-D. Diversity in medicinal chemistry space. Curr. Top. Med. Chem. 2006 , 6, 3–18. [4] Vopson, M. M. Estimation of the information contained in the visible matter of the universe. AIP Adv. 2021 , 11 ,105317. [5] Ingólfsson, H. I.; Lopez, C. A.; Uusitalo, J. J.; de Jong, D. H.; Gopal, S. M.; Periole, X.; Marrink, S. J. The power of coarse graining in biomolecular simulations. Wiley Interdiscip. Rev. Comput. Mol. Sci. 2014 , 4, 225–248. [6] Marrink, S. J.; Risselada, H. J.; Yefimov, S.; Tieleman, D. P.; De Vries, A. H. The MARTINI force field: coarse grained model for biomolecular simulations. J. Phys. Chem. B 2007 , 111 , 7812–7824. [7] Klein, F.; Soñora, M.; Santos, L. H.; Frigini, E. N.; Ballesteros-Casallas, A.; Machado, M. R.; Pantano, S. The SIRAH force field: A suite for simulations of complex biological systems at the coarse-grained and multiscale levels. J. Struct. Biol. 2023 , 215 , 107985. [8] Bereau, T. Computational compound screening of biomolecules and soft materials by molecular simulations. Model. Simul. Mater. Sci. Eng. 2021 , 29 , 023001. [9] Menichetti, R.; Kanekal, K. H.; Bereau, T. Drug–membrane permeability across chemical space. ACS Cent. Sci. 
+
+> 2019
+
+, 5, 290–298. [10] Hoffmann, C.; Menichetti, R.; Kanekal, K. H.; Bereau, T. Controlled exploration of chemical space by machine learning of coarse-grained representations. Phys. Rev. E 2019 , 100 , 033302. [11] Mohr, B.; Shmilovich, K.; Kleinwächter, I. S.; Schneider, D.; Ferguson, A. L.; Bereau, T. Data-driven discovery of cardiolipin-selective small molecules by computational active learning. Chem. Sci. 2022 , 13 , 4498–4511. [12] Walter, L. J.; Bereau, T. Navigating chemical space: multi-level Bayesian optimization with hierarchical coarse-graining. Chem. Sci. 2025 , 16 , 16027–16038. [13] Noid, W. G. Perspective: Advances, Challenges, and Insight for Predictive Coarse-Grained Models. J. Phys. Chem. B 2023 , 127 , 4174–4207. [14] Marrink, S. J.; Tieleman, D. P. Perspective on the Martini model. Chem. Soc. Rev. 2013 , 42 , 6801–6822. [15] Souza, P. C.; Thallmair, S.; Conflitti, P.; Ramírez-Palacios, C.; Alessandri, R.; Raniolo, S.; Limongelli, V.; Marrink, S. J. Protein–ligand binding with the coarse-grained Martini model. Nat. Comm. 2020 , 11 , 3714. [16] Souza, P. C.; Limongelli, V.; Wu, S.; Marrink, S. J.; Monticelli, L. Perspectives on high-throughput ligand/protein docking with Martini MD simulations. Front. Mol. Biosci. 2021 , 8, 657222. [17] Bartocci, A.; Grazzi, A.; Awad, N.; Corringer, P.-J.; Souza, P. C.; Cecchini, M. A millisecond coarse-grained simulation approach to decipher allosteric cannabinoid binding at the glycine receptor α 1. Nat. Comm. 2024 , 15 ,9040. [18] Stevens, J. A.; Grünewald, F.; van Tilburg, P. M.; König, M.; Gilbert, B. R.; Brier, T. A.; Thornburg, Z. R.; Luthey-Schulten, Z.; Marrink, S. J. Molecular dynamics simulation of an entire cell. Front. Chem. 2023 , 11 ,1106495. [19] Vazquez-Salazar, L. I.; Selle, M.; De Vries, A. H.; Marrink, S. J.; Souza, P. C. Martini coarse-grained models of imidazolium-based ionic liquids: from nanostructural organization to liquid–liquid extraction. Green Chem. 2020 ,
+
+22 , 7376–7386. [20] Alessandri, R.; Grünewald, F.; Marrink, S. J. The Martini model in materials science. Adv. Mater. 2021 , 33 ,2008635. [21] Souza, P. C. T. et al. Martini 3: a general purpose force field for coarse-grained molecular dynamics. Nat. Methods 
+
+> 2021
+
+, 18 , 382–388. [22] Marrink, S. J.; Monticelli, L.; Melo, M. N.; Alessandri, R.; Tieleman, D. P.; Souza, P. C. Two decades of Martini: Better beads, broader scope. Wiley Interdiscip. Rev. Comput. Mol. Sci. 2023 , 13 , e1620. 
+
+17 [23] Jones, M. S.; Khanna, S.; Ferguson, A. L. FlowBack: a generalized flow-matching approach for biomolecular backmapping. J. Chem. Inf. Model. 2025 , 65 , 672–692. [24] Hummerich, S.; Bereau, T.; Köthe, U. Split-flows: Measure transport and information loss across molecular resolutions. Proceedings of the 29th International Conference on Artificial Intelligence and Statistics (AISTATS). 2026; arXiv:2511.01464. [25] Du, Y.; Jamasb, A. R.; Guo, J.; Fu, T.; Harris, C.; Wang, Y.; Duan, C.; Liò, P.; Schwaller, P.; Blundell, T. L. Machine learning-aided generative molecular design. Nat. Mach. Intell. 2024 , 6, 589–604. [26] Tomczak, J. M. Deep Generative Modeling , 2nd ed.; Springer, 2024. [27] Stieffenhofer, M.; Wand, M.; Bereau, T. Adversarial reverse mapping of equilibrated condensed-phase molecular structures. Mach. Learn.: Sci. Technol. 2020 , 1, 045014. [28] Li, W.; Burkhart, C.; Polińska, P.; Harmandaris, V.; Doxastakis, M. Backmapping coarse-grained macromolecules: an efficient and versatile machine learning approach. J. Chem. Phys. 2020 , 153 , 041101. [29] Stieffenhofer, M.; Bereau, T.; Wand, M. Adversarial reverse mapping of condensed-phase molecular structures: chemical transferability. APL Mater. 2021 , 9, 031107. [30] Wang, W.; Xu, M.; Cai, C.; Miller, B. K.; Smidt, T.; Wang, Y.; Tang, J.; Gómez-Bombarelli, R. Generative coarse-graining of molecular conformations. Proceedings of the 39th International Conference on Machine Learning (ICML). 2022; pp 23213–23236. [31] Shmilovich, K.; Stieffenhofer, M.; Charron, N. E.; Hoffmann, M. Temporally coherent backmapping of molecular trajectories from coarse-grained to atomistic resolution. J. Phys. Chem. A 2022 , 126 , 9124–9139. [32] Arts, M.; Garcia Satorras, V.; Huang, C.-W.; Zugner, D.; Federici, M.; Clementi, C.; Noé, F.; Pinsler, R.; van den Berg, R. Two for one: Diffusion models and force fields for coarse-grained molecular dynamics. J. Chem. Theory Comput. 2023 , 19 , 6151–6159. [33] Jones, M. S.; Shmilovich, K.; Ferguson, A. L. DiAMoNDBack: diffusion-denoising autoregressive model for non-deterministic backmapping of C α protein traces. J. Chem. Theory Comput. 2023 , 19 , 7908–7923. [34] Ugarte La Torre, D.; Sugita, Y. CGBack: diffusion model for backmapping large-scale and complex coarse-grained molecular systems. J. Chem. Inf. Model. 2025 , 65 , 9974–9986. [35] Berlaga, A.; Jones, M. S.; Ferguson, A. L. FlowBack-Adjoint: physics-aware and energy-guided conditional flow-matching for all-atom protein backmapping. 2025; arXiv:2508.03619. [36] Alessandri, R.; Souza, P. C.; Thallmair, S.; Melo, M. N.; De Vries, A. H.; Marrink, S. J. Pitfalls of the Martini model. J. Chem. Theory Comput. 2019 , 15 , 5448–5460. [37] Kanekal, K. H.; Bereau, T. Resolution limit of data-driven coarse-grained models spanning chemical space. J. Chem. Phys. 2019 , 151 , 164106. [38] Gómez-Bombarelli, R.; Wei, J. N.; Duvenaud, D.; Hernández-Lobato, J. M.; Sánchez-Lengeling, B.; Sheberla, D.; Aguilera-Iparraguirre, J.; Hirzel, T. D.; Adams, R. P.; Aspuru-Guzik, A. Automatic chemical design using a data-driven continuous representation of molecules. ACS Cent. Sci. 2018 , 4, 268–276. [39] Lim, J.; Ryu, S.; Kim, J. W.; Kim, W. Y. Molecular generative model based on conditional variational autoencoder for de novo molecular design. J. Cheminf. 2018 , 10 , 31. [40] Kang, S.; Cho, K. Conditional molecular design with deep generative models. J. Chem. Inf. Model. 2019 , 59 ,43–52. [41] Kotsias, P.-C.; Arús-Pous, J.; Chen, H.; Engkvist, O.; Tyrchan, C.; Bjerrum, E. J. Direct steering of de novo molecular generation with descriptor conditional recurrent neural networks. Nat. Mach. Intell. 2020 , 2, 254–265. [42] Jin, W.; Barzilay, R.; Jaakkola, T. Junction tree variational autoencoder for molecular graph generation. Interna-tional Conference on Machine Learning. 2018; pp 2323–2332. [43] Arnott, J. A.; Planey, S. L. The influence of lipophilicity in drug discovery and design. Expert Opin. Drug Discov. 
+
+> 2012
+
+, 7, 863–875. [44] Lobo, S. Is there enough focus on lipophilicity in drug discovery? Expert Opin. Drug Discov. 2020 , 15 , 261–263. [45] Kingma, D. P.; Welling, M. An introduction to variational autoencoders. Foundations and Trends in Machine Learning 2019 , 12 , 307–392. 
+
+18 [46] Sohl-Dickstein, J.; Weiss, E.; Maheswaranathan, N.; Ganguli, S. Deep unsupervised learning using nonequilibrium thermodynamics. International Conference on Machine Learning. 2015; pp 2256–2265. [47] Song, Y.; Sohl-Dickstein, J.; Kingma, D. P.; Kumar, A.; Ermon, S.; Poole, B. Score-based generative mod-eling through stochastic differential equations. International Conference on Learning Representations. 2021; arXiv:2011.13456. [48] Ho, J.; Jain, A.; Abbeel, P. Denoising diffusion probabilistic models. Adv. Neural Inf. Process. Syst. 2020 , 33 ,6840–6851. [49] Kingma, D. P.; Salimans, T.; Poole, B.; Ho, J. Variational diffusion models. Adv. Neural Inf. Process. Syst. 2021 ,
+
+34 , 21696–21707. [50] Oestreich, M.; Merdivan, E.; Lee, M.; Schultze, J. L.; Piraud, M.; Becker, M. DrugDiff: small molecule diffusion model with flexible guidance towards molecular properties. J. Cheminf. 2025 , 17 , 23. [51] Zhang, X.; Wang, S.; Fang, Y.; Zhang, Q. MG-DIFF: A novel molecular graph diffusion model for molecular generation and optimization. PLOS ONE 2025 , 20 , e0331450. [52] Nisonoff, H.; Xiong, J.; Allenspach, S.; Listgarten, J. Unlocking guidance for discrete state-space diffusion and flow models. International Conference on Learning Representations. 2025; arXiv:2406.01572. [53] Vignac, C.; Krawczuk, I.; Siraudin, A.; Wang, B.; Cevher, V.; Frossard, P. DiGress: discrete denoising diffusion for graph generation. International Conference on Learning Representations. 2023; arXiv:2209.14734. [54] Dwivedi, V. P.; Bresson, X. A generalization of transformer networks to graphs. AAAI Workshop on Deep Learning on Graphs: Methods and Applications. 2021; arXiv:2012.09699. [55] Ninniri, M.; Podda, M.; Bacciu, D. Classifier-free graph diffusion for molecular property targeting. Joint European Conference on Machine Learning and Knowledge Discovery in Databases. 2024; pp 318–335. [56] Dhariwal, P.; Nichol, A. Diffusion models beat GANs on image synthesis. Adv. Neural Inf. Process. Syst. 2021 , 34 ,8780–8794. [57] Ho, J.; Salimans, T. Classifier-free diffusion guidance. 2022; arXiv:2207.12598. [58] Ruddigkeit, L.; Van Deursen, R.; Blum, L. C.; Reymond, J.-L. Enumeration of 166 billion organic small molecules in the chemical universe database GDB-17. J. Chem. Inf. Model. 2012 , 52 , 2864–2875. [59] Bereau, T.; Kremer, K. Automated parametrization of the coarse-grained Martini force field for small organic molecules. J. Chem. Theory Comput. 2015 , 11 , 2783–2791. [60] Glavatskikh, M.; Leguy, J.; Hunault, G.; Cauchy, T.; Da Mota, B. Dataset’s chemical diversity limits the generalizability of machine learning predictions. J. Cheminf. 2019 , 11 , 69. [61] Vazquez-Salazar, L. I.; Boittier, E. D.; Unke, O. T.; Meuwly, M. Impact of the Characteristics of Quantum Chemical Databases on Machine Learning Prediction of Tautomerization Energies. J. Chem. Theory Comput. 
+
+> 2021
+
+, 17 , 4769–4785. [62] Loshchilov, I.; Hutter, F. Decoupled weight decay regularization. International Conference on Learning Represen-tations. 2019; arXiv:1711.05101. [63] Landrum, G. RDKit: A software suite for cheminformatics, computational chemistry, and predictive modeling. 2013. [64] Zhang, J.; Mercado, R.; Engkvist, O.; Chen, H. Comparative study of deep generative models on chemical space coverage. J. Chem. Inf. Model. 2021 , 61 , 2572–2581. [65] Wildman, S. A.; Crippen, G. M. Prediction of physicochemical parameters by atomic contributions. J. Chem. Inf. Comput. Sci. 1999 , 39 , 868–873. [66] Tetko, I. V.; Tanchuk, V. Y. Application of associative neural networks for prediction of lipophilicity in ALOGPS 2.1 program. J. Chem. Inf. Comput. Sci. 2002 , 42 , 1136–1145. [67] Nielsen, F. On the Jensen–Shannon symmetrization of distances relying on abstract means. Entropy 2019 , 21 , 485. [68] Gretton, A.; Borgwardt, K. M.; Rasch, M. J.; Schölkopf, B.; Smola, A. A kernel two-sample test. J. Mach. Learn. Res. 2012 , 13 , 723–773. [69] Ertl, P. An algorithm to identify functional groups in organic molecules. J. Cheminf. 2017 , 9, 36. 
+
+19 [70] Colmenarejo, G. EFGs: A Complete and Accurate Implementation of Ertl’s Functional Group Detection Algorithm in RDKit. J. Chem. Inf. Model. 2025 , 65 , 1061–1066. [71] Preuer, K.; Renz, P.; Unterthiner, T.; Hochreiter, S.; Klambauer, G. Fréchet ChemNet Distance: A Metric for Generative Models for Molecules in Drug Discovery. J. Chem. Inf. Model. 2018 , 58 , 1736–1741. [72] Heusel, M.; Ramsauer, H.; Unterthiner, T.; Nessler, B.; Hochreiter, S. GANs trained by a two time-scale update rule converge to a local Nash equilibrium. Adv. Neural Inf. Process. Syst. 2017 , 30 , 6626–6637. [73] Mayr, A.; Klambauer, G.; Unterthiner, T.; Steijaert, M.; Wegner, J. K.; Ceulemans, H.; Clevert, D.-A.; Hochre-iter, S. Large-scale comparison of machine learning methods for drug target prediction on ChEMBL. Chem. Sci. 
+
+> 2018
+
+, 9, 5441–5451. [74] Benhenda, M. ChemGAN challenge for drug discovery: can AI reproduce natural chemical diversity? 2017; arXiv:1708.08227. [75] Mannhold, R.; Poda, G. I.; Ostermann, C.; Tetko, I. V. Calculation of molecular lipophilicity: State-of-the-art and comparison of log P methods on more than 96,000 compounds. J. Pharm. Sci. 2009 , 98 , 861–893. [76] Rasmussen, M. H.; Christensen, D. S.; Jensen, J. H. Do machines dream of atoms? Crippen’s logP as a quantitative molecular benchmark for explainable AI heatmaps. SciPost Chem. 2023 , 2, 002. [77] Buzzard, Z. Understanding the Quality-Diversity Trade-off in Diffusion Language Models. 2025; arXiv:2503.10683. 
+
+20 A Discrete graph diffusion: full formulation 
+
+This section states in full the discrete denoising diffusion construction summarised in Section 2.1 of the main manuscript. The construction follows the DiGress model of Vignac et al. [53] together with the classifier-free conditioning of Ninniri et al. [55]. It is reproduced here for completeness and contains no development original to this work. 
+
+A.1 Forward process (noising) 
+
+As mentioned before, molecules are considered graphs G = ( X , E, y ), where the space X contains xi features for each node i with a one-hot encoding for each atom, xi ∈ Ra, and a is the cardinality of the space X (i.e., the number of atom types). For edges, each bond type is also one-hot encoded as eij ∈ Rb, where b is the cardinality of the space E. Additionally, the absence of a bond is explicitly encoded with a special type. The encodings are organised in a matrix X ∈ Rn×a for nodes and E ∈ Rn×n×b for edges. In both cases, n is the number of nodes. Given that the space of a complete graph is too large to be handled at once, we treat edges and nodes separately. Therefore, we diffuse separately over the nodes’ and edges’ features. For the diffusion process, we define transition matrices over nodes and edges as: 
+
+[QtX ]ij = q(xt = j | xt−1 = i), [QtE ]ij = q(et = j | et−1 = i).
+
+Then, the process of adding noise to the graph Gt = ( Xt, Et, y ) is governed by: 
+
+q(Gt | Gt−1) = ( Xt−1QtX , Et−1QtE ). (S11) Here t ∼ U (1 , . . . , T ), X0 = X , and E0 = E. The process in Eq. S11 is generalised over T steps as: 
+
+q(Gt | G) = ( XQ tX , EQ tE ),
+
+where the cumulative transition matrices for nodes or edges are: 
+
+QtX/E =
+
+> t
+
+Y 
+
+> τ=1
+
+QτX/E .
+
+The transition matrices of edges and nodes can be chosen arbitrarily. However, we impose the condition 
+
+lim   
+
+> T→∞
+
+QTX 1i = mX ∀i, 
+
+where mX is the marginal distribution of nodes (i.e., atoms). A similar expression can be obtained for edges. Following this condition, the proposed transition matrices are: 
+
+QtX/E = αtI + βt1m X/E . (S12) In this case, the probability of a transition from state i to state j is proportional to the marginal probability of category j in the training dataset. Eq. S12 is generalised as: 
+
+Qt = αtI + βt1m ,
+
+where αt = Qtτ =1 ατ , defined by the cosine schedule αt = cos 2
+
+h π 
+
+> 2
+> t/T +s
+> 1+ s
+
+i
+
+with s ≪ 1. Correspondingly, 
+
+βt = 1 − αt.S1 A.2 Reverse process (inference) 
+
+In the denoising process, a neural network (NN) Φθ parametrised by θ takes as input Gt, a noisy graph, to predict a clean graph ( G = Φ θ (Gt)). The NN model is trained to estimate the probability of the reverse diffusion iteration, Pθ(Gt−1 | Gt). Here, these probabilities are conditioned on the value of the global label y (∆GCG W7 →O) corresponding to each graph, 
+
+Pθ(Gt−1 | Gt, y ). The value of y remains constant throughout the noising process. There are different ways of computing the desired probabilities; here, the classifier-free denoising procedure introduced by Ninniri et al. [55] was used. In the classifier-free model, the conditional probability for denoising a graph conditioned on the value of y is given by: 
+
+Pθ (Gt−1 | Gt, y ) = Y
+
+> 1≤i≤n
+
+pθ (xt−1 
+
+> i
+
+| Gt, y ) · Y
+
+> 1≤i≤n
+
+Y
+
+> 1≤j≤n
+
+pθ (et−1 
+
+> ij
+
+| Gt, y ). (S13) This result is marginalised over the predictions of the NN model and uses the result of Dhariwal and Nichol [56] on the separation of conditional probabilities. Using these results, the marginal probabilities for nodes are given by 
+
+pθ (xt−1 
+
+> i
+
+| Gt, y ) = X
+
+> x∈X
+
+q(xt−1 
+
+> i
+
+| xti, x0 
+
+> i
+
+= x)
+
+| {z }
+
+> transition probability
+
+· Φθ (x0 
+
+> i
+
+= x | Gt, y )
+
+| {z }
+
+> neural network
+
+. (S14) Similarly, for the edges: 
+
+pθ (et−1 
+
+> ij
+
+| Gt, y ) = X
+
+> e∈E
+
+q(et−1 
+
+> ij
+
+| etij , e0 
+
+> ij
+
+= e) · Φθ (e0 
+
+> ij
+
+= e | Gt, y ). (S15) In Eqs. S14 and S15, the first term on the right-hand side is the transition probability matrix, while the second is the NN model that predicts the node/edge types conditioned on a noisy graph ( Gt) and the guide value ( y). These marginals enter the barycentric combination of conditional and unconditional predictions, Eq. 1 of the main manuscript, from which samples are drawn. 
+
+B Conditional variational autoencoder 
+
+To benchmark our approach against other property-conditioned generative models, we ported the model of Ref. 39 to PyTorch. This model is a Conditional Variational Autoencoder (CVAE) built on recurrent neural networks, using an LSTM cell in both the encoder and the decoder. We adopted the same hyperparameters as reported in Ref. 39. For an initial validation, we trained the model on the dataset provided in the original repository, conditioning on 3 properties rather than the 5 used in the original paper. The generated molecules show a high correlation with the target property values, which we take as evidence of adequate performance. We introduced several modifications to reduce overfitting and improve performance. First, we applied a dropout of 0.2 to the LSTM cell. We also modified the optimiser by adding a weight decay of 10 −5 and a decay rate of 0.97. Finally, we implemented early stopping with a patience of 10 epochs. We trained two models on the dataset used in this work. The first, referred to as “CVAE Mult. Prop.”, was conditioned on 5 properties: molecular weight, ∆GCG W7 →O, hydrogen-bond donors, hydrogen-bond acceptors, and topological polar surface area (TPSA). The second, referred to as “CVAE Sing. Prop.”, was conditioned only on ∆GCG W7 →O. Both models were trained for a maximum of 200 epochs but stopped at epoch 115, as the validation loss had ceased to improve. The model is archived at https://github.com/LIVazquezS/CVAE .S2 C Why juniper? 
+
+Martini cocktails are made by mixing gin and vermouth. In the case of the coarse-grained force field, the “gin” can be considered to be the beads and their types, while the “vermouth” is the mapping. Because we aim to recover the components of the “gin,” we call our method juniper , since juniper berries are the main flavouring of gin. S3 D Tables 
+
+Model Validity Uniqueness Novelty Repetition Coverage JT-VAE* (ZINC-250K) 1.00 1.00 0.89 0.00 0.00 DiGress* (ZINC-250K) 0.85 1.00 1.00 0.15 0.00 MG-DIFF* (ZINC-250K) 0.96 0.99 0.99 0.03 0.00 DrugDiff † (ZINC-250K) 1.00 0.99 1.00 0.01 0.00 CVAE Mult. Prop. (CG dataset) 0.71 0.71 0.50 0.00 0.21 CVAE Sing. Prop. (CG dataset) 0.73 0.72 0.47 0.00 0.25 Juniper no guidance (CG dataset) 0.95 0.94 0.50 0.00 0.45 Juniper dimer guidance (CG dataset) 0.93 0.92 0.44 0.00 0.48  
+
+> Table S1
+
+Performance metrics for state-of-the-art models for the generation of molecular graphs. Data with an * is taken from Ref. 51 and † is taken from Ref. 50. The dataset used to train the models is shown in brackets. Validity, uniqueness, and novelty are reported as fractions; the repetition rate and coverage follow Eqs. 3 and 4 of the main manuscript, and all five metrics are defined in Section 2.4.1 there. Property Train/Juniper Train/CVAE Single Train/CVAE Mult. Prop. 
+
+∆GW7 →O 0.004 0.012 0.007 SASA 0.005 0.013 0.005 Juniper/CVAE Sing. Prop. Juniper/CVAE Mult. Prop. 
+
+∆GW7 →O 0.011 0.007 SASA 0.011 0.007  
+
+> Table S2
+
+Jensen–Shannon divergence between the distributions of ∆GW7 →O and SASA for the generated samples without guidance by Juniper and CVAE models. In the first half, we calculate DJS between the training and unconditioned distributions. The second half shows values for comparison between the models’ distributions. 
+
+S4 E Figures 6 4 2 0 2 4
+
+# GCG W O (kcal/mol) 
+
+## 0.00 0.02 0.04 0.06 0.08 0.10 
+
+> Probability
+
+## classpair C_C C_N C_P N_N N_P P_P  
+
+> Figure S1
+
+Histogram of bead population as a function of ∆GW7 →O for samples in the training dataset. 
+
+S5 6 4 2 0 2 4
+
+GW O (kcal/mol)   
+
+> 240 260 280 300 320 340 360 380 400
+> Solvent Accessible Surface Area ( Å2)
+> Training distribution Juniper-No guide CVAE Mult. Prop.-No guide CVAE Sing. Prop.-No guide Figure S2 Unguided sampling.
+
+2D kernel density representation of the chemical space in terms of the octanol–water partition free energy and the solvent-accessible surface area of the training dataset (black line). The samples generated without explicit guidance are shown in different colours by the model used to generate them. The figure margins show 1D kernel density estimates for each quantity. 
+
+S6 C1 C2 C3 C4 C5 N0 Na Nd Nda P1 P2 P3 P4 P5 C1 C2 C3 C4 C5 N0 Na Nd Nda P1 P2 P3 P4 P5 
+
+> = 0.5
+
+Valid 
+
+> C1 C2 C3 C4 C5 N0 Na Nd Nda P1 P2 P3 P4 P5
+
+Unique 
+
+> C1 C2 C3 C4 C5 N0 Na Nd Nda P1 P2 P3 P4 P5
+
+Novel 
+
+> C1 C2 C3 C4 C5 N0 Na Nd Nda P1 P2 P3 P4 P5
+
+C1 C2 C3 C4 C5 N0 Na Nd Nda P1 P2 P3 P4 P5 
+
+> = 1
+> C1 C2 C3 C4 C5 N0 Na Nd Nda P1 P2 P3 P4 P5 C1 C2 C3 C4 C5 N0 Na Nd Nda P1 P2 P3 P4 P5 C1 C2 C3 C4 C5 N0 Na Nd Nda P1 P2 P3 P4 P5
+
+C1 C2 C3 C4 C5 N0 Na Nd Nda P1 P2 P3 P4 P5 
+
+> = 2
+> C1 C2 C3 C4 C5 N0 Na Nd Nda P1 P2 P3 P4 P5 C1 C2 C3 C4 C5 N0 Na Nd Nda P1 P2 P3 P4 P5
+> 0.0 0.2 0.4 0.6 0.8 1.0
+> Fraction
+> 0.0 0.2 0.4 0.6 0.8 1.0
+> Fraction
+> 0.0 0.2 0.4 0.6 0.8 1.0
+> Fraction
+
+Figure S3 Basic metrics for the generated molecules for dimers. Left: fraction of valid molecules. Centre: fraction of unique generated samples. Right: fraction of novel molecules among those that are valid and unique. From top to bottom, the value of γ increases. 
+
+S7 C1 C2 C3 C4 C5 N0 Na Nd Nda P1 P2 P3 P4 P5 C1 C2 C3 C4 C5 N0 Na Nd Nda P1 P2 P3 P4 P5 
+
+> = 0.5
+
+Repetition Rate 
+
+> C1 C2 C3 C4 C5 N0 Na Nd Nda P1 P2 P3 P4 P5
+
+Novelty rate 
+
+> C1 C2 C3 C4 C5 N0 Na Nd Nda P1 P2 P3 P4 P5
+
+C1 C2 C3 C4 C5 N0 Na Nd Nda P1 P2 P3 P4 P5 
+
+> = 1
+> C1 C2 C3 C4 C5 N0 Na Nd Nda P1 P2 P3 P4 P5 C1 C2 C3 C4 C5 N0 Na Nd Nda P1 P2 P3 P4 P5
+
+C1 C2 C3 C4 C5 N0 Na Nd Nda P1 P2 P3 P4 P5 
+
+> = 2
+> C1 C2 C3 C4 C5 N0 Na Nd Nda P1 P2 P3 P4 P5
+> 0.0 0.2 0.4 0.6 0.8 1.0
+> Fraction
+> 0.0 0.2 0.4 0.6 0.8 1.0
+> Fraction
+> 0.0 0.2 0.4 0.6 0.8 1.0
+> Fraction
+
+Figure S4 Repetition and novelty rate for dimers. On the left, the repetition rate as defined in Eq. 3 of the main manuscript. On the right, the novelty rate from Eq. 5. From top to bottom, the value of γ increases. 
+
+S8 A B CFigure S5 Examples of molecules generated at the specific values of ∆GW7 →O used in Figure 4 of the main manuscript. From left to right: (A) C1-C1, (B) Na-Nda, and (C) P3-P4. 
+
+S9 6 4 2 0 2 4
+
+GW O (kcal/mol) 
+
+240 260 280 300 320 340 360 380 400 
+
+> Solvent Accessible Surface Area ( Å2)
+
+Guided generation C1-C1 (-6.79) Na-Nda (-1.19) P3-P4 (4.33) Reference Train Train (bead) 1.5 Figure S6 Sampling in chemical space. 2D kernel density estimate of the joint distribution of ∆GW7 →O and the solvent-accessible surface area (SASA). The figure margins show 1D kernel density estimates for each quantity. In the background, the solid black line shows the distribution for all molecules in the training dataset. The scattered points represent the conditional samples generated for three cases: C1-C1 (very hydrophobic), Na-Nda (intermediate), and P3-P4 (hydrophilic). Distributions of each property by bead of the training dataset are shown as colour-filled representations and with dashed-dotted lines in the figure margins. The effect of the conditioning on the sampling is visible in all three cases. Values of ∆GW7 →O were obtained with RDKit. Figure S5 shows examples of the molecules generated for the ∆GW7 →O value corresponding to each bead combination. 
+
+S10 6 4 2 0 2 4
+
+GCG W O (kcal/mol) 
+
+6
+
+4
+
+2
+
+024
+
+> GAA W O (kcal/mol)
+
+# A
+
+Bead family C-C C-N C-P N-N N-P P-P Multiple (markers) 
+
+= 0.5 
+
+= 1.0 
+
+= 2.0 
+
+(markers) 
+
+= 0.5 
+
+= 1.0 
+
+= 2.0 
+
+6 4 2 0 2 4
+
+GCG W O (kcal/mol) 
+
+0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 
+
+> GCG W O GAA W O (kcal/mol)
+
+# B (trend line) 
+
+= 0.5 
+
+= 1.0 
+
+= 2.0 
+
+0.00 0.02 0.04 0.06 0.08 0.10  
+
+> Probability Figure S7 Comparison between
+
+∆GCG W7 →O and ∆GAA W7 →O. (A) Scatter plot of the value of ∆GCG W7 →O versus the mean value of 
+
+∆GAA W7 →O for the generated molecules. The markers are coloured by bead family, except for values of ∆GW7 →O that can correspond to multiple bead combinations, which are coloured in magenta. (B) Residual plot of the absolute difference between the mean of ∆GAA W7 →O and the value of ∆GCG W7 →O for all combinations. A trend line fitted to a second-order polynomial is shown for each value of γ. The background shows the histogram of the training dataset. 
+
+S11 6 4 2 0 2 4
+
+GCG W O (kcal/mol) 
+
+6
+
+4
+
+2
+
+024
+
+> GAA W O (kcal/mol)
+
+Bead family C-C C-N C-P N-N N-P P-P Multiple (markers) 
+
+= 0.5 
+
+= 1.0 
+
+= 2.0 
+
+(trend line) 
+
+= 0.5 
+
+= 1.0 
+
+= 2.0 Figure S8 Signed residual plot for the difference between ∆GCG W7 →O and the mean value of ∆GAA W7 →O using ALOGPS. 
+
+S12 0.0 0.1 0.2 0.3 0.4 
+
+DJS 
+
+6
+
+4
+
+2
+
+024
+
+> GW O (kcal/mol)
+
+C1-C1 C1-C2 C2-C2 C1-C3 C2-C3 C3-C3 C1-C4 C2-C4 C3-C4 C1-C5 C2-C5 C4-C4 C3-C5 C1-N0 C2-N0 C4-C5 C1-Na,C1-Nd,C1-Nda, C3-N0 C2-Na,C2-Nd,C2-Nda, C3-Na,C3-Nd,C3-Nda, C4-N0 C5-C5 C4-Na,C4-Nd,C4-Nda, C1-P1 C2-P1 C5-N0 C1-P2 C3-P1 C2-P2 C5-Na,C5-Nd,C5-Nda, N0-N0 C3-P2 C4-P1 N0-Na,N0-Nd,N0-Nda, C4-P2 C1-P3 C1-P5 Na-Na,Na-Nd,Na-Nda,Nd-Nd,Nd-Nda,Nda-Nda, C2-P3 C1-P4 C2-P5 C5-P1 C2-P4 C3-P3 C3-P5 C5-P2 C3-P4 N0-P1 C4-P3 C4-P5 C4-P4 N0-P2 Na-P1,Nd-P1,Nda-P1, Na-P2,Nd-P2,Nda-P2, C5-P3 C5-P5 C5-P4 P1-P1 N0-P3 N0-P5 N0-P4 P1-P2 Na-P3,Nd-P3,Nda-P3, Na-P5,Nd-P5,Nda-P5, Na-P4,Nd-P4,Nda-P4, P2-P2 P1-P3 P1-P5 P1-P4 P2-P3 P2-P5 P2-P4 P3-P3 P3-P5 P3-P4 P4-P5 P4-P4,P5-P5, 
+
+A
+
+0.0 0.1 0.2 0.3 0.4 
+
+MMD 2
+
+C1-C1 C1-C2 C2-C2 C1-C3 C2-C3 C3-C3 C1-C4 C2-C4 C3-C4 C1-C5 C2-C5 C4-C4 C3-C5 C1-N0 C2-N0 C4-C5 C1-Na,C1-Nd,C1-Nda, C3-N0 C2-Na,C2-Nd,C2-Nda, C3-Na,C3-Nd,C3-Nda, C4-N0 C5-C5 C4-Na,C4-Nd,C4-Nda, C1-P1 C2-P1 C5-N0 C1-P2 C3-P1 C2-P2 C5-Na,C5-Nd,C5-Nda, N0-N0 C3-P2 C4-P1 N0-Na,N0-Nd,N0-Nda, C4-P2 C1-P3 C1-P5 Na-Na,Na-Nd,Na-Nda,Nd-Nd,Nd-Nda,Nda-Nda, C2-P3 C1-P4 C2-P5 C5-P1 C2-P4 C3-P3 C3-P5 C5-P2 C3-P4 N0-P1 C4-P3 C4-P5 C4-P4 N0-P2 Na-P1,Nd-P1,Nda-P1, Na-P2,Nd-P2,Nda-P2, C5-P3 C5-P5 C5-P4 P1-P1 N0-P3 N0-P5 N0-P4 P1-P2 Na-P3,Nd-P3,Nda-P3, Na-P5,Nd-P5,Nda-P5, Na-P4,Nd-P4,Nda-P4, P2-P2 P1-P3 P1-P5 P1-P4 P2-P3 P2-P5 P2-P4 P3-P3 P3-P5 P3-P4 P4-P5 P4-P4,P5-P5, 
+
+BC-C C-N C-P N-N N-P P-P Figure S9 Statistical distances between the distributions of ∆GW7 →O of training and generated samples with a value of γ = 1 . (A) Jensen–Shannon divergence (cf. Eq. 7 of the main manuscript). (B) Square of the maximum mean discrepancy (cf. Eq. 8). The dotted green line shows the average value, while the shaded region corresponds to ± one standard deviation. For the MMD, plots of the generated and reference distributions as well as the witness function for each combination are shown in Figure S10. 
+
+S13 0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 
+
+> P( GW O)
+
+C1-C1; MMD=0.165 
+
+C1 
+
+0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 
+
+> P( GW O)
+
+C1-C2; MMD=0.041 
+
+C2 
+
+C2-C2; MMD=0.074 
+
+0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 
+
+> P( GW O)
+
+C1-C3; MMD=0.014 
+
+C3 
+
+C2-C3; MMD=0.033 C3-C3; MMD=0.072 
+
+0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 
+
+> P( GW O)
+
+C1-C4; MMD=0.024 
+
+C4 
+
+C2-C4; MMD=0.084 C3-C4; MMD=0.048 C4-C4; MMD=0.087 
+
+0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 
+
+> P( GW O)
+
+C1-C5; MMD=0.064 
+
+C5 
+
+C2-C5; MMD=0.016 C3-C5; MMD=0.022 C4-C5; MMD=0.004 C5-C5; MMD=0.019 
+
+0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 
+
+> P( GW O)
+
+C1-N0; MMD=0.070 
+
+N0 
+
+C2-N0; MMD=0.047 C3-N0; MMD=0.056 C4-N0; MMD=0.014 C5-N0; MMD=0.017 N0-N0; MMD=0.078 
+
+0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 
+
+> P( GW O)
+
+C1-Na; MMD=0.073 
+
+Na 
+
+C2-Na; MMD=0.004 C3-Na; MMD=0.026 C4-Na; MMD=0.014 C5-Na; MMD=0.031 N0-Na; MMD=0.033 Na-Na; MMD=0.116 
+
+0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 
+
+> P( GW O)
+
+C1-Nd; MMD=0.059 
+
+Nd 
+
+C2-Nd; MMD=0.088 C3-Nd; MMD=0.027 C4-Nd; MMD=0.035 C5-Nd; MMD=0.038 N0-Nd; MMD=0.025 Na-Nd; MMD=0.034 Nd-Nd; MMD=0.101 
+
+0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 
+
+> P( GW O)
+
+C1-Nda; MMD=0.030 
+
+Nda 
+
+C2-Nda; MMD=0.034 C3-Nda; MMD=0.034 C4-Nda; MMD=0.030 C5-Nda; MMD=0.014 N0-Nda; MMD=0.057 Na-Nda; MMD=0.019 Nd-Nda; MMD=0.043 Nda-Nda; MMD=0.031 
+
+0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 
+
+> P( GW O)
+
+C1-P1; MMD=0.018 
+
+P1 
+
+C2-P1; MMD=0.066 C3-P1; MMD=0.036 C4-P1; MMD=0.017 C5-P1; MMD=0.044 N0-P1; MMD=0.064 Na-P1; MMD=0.018 Nd-P1; MMD=0.004 Nda-P1; MMD=0.018 P1-P1; MMD=0.034 
+
+0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 
+
+> P( GW O)
+
+C1-P2; MMD=0.052 
+
+P2 
+
+C2-P2; MMD=0.035 C3-P2; MMD=0.019 C4-P2; MMD=0.038 C5-P2; MMD=0.030 N0-P2; MMD=0.006 Na-P2; MMD=0.072 Nd-P2; MMD=0.022 Nda-P2; MMD=0.108 P1-P2; MMD=0.041 P2-P2; MMD=0.027 
+
+0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 
+
+> P( GW O)
+
+C1-P3; MMD=0.074 
+
+P3 
+
+C2-P3; MMD=0.165 C3-P3; MMD=0.163 C4-P3; MMD=0.286 C5-P3; MMD=0.128 N0-P3; MMD=0.184 Na-P3; MMD=0.050 Nd-P3; MMD=0.018 Nda-P3; MMD=0.054 P1-P3; MMD=0.010 P2-P3; MMD=0.008 P3-P3; MMD=0.019 
+
+0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 
+
+> P( GW O)
+
+C1-P4; MMD=0.207 
+
+P4 
+
+C2-P4; MMD=0.200 C3-P4; MMD=0.216 C4-P4; MMD=0.369 C5-P4; MMD=0.136 N0-P4; MMD=0.091 Na-P4; MMD=0.051 Nd-P4; MMD=0.034 Nda-P4; MMD=0.049 P1-P4; MMD=0.050 P2-P4; MMD=0.058 P3-P4; MMD=0.086 P4-P4; MMD=0.482 
+
+5 0 5
+
+GW O
+
+0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 
+
+> P( GW O)
+
+C1-P5; MMD=0.149 
+
+C1 P5 
+
+5 0 5
+
+GW O
+
+C2-P5; MMD=0.311 
+
+C2 
+
+5 0 5
+
+GW O
+
+C3-P5; MMD=0.137 
+
+C3 
+
+5 0 5
+
+GW O
+
+C4-P5; MMD=0.293 
+
+C4 
+
+5 0 5
+
+GW O
+
+C5-P5; MMD=0.116 
+
+C5 
+
+5 0 5
+
+GW O
+
+N0-P5; MMD=0.180 
+
+N0 
+
+5 0 5
+
+GW O
+
+Na-P5; MMD=0.109 
+
+Na 
+
+5 0 5
+
+GW O
+
+Nd-P5; MMD=0.049 
+
+Nd 
+
+5 0 5
+
+GW O
+
+Nda-P5; MMD=0.072 
+
+Nda 
+
+5 0 5
+
+GW O
+
+P1-P5; MMD=0.055 
+
+P1 
+
+5 0 5
+
+GW O
+
+P2-P5; MMD=0.195 
+
+P2 
+
+5 0 5
+
+GW O
+
+P3-P5; MMD=0.021 
+
+P3 
+
+5 0 5
+
+GW O
+
+P4-P5; MMD=0.069 
+
+P4 
+
+5 0 5
+
+GW O
+
+P5-P5; MMD=0.233 
+
+P5 
+
+0.4 
+
+0.3 
+
+0.2 
+
+0.1 
+
+0.0 0.1 0.2 0.3 0.4 Witness function 0.4 
+
+0.3 
+
+0.2 
+
+0.1 
+
+0.0 0.1 0.2 0.3 0.4 Witness function 0.4 
+
+0.3 
+
+0.2 
+
+0.1 
+
+0.0 0.1 0.2 0.3 0.4 Witness function 0.4 
+
+0.3 
+
+0.2 
+
+0.1 
+
+0.0 0.1 0.2 0.3 0.4 Witness function 0.4 
+
+0.3 
+
+0.2 
+
+0.1 
+
+0.0 0.1 0.2 0.3 0.4 Witness function 0.4 
+
+0.3 
+
+0.2 
+
+0.1 
+
+0.0 0.1 0.2 0.3 0.4 Witness function 0.4 
+
+0.3 
+
+0.2 
+
+0.1 
+
+0.0 0.1 0.2 0.3 0.4 Witness function 0.4 
+
+0.3 
+
+0.2 
+
+0.1 
+
+0.0 0.1 0.2 0.3 0.4 Witness function 0.4 
+
+0.3 
+
+0.2 
+
+0.1 
+
+0.0 0.1 0.2 0.3 0.4 Witness function 0.4 
+
+0.3 
+
+0.2 
+
+0.1 
+
+0.0 0.1 0.2 0.3 0.4 Witness function 0.4 
+
+0.3 
+
+0.2 
+
+0.1 
+
+0.0 0.1 0.2 0.3 0.4 Witness function 0.4 
+
+0.3 
+
+0.2 
+
+0.1 
+
+0.0 0.1 0.2 0.3 0.4 Witness function 0.4 
+
+0.3 
+
+0.2 
+
+0.1 
+
+0.0 0.1 0.2 0.3 0.4 Witness function 0.4 
+
+0.3 
+
+0.2 
+
+0.1 
+
+0.0 0.1 0.2 0.3 0.4 Witness function 
+
+Train P( GAA W O)
+
+Generated P( GAA W O)
+
+GCG W O
+
+Witness function Figure S10 Distributions of P (∆ Gtrain W7 →O) and P (∆ Ggen W7 →O), and witness function, for dimer combinations using γ = 1 .
+
+S14 Fragment in:    
+
+> Common Train Generated
+> Edge similarity
+> Sim. 0.9
+> 0.7 < Sim. < 0.9 Sim. 0.7 Figure S11
+
+Chemical network comparison of common functional groups between the training and generated sets. The functional groups shown are present in at least 50 bead combinations. The network structure was determined using the t-SNE decomposition of the SMARTS fragments obtained from Ertl’s functional group decomposition, ranked by the similarity between fragments. The FGs shared between the training and generated sets are circled in blue, FGs present only in the training set are circled in red, and FGs present only in the generated set are highlighted in green. 
+
+S15 C1 C2 C3 C4 C5 N0 Na Nd Nda P1 P2 P3 P4 P5 C1 C2 C3 C4 C5 N0 Na Nd Nda P1 P2 P3 P4 P5 
+
+0.7 0.7 0.7 0.7 0.7 0.7 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.9 0.9 0.9 0.8 0.8 0.8 0.8 0.8 0.9 0.9 0.9 0.8 0.8 0.8 0.8 0.8 0.9 0.9 0.9 0.9 0.8 0.8 0.8 0.8 0.9 0.9 0.9 0.9 0.9 0.9 0.8 0.8 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.8 0.9 0.8 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.8 0.8 0.8 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 
+
+A = 0.5 
+
+> C1 C2 C3 C4 C5 N0 Na Nd Nda P1 P2 P3 P4 P5
+
+0.7 0.7 0.7 0.7 0.7 0.7 0.7 0.7 0.7 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.9 0.9 0.8 0.8 0.8 0.8 0.8 0.9 0.9 0.9 0.8 0.8 0.8 0.8 0.8 0.9 0.9 0.9 0.9 0.8 0.8 0.8 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.8 0.8 0.8 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.8 0.9 0.8 0.8 0.8 0.9 0.8 0.9 0.8 0.9 0.8 0.8 0.9 0.8 0.9 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.9 0.8 0.8 0.8 0.9 0.9 0.8 0.8 0.9 0.8 0.8 0.8 0.8 
+
+B = 1.0 
+
+> C1 C2 C3 C4 C5 N0 Na Nd Nda P1 P2 P3 P4 P5
+
+0.7 0.7 0.7 0.7 0.7 0.7 0.7 0.7 0.7 0.7 0.7 0.7 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.9 0.9 0.8 0.8 0.8 0.8 0.8 0.9 0.9 0.9 0.8 0.8 0.8 0.8 0.8 0.9 0.9 0.9 0.9 0.8 0.8 0.8 0.8 0.8 0.9 0.9 0.9 0.9 0.9 0.8 0.8 0.8 0.8 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.8 0.9 0.8 0.8 0.8 0.9 0.8 0.8 0.8 0.9 0.8 0.8 0.9 0.8 0.9 0.8 0.8 0.8 0.8 0.8 0.8 0.9 0.8 0.9 0.8 0.8 0.9 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.9 0.8 0.9 0.8 0.8 
+
+C = 2.0 
+
+0.700 0.725 0.750 0.775 0.800 0.825 0.850 0.875 0.900 
+
+> Internal Chemical Diversity
+
+Figure S12 Internal chemical diversity (ICD) on the generated molecules for different combinations of beads. From left to right, the value of γ is increased. The colour scale ranges from 0.7 to 0.9. An ICD value closer to one indicates greater diversity in the generated molecules. 
+
+S16 0.5 1.0 2.0 
+
+## 0.70 0.75 0.80 0.85 
+
+> Internal Chemical Diversity
+
+C4_C4 
+
+C4_N0 
+
+C5_N0 
+
+P1_P1 
+
+P1_P2 
+
+P2_P2 
+
+Average change Largest increase (Top 3) Largest decrease (Top 3) Figure S13 Changes in the value of the internal chemical diversity (ICD) of the generated molecules with respect to the value of γ. In red, the three bead combinations with the largest decrease in ICD are highlighted. Conversely, the combinations with the largest increase in ICD are coloured in blue. The bold black line shows the mean change across all combinations. 
+
+S17 C1 C2 C3 C4 C5 N0 Na Nd Nda P1 P2 P3 P4 P5 C1 C2 C3 C4 C5 N0 Na Nd Nda P1 P2 P3 P4 P5 
+
+A = 0.5 
+
+> Frechet distance
+> 0.36 12.21 24.07 35.92
+> C1 C2 C3 C4 C5 N0 Na Nd Nda P1 P2 P3 P4 P5
+
+C1 C2 C3 C4 C5 N0 Na Nd Nda P1 P2 P3 P4 P5 
+
+B = 1.0 
+
+> Frechet distance
+> 0.36 12.21 24.07 35.92
+> C1 C2 C3 C4 C5 N0 Na Nd Nda P1 P2 P3 P4 P5
+
+C1 C2 C3 C4 C5 N0 Na Nd Nda P1 P2 P3 P4 P5 
+
+C = 2.0       
+
+> Frechet distance
+> 0.36 12.21 24.07 35.92
+> 510 15 20 25 30 35
+
+Frechet distance Figure S14 Fréchet ChemNet distance (FCD) between the training and generated molecules. The colour code and point radii illustrate the distance between training and generated molecules. From top to bottom, the value of γ is increased. Larger values of FCD correspond to larger differences between the structures of the generated compounds and those in the training set. 
+
+S18
