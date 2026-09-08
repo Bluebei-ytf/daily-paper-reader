@@ -41,17 +41,17 @@
 <section class="dpr-home-dashboard-card dpr-home-report-card">
   <div class="dpr-home-dashboard-header">
     <div>
-      <span class="dpr-home-dashboard-kicker">2026-09-07</span>
+      <span class="dpr-home-dashboard-kicker">2026-09-08</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">共 20 篇</strong>
+    <strong class="dpr-home-dashboard-count">共 7 篇</strong>
   </div>
   <dl class="dpr-home-dashboard-stats">
     <div class="dpr-home-dashboard-stat"><dt>累计更新</dt><dd>1 次</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>8</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>12</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>3</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>4</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-09-07 23:40:23 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-09-08 23:09:11 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -62,7 +62,9 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>今日共读20篇论文，其中8篇精读、12篇速读，聚焦分子表征与材料预测前沿。最值得关注的是CliffRank双分支框架攻克活性悬崖排序难题，以及LeJEPA自监督预训练提升分子图编码能力。建议普通读者优先了解自监督预训练与图神经网络在化学信息学中的落地价值。</p>
+<p>今日精读聚焦机器学习力场与二维光催化筛选，速读涵盖电解质、聚合物及定向进化综述。</p>
+<p>最值得关注：Hessian构象增强可提升机器学习原子间势效率（9.0分），PBE金属性修复实现HSE06级二维光催化剂筛选（8.0分）。</p>
+<p>建议普通读者优先看光催化产氢材料筛选方向，机器学习加速设计逻辑清晰且应用前景明确。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -71,12 +73,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">精读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">8 篇</strong>
+    <strong class="dpr-home-dashboard-count">3 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="CliffRank: A Dual-Branch Framework for Activity-Cliff Ranking Prediction">CliffRank: A Dual-Branch Framework for Activity-Cliff Ranking Prediction</span></li><li><span class="dpr-home-dashboard-paper-title" title="Self-Supervised Pretraining of Molecular Graph Encoders with LeJEPA">Self-Supervised Pretraining of Molecular Graph Encoders with LeJEPA</span></li><li><span class="dpr-home-dashboard-paper-title" title="Learning multistate kinetics with a variational multistate committor network">Learning multistate kinetics with a variational multistate committor network</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Hessian-based molecular conformation augmentation for a scalable and efficient strategy of machine learning interatomic potentials">Hessian-based molecular conformation augmentation for a scalable and efficient strategy of machine learning interatomic potentials</span></li><li><span class="dpr-home-dashboard-paper-title" title="Repairing PBE-Spurious Metallicity for HSE06-Level Screening of 2D Photocatalysts for Green Hydrogen Production">Repairing PBE-Spurious Metallicity for HSE06-Level Screening of 2D Photocatalysts for Green Hydrogen Production</span></li><li><span class="dpr-home-dashboard-paper-title" title="Molecular Déjà Vu: Digit-Level Retrieval of Published Values in Frontier Language Models">Molecular Déjà Vu: Digit-Level Retrieval of Published Values in Frontier Language Models</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">smc <strong>5</strong></span><span class="dpr-home-dashboard-tag">aichem-map <strong>3</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>3</strong></span></div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-skim-card">
   <div class="dpr-home-dashboard-header">
@@ -84,12 +86,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">速读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">12 篇</strong>
+    <strong class="dpr-home-dashboard-count">4 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="DISTAL: Distillation and Self-Supervised Pretraining for Structure-Agnostic Materials Property Prediction">DISTAL: Distillation and Self-Supervised Pretraining for Structure-Agnostic Materials Property Prediction</span></li><li><span class="dpr-home-dashboard-paper-title" title="Diagnosing Latent Energy Decomposition in Machine-Learning Interatomic Potentials via Interacting Quantum Atoms">Diagnosing Latent Energy Decomposition in Machine-Learning Interatomic Potentials via Interacting Quantum Atoms</span></li><li><span class="dpr-home-dashboard-paper-title" title="Element priors and target support shape chemical transfer in materials graph networks">Element priors and target support shape chemical transfer in materials graph networks</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Prototype-guided transfer of sparse literature knowledge for electrolyte additive discovery">Prototype-guided transfer of sparse literature knowledge for electrolyte additive discovery</span></li><li><span class="dpr-home-dashboard-paper-title" title="HiPoly: a hierarchical polymer-native AI framework for property prediction and generative design">HiPoly: a hierarchical polymer-native AI framework for property prediction and generative design</span></li><li><span class="dpr-home-dashboard-paper-title" title="Advances in Machine Learning for Directed Evolution: A Five-Year Retrospective">Advances in Machine Learning for Directed Evolution: A Five-Year Retrospective</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>9</strong></span><span class="dpr-home-dashboard-tag">smc <strong>3</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>3</strong></span><span class="dpr-home-dashboard-tag">smc <strong>1</strong></span></div>
 </section>
 </div>
 

@@ -1,0 +1,639 @@
+Title: Hessian-based molecular conformation augmentation for a scalable and efficient strategy of machine learning interatomic potentials
+
+URL Source: https://arxiv.org/pdf/2609.05233v1
+
+Published Time: Mon, 07 Sep 2026 01:07:00 GMT
+
+Number of Pages: 45
+
+Markdown Content:
+# Hessian-based molecular conformation augmentation for a scalable and efficient strategy of machine learning interatomic potentials 
+
+Bumju Kwak and Jeonghee Jo ∗
+
+Independent researcher, Seoul, Republic of Korea 
+
+E-mail: jade.jeonghee.jo@gmail.com 
+
+Abstract 
+
+While machine-learning interatomic potentials (MLIPs) have successfully learned potential energy surfaces (PES) and atomic forces, many practical applications, such as vibrational analysis and transition state search, rely heavily on the PES Hessian. Yet, standard MLIPs tend to be trained on energy and forces alone, leaving Hessian in-formation largely unexploited. Meanwhile, existing methods that explicitly incorporate the Hessian into training objectives require architectural modifications and introduce significant computational and memory overheads due to higher-order backpropaga-tion. To address these limitations, we propose two Hessian-derived data augmentation schemes: isotropic Gaussian displacement ( UniAug ) and normal mode-weighted dis-placement ( ModeAug ). Both methods utilize simple Taylor expansions, achieving effective augmentation without altering training objectives or extending the autograd graph. This allows seamless, plug-and-play integration with existing architectures and training pipelines. Comprehensive evaluations across non-equilibrium and equilibrium 
+
+1arXiv:2609.05233v1 [cs.LG] 4 Sep 2026 datasets demonstrate that our approach enhances model accuracy while providing prac-tical, task-specific guidelines. 
+
+# Introduction 
+
+The potential energy surface (PES) and the energies and forces derived from it underlie geometry optimization, structural relaxation, and molecular dynamics 1–3 . Because ab ini-tio evaluation is computationally expensive, reference datasets cover only a small set of configurations 4, leaving much of the PES unrepresented. Machine-learning interatomic po-tentials (MLIPs) address this bottleneck by approximating the PES from ab initio references and predicting energies and forces for unseen structures 5–8 . Unlike general-purpose neural networks, MLIPs incorporate physical inductive biases such as rotational invariance and equivariance 9,10 . Furthermore, atomic forces are commonly obtained either as gradients of the predicted energy to guarantee energy conservation 11–14 or predicted directly for compu-tational efficiency. These design choices have enabled MLIPs to succeed broadly across small molecules, proteins, and materials 15–17 .However, second-order properties—such as vibrational spectroscopy prediction and reac-tion dynamics simulation—require accurate modeling of the PES Hessian 18,19 , which energy-and force-only training fails to capture 20,21 . Directly incorporating Hessian supervision into training has been explored to address this gap 22 . Yet, beyond the high cost of generating DFT Hessians, explicit Hessian loss introduces substantial training overheads and memory footprints due to higher-order automatic differentiation 23 . Consequently, there remains a pressing need for efficient methods that supply curvature information to MLIPs without complicating the autograd graph or incurring prohibitive computational costs 20,23 .Apart from the cost of dataset generation, Hessian supervision imposes two further bur-dens at training time 20,22 . Constructing the full Hessian matrix requires evaluating vector-Jacobian products (VJPs) across Cartesian degrees of freedom, so the forward pass cost 2scales rapidly with system size 24 . Backpropagating the Hessian loss additionally requires higher-order automatic differentiation, introducing substantial memory and computational overheads to retain intermediate activations 25 .Three directions have been pursued to reduce this training-time overhead. The first re-tains autograd but samples only a subset of Hessian rows at each step, which dilutes the supervision signal 20,22 . The second predicts forces directly 26,27 and obtains the Hessian as a first derivative of the predicted force, saving one order of differentiation. The third con-structs the Hessian through an equivariant readout head without differentiation altogether 28 .Crucially, all three approaches treat the Hessian as an explicit supervision target, thereby coupling its utility to specific loss objectives or model architectures. Methods that exploit the Hessian as a flexible data prior, without modifying training losses or constraining archi-tectures, thus remain unexplored. While molecular data augmentation has been explored in various forms 4,29–31 , existing schemes either displace structures without reference to the local PES, which leaves the orig-inal labels inaccurate for perturbed geometries 32 , or recover valid labels only by running additional ab initio calculations on generated structures 33 . We instead treat the Hessian not as a training objective but as a source for data generation, leveraging each reference Hessian to synthesize perturbed geometries whose energy and force labels follow analyti-cally from a second-order Taylor expansion. Because the curvature is supplied through the augmented labels, higher-order automatic differentiation is not required during training, pre-serving both the physical constraints and the computational efficiency of the base model. Building on this principle, we propose UniAug and ModeAug , two plug-and-play data aug-mentation schemes for MLIPs. UniAug explores the PES through isotropic displacements, whereas ModeAug samples in the vibrational mode space governed by the Hessian, weighting each mode inversely with its eigenvalue magnitude. Across non-equilibrium and equilibrium benchmarks, both schemes improve upon Hessian-free baselines while leaving the training objective and the model architecture unchanged. 3• We propose two architecture-agnostic data augmentation schemes ( UniAug and Mod-eAug ) that incorporate curvature information via Taylor expansions at the data level, leaving the physical constraints of the underlying architecture intact. 
+
+• We show that both schemes improve consistently over energy-force training and reach accuracy competitive with direct Hessian supervision, without the need for higher-order differentiation. 
+
+• We find that UniAug and ModeAug offer complementary advantages depending on the training paradigm and the target property, providing practical guidance for choosing between them. OCH HOCH Hlow | λk| high | λk|
+
+(a) Overview of the two augmentation strategies. (b) Displacement magnitude distribu-tion. 
+
+Figure 1: Overview of the two augmentation schemes. (a) UniAug displaces a random sub-set of atoms isotropically in Cartesian space, ModeAug along the normal modes of the mass-weighted Hessian with amplitude weighted by 1 /p|λk| (λk: eigenvalue of mode k). (b) Geometry RMSE and Taylor-label ∆ E of the augmented structures on ts1x-train at 
+
+σ = 0 .05 ˚ A. 4Background 
+
+Force prediction in MLIPs 
+
+The force on atom i, Fi ∈ R3, is the negative gradient of the energy with respect to its position 
+
+Xi, and MLIPs use forces alongside energies as a joint training target. Forces are predicted in one of two ways. The first is conservative force training 12–14,34–37 , in which the predicted force ˆFi is obtained by automatic differentiation of the predicted energy ˆE, ˆFi = −∇ Xi
+
+ˆE.The resulting force field is by construction the negative gradient of a scalar potential and is therefore conservative. This avoids the unphysical energy drift that non-conservative fields induce in molecular dynamics (MD) simulations. However, since the predicted force is itself obtained by differentiation, backpropagating the force loss requires second-order automatic differentiation. The second is direct force training, in which the model predicts atomic forces through separate network outputs rather than obtaining them by differentiation 26,38,39 . This acceler-ates training, reduces memory consumption, and removes the differentiability requirement that gradient-based models impose on the cutoff function 26 . Nevertheless, directly predicted force fields are not guaranteed to be conservative. The force Jacobian ∂ ˆFi/∂ Xj is also gen-erally asymmetric, and therefore does not correspond to a valid energy Hessian. Despite these limitations, direct force training has been reported to achieve lower force MAEs than automatic differentiation approaches on several large-scale benchmarks 26,27 .
+
+Second-order Taylor approximation of the PES 
+
+The Taylor series approximates a smooth function near a reference point using only local derivative information at that point. Under the Born–Oppenheimer approximation, the PES is inherently smooth, so such local expansions are well defined. Around a reference con-figuration X0, the energy at a displaced position X0 + δ is approximated to second order 5as 
+
+E(X0 + δ) ≈ E(X0) − F(X0)⊤δ + 12 δ⊤H δ, (1) where H = ∇2E(X0) is the molecular Hessian matrix, and F(X0) = −∇ E(X0) de-notes the reference force vector. Unlike the harmonic approximation around a minimum, the expansion retains the first-order term, which is non-zero for off-equilibrium structures. Differentiating Eq. (1) with respect to position gives the corresponding force vector: 
+
+F(X0 + δ) = −∇ E(X0 + δ) ≈ F(X0) − Hδ. (2) Eqs. (1) and (2) therefore apply at arbitrary reference configurations, including those along reaction paths. For small displacements, higher-order anharmonic contributions are negligible, so the second-order expansion closely reproduces the reference electronic structure energies and forces. Consequently, a single Hessian evaluated at a reference geometry provides a physically consistent local surrogate for both energy and forces, since Eq. (2) is the exact gradient of Eq. (1). We use this as the basis for our label synthesis in data augmentation. 
+
+Data augmentation in machine learning 
+
+Since energy and forces are continuous functions of the atomic coordinates, almost any perturbation changes the labels, unlike the label-preserving augmentations common in com-puter vision 40 . The exceptions are rigid translations and rotations, which leave all interatomic distances unchanged. Such augmentation benefits non-equivariant architectures 41 , but is re-dundant for equivariant models, which satisfy these symmetries by construction. The challenge in expanding molecular datasets therefore lies not in generating new con-figurations, but in obtaining accurate labels for them efficiently. ANI-1 introduced normal mode sampling to generate off-equilibrium structures by perturbing equilibrium geometries along their normal modes 33 . Although this approach exploits local curvature to sample struc-tures, it does not exploit it to label them. Every generated structure still requires a separate 6quantum chemical evaluation, so the cost scales with the size of the augmented dataset. Denoising pre-training instead avoids labeling cost by learning from unlabeled pertur-bations 42 . Injecting Gaussian noise into equilibrium configurations and training a model to denoise them yields an objective equivalent to learning a force field under an isotropic Gaus-sian approximation of the Boltzmann distribution 42 . Because isotropic noise assumes identi-cal curvature along all spatial directions, subsequent works introduced coordinate-dependent noise schedules to mitigate this physical mismatch 43,44 . Denoising objectives have also been extended to off-equilibrium structures by conditioning the model on reference forces 45 . These methods incorporate curvature or force cues into the training signal, but noise prediction re-mains an auxiliary self-supervised objective. The perturbed configurations themselves never acquire energy or force labels. In both cases, curvature informs where structures are sam-pled but not how they are labeled, so the labels are either expensive to obtain or absent altogether. Table 1: Datasets used in this work. Energies are in eV, forces in eV ˚ A−1, and Hessians in eV ˚ A−2.                      
+
+> HORM 20 HessianQM9 23 MD17 46
+> Role Train + eval (in-domain and OOD) Train + in-domain eval Zero-shot OOD eval Subsets 3 (splits) 4 (solvents) 8 molecules (4 for MD) Structures 1,836,206 41,645 ×48 trajectories Regime Off-equilibrium Equilibrium MD trajectory Hessian Yes Yes No Level of theory ωB97X/6-31G(d) ωB97X/6-31G(d) PBE+vdW-TS
+
+# Methods 
+
+Hessian-based Augmentation Schemes Given a reference configuration X and its per-turbed structure X + δX, the corresponding changes in energy ∆ E and forces ∆ F are approximated via a second-order Taylor expansion as 7∆E = −F⊤δX + 12 δX⊤H δX, ∆F = −H δX, (3) where F = −∇ E(X) and H = ∇2E(X) are the force vector and Hessian, respectively. The two augmentation schemes we propose, UniAug and ModeAug , are distinguished by the perturbation distribution from which δX is sampled. We therefore propose UniAug 
+
+and ModeAug , two augmentation schemes that differ in the perturbation distribution for 
+
+δX.
+
+Uniform Cartesian augmentation (UniAug) UniAug samples atomic displacements directly in Cartesian space from an isotropic Gaussian distribution. For a given molecule with N atoms, displacements are applied to a randomly selected subset S of atoms, where 
+
+|S| = ⌈f · N ⌉ for a fraction f ∈ (0 , 1]: 
+
+δXi ∼ N (0, σ 2I3) (i ∈ S), δXi = 0 (i / ∈ S), (4) where the displacements are sampled independently for each atom and σ controls the mag-nitude. 
+
+Normal mode augmentation (ModeAug) ModeAug uses the normal modes of the molecule, sampling displacements along its vibrational eigenvectors. Specifically, the mass-weighted Hessian M−1/2HM −1/2 is diagonalized to obtain eigenvalues {λk} and eigenvectors 
+
+{vk}, and the translational and rotational modes are excluded, leaving n vibrational modes indexed by K. In practice, near-zero modes are identified by |λk| < 10 −2. To ensure energy equipartition across modes, the amplitude of each mode is scaled by its inverse frequency 
+
+|λk|−1/2. The weights are then L2-normalized over K and multiplied by √n. The resulting 8displacement δX is constructed: 
+
+δX = M−1/2 X
+
+> k∈K
+
+ck vk, ck = σ ε k wk, wk = √n |λk|−1/2
+
+  P  
+
+> j∈K
+
+|λj |−11/2 , εk ∼ N (0 , 1) , (5) where M is the diagonal mass matrix and σ controls the overall displacement scale. For both UniAug and ModeAug, the synthesized energy and force labels (∆ E, ∆F) are computed via Eq. (3). An overview of these augmentation schemes is illustrated in Figure 1a, with the resulting distributions of spatial displacements and potential energy shifts presented in Figure 1b. 
+
+Comparison of the two schemes The two schemes offer complementary ways of ex-ploring the configuration space. UniAug samples displacements independently of the local potential surface, resulting in augmented structures that are distributed isotropically in Cartesian space. In contrast, ModeAug assigns larger displacements to low-frequency modes and smaller ones to stiff, high-frequency modes, thereby distributing the perturbation energy uniformly across vibrational modes. 
+
+Role of σ. In both schemes, σ controls the magnitude of the displacement. Larger displace-ments explore broader regions of the potential energy surface, but the neglected higher-order terms of the Taylor expansion grow accordingly. The interpretation of σ also differs between the two schemes. In UniAug, it denotes the standard deviation of Cartesian displacement components, whereas in ModeAug, it sets the scale of the mass-weighted normal-mode coeffi-cients. We therefore fix σ for each dataset and scheme by inspecting the resulting distributions of energy and force, rather than using a common value. 
+
+Datasets and training 
+
+We validated the effectiveness of Hessian-based data augmentation on three molecular bench-marks which cover distinct regions of the potential energy surface (Table 1). HORM 20 
+
+9samples non-equilibrium and transition-state configurations along reactive pathways, Hes-sianQM9 23 covers near-equilibrium geometries where net forces approach zero and local cur-vature governs harmonic vibrations, and MD17 11 provides ab initio molecular dynamics tra-jectories sampling thermal fluctuations. We use the MDsim reformulation of this dataset 46 ,which redefines the data splits and evaluation protocol for assessing simulation stability. Throughout this work, E-F denotes the standard setting in which models are trained with energy and force losses only, and E-F-H denotes the setting that additionally includes an explicit Hessian loss term. Because our augmentation scheme modifies only the training data and not the loss function, all our models are trained in the E-F setting. 
+
+HORM HORM provides DFT-level energies, forces, and Hessians for non-equilibrium structures along reaction pathways, built from Transition-1x ( ts1x )47 and RGD1 48 . Fol-lowing the official protocol, models are trained on ts1x-train under both direct-force and autograd-force paradigms and evaluated in domain on ts1x-val . For zero-shot OOD eval-uation, the trained models are applied to RGD1 without fine-tuning. RGD1 contains larger molecules than ts1x and forms a nearly disjoint distribution in chemical space, providing a chemical domain unseen during training. 
+
+HessianQM9 HessianQM9 provides numerical Hessians for equilibrium geometries of QM9 molecules, computed in vacuum and in three solvents treated with an implicit solvation model. The ground-truth Hessians are obtained at the same level of theory as HORM (ωB97X/6-31G*). Models are trained separately for each of the four environments. 
+
+MDsim We adopt the MDsim benchmark 46 , which reorganizes the original MD17 trajec-tories 11 into its own splits and pairs single-point error metrics with rollout-based stability evaluation. Because the MD17 dataset does not include reference Hessians, models trained on HORM ( ts1x-train ) are evaluated in a zero-shot cross-dataset transfer setting with-out fine-tuning. Following the MDsim protocol 46 , single-point force accuracy is reported for 10 all eight molecules, and 300 ps NVT rollout simulations are conducted on four of them to assess stability. Stability is quantified by # f in , the number of trajectories completing the full simulation without any bond breaking, and structural fidelity by MAE h(r), the deviation between predicted and reference pair distance distributions. 
+
+Validation and feature changes of augmented structures 
+
+In addition to measuring prediction accuracy on benchmarks, we validated the structural validity of the augmented molecules and analyzed the characteristics of energy and force changes using several methods. First, we compared the inherent characteristics of the per-turbations and the resulting energy shifts induced by each augmentation mode and scale. Second, we assessed the quality of the data and targets obtained through the Taylor augmen-tation method by comparing the inferred forces from a model trained on perturbed structures against those directly calculated via DFT at the same level of theory as the HORM dataset. Third, we compared the degree of structural deformation by perturbation on a per-bond basis. 
+
+Structural distribution (t-SNE) To observe how the two augmentation schemes differ in configuration space, we visualize the distribution of atomic displacements induced by each perturbation with t-SNE. From each of the three HORM subsets ( ts1x-train , ts1x-val ,RGD1) we randomly select 30 molecules, apply UniAug and ModeAug at σ ∈ { 0.05 , 0.1} ˚Awith three random seeds per molecule, and project the resulting displacements δX after representing each as a fixed-dimensional descriptor vector. The procedure for constructing descriptor vectors of equal dimension from molecules with different numbers of atoms is described in the Supporting Information. Additionally, for each augmented structure, we inferred the energies of both the sampled original molecules and their derived perturbed structures using a model trained exclusively on original data (without perturbation data). We then compared the distribution of inferred 11 energy variations induced by perturbations across different augmentation methods and scales. 
+
+Force shift ( ∆F) We examine the magnitude of the force response induced by each aug-mentation scheme and σ against DFT references, and compare how well models trained on augmented data recover this response. The analysis uses the same sets of original and augmented molecules as the t-SNE analysis. Since HORM is restricted to non-equilibrium structures, we additionally sample 30 molecules per split from HessianQM9, which consists of equilibrium structures, and repeat the same analysis. The displacement scale was set to 
+
+σ ∈ { 0.01 , 0.03 , 0.05 } ˚A for HORM and σ ∈ { 0.002 , 0.01 , 0.02 } ˚A for HessianQM9. We fur-ther compare the predicted |F| and ∆ F distributions from three model checkpoints, trained without augmentation, with UniAug, and with ModeAug, against the reference DFT dis-tribution. This serves as an accuracy check for how well each model recovers the true force response. The force change ∆ F and force shift magnitude ∆ F are defined as follows: ∆F = F(X + δX) − F(X), ∆F = N −1
+
+> N
+
+X
+
+> i=1
+
+∥∆Fi∥2
+
+!1/2
+
+(6) First, on original molecular structures, we predicted the distribution of absolute force values using four methods—three model checkpoints: (i) model trained without augmented data (no aug), (ii) model trained with UniAug, (iii) model trained with ModeAug, and (iv) reference DFT at the same level of theory as the dataset—and compared their predicted distributions. This comparison of ∥F∥ serves not only as an accuracy metric for similarity to the DFT reference, but also as a verification of whether each model can achieve general-izability to sufficiently cover force distributions across various scales without bias. Second, across various sets of augmented molecular structures, we grouped three ap-proaches for each set: (i) no aug, (ii) UniAug or ModeAug, and (iii) DFT calculations. We then plotted the force shift distributions by group according to each subset, augmentation mode, and σ value. Through these plots, one can directly compare how the actual molecular 12 forces change according to each augmentation mode and scale (reference DFT), and how the predictive capability for these force shifts varies depending on the inclusion of augmented data during training. 
+
+Bond deformation analysis This analysis examines whether each augmentation mode preserves the original covalent bonds and induces physically plausible fluctuations. To this end, we measured the change in bond lengths within each molecule before and after augmen-tation. Using the same set of molecules as in the above analysis, we collected all interatomic distances satisfying covalent bonding conditions and computed the relative deformation ratio ∆r/r = ( rdisp − rorig )/r orig before and after perturbation for histogram comparison. 
+
+Curvature learned by models 
+
+Curvature Analysis Protocol To examine whether augmented data faithfully recovers the true Hessian beyond improving energy and force predictions, we assess the quality of 
+
+Hpred obtained by differentiating predicted forces from six models trained on the HORM training set (no aug, UniAug, ModeAug under direct force training and energy-conserved training, respectively). We report four metrics, three of which are in units of eV /˚A2. Hessian MAE is the element-wise mean absolute error relative to reference values, and asymmetry error is 19N 2
+
+P
+
+> k,l
+
+|Hkl − Hlk |20 . Both metrics are evaluated on the raw Jacobian prior to symmetrization. For spectral metrics, the symmetric component 12 (Hpred +H⊤
+
+> pred
+
+) is preserved, leaving conservative models unchanged. Eigenvalue MAE compares the full 3 N signed spectra paired by ascending indices without removing the translational and rotational modes, that is, the six smallest modes. In contrast, nimag counts the number of negative eigenvalues of the mass weighted Hessian after excluding these six modes. For evaluation, 2,000 molecules uniformly sampled at random with a fixed seed from 
+
+ts1x-val and RGD1 were used. We evaluated six model checkpoints trained with no aug, UniAug, and ModeAug under both direct force training and energy-conserved training 13 schemes. Comparisons were also made against E–F and E–F–H values reported in the original dataset paper 20 .
+
+Qualitative case study In addition to the quantitative metrics regarding Hessian re-covery, we examined individual molecular cases. Among the ts1x-val molecules used in the curvature analysis, we selected and plotted two molecules for each category where the ModeAug-trained model showed {low, similar, high } eigenvalue prediction accuracy relative to the no aug model, specifically within the stiff mode regime (400–3800 cm −1) correspond-ing to stretching vibrations derived from each molecule’s Hessian (detailed procedures are provided in the Supporting Information). 
+
+Computational cost and efficiency 
+
+We analyze the computational cost and efficiency of the proposed data augmentation scheme. Specifically, we compare it against two Hessian-supervised pathways that evaluate the model’s own force Jacobian during training (full Hessian supervision vs. stochastic row subset su-pervision) 20 . All comparison criteria—curvature source, inclusion in the autograd graph, number of backward passes, and retained-graph memory—represent model-agnostic metrics independent of specific model architectures. 
+
+# Results 
+
+This section is organized as follows. The first part analyzes the augmented data itself, com-paring how the two schemes differ in the structures they generate and how faithfully the resulting labels track reference DFT values. Downstream performance is then reported on HORM, HessianQM9, and MD17, followed by an analysis of PES curvature and computa-tional cost. 14 Validity and diversity of augmented data 
+
+This subsection characterizes the augmented data itself, assessing whether the two schemes produce physically valid labels and whether they explore distinct regions of the PES. Refer-ence DFT calculations serve as the standard against which the model-predicted quantities are assessed. 
+
+Displacement diversity by augmentation mode Examining the projected regions of vectors representing atomic displacements for the same molecule sets according to augmen-tation strategy and scale in Figure 2, it is clear that the two augmentation strategies are distinctly separated in the projected manifolds, with further distributional variations occur-ring across different scales. This distinction is also prominent in the results where ∆ E for each panel is color-encoded. On ts1x-train , 78% of UniAug samples at σ = 0 .1 ˚ A and 39% at σ = 0 .05 ˚ A exceed ∆ E > 0.1 eV, whereas ModeAug reaches only 27% and 3% at the same scales. UniAug therefore displaces atoms toward higher-energy regions than ModeAug, and increasing σ shifts both schemes in the same direction. 
+
+Force shift distribution recovery (HORM) Figure 3 presents the ∆ F distributions across different subsets of HORM. 
+
+Left. The left panel represents evaluations on original molecular structures before aug-mentation. In the ts1x-train set, model checkpoints trained on ModeAug, UniAug, and No aug data cover the |F| distribution of dataset labels in that order. Comparing inference distributions on ts1x-val and RGD1, UniAug shows the largest discrepancy from the ref-erence DFT distribution, whereas no aug and ModeAug recover it more closely. Overall, the predicted distributions from the three models remain closely aligned on the original dataset. 
+
+Right. The results in the right panel evaluated on augmented data demonstrate clear differences between UniAug and ModeAug across all three subsets. Comparing the reference DFT values first, UniAug clearly induces significantly larger force shifts than ModeAug 15 across all subsets and σ values. When comparing how well the no aug model and the models trained on each augmentation mode cover this DFT shift distribution, models trained on augmentation modes recover it better than the no aug model in almost all cases. These results imply the following: (i) models trained with augmented data achieve more accurate force predictions on both original and augmented data compared to models trained without augmentation; (ii) UniAug induces noticeably larger force variations than ModeAug, which is an expected outcome when considering the vibrational characteristics of molecules; and (iii) as the perturbation scale ( σ) increases, the magnitude of force shifts increases for both augmentation methods, which can be attributed to force variations growing as structural deformations increase. 
+
+Equilibrium force shift distribution recovery (HessianQM9) Figure 4 shows the corresponding ∆ F distribution for HessianQM9 in the same manner as Figure 3. 
+
+Left. On the unaugmented original dataset (left panel), although there are differences depending on the solvent type, models trained with UniAug and ModeAug consistently exhibit predicted distributions closer to the ground truth than the no aug model checkpoint. Unlike HORM, the HessianQM9 dataset consists of molecules in equilibrium structures, meaning most absolute force values are extremely small and close to zero. When compared, the medians of all model prediction distributions are lower than the reference. These models appear particularly vulnerable to zero-bias, failing to adequately distinguish molecules with relatively higher absolute force values. This tendency worsens as the reference median value itself becomes smaller; for the two solvents with the smallest values (water, THF), compared to vacuum and toluene (which have relatively larger absolute force median values), the predicted medians of all models fail to reach even the minimum values of the actual reference. This connects to the comparison of energy and prediction performance between HORM and HessianQM9 discussed later. 
+
+Right. In the right panel evaluated on augmented data, characteristic differences across 16 solvent types are minor and follow similar patterns in both reference DFT values and pre-dicted values (Note that, unlike HORM—an off-equilibrium dataset where absolute force values are generally large—the σ values were significantly reduced for this plot to reflect the fact that most force values are close to zero). Looking at the reference DFT as a bench-mark, the actual magnitude of force shift increases with larger σ, and predictions from all three models appear to have learned this pattern to some extent. Examining the predicted distributions, underestimation in predictions becomes more severe with less augmentation. Considering this alongside the left panel results, for equilibrium sets, data augmentation itself helps the model break away from zero-bias, preventing prediction collapse while improving predictive power. 
+
+Relative bond length deviation When comparing the range of mean relative bond deformation |∆r/r | between the two augmentation strategies in Figure 5, UniAug induces significantly broader and larger deformations (up to ∼15%) compared to ModeAug (within 
+
+∼5%) across all three HORM subsets, consistent with the larger energy and force shifts observed for UniAug in the preceding analyses. When comparing mean values, however, both UniAug and ModeAug average around 0 .5%, indicating that for both strategies, the vast majority of augmentations cause minimal bond length deviations. 
+
+Energy and force prediction 
+
+HORM Table 2 reports the in-domain evaluation on the HORM validation set ( ts1x-val ). The optimal augmentation scheme depends on the choice of force training paradigm. Under direct force training, UniAug ( σ = 0 .05 ˚ A) achieves the best overall force predic-tion accuracy (0 .0099 eV/˚ A). Notably, this is lower than the reported value (0 .016 eV/˚ A) obtained by explicitly incorporating the Hessian matrix into the loss function (E-F-H) 20 .This demonstrates that utilizing the Hessian as a data prior rather than direct supervision can yield higher accuracy in force prediction. ModeAug ( σ = 0 .05 ˚ A) also outperformed the 17 E-F-H baseline from the original report in force metrics, though it fell short of UniAug. For energy MAE, both UniAug and ModeAug achieves lower errors than no augmentation, but did not match the original report. Under autograd force training, the relative performance ordering reverses: ModeAug ( σ = 0 .05 ˚ A) recorded a lower MAE than UniAug, though its improvement over the baseline remained marginal. Table 3 presents zero-shot evaluation results on the out-of-domain (OOD) dataset RGD1 without fine-tuning. Unlike the in-domain evaluation on ts1x-val , the models did not match the absolute error level of the E-F-H baseline reported in the original paper. Nevertheless, both augmentation schemes effectively reduced force prediction errors compared to both E-F and the unaugmented baseline (No aug). Under direct force training, ModeAug ( σ = 0 .05 ˚ A) with a 1:3 augmentation ratio achieves the lowest force MAE of 0 .1017 eV/˚ A, reversing the in-domain trend where UniAug outper-formed ModeAug. For energy MAE, however, only UniAug yielded an improvement over the baseline (0 .8328 → 0.7954 eV). Under autograd force training, ModeAug ( σ = 0 .05 ˚ A) consistently outperformed all other schemes across both energy and force metrics, mirroring the in-domain trend. We also investigated the impact of the augmentation ratio and displacement magnitude (σ) under direct force training. Increasing the ratio of original to augmented data from 1:1 to 1:3 offered no clear benefit in domain ( ts1x-val ). Out-of-domain, however, the force MAE for ModeAug dropped to 0 .1017 eV/˚ A, which was the lowest among all direct force settings, suggesting that a higher proportion of augmented data can enhance generalization to unseen structures. Nonetheless, this benefit was confined to force prediction and provided little advantage for energy prediction. Increasing σ for ModeAug from 0 .05 to 0 .10 ˚ A degraded both energy and force metrics in domain (0 .0109 eV/˚ A) and out-of-domain (0 .1041 eV/˚ A) alike. This supports our physical intuition that a larger displacement scale broadens the ∆ E distribution beyond the local regime where the second order Taylor expansion remains valid. We note that the optimal 18 scale of 0 .05 ˚ A should be interpreted as specific to the HORM dataset, as the appropriate threshold may vary depending on the dataset. Finally, a mixed augmentation strategy with an original to UniAug to ModeAug ratio of 2:1:1 was evaluated. However, it failed to outperform either single method scheme across all metrics and is omitted from the tables for brevity. 
+
+HessianQM9 Table 4 reports the validation performance across four solvent environments in HessianQM9. Unlike HORM, this dataset contains only equilibrium geometries. Conse-quently, the overall force magnitude ⟨| F|⟩ is substantially smaller (1 .38 to 1 .93 meV/˚ A) than that of HORM, which included structures away from equilibrium. This value serves as a reference threshold to determine whether a model has learned a meaningful physical signal rather than collapsing to a trivial prediction where F = 0. Notably, the value reported in the original paper is larger than ours. We attribute this discrepancy to their evaluation at the molecule level, unlike our per atom metric. Typically, the molecule-wise MAE is roughly 18 .4 times the atom-wise MAE, corresponding to the average number of atoms per molecule. Because we could not verify the exact calculation details of their metric, we suggest treating this comparison as a qualitative reference, unlike our direct comparison in HORM. Among the twelve models trained across four solvents and three direct force training settings, only No aug and ModeAug yielded force prediction errors below ⟨| F|⟩ in vacuum and toluene. In both solvents, ModeAug outperformed No aug, reducing the error by 3 .6% in vacuum and 6 .2% in toluene relative to No aug. UniAug failed to fall below the ⟨| F|⟩ 
+
+threshold in both solvents and performed worse than No aug. In the cases of water and THF, however, no augmentation setting reached the baseline threshold. Although both augmentation schemes performed worse than No aug in these solvents, No aug itself exhibited an MAE comparable to ⟨| F|⟩ , indicating that all methods failed to learn a meaningful signal beyond the trivial solution. Although the exact cause 19 of this failure cannot be directly established, we hypothesize that the lower ⟨| F|⟩ values in water and THF resulted in sparser learning signals, preventing the models from distinguishing meaningful patterns from noise. We report the optimal σ values for each solvent determined by heuristic search. Unlike in vacuum and toluene, tuning σ was not effective for improving predictive accuracy in water and THF. 
+
+MD17: Single-point force prediction As noted in the methodology section, this evalu-ation represents a zero shot test using the three model checkpoints trained with direct force on HORM without any further fine tuning. Table 5 shows that ModeAug showed higher pre-dictive accuracy than both No aug and UniAug across all eight molecules, whereas UniAug generally performed slightly worse than No aug. In the force cosine metric, which com-pares normalized predicted and reference forces, UniAug showed no significant improvement over No aug overall, while ModeAug attained the highest alignment score for six molecules. Considering that this is a zero shot evaluation, these results suggest that training with Mod-eAug on non equilibrium structures can modestly enhance generalization even to equilibrium molecules. 
+
+Nos´ e–Hoover MD simulation Table 6 reports the results of 300 ps zero shot NVT simu-lations across four test molecules. We note that the same three model checkpoints evaluated in the single point force prediction above were used here for zero shot evaluation. Both aug-mentation schemes outperformed No aug, though they excelled along different evaluation axes. In terms of trajectory stability, UniAug showed superior robustness, completing all 20 trajectories. ModeAug and No aug completed 16 and 14 trajectories, respectively. The failure patterns differed by model. No aug collapsed across all five runs for salicylic acid, resulting in a mean stability time of only 18 .3 ps. In contrast, the instability of ModeAug was con-centrated exclusively in ethanol, while demonstrating stability comparable to UniAug across 20 the remaining three molecules. Regarding structural distribution accuracy, the performance ordering reversed, with Mod-eAug achieving the lowest h(r) MAE across all four molecules. The mean h(r) MAE values were 0 .0050 for ModeAug, 0 .0058 for UniAug, and 0 .0085 for No aug. The most substantial gain was observed for naphthalene, where ModeAug halved the error of No aug. Because No aug had no completed trajectories for salicylic acid, that molecule was excluded from its average, and comparisons with No aug are based on the remaining three molecules. 
+
+PES curvature recovery 
+
+Tables 7 and 8 report potential energy surface (PES) curvature metrics for 2,000 molecules on the in-domain ( ts1x-val ) and out-of-domain (RGD1) test sets, respectively. First, comparing the predictive performance of the models in Table 7, both direct force training and energy-conserved models showed improved predictive capability across all four metrics when trained with augmented data. Notably, models trained on ModeAug data ex-hibited superior performance metrics in most cases. Comparing Hessian and eigenvalue pre-dictions with reported values from the original paper 20 , while performance does not reach the level of explicitly training on Hessians (E–F–H), MAEs for both Hessians and eigenval-ues are substantially reduced to roughly 20–30% of their values compared to models trained without Hessians (E–F). However, because it cannot be confirmed whether all hyperparame-ters (such as loss term weights or learning rates) were identically configured, these results are best interpreted as indicating a substantial reduction in error rather than focusing strictly on exact numerical values. Next, looking at Table 8, augmentation again consistently improves predictive capability, though the relative superiority of UniAug versus ModeAug varies across metrics. In par-ticular, UniAug yielded better performance for Hessian and eigenvalue predictions in both direct force training and energy-conserved training, displaying a different trend from the 
+
+ts1x-val results. Compared with the original paper’s report, performance still falls short of 21 E–F–H (which directly trains on Hessians), but achieves significantly lower error values than those reported for E–F. In summary, both augmentation techniques intrinsically recover PES curvature-related information to a significant extent solely through Taylor-approximation-based augmentation, even when Hessian information is excluded during training. 
+
+Case study In the qualitative case study, the observed patterns across the two fail, normal, and success cases are as follows: In fail cases, we found that molecules with a higher number of low ground-truth (GT) frequencies exhibited degraded predictive performance in models trained on augmented data. Conversely, this indicates that the no aug model yields poor predictive power for molecules dominated by high GT frequencies; incorporating augmented data helps mitigate underestimation tendencies primarily in the high GT frequency regime. However, because this analysis is limited to a small number of cases, generalization is difficult, and further systematic analysis will be required to draw definitive conclusions. 
+
+Training cost comparison 
+
+Table 9 compares the per-structure, per-step training cost across three pathways that supply curvature information to E–F models. Conventional methods that train using the model’s own force Jacobian ( ∂xF) via Hessian supervision (full Hessian loss and row sampling) must recompute curvature within the autograd graph at every training step, requiring vector-Jacobian product (VJP) operations proportional to either the total Cartesian degrees of freedom (3 N ) or the number of sampled rows ( s ≪ 3N ). This incurs 3 N additional back-ward passes under full Hessian supervision and s additional backward passes under row sampling, introducing substantial memory overheads of O(N 2) and O(sN ), respectively, to retain activation values prior to parameter updates. In contrast, our framework leverages fixed DFT Hessians precomputed in the dataset as an external curvature prior. Because augmentation operations are performed entirely outside the autograd graph, they are not recomputed during training. Per-structure computational 22 cost is restricted to a single matrix-vector product for UniAug, with ModeAug requiring only one additional eigendecomposition. Consequently, our approach achieves zero additional backward passes (0) and zero backward memory footprint (0), perfectly maintaining the computational complexity of the training loop at standard E–F training levels. 
+
+Figure 2: t-SNE projections of augmentation displacement fields across data subsets. Hue distinguishes the four scheme × σ combinations, while color intensity encodes the predicted ∆E (lighter indicates lower energy shift). Inset boxes report P (∆ E > 0.1 eV) for each scheme, and bottom histograms display the corresponding ∆ E distributions. Table 2: Validation MAE on HORM-Transition1x for EquiformerV2 trained under different augmentation schemes, with the baseline results trained with (E-F-H) and without Hessian (E-F) comparison. 
+
+Training Metric Paper report 20 No aug UniAug ModeAug UniAug b ModeAug b ModeAug E-F-H E-F σ = .05 σ = .05 σ = .05 σ = .05 σ = .10 Direct force Energy 0.019 0.045 0.0301 0.0227 0.0239 0.0240 0.0240 0.0280 Force 0.016 0.021 0.0114 0.0099 0.0106 0.0101 0.0111 0.0109 Autograd force Energy –a –a 0.7400 0.5806 0.2669 - - -Force –a –a 0.0161 0.0160 0.0152 - - -  
+
+> aNot reported in the original paper.
+> bTrained with an original:augmented batch ratio of 1:3 (all other augmented columns use 1:1).
+
+23 T1x train T1x val RGD1 00.01 0.03 0.1 0.3 13
+
+> |F| (eV/ Å)
+
+original geometry 
+
+0.01 0.03 0.05 
+
+σ (displacement, Å)
+
+00.01 0.03 0.1 0.3 13
+
+> ΔF (eV/ Å)
+
+T1x train 
+
+0.01 0.03 0.05 
+
+σ (displacement, Å)
+
+T1x val 
+
+0.01 0.03 0.05 
+
+σ (displacement, Å)
+
+RGD1 
+
+EquiformerV2 (no aug) EquiformerV2 (UniAug-trained) EquiformerV2 (ModeAug-trained) DFT ωB97X/6-31G* Figure 3: Distribution of force changes ∆ F under displacement on the three HORM subsets. 
+
+Left : Force magnitude |F | at the original geometry, comparing the dataset label with the No-aug model prediction. Right : ∆ F = F(X + δX) − F(X) at σ ∈ { 0.01 , 0.03 , 0.05 } ˚A, grouped by displacement type. Within each group, the three violins represent the No-aug model (left), the augmented model (middle), and DFT (right). vacuum water toluene THF 010 4
+
+10 3
+
+10 2
+
+10 1
+
+10 0
+
+> |F| (eV/ Å)
+
+equilibrium 
+
+0.002 0.01 0.02 
+
+(displacement, Å)
+
+010 4
+
+10 3
+
+10 2
+
+10 1
+
+10 0
+
+> F (eV/ Å)
+
+vacuum 
+
+0.002 0.01 0.02 
+
+(displacement, Å)
+
+water 
+
+0.002 0.01 0.02 
+
+(displacement, Å)
+
+toluene 
+
+0.002 0.01 0.02 
+
+(displacement, Å)
+
+THF     
+
+> EquiformerV2 (no aug) EquiformerV2 (UniAug-trained) EquiformerV2 (ModeAug-trained) DFT B97X/6-31G*
+
+Figure 4: Distribution of force changes ∆ F under displacement on the four HessianQM9 environments at σ ∈ { 0.002 , 0.01 , 0.02 } ˚A. Conventions are the same as those in Figure 3, except that the y-axis scale is considerably smaller in HessianQM9. Note that dataset labels (left) and DFT (right) are both ωB97X/6-31G* but from different codes (NWChem vs. GPU4PySCF), shown in one color for clarity. 0.00 0.05 0.10 0.15 0.20 
+
+|Δr / r| (original) 
+
+10 −1
+
+10 0
+
+10 1
+
+10 2
+
+> Density  (log)
+
+RGD1 (σ=0.05)       
+
+> |Δr/r| mean p95
+> UniAug 0.006 0.048 ModeAug 0.005 0.012
+
+0.00 0.05 0.10 0.15 0.20 
+
+|Δr / r| (original) 
+
+T1x train (σ=0.05)       
+
+> |Δr/r| mean p95
+> UniAug 0.006 0.040 ModeAug 0.004 0.012
+
+0.00 0.05 0.10 0.15 0.20 
+
+|Δr / r| (original) 
+
+T1x val (σ=0.05)         
+
+> |Δr/r| mean p95
+> UniAug 0.006 0.042 ModeAug 0.005 0.013
+> UniAug atom_frac = 0.125 (as trained) ·ModeAug: all-atom, mode-weighted
+
+Figure 5: Distribution of relative bond deformation |∆r/r | under perturbation ( σ = 0 .05 ˚ A) across HORM subsets, comparing UniAug and ModeAug. 24 Table 3: Energy and force MAEs on RGD1 evaluation for EquiformerV2 models trained on HORM under different augmentation schemes, with the baseline results trained with (E-F-H) and without Hessian (E-F) comparison. Training Metric Paper report 20 No aug UniAug ModeAug ModeAug b ModeAug E-F-H E-F σ = .05 σ = .05 σ = .05 σ = .10 Direct force Energy 0.133 0.243 0.8328 0.7954 0.8586 0.9371 0.9509 Force 0.056 0.111 0.1108 0.1044 0.1027 0.1017 0.1041 Autograd force Energy –a –a 1.7440 1.5733 1.2779 - -Force –a –a 0.1207 0.1075 0.0960 - -  
+
+> aNot reported in the original paper.
+> bTrained with an original:augmented batch ratio of 1:3 (all other augmented columns use 1:1).
+
+Table 4: Validation force MAE on HessianQM9 subsets at the best σ range for each subset, where ⟨| F|⟩ (meV/˚ A) is the mean value of absolute forces in the dataset. Solvents σ range (˚ A) Paper report 23 a ⟨| F|⟩ No aug UniAug ModeAug Vacuum 0.002–0.02 35 1.92 1.877 1.934 1.851 
+
+Toluene 0.0008–0.02 29 1.93 1.876 1.917 1.811 
+
+Water 0.0008–0.002 28 1.38 1.385 1.455 1.398 THF 0.0008–0.005 28 1.68 1.686 1.781 1.729  
+
+> aNot directly comparable, as the paper does not specify its force reduction convention (molecule wise vs atom wise, 18.4 atoms on average).
+
+25 Table 5: Zero-shot OOD force prediction performance on MD17 for EquiformerV2 models trained on HORM (ts1x-train). Reported values are evaluated via MDsim using the model trained with direct forces predictions.                                                                
+
+> Force MAE (eV/˚ A) ↓Force cosine ↑
+> Molecule No aug UniAug ModeAug No aug UniAug ModeAug aspirin 0.2248 0.2275 0.2112 0.9557 0.9572 0.9571 ethanol 0.1641 0.1874 0.1627 0.9738 0.9725 0.9729 naphthalene 0.1639 0.1729 0.1569 0.9804 0.9799 0.9809
+> salicylic acid 0.2425 0.2402 0.2257 0.9426 0.9451 0.9458
+> toluene 0.1311 0.1358 0.1172 0.9869 0.9888 0.9898
+> uracil 0.2596 0.2743 0.2494 0.9425 0.9423 0.9452
+> malonaldehyde 0.2497 0.2812 0.2446 0.9493 0.9481 0.9502
+> benzene 0.1117 0.1063 0.1058 0.9780 0.9807 0.9823 MEAN 0.1934 0.2032 0.1842 0.9637 0.9643 0.9655
+
+Table 6: Zero-shot OOD MD simulation results on four MD17 molecules (300 ps NVT at 500 K). Metrics include average stability time (stab in ps), completed trajectories (#fin out of 5), and radial distribution function error ( h(r) MAE). Best h(r) values among valid trajectories are bolded. 
+
+No aug. UniAug ModeAug 
+
+Molecule stab #fin h(r) stab #fin h(r) stab #fin h(r)aspirin 246.2 4/5 0.0062 300.0 5/5 0.0040 300.0 5/5 0.0038 
+
+ethanol 300.0 5/5 0.0056 300.0 5/5 0.0047 185.3 2/5 0.0045 
+
+naphthalene 300.0 5/5 0.0120 300.0 5/5 0.0077 300.0 5/5 0.0060 
+
+salicylic acid 18.3 0/5 (0.0100) † 300.0 5/5 0.0069 262.3 4/5 0.0056 MEAN 216.1 14/20 0.0085 300.0 20/20 0.0058 261.9 16/20 0.0050  
+
+> †Excluded from mean and bolding due to zero completed trajectories (0 /5).
+
+# Discussion 
+
+Fidelity of Augmented Data and Contribution to Predictive Performance In this study, we proposed two Taylor-expansion-based data augmentation schemes: ModeAug and UniAug. A t-SNE projection of the displacement vectors confirmed that these two schemes occupy distinct regions, complementarily capturing both physically constrained near-equilibrium vibrations and broader off-equilibrium regions. Importantly, the energy and force shifts predicted on these augmented geometries agree with reference DFT calcula-tions, demonstrating that Taylor-based augmentation enriches the potential energy surface 26 Table 7: Curvature evaluation metrics (MAE) on ts1x-val (in-domain). 
+
+Paper report Direct force Autograd force Metric E-F-H E-F No aug. UniAug ModeAug No aug. UniAug ModeAug Hessian 0.075 2.231 1.2248 0.6594 0.5387 2.4411 0.5677 0.4835 
+
+Eigenvalues 0.292 20.795 9.0690 5.1660 3.8176 14.5419 3.6846 2.3230 
+
+Assymmetry – – 1.0125 0.5172 0.4834 0 0 0
+
+nimag (GT 0.99) – – 2.90 1.87 1.65 6.55 1.47 1.74 
+
+Table 8: Curvature evaluation metrics (MAE) on RGD1 (OOD). 
+
+Paper report Direct force Autograd force Metric E-F-H E-F No aug. UniAug ModeAug No aug. UniAug ModeAug Hessian 0.092 1.224 0.4149 0.2486 0.2530 3.8554 0.5807 0.7033 Eigenvalues 0.292 10.300 2.1088 1.2585 1.4207 25.8133 3.3831 4.4429 Assymmetry – – 0.487 0.290 0.263 0 0 0
+
+nimag (GT 3.86) – – 4.80 4.58 4.58 10.43 5.11 5.19 fail_1 · C4H5N1O1 (idx 48940) soft 51 / stiff 3347 cm ¹ 
+
+0 500 1000 1500 2000 2500 3000 3500 
+
+GT frequency (cm ¹) 
+
+0500 1000 1500 2000 2500 3000 3500 
+
+> Predicted freq (cm ¹)
+
+capped 3800 · orange=soft / purple=stiff · stiff MAE on [400,3800] 
+
+No aug (stiff MAE 263) UniAug (stiff MAE 264) ModeAug (stiff MAE 543) 
+
+(a) Fail (1) fail_2 · C3H5N1O2 (idx 14935) soft 240 / stiff 3543 cm ¹ 
+
+0 500 1000 1500 2000 2500 3000 3500 
+
+GT frequency (cm ¹) 
+
+0500 1000 1500 2000 2500 3000 3500 
+
+> Predicted freq (cm ¹)
+
+capped 3800 · orange=soft / purple=stiff · stiff MAE on [400,3800] 
+
+No aug (stiff MAE 228) UniAug (stiff MAE 231) ModeAug (stiff MAE 273) (b) Fail (2) normal_1 · C4H8N2O1 (idx 16088) soft 84 / stiff 3611 cm ¹ 
+
+0 500 1000 1500 2000 2500 3000 3500 
+
+GT frequency (cm ¹) 
+
+0500 1000 1500 2000 2500 3000 3500 
+
+> Predicted freq (cm ¹)
+
+capped 3800 · orange=soft / purple=stiff · stiff MAE on [400,3800] 
+
+No aug (stiff MAE 307) UniAug (stiff MAE 301) ModeAug (stiff MAE 307) 
+
+(c) Normal (1) normal_2 · C5H6O2 (idx 23178) soft 98 / stiff 3336 cm ¹ 
+
+0 500 1000 1500 2000 2500 3000 3500 
+
+GT frequency (cm ¹) 
+
+0500 1000 1500 2000 2500 3000 3500 
+
+> Predicted freq (cm ¹)
+
+capped 3800 · orange=soft / purple=stiff · stiff MAE on [400,3800] 
+
+No aug (stiff MAE 311) UniAug (stiff MAE 298) ModeAug (stiff MAE 311) (d) Normal (2) success_1 · C4H5N1O1 (idx 26193) soft 142 / stiff 3552 cm ¹ 
+
+1000 0 1000 2000 3000 
+
+GT frequency (cm ¹) 
+
+1000 
+
+01000 2000 3000 
+
+> Predicted freq (cm ¹)
+
+capped 3800 · orange=soft / purple=stiff · stiff MAE on [400,3800] 
+
+No aug (stiff MAE 896) UniAug (stiff MAE 380) ModeAug (stiff MAE 282) 
+
+(e) Success (1) success_2 · C6H10 (idx 9160) soft 172 / stiff 3255 cm ¹ 
+
+1000 0 1000 2000 3000 
+
+GT frequency (cm ¹) 
+
+1000 
+
+01000 2000 3000 
+
+> Predicted freq (cm ¹)
+
+capped 3800 · orange=soft / purple=stiff · stiff MAE on [400,3800] 
+
+No aug (stiff MAE 882) UniAug (stiff MAE 429) ModeAug (stiff MAE 309) (f) Success (2) 
+
+Figure 6: Model-derived harmonic vibrational frequencies compared against reference DFT values for (a, b) failure, (c, d) neutral, and (e, f ) success cases. The dashed diagonal indi-cates y = x, while shaded orange and purple regions denote soft and stiff bands, respectively. Insets depict normal-mode displacement vectors. 27 Table 9: Per-structure, per-step training cost of three routes to supplying curvature to an E– F model. N : number of atoms, 3 N : Cartesian degrees of freedom. Row sampling supervises 
+
+s ≪ 3N rows. UniAug requires one matrix–vector product per structure and ModeAug one additional eigendecomposition.                            
+
+> UniAug & ModeAug Row sampling 20 Full Hessian loss
+> Curvature source DFT Hessian (data) Model ∂xFModel ∂xF
+> In autograd graph No Yes Yes Recomputed each step No Yes Yes Curvature operation mat–vec (+ eigh) VJP ×sVJP ×3N
+> Backward passes 0s3N
+> Extra memory in backprop 0O(sN )O(N2)
+
+(PES) without introducing unphysical artifacts. By mitigating the equilibrium bias inherent in standard relaxed datasets, this expanded coverage translates into accuracy gains across equilibrium and transition-state benchmarks as well as in zero-shot MD evaluations. 
+
+Computational Efficiency and Flexibility of Data Generation Data augmentation leveraging Taylor expansions imposes minimal computational and memory overhead across preprocessing, training, and inference. Because our approach operates purely as a data-level intervention rather than incorporating Hessian terms directly into the loss function, the backpropagation graph remains identical to standard energy-and-force training. This design offers two major practical advantages. First, it renders our methodology completely model-agnostic and seamlessly compatible with any standard MLIP architecture. Second, structures can either be pre-generated offline to avoid runtime latency or synthesized on-the-fly to avoid storage overhead. More broadly, this plug-and-play design should allow existing pretrained MLIP foundation models to be fine-tuned without modifying their network architectures or loss formulations, although we leave this direction to future work. 
+
+Characteristics of Augmentation Modes and Practical Guidance While both aug-mentation modes clearly outperformed the unaugmented baseline, we observed that the rel-28 ative effectiveness of each scheme varies subtly depending on the specific benchmark. On the HORM dataset, where force scales are relatively large, UniAug proved more advantageous in-domain, whereas ModeAug yielded superior performance out-of-domain (OOD) under di-rect force models. In contrast, when evaluating the accuracy of Hessians and eigenvalues derived from predicted forces, ModeAug showed a slight superiority in-domain, while Uni-Aug marginally outperformed ModeAug in OOD evaluation. This implies that minimizing force prediction errors does not necessarily guarantee a corresponding accuracy in Hessian reconstruction. On the equilibrium dataset HessianQM9, ModeAug performed slightly better overall, though this enhancement was less pronounced in solvent environments with smaller force scales, such as water and THF. In MD simulations, ModeAug achieved higher fidelity in recovering interatomic pair distance distributions, whereas UniAug exhibited superior stability in trajectory completion rates. The force distributions of original and augmented molecules across datasets offer key insights into the mechanisms driving these performance discrepancies. Examining the energy and force shift distributions relative to the reference structures in HessianQM9 suggests that augmentation modes capable of encompassing the original distribution while covering broader regions are more effective for model enhancement. Because the augmentation scale ( σ) also directly governs the distribution of synthesized configurations, careful consideration of these distributional characteristics when selecting the appropriate mode and scale is recommended for new applications. 
+
+Limitations We explicitly clarify several limitations of our proposed methodology and an-alytical framework. First, the optimal augmentation mode and scale ( σ) must be determined prior to training for each benchmark dataset. Although the optimal choice is closely linked to the target energy distribution, relying on a somewhat heuristic inspection of energy shift distributions between original and augmented configurations remains a practical limitation. Second, performance gains diminish for equilibrium configurations where force magni-29 tudes approach zero. This represents an inherent constraint of our approach, as reference force vectors themselves serve as essential ingredients for label generation. However, this characteristic also implies that our augmentation framework is particularly well-suited for off-equilibrium configurations where reference labels are sparse. Third, because our approach relies on local Taylor expansions, it is fundamentally de-signed to enrich data density within small displacement regimes. Consequently, our method-ology is not intended to model global potential energy surfaces across arbitrarily large confor-mational changes, imposing limitations in describing potential energy profiles along dihedral rotations or accurately estimating global vibrational modes across entire molecular frame-works. 
+
+# Conclusion 
+
+In this study, we proposed two data augmentation schemes, UniAug and ModeAug, that utilize molecular Hessians as a source for data generation. By leveraging second-order Taylor expansions, our method generates novel configurations within the local neighborhood of a reference structure, along with their corresponding energy and force labels from a single Hessian, all without requiring additional quantum chemical calculations. Because curvature information is imparted exclusively through the synthesized labels, this framework leaves the model architecture and objective function unchanged while avoiding extra computational overhead during training. Across diverse benchmarks—including HORM (encompassing reaction paths and transi-tion states), HessianQM9 (composed of equilibrium configurations), and MD17 (evaluating long-time dynamics)—both augmentation schemes consistently enhanced predictive accu-racy. Crucially, our approach substantially recovers the potential energy surface curvature that models trained strictly on energies and forces fail to capture. Furthermore, the two augmentation modes exhibited complementary strengths across distinct evaluation metrics: 30 ModeAug proved advantageous for curvature reconstruction and generalization to out-of-distribution structures, whereas UniAug excelled in energy accuracy and long-term simula-tion stability. Overall, these findings offer practical guidelines and a computationally efficient route for leveraging curvature information in machine learning potentials when Hessian data is readily available. 
+
+# Author Information 
+
+Notes 
+
+This work was carried out by the authors in their personal capacity, independently of and without support from their employers. The authors declare no competing financial interest. 
+
+# Acknowledgements 
+
+This work received no external funding, institutional support, or dedicated computational resources. 31 Supporting Information 
+
+Details of datasets and evaluation protocols 
+
+HORM 
+
+HORM is a benchmark dataset constructed from two reaction repositories, Transition-1x (hereafter ts1x )47 and RGD1 48 , which together cover extensive chemical reaction pathways and transition states. In addition to DFT-calculated energies and forces at the ωB97X/6-31G* level, HORM provides full reference Hessian matrices.Unlike traditional molecular databases—such as QM7 49 , QM7b 50 , QM8 51 , and QM9 52 —which predominantly target re-laxed geometries with vanishingly small atomic forces, HORM captures non-equilibrium structures along reaction coordinates characterized by substantial, non-negligible forces. In these high-force, far-from-equilibrium regimes, Hessian-based augmentation effectively lever-ages the rich PES curvature, yielding spatially diverse and physically faithful synthetic per-turbations. Model evaluation follows the official protocols established by the benchmark creators. The training set ( ts1x-train ) and in-domain validation set ( ts1x-valid ) originate from non-overlapping reaction pathways within the original Transition-1x dataset 47 . For out-of-distribution (OOD) evaluation, RGD1 serves as a challenging 60k test set featuring reactions where up to two bonds form and break simultaneously, representing a distinct chemical and structural domain from ts1x . Models trained exclusively on ts1x-train are applied directly to RGD1 without fine-tuning to evaluate zero-shot OOD generalization. All model architec-tures, random seeds, and training hyperparameters are kept strictly identical, isolating the augmentation strategy ( No aug , UniAug , or ModeAug ) as the sole variable. All models are optimized using the standard joint loss function L, defined as the weighted 1sum of energy and force Mean Absolute Error (MAE) terms: 
+
+L = α LE + β LF, LE = 1
+
+B
+
+> B
+
+X
+
+> m=1
+
+ˆEm − Em , LF = 1
+
+Ntotal 
+
+> Ntotal
+
+X
+
+> i=1
+
+ˆFi − Fi 2, (7) where α and β are weighting coefficients, B is the batch size, and Ntotal is the total number of atoms in the batch. 
+
+HessianQM9 
+
+HessianQM9 23 is a database providing numerical Hessians for equilibrium geometries, com-prising 41 ,645 ground-state organic molecules selected from the 133 ,885 structures in QM9 52 
+
+(up to nine C, N, O, and F heavy atoms). To ensure structural heterogeneity rather than arbitrary subsampling, these candidates were selected via UMAP-based dimensionality re-duction paired with farthest-point sampling to maximize configurational diversity. For each molecule, HessianQM9 supplies the second-derivative matrix alongside DFT-calculated ener-gies and forces at the ωB97X/6-31G* level. Unlike first-order derivatives (forces), which can be evaluated analytically via the Hellmann–Feynman theorem, the Hessians in HessianQM9 were computed via finite differences. While conventional molecular databases focus exclusively on vacuum potential energy surfaces, HessianQM9 incorporates environmental effects using the SMD implicit solvation model 53 . It provides Hessians across three distinct solvent environments—water ( ϵr = 80 .0), tetrahydrofuran (THF, ϵr = 7 .6), and toluene ( ϵr = 2 .4)—in addition to the gas phase. Because the structures represent energy minima, the reference forces are near zero. Across the four subsets (vacuum and three solvent phases), the root-mean-square (RMS) of force components ranges from 2 .3 × 10 −3 to 3 .1 × 10 −3 eV /˚A (e.g., 3 .0 × 10 −3 eV /˚A in vacuum and 2.3 × 10 −3 eV /˚A in water), with mean component values on the order of 10 −8 eV /˚A. These values are roughly two orders of magnitude smaller than those in off-equilibrium datasets such as ts1x (0 .36 eV /˚A). The force labels in HessianQM9 thus reflect numerical convergence 2residuals from geometry optimization rather than meaningful physical force signals. Consequently, HessianQM9 provides a complementary testbed to HORM, probing whether curvature information can be effectively injected in a regime where reference forces offer neg-ligible supervisory signal. Models on HessianQM9 are trained exclusively using the direct force training approach under the joint energy-force objective defined in Eq. (7). To ensure consistent loss weighting across augmentation schemes, force target normalization is com-puted independently for each arm based on the empirical force distribution generated by its respective perturbation distribution. 
+
+MD17 and Long-Time Dynamics Evaluation 
+
+While HORM and HessianQM9 assess local single-point prediction accuracy, MD17 evalu-ates the long-term dynamical stability of MLIPs. Comprising ab initio molecular dynamics (AIMD) trajectories for eight small organic molecules, MD17 11 serves as a standard bench-mark for force prediction. However, as demonstrated by Fu et al. 46 , low single-point force errors do not necessarily guarantee physical simulation fidelity, necessitating autoregressive rollout simulations to evaluate whether a learned potential yields physically valid dynamic trajectories. Because MD17 lacks ground-truth Hessian matrices and uses a different level of elec-tronic structure theory than our training set ( ωB97X/6-31G*), it is excluded from the model training process. Instead, models trained on HORM ( ts1x-train ) are evaluated directly on MD17 without any fine-tuning, thereby probing long-term dynamical behavior under a strict 
+
+zero-shot transfer setting. 
+
+Simulation Protocol Initial atomic velocities are drawn from a Maxwell–Boltzmann dis-tribution at 500 K, and atomic forces are evaluated analytically via automatic differentiation of the predicted potential energy surface ( F = −∇ XE). To compensate for ASE’s default assignment of 3 N degrees of freedom following center-of-mass (COM) momentum removal 3(which reduces active physical modes to 3 N − 3), the thermostat target temperature is set to 
+
+Tset = T · (3 N − 3) /3N . This protocol maintains the measured internal temperature strictly within the range of 494 K to 518 K across all production runs. 
+
+Evaluation Metrics GPU non-determinism introduces approximately 0 .07% relative vari-ation in force magnitude, which renders individual breakdown times stochastic and motivates the use of the completion count as the primary stability index. The radial distribution his-togram ⟨ˆh(r)⟩ is constructed from all pairwise distances (0–8 ˚ A, bin width 0 .05 ˚ A, sampled every 20 steps). 
+
+Implementation Details 
+
+We selected EquiformerV2 27 as our primary backbone architecture, which is SO (3)-equivariant, demonstrates strong empirical performance across various atomistic tasks, and serves as the baseline model in the HORM benchmark. Following the configuration established in Cui et al. 20 , the model consists of 4 layers ( lmax = 4, mmax = 2, 128 spherical channels), compris-ing approximately 13 .9M parameters. Atomic graphs were constructed using a radial cutoff of max radius = 12 ˚ A and max neighbors = 20. Models were optimized using AdamW (weight decay 10 −3, gradient norm clipping at 10 .0) with a linear warmup followed by a cosine decay schedule (minimum learning rate set to 2% of the initial value). All training runs were conducted on a single NVIDIA GeForce RTX 3090 GPU (24 GiB). The perturbation scale was set to σ = 0 .05 ˚ A for HORM. For HessianQM9, σ was drawn from a per-solvent range, which is reported together with the results in Table 4. For UniAug, the fraction of displaced atoms was f = 0 .125 on HORM and f = 0 .25 on HessianQM9. ModeAug displaces all atoms through the mode basis. To maintain a strict 1 : 1 balance between original and perturbed structures, data augmentation was applied dynamically at the mini-batch level. While implemented on the fly for computational convenience, this pipeline can also be executed as an offline preprocessing step without loss of generality. 4We emphasize that this dynamic sampling scheme is an implementation choice for training convenience. The proposed augmentation strategies can equally be executed offline during data preprocessing without affecting model performance. Across all benchmark datasets, model architectures, and experimental conditions (includ-ing baseline and augmented models), training was governed by the identical joint energy-force loss objective defined in Eq. (7), ensuring that any observed performance gains stem solely from data-level augmentation. 
+
+Bond Length Deviation Metric 
+
+To quantify how much augmentation perturbs the local molecular structure, we measured the relative deviation |∆r/r | of each bond. 
+
+Bond Definition The bond list was determined only once based on distance criteria from the original geometry before applying displacements. For atomic pairs ( i, j ) with i < j , a pair was considered a bond if it satisfied 
+
+rij < R cov  
+
+> i
+
++ Rcov  
+
+> j
+
++ δ, δ = 0 .4 ˚ A, (8) where Rcov denotes the covalent radius (H 0 .31, C 0 .76, N 0 .71, O 0 .66, and F 0 .57 ˚ A). The resulting cutoffs for element pairs are 1 .92 for C–C, 1 .87 for C–N, 1 .82 for C–O, 1 .47 for C–H, 1 .37 for O–H, and 1 .02 ˚ A for H–H. 
+
+Metric In augmented structures, bonds were not redetected, and the relative deviation ∆rr = raug  
+
+> ij
+
+− rorig 
+
+> ij
+
+rorig 
+
+> ij
+
+(9) was calculated over the fixed set of atomic pair indices from Equation (8). Because the distributions were symmetric around zero across all three conditions, we reported the folded 5magnitudes |∆r/r |. Applying the identical bond list to both UniAug and ModeAug allowed us to evaluate the two augmentation schemes through paired comparisons. 
+
+Validity and Limitations The distance cutoff in Equation (8) is a geometric heuristic that does not account for bond order, valence, or electronic structure. However, in the organic molecules containing H, C, N, O, and F studied here, the gap between bonding distances and nonbonding nearest neighbor distances is sufficiently wide. For example, C–C bonds at 1.20 to 1 .54 ˚ A stand well apart from 1 , 3-C · · · C distances near 2 .5 ˚ A, C–H at 1 .09 ˚ A stands apart from 1 , 3-H · · · C distances near 2 .1 ˚ A, geminal H · · · H distances are around 1 .78 ˚ A, and hydrogen bonded O · · · H distances at 1 .8 to 2 .0 ˚ A lie outside the cutoff, so this criterion reliably separates bonds. On the other hand, in transition states, the distances of partial bonds being formed or broken lie near the cutoff. For instance, C · · · H distances of 1 .3 to 1 .4 ˚ A in hydrogen transfer transition states include both partial bonds, while forming C · · · C distances of 2 .0 to 2 .4 ˚ Astraddle the 1 .92 ˚ A cutoff, meaning this definition does not align perfectly with chemical bond lists. However, because such misclassifications apply equally to both augmentation conditions, our relative comparison between the two schemes, specifically the finding that ModeAug pro-duces a shorter tail in the |∆r/r | distribution, remains insensitive to the details of the bond definition. On the other hand, this limitation applies to absolute chemical interpretations, such as treating a specific threshold as bond cleavage. Therefore, this metric was used solely for comparison between augmentation schemes. 
+
+Effect of the Local Frame Detach on Autograd Force Evaluation 
+
+EquiformerV2 is designed around direct force prediction, and its local rotation frame R(x)serves as a geometric preprocessing step that reduces SO(3) convolutions to SO(2). Because this frame does not depend on the model parameters, the upstream implementation applies 6.detach() along this path to reduce the cost of building the computational graph. Under this setting the force obtained by autograd is not the true gradient of E = f (x, R (x)) but the gradient of a proxy function in which the frame is held fixed, and the model minimizes the force loss through this same path. We therefore followed the original design intent and kept the detach in place during training. When the detach was removed at evaluation time after training, however, we found that the error metrics for curvature changed appreciably, in some cases decreasing. We report this observation not to argue for or against removing the detach, nor to extend it into any further interpretation, but to note that it is one variable that affects the evaluation results. 
+
+Stiff Mode Frequency Calculation for Case Studies 
+
+Predicted and reference Hessians were mass weighted as D = M−1/2HM −1/2, where M is the diagonal matrix of atomic masses repeated over the three Cartesian components, and diagonalized to obtain eigenvalues λi. Since the predicted Hessian from the direct force head is not strictly symmetric, only its symmetric part 12 (H+HT) was used prior to diagonalization. The six eigenvalues with smallest |λi|, corresponding to translational and rotational modes, were discarded, and signed vibrational frequencies were computed from the remaining 3 N −6modes as 
+
+νi = sign( λi) p|λi| × 521 .47 cm −1, (10) with λi < 0 yielding imaginary frequencies reported as negative values. Each normal mode was assigned to a stiff or soft band according to its reference frequency, with |νref  
+
+> i
+
+| ≥ 400 cm −1
+
+defining the stiff band and |νref  
+
+> i
+
+| < 400 cm −1 defining the soft band. The stiff mode error was then defined as the mean absolute error between predicted and reference frequencies averaged only over modes falling in the stiff band. 7References 
+
+(1) Halgren, T. A. Merck molecular force field. I. Basis, form, scope, parameterization, and performance of MMFF94. Journal of computational chemistry 1996 , 17 , 490–519. (2) Cornell, W. D.; Cieplak, P.; Bayly, C. I.; Gould, I. R.; Merz, K. M.; Ferguson, D. M.; Spellmeyer, D. C.; Fox, T.; Caldwell, J. W.; Kollman, P. A. A second generation force field for the simulation of proteins, nucleic acids, and organic molecules. Journal of the American Chemical Society 1995 , 117 , 5179–5197. (3) MacKerell Jr, A. D.; Bashford, D.; Bellott, M.; Dunbrack Jr, R. L.; Evanseck, J. D.; Field, M. J.; Fischer, S.; Gao, J.; Guo, H.; Ha, S.; others All-atom empirical potential for molecular modeling and dynamics studies of proteins. The journal of physical chemistry B 1998 , 102 , 3586–3616. (4) Kulichenko, M.; Nebgen, B.; Lubbers, N.; Smith, J. S.; Barros, K.; Allen, A. E. A.; Habib, A.; Shinkle, E.; Fedik, N.; Li, Y. W.; Messerly, R. A.; Tretiak, S. Data Generation for Machine Learning Interatomic Potentials and Beyond. Chemical Reviews 2024 , 124 ,13681–13714. (5) Behler, J.; Parrinello, M. Generalized neural-network representation of high-dimensional potential-energy surfaces. Physical review letters 2007 , 98 , 146401. (6) Bart´ ok, A. P.; Payne, M. C.; Kondor, R.; Cs´ anyi, G. Gaussian approximation potentials: The accuracy of quantum mechanics, without the electrons. Physical review letters 
+
+2010 , 104 , 136403. (7) Behler, J. Four generations of high-dimensional neural network potentials. Chemical Reviews 2021 , 121 , 10037–10072. (8) Unke, O. T.; Chmiela, S.; Sauceda, H. E.; Gastegger, M.; Poltavsky, I.; Schutt, K. T.; 8Tkatchenko, A.; Muller, K.-R. Machine learning force fields. Chemical reviews 2021 ,
+
+121 , 10142–10186. (9) Thomas, N.; Smidt, T.; Kearnes, S.; Yang, L.; Li, L.; Kohlhoff, K.; Riley, P. Tensor field networks: Rotation-and translation-equivariant neural networks for 3d point clouds. 
+
+arXiv preprint arXiv:1802.08219 2018 ,(10) Batatia, I.; Batzner, S.; Kov´ acs, D. P.; Musaelian, A.; Simm, G. N.; Drautz, R.; Ort-ner, C.; Kozinsky, B.; Cs´ anyi, G. The design space of E (3)-equivariant atom-centred interatomic potentials. Nature Machine Intelligence 2025 , 7, 56–67. (11) Chmiela, S.; Tkatchenko, A.; Sauceda, H. E.; Poltavsky, I.; Sch¨ utt, K. T.; M¨ uller, K.-R. Machine learning of accurate energy-conserving molecular force fields. Science advances 
+
+2017 , 3, e1603015. (12) Batzner, S.; Musaelian, A.; Sun, L.; Geiger, M.; Mailoa, J. P.; Kornbluth, M.; Moli-nari, N.; Smidt, T. E.; Kozinsky, B. E(3)-Equivariant Graph Neural Networks for Data-Efficient and Accurate Interatomic Potentials. Nature Communications 2022 , 13 , 2453. (13) Batatia, I.; Kovacs, D. P.; Simm, G.; Ortner, C.; Cs´ anyi, G. MACE: Higher order equivariant message passing neural networks for fast and accurate force fields. Advances in neural information processing systems 2022 , 35 , 11423–11436. (14) Musaelian, A.; Batzner, S.; Johansson, A.; Sun, L.; Owen, C. J.; Kornbluth, M.; Kozin-sky, B. Learning Local Equivariant Representations for Large-Scale Atomistic Dynam-ics. Nature Communications 2023 , 14 , 579. (15) Chanussot, L. et al. Open Catalyst 2020 (OC20) Dataset and Community Challenges. 
+
+ACS Catalysis 2021 , 11 , 6059–6072. (16) Poltavsky, I.; Tkatchenko, A. Machine learning force fields: Recent advances and re-maining challenges. The journal of physical chemistry letters 2021 , 12 , 6551–6564. 9(17) Unke, O. T.; others Biomolecular Dynamics with Machine-Learned Quantum-Mechanical Force Fields Trained on Diverse Chemical Fragments. Science Advances 
+
+2024 , 10 , eadn4397. (18) Yuan, E. C.-Y.; Kumar, A.; Guan, X.; Hermes, E. D.; Rosen, A. S.; Z´ ador, J.; Head-Gordon, T.; Blau, S. M. Analytical ab initio Hessian from a deep learning potential for transition state optimization. Nature Communications 2024 , 15 , 8865. (19) Fang, S.; Geiger, M.; Checkelsky, J. G.; Smidt, T. Phonon predictions with e (3)-equivariant graph neural networks. arXiv preprint arXiv:2403.11347 2024 ,(20) Cui, T.; Han, Y.; Jia, H.; Duan, C.; Zhao, Q. A large scale molecular hessian database for optimizing reactive machine learning interatomic potentials. Scientific Data 2025 ,
+
+13 , 37. (21) Rodriguez, A.; Smith, J. S.; Mendoza-Cortes, J. L. Does Hessian data improve the per-formance of machine learning potentials? Journal of Chemical Theory and Computation 
+
+2025 , 21 , 6698–6710. (22) Amin, I.; Raja, S.; Krishnapriyan, A. Towards Fast, Specialized Machine Learning Force Fields: Distilling Foundation Models via Energy Hessians. International Conference on Learning Representations (ICLR). 2025; arXiv:2501.09009. (23) Williams, N. J.; Kabalan, L.; Stojanovic, L.; Z´ olyomi, V.; Pyzer-Knapp, E. O. Hes-sian QM9: A quantum chemistry database of molecular Hessians in implicit solvents. 
+
+Scientific data 2025 , 12 , 9. (24) Rodriguez, A.; Smith, J. S.; Matin, S.; Lubbers, N.; Barros, K.; Mendoza-Cortes, J. L. Projected Hessian Learning: Fast Curvature Supervision for Accurate Machine-Learning Interatomic Potentials. arXiv preprint arXiv:2603.04523 2026 ,10 (25) Gonnheimer, N.; Reuter, K.; Margraf, J. T. Beyond numerical Hessians: higher-order derivatives for machine learning interatomic potentials via automatic differentiation. 
+
+Journal of Chemical Theory and Computation 2025 , 21 , 4742–4752. (26) Gasteiger, J.; Becker, F.; G¨ unnemann, S. Gemnet: Universal directional graph neural networks for molecules. Advances in neural information processing systems 2021 , 34 ,6790–6802. (27) Liao, Y.-L.; Wood, B.; Das, A.; Smidt, T. Equiformerv2: Improved equivariant trans-former for scaling to higher-degree representations. International Conference on Learn-ing Representations. 2024; pp 39282–39309. (28) Burger, A.; Thiede, L.; Rønne, N.; Vijaykumar, N.; Vegge, T.; Bhowmik, A.; Aspuru-Guzik, A. Shoot from the HIP: Hessian Interatomic Potentials without derivatives. EurIPS 2025 Workshop on SIMBIOCHEM. 2025. (29) Cooper, A. M.; K¨ astner, J.; Urban, A.; Artrith, N. Efficient Training of ANN Potentials by Including Atomic Forces via Taylor Expansion and Application to Water and a Transition-Metal Oxide. npj Computational Materials 2020 , 6, 54, arXiv:2002.04172. (30) Godwin, J.; Schaarschmidt, M.; Gaunt, A.; Sanchez-Gonzalez, A.; Rubanova, Y.; Veliˇ ckovi´ c, P.; Kirkpatrick, J.; Battaglia, P. Simple GNN Regularisation for 3D Molec-ular Property Prediction and Beyond. International Conference on Learning Represen-tations (ICLR). 2022; arXiv:2106.07971. (31) Yeu, I. W.; Stuke, A.; L´ opez-Zorrilla, J.; Stevenson, J. M.; Reichman, D. R.; Fries-ner, R. A.; Urban, A.; Artrith, N. Scalable training of neural network potentials for complex interfaces through data augmentation. npj Computational Materials 2025 ,
+
+11 , 156. (32) Gibson, J.; Hire, A.; Hennig, R. G. Data-augmentation for graph neural network learn-11 ing of the relaxed energies of unrelaxed structures. npj Computational Materials 2022 ,
+
+8, 211. (33) Smith, J. S.; Isayev, O.; Roitberg, A. E. ANI-1: an extensible neural network potential with DFT accuracy at force field computational cost. Chemical science 2017 , 8, 3192– 3203. (34) Sch¨ utt, K. T.; Sauceda, H. E.; Kindermans, P.-J.; Tkatchenko, A.; M¨ uller, K.-R. Schnet– a deep learning architecture for molecules and materials. The Journal of chemical physics 2018 , 148 .(35) Gasteiger, J.; Giri, S.; Margraf, J. T.; G¨ unnemann, S. Fast and uncertainty-aware direc-tional message passing for non-equilibrium molecules. arXiv preprint arXiv:2011.14115 
+
+2020 ,(36) Sch¨ utt, K.; Unke, O.; Gastegger, M. Equivariant message passing for the prediction of tensorial properties and molecular spectra. International conference on machine learn-ing. 2021; pp 9377–9388. (37) Haghighatlari, M.; Li, J.; Guan, X.; Zhang, O.; Das, A.; Stein, C. J.; Heidar-Zadeh, F.; Liu, M.; Head-Gordon, M.; Bertels, L.; others NewtonNet: a Newtonian message passing network for deep learning of interatomic potentials and forces. Digital Discovery 2022 ,
+
+1, 333–343. (38) Gasteiger, J.; Shuaibi, M.; Sriram, A.; G¨ unnemann, S.; Ulissi, Z.; Zitnick, C. L.; Das, A. GemNet-OC: developing graph neural networks for large and diverse molecular simu-lation datasets. arXiv preprint arXiv:2204.02782 2022 ,(39) Passaro, S.; Zitnick, C. L. Reducing SO (3) convolutions to SO (2) for efficient equiv-ariant GNNs. International conference on machine learning. 2023; pp 27420–27438. 12 (40) Shorten, C.; Khoshgoftaar, T. M. A survey on image data augmentation for deep learn-ing. Journal of big data 2019 , 6, 60. (41) Hu, W.; Shuaibi, M.; Das, A.; Goyal, S.; Sriram, A.; Leskovec, J.; Parikh, D.; Zit-nick, C. L. Forcenet: A graph neural network for large-scale quantum calculations. 
+
+arXiv preprint arXiv:2103.01436 2021 ,(42) Zaidi, S.; Schaarschmidt, M.; Martens, J.; Kim, H.; Teh, Y. W.; Sanchez-Gonzalez, A.; Battaglia, P.; Pascanu, R.; Godwin, J. Pre-training via Denoising for Molecular Prop-erty Prediction. The Eleventh International Conference on Learning Representations. 2023. (43) Feng, S.; Ni, Y.; Lan, Y.; Ma, Z.-M.; Ma, W.-Y. Fractional denoising for 3d molecular pre-training. International Conference on Machine Learning. 2023; pp 9938–9961. (44) Ni, Y.; Feng, S.; Ma, W.-Y.; Ma, Z.-M.; Lan, Y. Sliced denoising: A physics-informed molecular pre-training method. International Conference on Learning Representations. 2024; pp 17064–17088. (45) Liao, Y.-L.; Smidt, T.; Shuaibi, M.; Das, A. Generalizing denoising to non-equilibrium structures improves equivariant force fields. arXiv preprint arXiv:2403.09549 2024 ,(46) Fu, X.; Wu, Z.; Wang, W.; Xie, T.; Keten, S.; Gomez-Bombarelli, R.; Jaakkola, T. Forces are not Enough: Benchmark and Critical Evaluation for Machine Learning Force Fields with Molecular Simulations. Transactions on Machine Learning Research 2023 , Survey Certification. (47) Schreiner, M.; Bhowmik, A.; Vegge, T.; Busk, J.; Winther, O. Transition1x-a dataset for building generalizable reactive machine learning potentials. Scientific Data 2022 ,
+
+9, 779. 13 (48) Zhao, Q.; Vaddadi, S. M.; Woulfe, M.; Ogunfowora, L. A.; Garimella, S. S.; Isayev, O.; Savoie, B. M. Comprehensive exploration of graphically defined reaction spaces. Scien-tific data 2023 , 10 , 145. (49) Rupp, M.; Tkatchenko, A.; M¨ uller, K.-R.; Von Lilienfeld, O. A. Fast and accurate modeling of molecular atomization energies with machine learning. Physical review letters 2012 , 108 , 058301. (50) Montavon, G.; Rupp, M.; Gobre, V.; Vazquez-Mayagoitia, A.; Hansen, K.; Tkatchenko, A.; M¨ uller, K.-R.; Anatole von Lilienfeld, O. Machine learning of molec-ular electronic properties in chemical compound space. New Journal of Physics 2013 ,
+
+15 , 095003. (51) Ramakrishnan, R.; Hartmann, M.; Tapavicza, E.; Von Lilienfeld, O. A. Electronic spec-tra from TDDFT and machine learning in chemical space. The Journal of chemical physics 2015 , 143 .(52) Ramakrishnan, R.; Dral, P. O.; Rupp, M.; Von Lilienfeld, O. A. Quantum chemistry structures and properties of 134 kilo molecules. Scientific data 2014 , 1, 1–7. (53) Marenich, A. V.; Cramer, C. J.; Truhlar, D. G. Universal solvation model based on solute electron density and on a continuum model of the solvent defined by the bulk dielectric constant and atomic surface tensions. The Journal of Physical Chemistry B 
+
+2009 , 113 , 6378–6396. 14

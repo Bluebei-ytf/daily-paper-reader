@@ -1,0 +1,307 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-09-08T22:56:44.237096+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 3,
+    "deep_cap": 7,
+    "deep_selected": 3,
+    "quick_candidates": 4,
+    "quick_skim_target": 12,
+    "quick_selected": 4
+  },
+  "deep_dive": [
+    {
+      "id": "2609.05233v1",
+      "source": "arxiv",
+      "title": "Hessian-based molecular conformation augmentation for a scalable and efficient strategy of machine learning interatomic potentials",
+      "abstract": "While machine-learning interatomic potentials (MLIPs) have successfully learned potential energy surfaces (PES) and atomic forces, many practical applications, such as vibrational analysis and transition state search, rely heavily on the PES Hessian. Yet, standard MLIPs tend to be trained on energy and forces alone, leaving Hessian information largely unexploited. Meanwhile, existing methods that explicitly incorporate the Hessian into training objectives require architectural modifications and introduce significant computational and memory overheads due to higher-order backpropagation. To address these limitations, we propose two Hessian-derived data augmentation schemes: isotropic Gaussian displacement (\\textbf{UniAug}) and normal mode-weighted displacement (\\textbf{ModeAug}). Both methods utilize simple Taylor expansions, achieving effective augmentation without altering training objectives or extending the autograd graph. This allows seamless, plug-and-play integration with existing architectures and training pipelines. Comprehensive evaluations across non-equilibrium and equilibrium datasets demonstrate that our approach enhances model accuracy while providing practical, task-specific guidelines.",
+      "authors": [
+        "Bumju Kwak",
+        "Jeonghee Jo"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "physics.chem-ph"
+      ],
+      "published": "2026-09-04T15:00:27+00:00",
+      "link": "https://arxiv.org/pdf/2609.05233v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Hessian-derived data augmentation improves scalable ML interatomic potential training",
+      "llm_evidence_cn": "借助Hessian数据增强提升机器学习原子间势训练效率",
+      "llm_evidence": "借助Hessian数据增强提升机器学习原子间势训练效率",
+      "canonical_evidence": "借助Hessian数据增强提升机器学习原子间势训练效率",
+      "llm_tldr_en": "Proposes two Hessian-derived augmentation schemes to train MLIPs on second-order PES information without architecture changes or costly Hessian backpropagation, improving scalability for vibrational analysis and transition-state search.",
+      "llm_tldr_cn": "机器学习原子间势通常只拟合能量和力，忽略了振动分析与过渡态搜索依赖的Hessian信息，而直接将Hessian加入训练目标需要架构改动和二阶反向传播，开销较大。论文提出两种由Hessian导出的数据增广策略，通过各向同性高斯扰动等途径在不大幅增加成本的情况下让模型更好地学习势能面二阶信息。实验表明该方法可扩展地提升MLIP在振动分析等任务上的表现，为机器学习原子间势训练提供通用增广路线。",
+      "llm_tldr": "机器学习原子间势通常只拟合能量和力，忽略了振动分析与过渡态搜索依赖的Hessian信息，而直接将Hessian加入训练目标需要架构改动和二阶反向传播，开销较大。论文提出两种由Hessian导出的数据增广策略，通过各向同性高斯扰动等途径在不大幅增加成本的情况下让模型更好地学习势能面二阶信息。实验表明该方法可扩展地提升MLIP在振动分析等任务上的表现，为机器学习原子间势训练提供通用增广路线。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2609.02883v1",
+      "source": "arxiv",
+      "title": "Repairing PBE-Spurious Metallicity for HSE06-Level Screening of 2D Photocatalysts for Green Hydrogen Production",
+      "abstract": "Semilocal PBE calculations can remove viable photocatalysts before screening by labeling narrow-gap semiconductors as metals. We address this failure mode in the Computational 2D Materials Database (C2DB) by combining leakage-aware repair of PBE-spurious metallicity with HSE06--PBE $Δ$-learning. Stage~I classifies HSE06-unknown PBE metals using structural, chemical, magnetic, and stability descriptors, while excluding HSE06/GW quantities and PBE electronic shortcuts. Stage~II learns $E_g^{HSE} - E_g^{PBE}$ for the corrected insulating population. The curated XGBoost regressor reconstructs HSE06 gaps with a mean absolute error of 0.108~eV ($R^2=0.989$), compared with 1.036~eV for raw PBE. The Stage~I classifier is used only for triage because the labeled true-metal class contains 29 materials; its best holdout performance gives 87.5\\% accuracy, 0.286 true-metal recall, and 0.643 balanced accuracy. The corrected pH~0 electronic screen yields 10 strict and 29 initial relaxed green-hydrogen photocatalyst candidates. Four strict and 18 relaxed candidates would fail the same 1.6--2.8~eV gap window at the PBE level. Targeted VASP HSE06 calculations for six ML-predicted compounds give material-level MAEs of 0.417, 0.182, and 0.110~eV for the C2DB-native, Magpie+structural, and curated models, respectively; \\feat{1AgBr-1} shifts above the upper gap cutoff, leaving 28 retained relaxed candidates. The workflow shows that high-fidelity correction must be evaluated by candidate membership, not only by global regression error.",
+      "authors": [
+        "Ritam Chakraborty",
+        "Arpan Das"
+      ],
+      "primary_category": "cond-mat.mtrl-sci",
+      "categories": [
+        "cond-mat.mtrl-sci"
+      ],
+      "published": "2026-09-02T17:57:21+00:00",
+      "link": "https://arxiv.org/pdf/2609.02883v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Machine-learned delta correction predicts HSE06-level band gaps from PBE, accelerating quantum-chemical screening",
+      "llm_evidence_cn": "用机器学习误差修正预测HSE06级带隙，加速量子化学筛选",
+      "llm_evidence": "用机器学习误差修正预测HSE06级带隙，加速量子化学筛选",
+      "canonical_evidence": "用机器学习误差修正预测HSE06级带隙，加速量子化学筛选",
+      "llm_tldr_en": "Repairs PBE false-metallic states with leakage-aware descriptors and HSE06-PBE delta learning, rebuilding hybrid band gaps at MAE 0.108 eV for photocatalyst screening.",
+      "llm_tldr_cn": "针对PBE泛函将窄带隙半导体误判为金属、导致二维光催化剂被过早排除的问题，作者结合泄漏感知修复与HSE06-PBE差量学习构建两阶段机器学习流程：先用结构、化学、磁性等描述符分类PBE金属，再学习HSE06与PBE带隙差。在相关数据上，XGBoost回归器重建HSE06带隙平均绝对误差约0.108电子伏特，R方约0.989，远优于原始PBE的1.036电子伏特。该方法以较低DFT计算成本逼近混合泛函精度，可用于绿色制氢光催化剂的高通量初筛。",
+      "llm_tldr": "针对PBE泛函将窄带隙半导体误判为金属、导致二维光催化剂被过早排除的问题，作者结合泄漏感知修复与HSE06-PBE差量学习构建两阶段机器学习流程：先用结构、化学、磁性等描述符分类PBE金属，再学习HSE06与PBE带隙差。在相关数据上，XGBoost回归器重建HSE06带隙平均绝对误差约0.108电子伏特，R方约0.989，远优于原始PBE的1.036电子伏特。该方法以较低DFT计算成本逼近混合泛函精度，可用于绿色制氢光催化剂的高通量初筛。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2609.05381v1",
+      "source": "arxiv",
+      "title": "Molecular Déjà Vu: Digit-Level Retrieval of Published Values in Frontier Language Models",
+      "abstract": "Large language models (LLMs) are increasingly evaluated on molecular property benchmarks, but accuracy cannot distinguish a model that predicts a property from one that retrieves a published number. We audit 22 frontier models on 12 regression benchmarks for verbatim retrieval and find that it is widespread but relatively benchmark-specific: on five datasets more than $50\\%$ of the LLMs show verbatim retrieval, while on the remaining datasets it appears only in isolated cells. We run our experiments at two reasoning levels and find that reasoning changes retrieval. The same experiments, on the same molecules and with the same prompt, are flagged $89\\%$ more often at the higher reasoning level than at the lowest one. Finally, we test a way to interrupt retrieval in our most contaminated cases, and find that the strongest models in some cases still recognise a combination of transformed SMILES strings and original labels. Furthermore, suppressing retrieval moves the prediction errors of the different models closer together in relative terms, while their differing use of verbatim retrieval spreads them apart. This indicates that the general predictive capability of an LLM is not determined solely by the amount of memorised values. This work provides an overview of the amount and depth of verbatim retrieval in molecular regression benchmarks using LLMs.",
+      "authors": [
+        "Matthias Busch",
+        "Marius Tacke",
+        "Sviatlana V. Lamaka",
+        "Mikhail L. Zheludkevich",
+        "Christian J. Cyron",
+        "Roland C. Aydin",
+        "Christian Feiler"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-09-04T17:32:48+00:00",
+      "link": "https://arxiv.org/pdf/2609.05381v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Audits 22 frontier LLMs on 12 molecular property benchmarks for memorized value retrieval",
+      "llm_evidence_cn": "审计22个前沿大模型在12个分子性质基准上的数值记忆检索现象",
+      "llm_evidence": "审计22个前沿大模型在12个分子性质基准上的数值记忆检索现象",
+      "canonical_evidence": "审计22个前沿大模型在12个分子性质基准上的数值记忆检索现象",
+      "llm_tldr_en": "LLM accuracy on molecular property benchmarks can hide memorization of published values. This audit of 22 frontier models across 12 regression tasks shows verbatim retrieval is frequent but benchmark-specific, and higher reasoning levels increase detected retrieval; it provides checks to distinguish real prediction from recall.",
+      "llm_tldr_cn": "在分子性质回归基准上，大语言模型的高准确率可能来自记忆并检索已发表数值，而非真正预测。该文审计22个前沿模型在12个基准数据集上的逐位检索现象，发现此类检索广泛但按数据集分布不均，且推理层级提高时会增加对已发表数值的召回。该工作提出检验手段，提醒化学语言模型评测需要区分真实预测与记忆检索，对LLM在化学中的应用评估具有重要警示价值。",
+      "llm_tldr": "在分子性质回归基准上，大语言模型的高准确率可能来自记忆并检索已发表数值，而非真正预测。该文审计22个前沿模型在12个基准数据集上的逐位检索现象，发现此类检索广泛但按数据集分布不均，且推理层级提高时会增加对已发表数值的召回。该工作提出检验手段，提醒化学语言模型评测需要区分真实预测与记忆检索，对LLM在化学中的应用评估具有重要警示价值。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "large language models for chemistry applications",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2609.02209v1",
+      "source": "arxiv",
+      "title": "Prototype-guided transfer of sparse literature knowledge for electrolyte additive discovery",
+      "abstract": "Electrolyte additive discovery remains challenging because experimentally validated molecules are sparse, whereas accessible chemical spaces are vast and largely unlabeled. This challenge is amplified in lithium-ion batteries, where additive performance arises from coupled interfacial reactions rather than a single molecular property. Here, we develop a prototype-guided molecular intelligence, ProtoMI, a literature-driven framework that learns transferable structural priors from reported electrolyte additives and uses them to prioritize candidates in unlabeled chemical space. For boron-containing additives, ProtoMI combines 126 literature-reported molecules with 179,977 unlabeled candidates. Graph contrastive learning identifies seven chemically interpretable prototypes from the reported additives, and prototype guided semi-supervised contrastive learning adapts these prototypes to the candidate space under source-target distribution mismatch. In retrospective temporal validation, ProtoMI achieves enrichment factors of 9.2-45.6 while screening less than 2% of the candidate space. A subsequent translation step identifies four commercially accessible candidates. One representative candidate, 4,4,5,5-Tetramethyl-2-[10-(1naphthyl)anthracen-9-yl]-1,3,2-dioxaborolane (TNDB), improves high-temperature LiFePO4||graphite cycling at 55 °C by 34.93% relative to the baseline electrolyte. An arsenal of characterizations and operando optical fiber Fourier transform infrared spectroscopy suggest that TNDB forms B-containing, F/P/O-modified inorganic interphases, suppresses solvent decomposition and reduces Fe deposition on graphite. This case study shows how sparse literature knowledge can guide experimentally efficient molecular discovery in data-scarce battery-additive spaces.",
+      "authors": [
+        "Weixiang Hong",
+        "Hongting Du",
+        "Jiayue Tang",
+        "Ruifeng Tan",
+        "Yangjian Quan",
+        "Jia Li",
+        "Jiaqiang Huang"
+      ],
+      "primary_category": "physics.chem-ph",
+      "categories": [
+        "physics.chem-ph",
+        "cs.LG"
+      ],
+      "published": "2026-09-02T07:21:47+00:00",
+      "link": "https://arxiv.org/pdf/2609.02209v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Learns transferable molecular structural priors via prototype-guided graph contrastive learning from literature to prioritize large unlabeled chemical space; relevant to chemical transfer learning and molecular discovery",
+      "llm_evidence_cn": "通过原型引导的图对比学习从文献迁移结构先验以排序未标注化学空间，契合化学迁移学习与小分子发现",
+      "llm_evidence": "通过原型引导的图对比学习从文献迁移结构先验以排序未标注化学空间，契合化学迁移学习与小分子发现",
+      "canonical_evidence": "通过原型引导的图对比学习从文献迁移结构先验以排序未标注化学空间，契合化学迁移学习与小分子发现",
+      "llm_tldr_en": "ProtoMI combines 126 literature-reported electrolyte additives with 179,977 unlabeled candidates via graph contrastive learning and prototype-guided transfer to prioritize new boron-containing additives in unlabeled chemical space.",
+      "llm_tldr_cn": "电解液添加剂筛选面临实验验证数据稀疏而化学空间巨大的问题，尤其锂电添加剂性能依赖耦合界面反应。作者提出原型引导分子智能ProtoMI，从文献报道的126种分子学习可迁移结构先验，结合179,977个未标注候选，通过图对比学习识别原型并选择候选。这一方法有效将稀疏文献知识迁移到未标注空间，用于硼类添加剂的优先级排序。整体说明结合小样本文献与大规模未标注分子的迁移学习能促进电解质等功能分子发现。",
+      "llm_tldr": "电解液添加剂筛选面临实验验证数据稀疏而化学空间巨大的问题，尤其锂电添加剂性能依赖耦合界面反应。作者提出原型引导分子智能ProtoMI，从文献报道的126种分子学习可迁移结构先验，结合179,977个未标注候选，通过图对比学习识别原型并选择候选。这一方法有效将稀疏文献知识迁移到未标注空间，用于硼类添加剂的优先级排序。整体说明结合小样本文献与大规模未标注分子的迁移学习能促进电解质等功能分子发现。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "chemical foundation model pre-training and transfer learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2609.03046v1",
+      "source": "arxiv",
+      "title": "Advances in Machine Learning for Directed Evolution: A Five-Year Retrospective",
+      "abstract": "The last five-plus years have seen many protein engineering disciplines transformed by advances in machine learning (ML), but the same cannot be said for directed evolution. Reflecting on a previously co-authored perspective, I discuss why I believe this to be the case, arguing that a disconnect between the goals of machine-learning-assisted directed evolution (MLDE) researchers--\"identify an optimal protein\"--and the goals of directed evolution more broadly--\"identify a sufficient protein given time and resource constraints\"--is a principal culprit. As an example, I highlight how nearly all current MLDE methods neglect to account for the cost of DNA synthesis, resulting in strategies that have limited practical applicability regardless of the underlying models' capabilities. I close by discussing recent works that are exceptions to this overarching trend, and emphasize that the last five years of efforts in ML-assisted protein engineering and the prescribed reframe of MLDE objectives need not be mutually exclusive.",
+      "authors": [
+        "Bruce J. Wittmann"
+      ],
+      "primary_category": "q-bio.BM",
+      "categories": [
+        "q-bio.BM",
+        "cs.LG"
+      ],
+      "published": "2026-09-02T18:17:41+00:00",
+      "link": "https://arxiv.org/pdf/2609.03046v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Machine-learning-guided directed evolution retrospective; protein molecule optimization loop and evaluation mismatch",
+      "llm_evidence_cn": "机器学习辅助定向进化回顾；蛋白质分子优化闭环及其目标与评估脱节问题",
+      "llm_evidence": "机器学习辅助定向进化回顾；蛋白质分子优化闭环及其目标与评估脱节问题",
+      "canonical_evidence": "机器学习辅助定向进化回顾；蛋白质分子优化闭环及其目标与评估脱节问题",
+      "llm_tldr_en": "Retrospective argues ML-assisted directed evolution is hindered by optimizing for the ideal protein while ignoring time and DNA-synthesis constraints in real evolution.",
+      "llm_tldr_cn": "该回顾性论文探讨为何机器学习辅助的定向进化（MLDE）在过去五年未像其他蛋白质工程领域那样被ML深刻改变。作者认为根本原因在于MLDE研究者追求“识别最优蛋白”，而定向进化的真正目标是“在时间与资源约束下获得足够的蛋白”。以DNA合成成本为例，指出多数现有方法未纳入这类实际约束，导致策略实用性有限。这一视角对分子优化中目标设定与评价体系的设计具有重要启示。",
+      "llm_tldr": "该回顾性论文探讨为何机器学习辅助的定向进化（MLDE）在过去五年未像其他蛋白质工程领域那样被ML深刻改变。作者认为根本原因在于MLDE研究者追求“识别最优蛋白”，而定向进化的真正目标是“在时间与资源约束下获得足够的蛋白”。以DNA合成成本为例，指出多数现有方法未纳入这类实际约束，导致策略实用性有限。这一视角对分子优化中目标设定与评价体系的设计具有重要启示。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "molecular generation and optimization with machine learning",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2609.02746v1",
+      "source": "arxiv",
+      "title": "HiPoly: a hierarchical polymer-native AI framework for property prediction and generative design",
+      "abstract": "Polymeric materials are central to modern technologies, with applications ranging from energy to health and transportation. Although AI has made significant advances in materials discovery, the hierarchical structure of polymers across multiple length scales makes them inherently difficult to represent in a unified and physically meaningful way. Here we introduce HiPoly, a polymer-native AI framework that processes complete polymer descriptions through a three-level hierarchical graph architecture built on the G2RINS representation. HiPoly encodes stochastic inter-monomer connectivity, composition, and molecular weight directly within its architecture, using physically motivated design principles that mirror the multi-scale nature of polymeric systems. The framework establishes an end-to-end AI-driven workflow from experimental formulation data to property prediction, generative molecular design, and physics-based validation through molecular simulations, all unified by a single polymer representation. We demonstrate state-of-the-art prediction accuracy for thermophysical properties of multi-component polymer systems, with ablation studies confirming that each hierarchical design choice contributes independently to model performance. As an example, the generative design pathway is applied here to the discovery of sustainable alternatives to persistent fluorinated polymers, where it is possible to identify and independently validate PFAS-free candidates with target surface-energy properties. This work demonstrates how polymer-native AI can accelerate discovery by linking representation, prediction, and design across complex polymer chemistries.",
+      "authors": [
+        "Ge Sun",
+        "Gervasio Zaldivar",
+        "Yuan Tian",
+        "Gustavo Perez Lemus",
+        "Juhae Park",
+        "Daryna Safarian",
+        "Ming Han",
+        "Juan J. de Pablo"
+      ],
+      "primary_category": "physics.chem-ph",
+      "categories": [
+        "physics.chem-ph",
+        "cond-mat.mtrl-sci",
+        "cs.AI",
+        "cs.LG",
+        "physics.comp-ph"
+      ],
+      "published": "2026-09-02T15:48:11+00:00",
+      "link": "https://arxiv.org/pdf/2609.02746v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Hierarchical polymer-native AI framework for property prediction and generative design",
+      "llm_evidence_cn": "面向性质预测与生成设计的层级聚合物原生AI框架",
+      "llm_evidence": "面向性质预测与生成设计的层级聚合物原生AI框架",
+      "canonical_evidence": "面向性质预测与生成设计的层级聚合物原生AI框架",
+      "llm_tldr_en": "Polymers are hard to represent for AI because of their multi-scale hierarchy. HiPoly builds a three-level hierarchical graph architecture on G2RINS representations, encoding monomer connectivity, composition, and molecular weight, enabling both property prediction and generative design of polymers in a physically meaningful way.",
+      "llm_tldr_cn": "聚合物跨尺度层次结构使其难以被统一的AI表示准确刻画，限制了性质预测与生成设计。该文提出聚合物原生框架HiPoly，基于G2RINS表示构建三级层级图架构，把随机单体间连接、组成和分子量直接编码进模型中，从而在物理可解释的多尺度层级上完成性质预测与生成设计。研究表明该结构可更贴近聚合物真实形态，为材料化学中的AI驱动设计提供了新的可行范式。",
+      "llm_tldr": "聚合物跨尺度层次结构使其难以被统一的AI表示准确刻画，限制了性质预测与生成设计。该文提出聚合物原生框架HiPoly，基于G2RINS表示构建三级层级图架构，把随机单体间连接、组成和分子量直接编码进模型中，从而在物理可解释的多尺度层级上完成性质预测与生成设计。研究表明该结构可更贴近聚合物真实形态，为材料化学中的AI驱动设计提供了新的可行范式。",
+      "llm_tags": [
+        "query:smc"
+      ],
+      "matched_query_tag": "query:smc",
+      "matched_query_text": "molecular property prediction",
+      "matched_requirement_id": "req-15",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2609.05207v1",
+      "source": "arxiv",
+      "title": "FluxDisco: Symbolic Regression for Stoichiometric Dynamical Systems via Monte Carlo Graph Search",
+      "abstract": "Dynamical symbolic regression methods identify governing differential equations from noisy data, balancing interpretability and predictive accuracy. However, standard methods often produce expressions that violate known physical laws. To address this, we propose FluxDisco, a physics-informed framework tailored for flux-based, stoichiometric ODE systems. By leveraging a known stoichiometry, we reduce the expression search space and ensure physical adherence. Our framework adapts the Monte Carlo Graph Search algorithm for the unique challenges associated with joint flux discovery of stoichiometric systems. We evaluate our method across a range of physical and biological systems, demonstrating its ability to accurately recover governing dynamics through interpretable equations.",
+      "authors": [
+        "Cassandra Durr",
+        "Alvaro Köhn-Luque",
+        "Chris Jewell",
+        "Lloyd A. C. Chapman"
+      ],
+      "primary_category": "stat.ML",
+      "categories": [
+        "stat.ML",
+        "cs.LG",
+        "physics.data-an"
+      ],
+      "published": "2026-09-04T14:38:59+00:00",
+      "link": "https://arxiv.org/pdf/2609.05207v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Symbolic regression learns governing fluxes in stoichiometric reaction systems, relevant to reaction mechanism inference",
+      "llm_evidence_cn": "符号回归学习化学计量反应网络的动力学通量，可用于反应机理推断",
+      "llm_evidence": "符号回归学习化学计量反应网络的动力学通量，可用于反应机理推断",
+      "canonical_evidence": "符号回归学习化学计量反应网络的动力学通量，可用于反应机理推断",
+      "llm_tldr_en": "FluxDisco adapts Monte Carlo Graph Search to infer physically admissible flux expressions for stoichiometric ODE systems, recovering governing laws from noisy data for physical/biological networks.",
+      "llm_tldr_cn": "从噪声数据识别反应和动力系统的控制方程时，标准符号回归常产生违背物理律的表达式。FluxDisco针对基于通量的化学计量ODE系统提出物理约束符号回归框架，利用已知化学计量大幅缩小搜索空间，并将蒙特卡洛图搜索适配到多通量联合发现问题上。在多种物理与生物体系测试中可以准确恢复真实通量，为反应网络机理推断提供可解释且物理一致的建模工具。",
+      "llm_tldr": "从噪声数据识别反应和动力系统的控制方程时，标准符号回归常产生违背物理律的表达式。FluxDisco针对基于通量的化学计量ODE系统提出物理约束符号回归框架，利用已知化学计量大幅缩小搜索空间，并将蒙特卡洛图搜索适配到多通量联合发现问题上。在多种物理与生物体系测试中可以准确恢复真实通量，为反应网络机理推断提供可解释且物理一致的建模工具。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "How is deep learning applied to reaction mechanism inference and catalysis design?",
+      "matched_requirement_id": "req-10",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

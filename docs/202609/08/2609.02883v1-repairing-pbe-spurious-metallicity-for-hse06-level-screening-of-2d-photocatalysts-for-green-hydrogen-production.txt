@@ -1,0 +1,463 @@
+Title: Repairing PBE-Spurious Metallicity for HSE06-Level Screening of 2D Photocatalysts for Green Hydrogen Production
+
+URL Source: https://arxiv.org/pdf/2609.02883v1
+
+Published Time: Thu, 03 Sep 2026 01:31:18 GMT
+
+Number of Pages: 42
+
+Markdown Content:
+# Repairing PBE-Spurious Metallicity for HSE06-Level Screening of 2D Photocatalysts for Green Hydrogen Production 
+
+## Ritam Chakraborty ∗,† and Arpan Das ∗,‡
+
+†Theoretical Sciences Unit, Jawaharlal Nehru Centre for Advanced Scientific Research (JNCASR), Bangalore 560064, India 
+
+‡Department of Science and Humanities, Audisankara (Deemed to be University), Gudur 524101, India 
+
+E-mail: ritamchakraborty454@gmail.com; arpandas9236@gmail.com 
+
+Abstract 
+
+Semilocal PBE calculations can remove viable photocatalysts before screening by labeling narrow-gap semiconductors as metals. We address this failure mode in the Computational 2D Materials Database (C2DB) by combining leakage-aware repair of PBE-spurious metallicity with HSE06–PBE ∆-learning. Stage I classifies HSE06-unknown PBE metals using structural, chemical, magnetic, and stability descriptors, while excluding HSE06/GW quantities and PBE electronic shortcuts. Stage II learns 
+
+EHSE06  
+
+> g
+
+− EPBE  
+
+> g
+
+for the corrected insulating population. The curated XGBoost regres-sor reconstructs HSE06 gaps with a mean absolute error of 0.108 eV ( R2 = 0 .989), compared with 1.036 eV for raw PBE. The Stage I classifier is used only for triage be-cause the labeled true-metal class contains 29 materials; its best holdout performance gives 87.5% accuracy, 0.286 true-metal recall, and 0.643 balanced accuracy. The cor-rected pH 0 electronic screen yields 10 strict and 29 initial relaxed green-hydrogen 
+
+1arXiv:2609.02883v1 [cond-mat.mtrl-sci] 2 Sep 2026 photocatalyst candidates. Four strict and 18 relaxed candidates would fail the same 1.6–2.8 eV gap window at the PBE level. Targeted VASP HSE06 calculations for six ML-predicted compounds give material-level MAEs of 0.417, 0.182, and 0.110 eV for the C2DB-native, Magpie+structural, and curated models, respectively; 1AgBr-1 
+
+shifts above the upper gap cutoff, leaving 28 retained relaxed candidates. The workflow shows that high-fidelity correction must be evaluated by candidate membership, not only by global regression error. 
+
+# Keywords 
+
+2D materials, C2DB, ∆-learning, HSE06 band gap, machine learning, target leakage, pho-tocatalytic water splitting, solar hydrogen 
+
+# 1 Introduction 
+
+Photocatalytic water splitting is a materials route to green hydrogen because it converts solar energy directly into chemical fuel. A useful screening candidate must satisfy electronic constraints before more expensive calculations are justified: the gap must be large enough for overall water splitting but still compatible with visible-light absorption, and the band edges must straddle the water redox potentials on an absolute energy scale. 1,2 Stability, optical absorption, carrier transport, excitonic effects, and catalytic overpotentials remain essential later filters, but the first bottleneck is the reliable identification of semiconductors with plausible gap and band-edge energetics. Two-dimensional (2D) materials are rele-vant to this problem because reduced dimensionality exposes large interfacial area, shortens carrier-transport distances, and allows electronic structure to be tuned through composition, bonding, and dielectric environment. 3,4 Databases such as the Computational 2D Materials Database (C2DB) enable such screening across thousands of monolayers generated with a common first-principles workflow. 5,6 
+
+2The database scale required for screening depends on semilocal density-functional theory, and this creates a specific failure mode. PBE systematically underestimates semiconductor band gaps. 7 For ordinary ranking this gives a quantitative error, but near the metal–insulator boundary it can become a classification error: a finite-gap semiconductor may be labeled metallic and removed before any photocatalyst criterion is applied. Hybrid functionals such as HSE06 reduce this band-gap bias for many semiconductors, 8,9 but database-wide HSE06 calculations remain too expensive for routine use. A practical screening workflow must therefore do two things. It must recover PBE-spurious semiconductors from the nominal metal pool, and it must correct the PBE gaps of the resulting insulating population toward HSE06 accuracy. ∆-machine learning addresses the second task by predicting the difference between a low-fidelity baseline and a high-fidelity reference rather than predicting the high-fidelity value independently. 10 This strategy has been applied successfully in molecular quantum chem-istry and is now entering periodic electronic-structure workflows. Examples include HSE06 eigenvalue reconstruction from PBE inputs for crystalline compounds, 11 PBE-to-HSE06 correction for metal–nitrogen-doped graphene catalysts, 12 and OrbNet-Crystal learning of 
+
+EHSE06  
+
+> g
+
+− EPBE  
+
+> g
+
+on C2DB with HSE06-level band-gap errors near 0.12 eV. 13 These results show that high-fidelity electronic gaps can be reconstructed from lower-cost information. They do not, by themselves, solve the upstream population problem: a semiconductor-only regressor cannot recover materials that PBE has already excluded as metals. This upstream error matters for green-hydrogen photocatalyst discovery because candi-date membership, not only regression accuracy, controls the final screen. Recent 2D pho-tocatalyst studies combine high-throughput screening with machine-learned gaps, hybrid-functional or many-body validation, optical descriptors, carrier-dynamics estimates, finite-temperature tests, and electrochemical stability analysis. 14–17 In such multi-stage workflows, the decisive question is whether the fidelity correction changes which materials pass the phys-ically imposed thresholds. A small global mean absolute error is insufficient if the workflow 3still removes viable materials upstream or makes incorrect decisions near the gap cutoff. We address this issue with a leakage-aware two-stage workflow. Stage I treats PBE-labeled metals with known HSE06 gaps as a classification problem and identifies PBE-spurious metals using only structural, chemical, magnetic, and stability descriptors. HSE06 and GW quantities are excluded as direct target leakage, and PBE electronic quantities are also withheld because they are target-proximal outputs of the same low-fidelity calcu-lation being audited. 18 Stage II then reintroduces PBE electronic quantities as physically meaningful low-fidelity inputs for HSE06–PBE ∆-learning. Thus, a descriptor that would be an inappropriate shortcut in Stage I becomes the baseline to be corrected in Stage II. Machine-learning classification of metals and insulators has been explored in other materials contexts, 19 but here the classifier is used specifically to repair the PBE-defined screening population before high-fidelity gap correction. We ask three questions. First, can PBE-spurious metallicity in C2DB be repaired without using electronic leakage features? Second, how accurately can HSE06 band gaps be recon-structed for the corrected insulating population by ∆-learning? Third, does the high-fidelity correction change which 2D materials survive an electronic screen for green-hydrogen photo-catalysis? We answer these questions by combining classification, regression, and a bounded pH 0 water-splitting pre-screen. The resulting shortlist is a prioritized validation set for ex-plicit HSE06 band edges, optical response, catalytic kinetics, and stability, not a final claim of photocatalytic performance. 
+
+# 2 Computational Methods 
+
+## 2.1 Data source, labels, and dataset bookkeeping 
+
+All structures and properties were taken from C2DB. 5,6 No first-principles calculations from the database were recomputed in the present workflow. Of the 16,905 entries in the working C2DB snapshot, 8,686 have a reported PBE gap and form the modeling pool. Using EPBE  
+
+> g
+
+<
+
+40.05 eV as the operational PBE-metal criterion, this pool contains 4,351 PBE-labeled metals and 4,335 PBE-labeled insulators. The PBE-metal population is the focus of Stage I. Among the 4,351 PBE-labeled met-als, 159 have an explicit HSE06 gap: 29 remain metallic at HSE06 ( EHSE06  
+
+> g
+
+< 0.05 eV), whereas 130 become insulating ( EHSE06  
+
+> g
+
+≥ 0.05 eV). These 159 materials define the labeled classification set, and the remaining 4,192 PBE metals constitute the unlabeled classification target. A separate bookkeeping point is important for the downstream screen. Across the com-plete 8,686-material modeling pool, 3,363 entries have an explicit HSE06 gap, comprising 3,318 HSE06 insulators and 45 HSE06 metals. Because only 29 of those 45 HSE06 metals occur in the PBE-metal labeled subset, 16 explicit HSE06 metals occur among PBE-labeled insulators. Accordingly, whenever an HSE06 label is available it takes precedence over the PBE label; the PBE-insulator subset is not treated as infallible. The 3,318 HSE06 insulators form the ground-truth population for Stage II regression. 
+
+## 2.2 Stage-specific descriptor construction and leakage control 
+
+We compared three descriptor representations of increasing chemical and structural richness (Table 1). The first uses C2DB-native metadata. The second contains Magpie composition statistics generated with matminer , together with basic lattice and density descriptors. 20,21 
+
+The third combines these branches with ionic, oxidation-state, and valence-orbital statistics and local coordination descriptors extracted from relaxed structures using pymatgen and the Atomic Simulation Environment. 22,23 
+
+The raw curated representation contained 841 columns. We used pairwise Pearson cor-relations only as a redundancy screen for this high-dimensional representation: for pairs with |r| > 0.95, we removed one member, eliminating 138 columns and leaving 703 columns before stage-specific exclusions. The smaller C2DB-native and Magpie representations were not correlation-pruned. The correlation structure of the compact C2DB-native classification 5representation is shown in Figure S1 of the Supporting Information. We made feature inclusion explicitly stage dependent. In Stage I, HSE06- and GW-derived quantities are direct target leakage and were removed. We also withheld the PBE gap, direct-gap flag, VBM, CBM, Fermi level, plasma frequency, and half-metal gap. These PBE quantities do not constitute direct HSE06 target leakage, but they are target-proximal electronic shortcuts from the same low-fidelity calculation whose metallic label is being au-dited. Excluding them makes Stage I a chemistry/structure-based repair problem rather than a continuation of the PBE electronic label. In Stage II, by contrast, the PBE gap, vacuum level, Fermi level, VBM, and CBM are physically legitimate low-fidelity inputs because the target is explicitly the HSE06 correction to PBE; only HSE06- and GW-level target quanti-ties were excluded. This stage-specific feature policy produces 9/19 classification/regression features for the C2DB-native representation, 141/141 for Magpie+structural, and 694/702 for the curated representation. Table 1: Descriptor representations used in the two learning stages. Stage I excludes HSE06/GW target information to prevent direct leakage and additionally withholds PBE electronic quantities to avoid a low-fidelity shortcut; Stage II reintroduces PBE electronic quantities as physically legitimate low-fidelity inputs for ∆-learning.                          
+
+> Representation Contents Class. Regr. C2DB native Structural, symmetry, stability, magnetic, and thermodynamic metadata native to C2DB; PBE electronic quantities added only for regression 919 Magpie +structural Composition-derived elemental statistics (mean, range, average deviation, and mode of atomic number, electronegativity, valence counts, etc.) plus lattice/density descriptors 141 141 Curated com-bined C2DB +Magpie branches, ionic/oxidation-state/valence-orbital statistics, and POSCAR-derived coordination/bond-length descriptors; high-dimensional representation pruned at |r|>0.95 694 702
+
+62.3 Stage I: PBE-spurious-metal versus true-metal classification 
+
+For the 159 HSE06-labeled PBE metals, the binary target was y = 1 for a PBE-spurious metal ( EHSE06  
+
+> g
+
+≥ 0.05 eV) and y = 0 for a true HSE06 metal ( EHSE06  
+
+> g
+
+< 0.05 eV), match-ing the final notebook convention used to generate the confusion matrices. We used a stratified 75/25 split (119 training, 40 test; random state 42) and compared four classi-fiers for each descriptor representation: an RBF support-vector classifier in a standard-ized pipeline ( C = 1 .0); a Random Forest with 50–100 trees, maximum depth 3–5, and 
+
+min samples leaf=5 ; Gradient Boosting with 50 estimators, maximum depth 3, learning rate 0.01–0.03, and min samples leaf=3 ; and XGBoost with 50 estimators, maximum depth 3, and learning rate 0.01–0.03. 24 We median-imputed missing values using statistics fitted only on the training data. We additionally assessed model stability by 5-fold stratified cross-validation on the train-ing set; the complete comparison is reported in Table S1. We retained Random Forest as the common classifier because it combines stable cross-validation behavior with the strongest or near-strongest holdout accuracy across the descriptor sets, and because using one classifier family keeps the representation comparison interpretable. Full holdout confusion matrices for all four algorithms are provided in Figure S2. We applied the selected classifier to the 4,192 HSE06-unknown PBE metals. Three operational probability bands were used for triage using the predicted PBE-spurious-metal probability: Pspur ≥ 0.65 (predicted PBE-spurious metal, retained as an insulator candidate), 0.35 < P spur < 0.65 (borderline, withheld from the screen), and Pspur ≤ 0.35 (predicted true metal). These thresholds are workflow cutoffs rather than calibrated posterior-probability confidence intervals and are interpreted accordingly. 
+
+## 2.4 Stage II: HSE06–PBE ∆-learning regression 
+
+The regression target was ∆Eg = EHSE06  
+
+> g
+
+− EPBE  
+
+> g
+
+, (1) 7and the reconstructed hybrid-functional gap was 
+
+\EHSE06  
+
+> g
+
+= EPBE  
+
+> g
+
++ d∆Eg. (2) We split the 3,318 HSE06-insulator references 80/20 (2,654/664; random state=42 ) and screened linear regression, Ridge regression ( α = 1), RBF-SVR, Random Forest, Gradient Boosting, and XGBoost. We subsequently refined XGBoost by manual hyperparameter exploration for each representation. The final regularized models used 200 estimators/depth 3/learning rate 0.05 for C2DB-native descriptors, 1000 estimators/depth 3/learning rate 0.03 for Magpie+structural descriptors, and 1000 estimators/depth 5/learning rate 0.03 for the curated representation; all used subsample=0.8 , colsample bytree=0.8 , and L1/L2 regularization. We implemented the models with scikit-learn and XGBoost. 24,25 
+
+We retain the fixed 80/20 split to provide a common descriptor-by-descriptor benchmark. The available model-selection workflow does not constitute a fully nested external validation, so the 664-material metrics are best interpreted as internal interpolation benchmarks rather than deployment-level error estimates. For future deployment to chemically distinct material families, repeated/nested model selection and composition- or prototype-grouped validation would provide a more stringent estimate of extrapolative uncertainty. 
+
+## 2.5 Targeted first-principles validation of ML-predicted gaps 
+
+To complement the database-based test set with material-resolved validation, we performed explicit PBE and HSE06 calculations for six compounds for which ML gap predictions were available and the first-principles calculations were complete: 1AgBr-1 , 1AgCl-1 , 1AgI-1 ,
+
+1BrCu-1 , 1ClCu-1 , and 1CuI-1 . The calculations were carried out with VASP 6.4.3 using the projector-augmented-wave method. 26–29 A plane-wave kinetic-energy cutoff of 550 eV was used, and the Brillouin zone was sampled with Monkhorst–Pack meshes generated from a reciprocal-space spacing of 0.003 ˚ A−1. Periodic images of the monolayers were separated 8by 15 ˚ A of vacuum. PBE structural relaxations used an electronic self-consistency threshold of 10 −6 eV and were continued until all residual forces were smaller than 0.01 eV ˚ A−1. The relaxed geometries were then used for spin–orbit-coupled electronic-structure calculations. For each material, a self-consistent PBE+SOC calculation was followed by a single-point HSE06+SOC calculation using the standard HSE06 screened hybrid functional. The inde-pendently recalculated PBE gaps agree closely with the corresponding C2DB PBE values (mean absolute difference 0.023 eV; maximum difference 0.05 eV), providing a consistency check before comparison with the new HSE06 references. The explicit HSE06 values are used below as a prospective material-level validation set and, when a screened candidate is affected, to update its screening status. 
+
+## 2.6 Stage III: electronic pre-screen for overall water splitting 
+
+We merged the Stage I and Stage II outputs after giving every explicit HSE06 label prece-dence over its PBE label. The resulting partition contains 8,221 materials in the HSE06-insulator screening pool (3,318 with DFT-calculated HSE06 gaps and 4,903 with ∆-learned gaps), 57 excluded metals (45 HSE06-confirmed plus 12 predicted metals), and 408 borderline cases. These corrected counts sum to the full 8,686-material modeling pool (Table 2). We subjected the insulator pool to three electronic/thermodynamic filters: (i) a practical visible-light gap window of 1 .6 ≤ EHSE06  
+
+> g
+
+≤ 2.8 eV; (ii) a near-hull filter, using Ehull ≤
+
+0.05 eV/atom as the strict criterion and Ehull ≤ 0.10 eV/atom as a relaxed metastability tolerance; and (iii) band-edge alignment with the pH 0 water redox potentials on an absolute vacuum scale, requiring ECBM ≥ − 4.44 eV for H +/H2 reduction and EVBM ≤ − 5.67 eV for O2/H2O oxidation. 30,31 The 1.6–2.8 eV interval is a screening choice intended to prioritize visible-light absorbers and should not be confused with the 1.23 eV thermodynamic minimum for overall water splitting. Because the present model learns only the gap correction and not separate VBM and CBM 9corrections, we constructed the screened band edges with a symmetric scissor approximation, 
+
+E∗ 
+
+> VBM /CBM
+
+= Eabs Fermi ∓
+
+\EHSE06 
+
+> g
+
+2 . (3) This approximation treats the vacuum-referenced Fermi level as a proxy for the gap cen-ter and opens the corrected gap symmetrically; it therefore does not capture asymmetric HSE06 shifts of the individual band edges or uncertainty in the assumed center. The re-sulting shortlist is therefore an electronic-structure pre-screen. Direct HSE06 band edges (or edge-specific ∆-learning), pH dependence, kinetic overpotentials, and photo-/electrochemical stability remain necessary validation steps. Table 2: Dataset partition used by the corrected workflow. Explicit HSE06 labels take precedence over PBE labels. 
+
+Quantity Count Total C2DB entries in working snapshot 16,905 Entries with PBE gap (modeling pool) 8,686 PBE insulators ( EPBE  
+
+> g
+
+≥ 0.05 eV) 4,335 PBE metals ( EPBE  
+
+> g
+
+< 0.05 eV) 4,351 HSE06-labeled PBE metals: true / spurious 159: 29 / 130 Classification train / test 119 / 40 HSE06-unknown PBE metals classified downstream 4,192 Materials with explicit HSE06 gap (any PBE label) 3,363 HSE06 insulators / metals 3,318 / 45 ∆-learning train / test 2,654 / 664 Final HSE06-insulator screening pool 8,221 DFT-HSE06 / ML-HSE06 gaps 3,318 / 4,903 Excluded HSE06-confirmed + predicted metals 57 Borderline classifier cases (withheld) 408 
+
+10 C2DB working snapshot        
+
+> N= 16 ,905 PBE gap available
+> N= 8 ,686 PBE insulators
+> N= 4 ,335 PBE metals
+> N= 4 ,351 HSE06-labeled subset
+> N= 159 (29/130) Magpie + structural C2DB native Curated combined 4 classifiers; leakage-controlled features CV and holdout evaluation HSE06-unknown PBE metals
+> N= 4 ,192 Operational probability triage: insulator / borderline / metal
+
+Figure 1: Stage I workflow for triaging PBE-predicted metals. HSE06/GW target infor-mation is excluded to prevent direct leakage, while PBE electronic quantities are withheld so that classification tests whether non-electronic materials information can repair the low-fidelity metallic label. Explicit HSE06 labels anywhere in the 8,686-material pool supersede PBE labels downstream. 11 Modeling pool 
+
+N = 8 ,686 HSE06-insulator pool 
+
+N = 8 ,221 Metals excluded 
+
+N = 57 Borderline withheld 
+
+N = 408 Ground-truth HSE06 insulators 
+
+N = 3 ,318; 80/20 split HSE06–PBE ∆-regression 3 representations compared ML-reconstructed HSE06 gaps 
+
+N = 4 ,903 Complete screening pool 
+
+N = 8 ,221 Electronic pre-screen gap + Ehull + pH 0 band alignment Initial shortlist 10 strict / 29 relaxed Current after targeted HSE: 10 / 28 
+
+Figure 2: Stages II–III: ∆-learning of the HSE06–PBE band-gap correction followed by the water-splitting electronic pre-screen. The initial screen yields 10 strict and 29 relaxed can-didates. Subsequent targeted HSE06 validation removes one relaxed candidate ( 1AgBr-1 ), giving a current retained set of 10 strict and 28 relaxed materials. 12 3 Results and Discussion 
+
+## 3.1 Classification remains minority-class limited despite descrip-tor enrichment 
+
+Table 3 summarizes the selected Random Forest classifier on the common 40-material hold-out set. The raw accuracy varies only from 85.0 to 87.5%. This number should not be interpreted in isolation: the holdout set contains 33 PBE-spurious metals and only 7 true HSE06 metals, so an always-insulator classifier already attains 82.5% accuracy. Balanced accuracy is therefore more informative, increasing from 0.571 for the C2DB-native represen-tation to 0.643 for both Magpie+structural and curated combined. The C2DB-native model recovers 1 of the 7 true metals, while the enriched representations recover 2 of the 7; all three avoid assigning any PBE-spurious metal to the true-metal class. The selected models are consequently useful as a triage device but not as a definitive metal/insulator classifier. Table 3: Stage I performance of the selected Random Forest classifiers on the 40-material holdout set. Precision, recall, and F1 refer to the minority true-HSE06-metal class. The cross-validation values are mean ± standard deviation on the training folds.                                       
+
+> Representation Test acc. 5-fold CV acc. Precision Recall F1 Specificity Balanced acc. (TN,FP,FN,TP) C2DB native 85.0% 81 .5±1.9% 1.000 0.143 0.250 1.000 0.571 (33,0,6,1) Magpie + structural 87.5% 83 .2±2.5% 1.000 0.286 0.444 1.000 0.643 (33,0,5,2) Curated combined 87.5% 82 .4±3.0% 1.000 0.286 0.444 1.000 0.643 (33,0,5,2)
+
+Figure 3 makes the class imbalance explicit: descriptor enrichment increases true-metal recovery from 1 to 2 materials, but the minority class remains poorly sampled. The Support-ing Information contains the corresponding training-set matrices, cross-validation compari-son, and extended regression diagnostics; together they show that the principal limitation is minority-class statistics rather than descriptor dimensionality. The feature-importance profiles nevertheless reveal physically interpretable differences (Figure 4). In the compact C2DB-native model, thickness has the largest Gini importance (about 22%), followed by the layer-group number, formation enthalpy, minimum Hessian eigenvalue, and energy above hull. These variables collectively encode confinement, sym-13 (a) C2DB native (b) Magpie + structural (c) Curated combined 
+
+Figure 3: Holdout confusion matrices for the selected Random Forest classifiers. Although overall accuracy is 85.0–87.5%, the C2DB-native representation recovers 1 of the 7 true HSE06 metals, while the enriched representations recover 2 of the 7; the figure therefore visualizes why this stage is used for triage rather than definitive classification. The majority class contains 33 PBE-spurious metals (labeled “Insulator”). metry, and structural/thermodynamic environment. The Magpie representation highlights composition-derived trends, whereas in the 694-feature curated representation importance is distributed over local coordination motifs, bond-length statistics, and lattice descriptors, with no single feature dominating. Because impurity-based importance can redistribute weight among correlated or high-cardinality descriptors, these rankings are best read as qualitative indicators of the information used by the model, not as causal measures of what determines metallicity. 14 (a) C2DB native (9 features) (b) Magpie + structural 
+
+> (c) Curated combined (top 20 of 694)
+
+Figure 4: Random Forest Gini feature importance for true-HSE06-metal versus PBE-spurious-metal classification. The compact representation emphasizes thickness, symmetry, and thermodynamic descriptors, the Magpie representation emphasizes composition-derived statistics, and the curated representation distributes weight across local coordination, bond-length, and lattice descriptors. Importances are interpreted qualitatively because correlated features can redistribute impurity-based weight. 
+
+## 3.2 Curated descriptors reduce PBE-to-HSE06 gap error by ap-proximately 90% 
+
+Stage II is statistically better supported than Stage I because 3,318 HSE06-insulator ref-erences are available. Table 4 compares the six regressors. Since \EHSE06  
+
+> g
+
+= EPBE  
+
+> g
+
++ d∆Eg,the absolute error in \EHSE06  
+
+> g
+
+is identical to the error in ∆ Eg for each material; the MAE is therefore the same for both targets, whereas R2 differs because their variances differ. 15 Unregularized linear regression fails for the 702-feature curated matrix, whereas Ridge regression restores a physically reasonable MAE of 0.198 eV, confirming that the instability is estimator-specific. The nonlinear models benefit consistently from descriptor enrichment: the final regularized XGBoost models give MAEs of 0.239, 0.197, and 0.108 eV for C2DB-native, Magpie+structural, and curated representations, respectively. The curated model reaches R2∆Eg = 0 .906 and R2abs = 0 .989, reducing the 1.036 eV raw-PBE error by approx-imately 90%. This accuracy is comparable to the emerging periodic-materials ∆-learning literature, including HSE06 eigenvalue reconstruction and the recent OrbNet-Crystal C2DB gap model, although direct numerical ranking is inappropriate because the targets, splits, and representations differ. 11–13 The important distinction here is that the regressor operates inside a population-repair and photocatalyst-screening workflow rather than as a stand-alone gap predictor. Table 4: Stage II ∆-learning regression on the 664-material test set. MAE is identical for ∆Eg and the reconstructed absolute HSE06 gap by construction; R2 is reported separately because the target variances differ. 
+
+Representation Model MAE (eV) R2∆Eg R2abs . HSE06 
+
+C2DB native (19) Linear Regression 0.279 0.498 0.941 Ridge Regression 0.279 0.499 0.941 SVR (RBF) 0.213 0.677 0.962 Random Forest 0.224 0.670 0.961 Gradient Boosting 0.211 0.712 0.966 XGBoost (regularized final) 0.239 0.641 0.958 Magpie + structural (141) Linear Regression 0.292 0.557 0.937 Ridge Regression 0.294 0.555 0.937 SVR (RBF) 0.192 0.755 0.965 Random Forest 0.194 0.749 0.965 Gradient Boosting 0.165 0.807 0.973 XGBoost (regularized final) 0.197 0.770 0.968 Curated combined (702) Linear Regression 14.563 −2.10 × 10 5 −2.47 × 10 4
+
+Ridge Regression 0.198 0.749 0.971 SVR (RBF) 0.166 0.796 0.976 Random Forest 0.143 0.846 0.982 Gradient Boosting 0.114 0.897 0.988 XGBoost (regularized final) 0.108 0.906 0.989 
+
+16 3.2.1 Material-resolved validation against new HSE06 calculations 
+
+Table 5 compares the new explicit HSE06 gaps with the available model predictions for all six compounds in the completed validation set. The PBE baseline is poor for these systems (MAE 1.480 eV), whereas the C2DB-native, Magpie+structural, and curated models reduce the MAE to 0.417, 0.182, and 0.110 eV, respectively. The curated model is therefore also the most accurate on this small prospective validation set, although the six-material size should be kept in mind when comparing representation-level performance. Table 5: Material-resolved validation using explicit HSE06 calculations performed in this work. Values in parentheses are absolute errors relative to the new HSE06 reference. All six materials with completed HSE06 calculations and available ML predictions are retained.                                                 
+
+> Material HSE06 this work PBE this work C2DB-native ML Magpie ML Curated ML (eV) (eV; |ϵ|)(eV; |ϵ|)(eV; |ϵ|)(eV; |ϵ|)
+> 1AgBr-1 2.97 1.62 (1.35) 2.65 (0.32) 2.70 (0.27) 2.78 (0.19)
+> 1AgCl-1 3.16 1.68 (1.48) 2.75 (0.41) 2.85 (0.31) 3.03 (0.13)
+> 1AgI-1 2.70 1.55 (1.15) 2.58 (0.12) 2.60 (0.10) 2.55 (0.15)
+> 1BrCu-1 2.72 1.03 (1.69) 2.14 (0.58) 2.83 (0.11) 2.74 (0.02)
+> 1ClCu-1 2.84 1.09 (1.75) 2.21 (0.63) 3.00 (0.16) 2.85 (0.01)
+> 1CuI-1 2.75 1.29 (1.46) 2.31 (0.44) 2.89 (0.14) 2.91 (0.16) MAE —1.480 0.417 0.182 0.110
+
+The close agreement between the recalculated and C2DB PBE gaps (mean absolute dif-ference 0.023 eV) indicates that the large PBE–HSE06 shifts are not caused by an obvious mismatch in the PBE baseline. The validation set also illustrates why pointwise accuracy and screening decisions are distinct: 1AgBr-1 is predicted within about 0.2 eV by the available Magpie model, yet the explicit HSE06 gap of 2.97 eV crosses the 2.8 eV screening thresh-old. By contrast, 1AgI-1 remains inside the window at 2.70 eV. This threshold crossing is incorporated into the updated relaxed shortlist discussed below. The curated XGBoost importance profile (Figure 5) is led by Magpie mode electronegativ-ity and minimum ground-state volume per atom, followed by melting-temperature statistics and the C2DB magnetic flag. The corresponding C2DB-native and Magpie-only rankings are provided in Figure S4. The recurrence of electronegativity and volume descriptors across 17 the Magpie and curated models suggests that chemical scale and bonding environment con-tain substantial information about the semilocal-to-hybrid correction. The curated model then gains additional predictive capacity from complementary structural and native-C2DB descriptors rather than replacing the composition signal altogether. As with the classifier, gain-based importance is interpreted descriptively rather than causally. 
+
+Figure 5: Gain-based XGBoost feature importance for the curated ∆-learning regressor (top 10 of 702 features). The leading descriptors span chemical-scale statistics (electronegativity, atomic volume, melting temperature) and native C2DB information, consistent with com-plementary rather than single-feature control of the HSE06 correction. Figure 6 makes the pointwise accuracy explicit. The parity panels show progressively narrower scatter from C2DB native to Magpie and curated descriptors, with the curated model remaining especially tight in the low-to-intermediate gap region most relevant to visible-light screening. The MAE values in Table 4 place this improvement against the raw-PBE baseline: the key gain is not a small optimization among ML models, but an order-of-magnitude reduction in the dominant low-fidelity band-gap error. Residual histograms (Figure 7) are centered close to zero, indicating little global signed bias. Their widths, rather than their centers, distinguish the models: the C2DB-native distribution is visibly broader, whereas the Magpie and especially curated representations concentrate more probability near zero. The occasional long negative residuals correspond to under-corrections, i.e., cases where the reconstructed gap remains smaller than the HSE06 reference. Importantly, the centered residuals do not imply that R2 for ∆ Eg and the absolute 18 (a) C2DB native (b) Magpie + structural 
+
+> (c) Curated combined
+
+Figure 6: Regression performance on the 664-material test sets. Panels (a–c) compare recon-structed and reference HSE06 gaps for the final regularized XGBoost models. The curated representation reduces the mean absolute error to 0.108 eV, approximately 90% below the 1.036 eV raw-PBE baseline. gap should be equal; those R2 values differ because the target variances differ, as shown in Table 4. The residual magnitude is strongly gap dependent (Figure 8; absolute errors are shown in Figure S5). Errors exceeding 0.5 eV occur predominantly for EPBE  
+
+> g
+
+≲ 1.5–2 eV, whereas the residual envelope contracts substantially for large PBE gaps. This is consistent with the 19 (a) C2DB native (b) Magpie + structural (c) Curated combined 
+
+Figure 7: Test-set residual distributions, defined as reconstructed minus reference HSE06 gap. The curated model has the narrowest central distribution; the remaining long negative tail corresponds to occasional under-correction of the HSE06 gap. low-gap region containing both larger and more chemistry-dependent semilocal-to-hybrid corrections. It also identifies the part of descriptor space in which uncertainty estimates would be most valuable. For screening decisions close to a band-gap threshold, point pre-dictions should therefore be supplemented by explicit HSE06 calculations or a calibrated uncertainty model.   
+
+> (a) C2DB native (b) Magpie + structural (c) Curated combined
+
+Figure 8: Signed ∆-learning error versus PBE gap on the regression test set. Large residuals are concentrated below approximately 1.5–2 eV, identifying the low-gap region in which explicit HSE06 validation or calibrated uncertainty estimates are most valuable for threshold-based screening. 20 3.3 The HSE06 correction changes candidate membership, not only ranking 
+
+A low regression MAE is useful only if it changes a materials decision. We therefore ask whether the HSE06 correction alters which compounds survive the solar-hydrogen gap win-dow. Applying the screening criteria to the 8,221-material corrected insulator pool initially yields 10 strict ( Ehull ≤ 0.05 eV/atom) and 29 relaxed ( Ehull ≤ 0.10 eV/atom) candidates. The strict shortlist is given in Table 6; The 10 strict materials are nonmagnetic and have corrected gaps of 1.984–2.798 eV; eight use explicit C2DB HSE06 gaps and two ( 4LiSeO2-1 ,
+
+4NaSeO2-1 ) remain ML-derived. The functional correction materially changes the screen. For the strict set, ∆ Eg = 0 .592– 1.427 eV (mean 0.994 eV), and four materials would fail the same 1.6–2.8 eV gap window at PBE. In the initial relaxed set, 18 of 29 materials likewise have PBE gaps outside the window. The targeted validation then provides a second, independent effect: the explicit HSE06 gap of 1AgBr-1 is 2.97 eV, above the upper cutoff, whereas 1AgI-1 remains inside at 2.70 eV. The currently retained relaxed set therefore contains 28 materials (19 with explicit HSE06 gaps, including the new 1AgI-1 result, and 9 still ML-derived); 17 of these 28 would lie outside the selected gap window at the PBE level. The strict set is unchanged. The resulting HSE-equivalent band-edge alignment of the strict shortlist is shown in Figure 9. The strict list is chemically nonuniform: seven of the ten entries contain Se, while the remaining three comprise an iodide and two Pd–S/H-containing compositions. Three strict candidates lie on the reported convex hull ( Ehull = 0), and the remaining seven are within 35 meV/atom of it; all have negative formation enthalpies in the C2DB data. This concen-tration should not be interpreted as a universal chemical design rule, because it reflects both the composition of the database and the specific electronic/stability filters used here. Before targeted validation, 18 of the 29 relaxed gaps were explicit HSE06 values and 11 were ML-derived. The new HSE06 calculations convert 1AgI-1 and 1AgBr-1 from ML-only cases into explicit references; 1AgI-1 is retained while 1AgBr-1 is removed by the gap crite-21 Figure 9: Vacuum-aligned HSE-equivalent band edges for the strict water-splitting can-didates. Teal bars denote candidates with explicit HSE06 gaps and orange bars denote candidates whose HSE06-equivalent gaps are obtained from the curated ∆-learning model. Dashed horizontal lines mark the pH 0 H +/H 2 and O 2/H 2 redox levels. Table 6: Strict near-hull ( Ehull ≤ 0.05 eV/atom) candidates surviving the electronic water-splitting pre-screen. ∆ Eg = EHSE06  
+
+> g
+
+− EPBE  
+
+> g
+
+. “DFT” denotes an explicit C2DB HSE06 gap; “ML” denotes the curated ∆-learning prediction.                                                                        
+
+> UID Ehull (eV/atom) ∆Hf(eV/atom) EPBE
+> g(eV) EHSE06
+> g(eV) ∆Eg(eV) Source
+> 4AuNaSe-1 0.011 −0.582 1.392 1.984 0.592 DFT
+> 4KSeO2-1 0.000 −1.263 1.929 2.751 0.822 DFT
+> 4LiSeO2-1 0.000 −1.279 1.452 2.522 1.070 ML
+> 4NaSeO2-1 0.008 −1.234 1.757 2.730 0.973 ML
+> 2PtSeO3-1 0.020 −0.590 1.305 2.732 1.427 DFT
+> 2PtSeO3-2 0.035 −0.575 0.828 2.187 1.359 DFT
+> 2AuI-1 0.000 −0.098 1.808 2.585 0.777 DFT
+> 2P2Se3-2 0.028 −0.038 1.794 2.700 0.906 DFT
+> 1PdK2H6S6-1 0.026 −0.428 1.783 2.798 1.015 DFT
+> 1PdNa2H6S6-1 0.033 −0.384 1.715 2.710 0.995 DFT
+
+rion. Among the 28 currently retained relaxed candidates, 19 therefore have explicit HSE06 gaps and 9 remain ML-derived. The largest correction in this retained set is 2NiTeO3-1 ,whose gap increases from 0.217 eV at PBE to 2.222 eV at HSE06 (∆ Eg = 2 .005 eV). This example, together with the threshold crossing of 1AgBr-1 , shows why high-fidelity validation must be coupled to the screening decision rather than treated only as a global error metric. 22 3.4 Scope of the electronic shortlist and validation priorities 
+
+The screen establishes three quantities only: a high-fidelity-equivalent gap, near-hull ther-modynamic accessibility, and approximate pH 0 band-edge straddling. It does not estab-lish optical absorption strength, excitonic effects, carrier transport/recombination, catalytic overpotentials, aqueous stability, photochemical corrosion resistance, or finite-temperature robustness. These are standard subsequent filters in more complete photocatalyst work-flows. 16,17,32,33 
+
+The highest-priority next step is direct electronic validation: explicit HSE06 gaps for the remaining ML-derived candidates and vacuum-aligned HSE06 VBM/CBM values for the strict shortlist. Because the present symmetric scissor construction corrects the gap but not the individual band-edge shifts, a gap model alone cannot quantify the uncertainty of redox straddling. Optical, catalytic, and stability calculations should then be concentrated on the candidates that survive this direct band-edge test. 
+
+# 4 Conclusions 
+
+We developed a leakage-aware two-stage workflow in which PBE-spurious metallicity is ad-dressed before HSE06–PBE ∆-learning. The distinction between the stages is essential: classification deliberately excludes low-fidelity electronic shortcuts, whereas regression rein-troduces PBE electronic quantities as the baseline to be corrected. Stage I remains limited by the 29-material true-metal minority class (best true-metal recall 0.286), while Stage II is supported by 3,318 HSE06-insulator references and reaches a reconstructed-gap MAE of 0.108 eV ( R2 = 0 .989) with the curated XGBoost model, compared with 1.036 eV for raw PBE. The correction has a direct materials consequence. The initial electronic pre-screen iden-tifies 10 strict and 29 relaxed candidates, and four strict plus 18 relaxed candidates would fall outside the same visible-gap window at the PBE level. Targeted HSE06 calculations for 23 six ML-predicted compounds provide a material-level validation set: the C2DB-native, Mag-pie+structural, and curated models have MAEs of 0.417, 0.182, and 0.110 eV against these new references, while 1AgBr-1 demonstrates the importance of threshold-aware validation by moving above the 2.8 eV cutoff despite a modest prediction error. The current relaxed set therefore contains 28 retained candidates; the 10-material strict set is unchanged. The remaining uncertainty is dominated by physics not yet modeled explicitly, especially individual HSE06 band-edge shifts. The shortlist should therefore be viewed as a priori-tized validation set rather than as a claim of established photocatalytic performance. More generally, the study shows that low-to-high-fidelity learning is most useful when coupled to upstream population repair and downstream decision criteria, so that model accuracy is evaluated in terms of which materials are actually admitted to or removed from an energy-materials screen. 
+
+# Supporting Information Available 
+
+Additional classification diagnostics (feature correlations, cross-validation, all-model and training-set confusion matrices); additional regression diagnostics (feature-importance com-parisons, absolute-error dependence on PBE gap, and the complete material-resolved HSE06 validation table) are given in the Supporting Information (SI) file. 
+
+# References 
+
+(1) Wang, Q.; Domen, K. Particulate Photocatalysts for Light-Driven Water Splitting: Mechanisms, Challenges, and Design Strategies. Chem. Rev. 2020 , 120 , 919–985, DOI: 
+
+10.1021/acs.chemrev.9b00201 .(2) Mai, H.; Le, T. C.; Chen, D.; Winkler, D. A.; Caruso, R. A. Machine Learning for 24 Electrocatalyst and Photocatalyst Design and Discovery. Chem. Rev. 2022 , 122 , 13478– 13515, DOI: 10.1021/acs.chemrev.2c00061 .(3) Jin, H.; Tan, X.; Wang, T.; Yu, Y.; Wei, Y. Discovery of Two-Dimensional Multinary Component Photocatalysts Accelerated by Machine Learning. J. Phys. Chem. Lett. 
+
+2022 , 13 , 7228–7235, DOI: 10.1021/acs.jpclett.2c01862 .(4) Gao, Y.; Zhang, Q.; Hu, W.; Yang, J. First-Principles Computational Screening of Two-Dimensional Polar Materials for Photocatalytic Water Splitting. ACS Nano 2024 , 18 ,19381–19390, DOI: 10.1021/acsnano.4c06544 .(5) Haastrup, S.; Strange, M.; Pandey, M.; Deilmann, T.; Schmidt, P. S.; Hinsche, N. F.; Gjerding, M. N.; Torelli, D.; Larsen, P. M.; Riis-Jensen, A. C.; Gath, J.; Jacob-sen, K. W.; Mortensen, J. J.; Olsen, T.; Thygesen, K. S. The Computational 2D Materials Database: High-Throughput Modeling and Discovery of Atomically Thin Crystals. 2D Mater. 2018 , 5, 042002, DOI: 10.1088/2053-1583/aacfc1 .(6) Gjerding, M. N.; Taghizadeh, A.; Rasmussen, A.; Ali, S.; Bertoldo, F.; Deilmann, T.; Holguin, U. P.; Knøsgaard, N. R.; Kruse, M.; Larsen, A. H.; Manti, S.; Pedersen, T. G.; Skovhus, T.; Svendsen, M. K.; Mortensen, J. J.; Olsen, T.; Thygesen, K. S. Recent Progress of the Computational 2D Materials Database (C2DB). 2D Mater. 2021 , 8,044002, DOI: 10.1088/2053-1583/ac1059 .(7) Perdew, J. P.; Burke, K.; Ernzerhof, M. Generalized Gradient Approximation Made Simple. Phys. Rev. Lett. 1996 , 77 , 3865–3868, DOI: 10.1103/PhysRevLett.77.3865 .(8) Heyd, J.; Scuseria, G. E.; Ernzerhof, M. Hybrid Functionals Based on a Screened Coulomb Potential. J. Chem. Phys. 2003 , 118 , 8207–8215, DOI: 10.1063/1.1564060 .(9) Krukau, A. V.; Vydrov, O. A.; Izmaylov, A. F.; Scuseria, G. E. Influence of the Ex-change Screening Parameter on the Performance of Screened Hybrid Functionals. J. Chem. Phys. 2006 , 125 , 224106, DOI: 10.1063/1.2404663 .25 (10) Ramakrishnan, R.; Dral, P. O.; Rupp, M.; von Lilienfeld, O. A. Big Data Meets Quan-tum Chemistry Approximations: The ∆-Machine Learning Approach. J. Chem. Theory Comput. 2015 , 11 , 2087–2096, DOI: 10.1021/acs.jctc.5b00099 .(11) Adhikari, S.; Clary, J.; Sundararaman, R.; Musgrave, C. B.; Vigil-Fowler, D.; Sutton, C. Accurate Prediction of HSE06 Band Structures for a Diverse Set of Materials Using ∆-Learning. Chem. Mater. 2023 , 35 , 8397–8405, DOI: 
+
+10.1021/acs.chemmater.3c01131 .(12) Karimitari, N.; Pakornchote, T.; Alherz, A. W.; Clary, J. M.; Tezak, C.; Dey, S.; Hu, J.; Vigil-Fowler, D.; Sundararaman, R.; Musgrave, C. B.; Sutton, C. ∆-Learning of High-Fidelity Electronic Structure Using Graph Neural Networks with Modified Node-Level Features. ACS Mater. Lett. 2025 , 7, 3901–3907, DOI: 
+
+10.1021/acsmaterialslett.5c00857 .(13) Kang, M.; Kang, B. S.; Kliavinek, S.; Hanisch, M. D.; Goddard, W. A.; Anand-kumar, A. An Orbital-Based Geometric Deep Learning Framework for Periodic Ma-terials. International Conference on Learning Representations (ICLR) 2026 , https: //openreview.net/forum?id=Dnjz9nlGBq .(14) Singh, A. K.; Mathew, K.; Zhuang, H. L.; Hennig, R. G. Computational Screening of 2D Materials for Photocatalysis. J. Phys. Chem. Lett. 2015 , 6, 1087–1098, DOI: 
+
+10.1021/jz502646d .(15) Wang, Y.; Sorkun, M. C.; Brocks, G.; Er, S. ML-Aided Computational Screening of 2D Materials for Photocatalytic Water Splitting. J. Phys. Chem. Lett. 2024 , 15 , 4983– 4991, DOI: 10.1021/acs.jpclett.4c00425 .(16) Wang, Y.; Brocks, G.; Er, S. Data-Driven Discovery of Intrinsic Direct-Gap 2D Ma-terials as Potential Photocatalysts for Efficient Water Splitting. ACS Catal. 2024 , 14 ,1336–1350, DOI: 10.1021/acscatal.3c05181 .26 (17) Tang, K.; Liu, S.; Zhou, J.; Sun, Z. Data-Driven Discovery of Highly Efficient 2D Photocatalytic Materials for Water Splitting. Nano Energy 2026 , 153 , 111929, DOI: 
+
+10.1016/j.nanoen.2026.111929 .(18) Kapoor, S.; Narayanan, A. Leakage and the Reproducibility Crisis in Machine-Learning-Based Science. Patterns 2023 , 4, 100804, DOI: 10.1016/j.patter.2023.100804 .(19) Georgescu, A. B.; Ren, P.; Toland, A. R.; Zhang, S.; Miller, K. D.; Apley, D. W.; Olivetti, E. A.; Wagner, N.; Rondinelli, J. M. Database, Features, and Machine Learn-ing Model to Identify Thermally Driven Metal–Insulator Transition Compounds. Chem. Mater. 2021 , 33 , 5591–5605, DOI: 10.1021/acs.chemmater.1c00905 .(20) Ward, L.; Agrawal, A.; Choudhary, A.; Wolverton, C. A General-Purpose Machine Learning Framework for Predicting Properties of Inorganic Materials. npj Comput. Mater. 2016 , 2, 16028, DOI: 10.1038/npjcompumats.2016.28 .(21) Ward, L.; Dunn, A.; Faghaninia, A.; Zimmermann, N. E. R.; Bajaj, S.; Wang, Q.; Montoya, J.; Chen, J.; Bystrom, K.; Dylla, M.; Chard, K.; Asta, M.; Pers-son, K. A.; Snyder, G. J.; Foster, I.; Jain, A. Matminer: An Open Source Toolkit for Materials Data Mining. Comput. Mater. Sci. 2018 , 152 , 60–69, DOI: 
+
+10.1016/j.commatsci.2018.05.018 .(22) Ong, S. P.; Richards, W. D.; Jain, A.; Hautier, G.; Kocher, M.; Cholia, S.; Gunter, D.; Chevrier, V. L.; Persson, K. A.; Ceder, G. Python Materials Genomics (pymatgen): A Robust, Open-Source Python Library for Materials Analysis. Comput. Mater. Sci. 
+
+2013 , 68 , 314–319, DOI: 10.1016/j.commatsci.2012.10.028 .(23) Larsen, A. H.; Mortensen, J. J.; Blomqvist, J.; Castelli, I. E.; Christensen, R.; Du lak, M.; Friis, J.; Groves, M. N.; Hammer, B.; Hargus, C.; Hermes, E. D.; Jen-nings, P. C.; Jensen, P. B.; Kermode, J.; Kitchin, J. R.; Kolsbjerg, E. L.; Kubal, J.; Kaasbjerg, K.; Lysgaard, S.; Maronsson, J. B.; Maxson, T.; Olsen, T.; Pastewka, L.; 27 Peterson, A.; Rostgaard, C.; Schiøtz, J.; Sch¨ utt, O.; Strange, M.; Thygesen, K. S.; Vegge, T.; Vilhelmsen, L.; Walter, M.; Zeng, Z.; Jacobsen, K. W. The Atomic Simu-lation Environment—A Python Library for Working with Atoms. J. Phys.: Condens. Matter 2017 , 29 , 273002, DOI: 10.1088/1361-648X/aa680e .(24) Chen, T.; Guestrin, C. XGBoost: A Scalable Tree Boosting System. Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining 2016 , 785–794, DOI: 10.1145/2939672.2939785 .(25) Pedregosa, F.; Varoquaux, G.; Gramfort, A.; Michel, V.; Thirion, B.; Grisel, O.; Blon-del, M.; Prettenhofer, P.; Weiss, R.; Dubourg, V.; Vanderplas, J.; Passos, A.; Courna-peau, D.; Brucher, M.; Perrot, M.; Duchesnay, ´E. Scikit-learn: Machine Learning in Python. J. Mach. Learn. Res. 2011 , 12 , 2825–2830. (26) Kresse, G.; Furthm¨ uller, J. Efficient Iterative Schemes for ab initio Total-Energy Cal-culations Using a Plane-Wave Basis Set. Phys. Rev. B 1996 , 54 , 11169–11186, DOI: 
+
+10.1103/PhysRevB.54.11169 .(27) Kresse, G.; Furthm¨ uller, J. Efficiency of ab initio Total Energy Calculations for Metals and Semiconductors Using a Plane-Wave Basis Set. Comput. Mater. Sci. 1996 , 6, 15– 50, DOI: 10.1016/0927-0256(96)00008-0 .(28) Bl¨ ochl, P. E. Projector Augmented-Wave Method. Phys. Rev. B 1994 , 50 , 17953–17979, DOI: 10.1103/PhysRevB.50.17953 .(29) Kresse, G.; Joubert, D. From Ultrasoft Pseudopotentials to the Projector Augmented-Wave Method. Phys. Rev. B 1999 , 59 , 1758–1775, DOI: 10.1103/PhysRevB.59.1758 .(30) Butler, M. A.; Ginley, D. S. Prediction of Flatband Potentials at Semiconductor– Electrolyte Interfaces from Atomic Electronegativities. J. Electrochem. Soc. 1978 , 125 ,228–232, DOI: 10.1149/1.2131419 .28 (31) Xu, Y.; Schoonen, M. A. A. The Absolute Energy Positions of Conduction and Valence Bands of Selected Semiconducting Minerals. Am. Mineral. 2000 , 85 , 543–556, DOI: 
+
+10.2138/am-2000-0416 .(32) Shobeyrian, F.; Soleimani, M.; Shojaei, F.; Lashani Zand, A.; Pourfath, M. Compu-tational Screening of 2D Heterostructures for Efficient Photocatalytic Water Splitting. 
+
+ACS Appl. Energy Mater. 2025 , 8, 9748–9759, DOI: 10.1021/acsaem.5c01342 .(33) Yadav, S.; Modi, J. K.; Ahammed, R.; Bhadoria, B. S.; Chauhan, Y. S.; Agarwal, A.; Bhowmick, S. High-Throughput Screening of 2D Photocatalyst Heterostructures with Suppressed Electron–Hole Recombination for Solar Water Splitting. ACS Appl. Energy Mater. 2025 , 8, 14601–14611, DOI: 10.1021/acsaem.5c02326 .
+
+# 5 Supplemental Material 
+
+This Supporting Information reports diagnostics and extended results that complement the main text. The analyses use the same train/test partitions, model definitions, descriptor names, and screening thresholds as the main manuscript. Section, figure, and table number-ing is prefixed by “S” and is independent of the main-text numbering. 
+
+# 6 Additional Classification Diagnostics 
+
+## 6.1 Correlation structure of the compact C2DB-native represen-tation 
+
+Figure 10 shows the pairwise Pearson correlation matrix for the nine non-electronic C2DB-native descriptors used in Stage I classification, evaluated over the 159-material HSE06-labeled PBE-metal population. Most pairs are weakly correlated ( |r| < 0.3). The strongest relationship is between the two symmetry-breaking energy descriptors dE zx and dE zy 
+
+29 (r = 0 .95), which probe closely related distortion energetics. Formation enthalpy and en-ergy above hull show a moderate positive correlation ( r = 0 .40), as expected for related thermodynamic descriptors. No correlation pruning was applied to this nine-feature representation or to the 141-feature Magpie+structural representation. Correlation pruning was restricted to the high-dimensional curated representation: 138 columns were removed from the 841-column raw table at |r| > 0.95, leaving 703 columns before the stage-specific inclusion/exclusion rules produced 694 classification and 702 regression features. 
+
+Figure 10: Pairwise Pearson correlation matrix for the nine non-electronic C2DB-native descriptors used in Stage I, evaluated over the 159-material HSE06-labeled classification pool. 30 6.2 Cross-validation comparison and model-selection rationale 
+
+Table 7 reports the complete 5-fold stratified cross-validation comparison available in the final notebooks for all three descriptor representations. The values are mean ± standard deviation across folds. For C2DB-native descriptors, the RBF-SVC has the highest mean cross-validation accu-racy, but Random Forest has the highest holdout accuracy and a small train–test gap. For the Magpie+structural representation, Random Forest has the highest mean cross-validation and holdout accuracy. For the curated representation, Random Forest is close to the best mean cross-validation accuracy while retaining the strongest holdout performance. This sta-bility, together with the use of a common model family across representations, motivated selection of Random Forest as the Stage I classifier. The small number of minority-class examples should nevertheless be kept in mind when interpreting fold-to-fold differences. Table 7: Five-fold stratified cross-validation accuracy (mean ± standard deviation) for the four candidate classifiers on the training folds of the 159-material labeled pool.                                        
+
+> Classifier C2DB native Magpie + structural Curated combined SVC (RBF) 82 .4±1.6% 80 .7±1.9% 84 .1±1.5% Random Forest 81 .5±1.9% 83 .2±2.5% 82 .4±3.0% Gradient Boosting 79 .9±3.0% 79 .9±5.5% 83 .2±3.6% XGBoost 80 .7±3.4% 80 .7±1.9% 81 .5±1.9%
+
+## 6.3 Holdout confusion matrices for the selected classifier 
+
+Figure 11 reproduces the holdout confusion matrices for the selected Random Forest classifier across all three descriptor representations. The common test fold contains 33 PBE-spurious metals (HSE06 insulators) and 7 true HSE06 metals. The figure highlights why raw accuracy alone is insufficient for model selection in this imbalanced set. The main manuscript there-fore reports class-resolved metrics and balanced accuracy for the selected Random Forest classifiers. 31 (a) C2DB native (b) Magpie + structural (c) Curated combined 
+
+Figure 11: Holdout confusion matrices for the selected Random Forest classifier using each descriptor representation. 
+
+## 6.4 Training-set fit of the selected Random Forest models 
+
+The selected Random Forest estimators nearly perfectly separate the 119 training examples (Figure 12): the C2DB-native representation fits all 119 correctly, while the Magpie and curated representations each misclassify only one majority-class example. This behavior should not be described as evidence that the classification problem is intrinsically easy. A depth-5, 100-tree ensemble has sufficient capacity to fit a small data set, and the large difference between training separation and held-out minority recall indicates substantial statistical uncertainty. Consequently, the cross-validation and held-out class-resolved metrics are more informative than training accuracy.   
+
+> (a) C2DB native (b) Magpie + structural (c) Curated combined
+
+Figure 12: Training-set confusion matrices for the selected Random Forest classifier (119 materials) using the three descriptor representations. 32 7 Additional Regression Diagnostics 
+
+## 7.1 Feature importance for C2DB-native and Magpie ∆-learning models 
+
+The main text reports the gain-based XGBoost feature-importance profile for the curated ∆-learning regressor. Figure 13 gives the corresponding C2DB-native and Magpie+structural profiles. In the 19-feature C2DB-native model, is magnetic has more than four times the gain of the next-ranked descriptor, dE zy , while the raw PBE gap ranks sixth among the displayed features. Thus, within this compact representation, the learned correction is not controlled by the PBE gap magnitude alone; magnetic and structural/energetic descriptors also carry substantial predictive signal. The Magpie model is led by mode electronegativity and minimum ground-state volume per atom, the same two descriptors that lead the curated model. Their persistence after ad-ditional C2DB and local-environment features are added is consistent with the improvement of the curated model arising from complementary information rather than replacement of the composition signal. As noted in the main text, gain importance is not a causal attribution and can be redistributed among correlated descriptors.  
+
+> (a) C2DB native (top 10 of 19) (b) Magpie + structural (top 10 of 141)
+
+Figure 13: Gain-based XGBoost feature importance for the C2DB-native and Mag-pie+structural ∆-learning regressors. The curated-model importance is shown in the main text. 33 7.2 Absolute error versus PBE gap 
+
+The main manuscript plots the signed ∆-learning residual against the PBE gap. Figure 14 shows the same test points as absolute error, making the heteroscedastic error envelope easier to read. For all three representations, the largest and most variable errors cluster at 
+
+EPBE  
+
+> g
+
+< 2 eV and the envelope contracts strongly with increasing PBE gap. The curated model has the narrowest envelope across most of the gap range, consistent with its 0.108 eV overall MAE. The low-gap regime is therefore the most important target for uncertainty calibration and explicit HSE06 validation when a screening decision lies close to a numerical threshold.   
+
+> (a) C2DB native (b) Magpie + structural (c) Curated combined
+
+Figure 14: Absolute HSE06-gap reconstruction error versus PBE gap on the 664-material regression test set. 
+
+# 8 Targeted HSE06 Validation of ML-Predicted Mate-rials 
+
+Table 8 collects all six compounds for which the current calculation-status sheet contains both a completed explicit HSE06 calculation and ML predictions. Retaining the complete available set avoids selecting examples based on agreement with the model. The recalculated PBE gaps agree with C2DB to within 0.05 eV for every material (mean absolute difference 0.023 eV). Against the new HSE06 references, the C2DB PBE and recalculated PBE baselines 34 have MAEs of 1.503 and 1.480 eV, respectively, whereas the C2DB-listed HSE-equivalent values give an MAE of 0.527 eV. The C2DB-native, Magpie+structural, and curated ML predictions give MAEs of 0.417, 0.182, and 0.110 eV, respectively. Table 8: Detailed material-resolved HSE06 validation set. Values in parentheses are absolute errors relative to the new HSE06 reference. “C2DB-listed HSE-equivalent” reproduces the ML-tagged value in the calculation-status sheet and is not the same quantity as the C2DB-native descriptor model used in the manuscript. 
+
+Material HSE06 this work PBE C2DB PBE this work C2DB-listed HSE-equivalent C2DB-native ML Magpie ML Curated ML (eV) (eV; |ϵ|) (eV; |ϵ|) (eV; |ϵ|) (eV; |ϵ|) (eV; |ϵ|) (eV; |ϵ|)
+
+1AgBr-1 2.97 1.57 (1.40) 1.62 (1.35) 2.49 (0.48) 2.65 (0.32) 2.70 (0.27) 2.78 (0.19) 
+
+1AgCl-1 3.16 1.66 (1.50) 1.68 (1.48) 2.55 (0.61) 2.75 (0.41) 2.85 (0.31) 3.03 (0.13) 
+
+1AgI-1 2.70 1.51 (1.19) 1.55 (1.15) 2.40 (0.30) 2.58 (0.12) 2.60 (0.10) 2.55 (0.15) 
+
+1BrCu-1 2.72 1.02 (1.70) 1.03 (1.69) 2.17 (0.55) 2.14 (0.58) 2.83 (0.11) 2.74 (0.02) 
+
+1ClCu-1 2.84 1.09 (1.75) 1.09 (1.75) 2.19 (0.65) 2.21 (0.63) 3.00 (0.16) 2.85 (0.01) 
+
+1CuI-1 2.75 1.27 (1.48) 1.29 (1.46) 2.18 (0.57) 2.31 (0.44) 2.89 (0.14) 2.91 (0.16) MAE — 1.503 1.480 0.527 0.417 0.182 0.110 
+
+35 Supporting Information: Repairing PBE-Spurious Metallicity for HSE06-Level Screening of 2D Photocatalysts for Green Hydrogen Production 
+
+## Ritam Chakraborty ∗,† and Arpan Das ∗,‡
+
+†Theoretical Sciences Unit, Jawaharlal Nehru Centre for Advanced Scientific Research (JNCASR), Bangalore 560064, India 
+
+‡Department of Science and Humanities, Audisankara (Deemed to be University), Gudur 524101, India 
+
+E-mail: ritamchakraborty454@gmail.com; arpandas9236@gmail.com 
+
+This Supporting Information reports diagnostics and extended results that complement the main text. The analyses use the same train/test partitions, model definitions, descrip-tor names, and screening thresholds as the main manuscript. Section, figure, and table numbering is prefixed by “S” and is independent of the main-text numbering. S-1 1 Additional Classification Diagnostics 
+
+## 1.1 Correlation structure of the compact C2DB-native represen-tation 
+
+Figure S1 shows the pairwise Pearson correlation matrix for the nine non-electronic C2DB-native descriptors used in Stage I classification, evaluated over the 159-material HSE06-labeled PBE-metal population. Most pairs are weakly correlated ( |r| < 0.3). The strongest relationship is between the two symmetry-breaking energy descriptors dE zx and dE zy 
+
+(r = 0 .95), which probe closely related distortion energetics. Formation enthalpy and en-ergy above hull show a moderate positive correlation ( r = 0 .40), as expected for related thermodynamic descriptors. No correlation pruning was applied to this nine-feature representation or to the 141-feature Magpie+structural representation. Correlation pruning was restricted to the high-dimensional curated representation: 138 columns were removed from the 841-column raw table at |r| > 0.95, leaving 703 columns before the stage-specific inclusion/exclusion rules produced 694 classification and 702 regression features. 
+
+## 1.2 Cross-validation comparison and model-selection rationale 
+
+Table S1 reports the complete 5-fold stratified cross-validation comparison available in the final notebooks for all three descriptor representations. The values are mean ± standard deviation across folds. For C2DB-native descriptors, the RBF-SVC has the highest mean cross-validation accu-racy, but Random Forest has the highest holdout accuracy and a small train–test gap. For the Magpie+structural representation, Random Forest has the highest mean cross-validation and holdout accuracy. For the curated representation, Random Forest is close to the best mean cross-validation accuracy while retaining the strongest holdout performance. This sta-bility, together with the use of a common model family across representations, motivated S-2 Figure S1: Pairwise Pearson correlation matrix for the nine non-electronic C2DB-native descriptors used in Stage I, evaluated over the 159-material HSE06-labeled classification pool. selection of Random Forest as the Stage I classifier. The small number of minority-class examples should nevertheless be kept in mind when interpreting fold-to-fold differences. Table S1: Five-fold stratified cross-validation accuracy (mean ± standard deviation) for the four candidate classifiers on the training folds of the 159-material labeled pool.                                        
+
+> Classifier C2DB native Magpie + structural Curated combined SVC (RBF) 82 .4±1.6% 80 .7±1.9% 84 .1±1.5% Random Forest 81 .5±1.9% 83 .2±2.5% 82 .4±3.0% Gradient Boosting 79 .9±3.0% 79 .9±5.5% 83 .2±3.6% XGBoost 80 .7±3.4% 80 .7±1.9% 81 .5±1.9%
+
+S-3 1.3 Holdout confusion matrices for the selected classifier 
+
+Figure S2 reproduces the holdout confusion matrices for the selected Random Forest classifier across all three descriptor representations. The common test fold contains 33 PBE-spurious metals (HSE06 insulators) and 7 true HSE06 metals. The figure highlights why raw accuracy alone is insufficient for model selection in this imbalanced set. The main manuscript there-fore reports class-resolved metrics and balanced accuracy for the selected Random Forest classifiers.   
+
+> (a) C2DB native (b) Magpie + structural (c) Curated combined
+
+Figure S2: Holdout confusion matrices for the selected Random Forest classifier using each descriptor representation. 
+
+## 1.4 Training-set fit of the selected Random Forest models 
+
+The selected Random Forest estimators nearly perfectly separate the 119 training examples (Figure S3): the C2DB-native representation fits all 119 correctly, while the Magpie and curated representations each misclassify only one majority-class example. This behavior should not be described as evidence that the classification problem is intrinsically easy. A depth-5, 100-tree ensemble has sufficient capacity to fit a small data set, and the large difference between training separation and held-out minority recall indicates substantial statistical uncertainty. Consequently, the cross-validation and held-out class-resolved metrics are more informative than training accuracy. S-4 (a) C2DB native (b) Magpie + structural (c) Curated combined 
+
+Figure S3: Training-set confusion matrices for the selected Random Forest classifier (119 materials) using the three descriptor representations. 
+
+# 2 Additional Regression Diagnostics 
+
+## 2.1 Feature importance for C2DB-native and Magpie ∆-learning models 
+
+The main text reports the gain-based XGBoost feature-importance profile for the curated ∆-learning regressor. Figure S4 gives the corresponding C2DB-native and Magpie+structural profiles. In the 19-feature C2DB-native model, is magnetic has more than four times the gain of the next-ranked descriptor, dE zy , while the raw PBE gap ranks sixth among the displayed features. Thus, within this compact representation, the learned correction is not controlled by the PBE gap magnitude alone; magnetic and structural/energetic descriptors also carry substantial predictive signal. The Magpie model is led by mode electronegativity and minimum ground-state volume per atom, the same two descriptors that lead the curated model. Their persistence after ad-ditional C2DB and local-environment features are added is consistent with the improvement of the curated model arising from complementary information rather than replacement of the composition signal. As noted in the main text, gain importance is not a causal attribution and can be redistributed among correlated descriptors. S-5 (a) C2DB native (top 10 of 19) (b) Magpie + structural (top 10 of 141) 
+
+Figure S4: Gain-based XGBoost feature importance for the C2DB-native and Mag-pie+structural ∆-learning regressors. The curated-model importance is shown in the main text. 
+
+## 2.2 Absolute error versus PBE gap 
+
+The main manuscript plots the signed ∆-learning residual against the PBE gap. Figure S5 shows the same test points as absolute error, making the heteroscedastic error envelope easier to read. For all three representations, the largest and most variable errors cluster at 
+
+EPBE  
+
+> g
+
+< 2 eV and the envelope contracts strongly with increasing PBE gap. The curated model has the narrowest envelope across most of the gap range, consistent with its 0.108 eV overall MAE. The low-gap regime is therefore the most important target for uncertainty calibration and explicit HSE06 validation when a screening decision lies close to a numerical threshold.   
+
+> (a) C2DB native (b) Magpie + structural (c) Curated combined
+
+Figure S5: Absolute HSE06-gap reconstruction error versus PBE gap on the 664-material regression test set. S-6 3 Targeted HSE06 Validation of ML-Predicted Mate-rials 
+
+Table S2 collects all six compounds for which the current calculation-status sheet contains both a completed explicit HSE06 calculation and ML predictions. Retaining the complete available set avoids selecting examples based on agreement with the model. The recalculated PBE gaps agree with C2DB to within 0.05 eV for every material (mean absolute difference 0.023 eV). Against the new HSE06 references, the C2DB PBE and recalculated PBE baselines have MAEs of 1.503 and 1.480 eV, respectively, whereas the C2DB-listed HSE-equivalent values give an MAE of 0.527 eV. The C2DB-native, Magpie+structural, and curated ML predictions give MAEs of 0.417, 0.182, and 0.110 eV, respectively. Table S2: Detailed material-resolved HSE06 validation set. Values in parentheses are abso-lute errors relative to the new HSE06 reference. “C2DB-listed HSE-equivalent” reproduces the ML-tagged value in the calculation-status sheet and is not the same quantity as the C2DB-native descriptor model used in the manuscript.                                                                     
+
+> Material HSE06 this work PBE C2DB PBE this work C2DB-listed HSE-equivalent C2DB-native ML Magpie ML Curated ML (eV) (eV; |ϵ|)(eV; |ϵ|)(eV; |ϵ|)(eV; |ϵ|)(eV; |ϵ|)(eV; |ϵ|)
+> 1AgBr-1 2.97 1.57 (1.40) 1.62 (1.35) 2.49 (0.48) 2.65 (0.32) 2.70 (0.27) 2.78 (0.19)
+> 1AgCl-1 3.16 1.66 (1.50) 1.68 (1.48) 2.55 (0.61) 2.75 (0.41) 2.85 (0.31) 3.03 (0.13)
+> 1AgI-1 2.70 1.51 (1.19) 1.55 (1.15) 2.40 (0.30) 2.58 (0.12) 2.60 (0.10) 2.55 (0.15)
+> 1BrCu-1 2.72 1.02 (1.70) 1.03 (1.69) 2.17 (0.55) 2.14 (0.58) 2.83 (0.11) 2.74 (0.02)
+> 1ClCu-1 2.84 1.09 (1.75) 1.09 (1.75) 2.19 (0.65) 2.21 (0.63) 3.00 (0.16) 2.85 (0.01)
+> 1CuI-1 2.75 1.27 (1.48) 1.29 (1.46) 2.18 (0.57) 2.31 (0.44) 2.89 (0.14) 2.91 (0.16) MAE —1.503 1.480 0.527 0.417 0.182 0.110
+
+S-7
