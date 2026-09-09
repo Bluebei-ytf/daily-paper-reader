@@ -1,0 +1,1026 @@
+Title: Quantum Wavefunction Augmentation via Variational Autoencoders
+
+URL Source: https://arxiv.org/pdf/2609.07972v1
+
+Published Time: Wed, 09 Sep 2026 03:12:58 GMT
+
+Number of Pages: 20
+
+Markdown Content:
+# Quantum Wavefunction Augmentation via Variational Autoencoders 
+
+Sonaldeep Halder, 1 Chayan Patra, 1 and Rahul Maitra 1, 2, a) 
+
+> 1)
+
+Department of Chemistry, Indian Institute of Technology Bombay, Powai, Mumbai 400076, India 
+
+> 2)
+
+Centre of Excellence in Quantum Information, Computing, Science & Technology, Indian Institute of Technology Bombay, Powai, Mumbai 400076, India 
+
+Sample-based quantum diagonalization (SQD) has emerged as a promising route for quantum-centric su-percomputing, relying on classical diagonalization of the molecular Hamiltonian within a hardware-sampled determinant subspace. However, its accuracy degrades in strongly correlated regimes where the relevant determinant space exceeds what finite-shot sampling can capture. In this work, we introduce Quantum Wavefunction Augmentation via Variational Autoencoders (Q-WAVE), a hybrid method that combines de-terminants sampled via SqDRIFT Krylov circuits and configuration interaction singles and doubles (CISD) determinants with generative machine learning. Using a custom β-annealed variational autoencoder (VAE) model, Q-WAVE iteratively expands this basis toward the variational ground state. The VAE learns the wavefunction’s primary support structure from the combined hardware and CISD seed in a continuous la-tent space, generating new dominant determinants beyond any fixed excitation hierarchy. The resulting compact wavefunction exceeds what can be extracted from raw hardware samples alone. We demonstrate sub-millihartree accuracy compared to full configuration interaction for H 2O and N 2 dissociation. Finally, we establish Q-WAVE’s scalability on a 52-qubit ethylene system (achieving sub-millihartree accuracy ver-sus CCSD(T)) and a highly correlated 60-qubit Cr 2 stress test that attains chemical accuracy upon a final perturbative correction. 
+
+I. INTRODUCTION 
+
+Computing the ground-state wavefunction for many-body systems remains a core challenge in fields ranging from high-energy physics to quantum chemistry. While fault-tolerant quantum computers promise exact solu-tions, current pre-fault-tolerant devices, despite exceed-ing the 100-qubit threshold, remain fundamentally con-strained by noise. Early variational quantum eigensolver (VQE) frameworks 1–6 showed initial promise in noisy set-tings but were fundamentally hindered by deep quan-tum circuits, impractically long optimization cycles, local traps 7 and barren plateaus 8,9 , and require significant im-provements for practical scalability 10–24 . Consequently, recent efforts have shifted toward quantum-centric super-computing methods, which utilize quantum processors for state preparation and sampling, followed by classical diagonalization. Methods such as Krylov quantum di-agonalization (KQD) 25 , quantum selected configuration interaction (QSCI) 26 , sample-based quantum diagonal-ization (SQD) 27 and its different variants 28–36 have suc-cessfully pushed molecular simulations beyond the limits of pure exact classical diagonalization. A combination of the above-mentioned KQD and SQD methods culmi-nated in sample-based KQD (SKQD) 37 and its random-ized compilation variant, SqDRIFT 38 , which achieves provable convergence while maintaining circuit depths in-dependent of Hamiltonian term counts. Despite these advances, the accuracy of sample-based methods remains strictly bounded by finite shot budgets. 
+
+> a) Electronic mail: rmaitra@chem.iitb.ac.in
+
+In strongly correlated regimes, such as bond dissociations and transition-metal clusters, the true ground state ex-hibits a long “tail” of determinants with non-negligible weights. Realistic shot budgets cannot sample this combinatorially vast space, and classical configuration-recovery steps of SQD cannot reconstruct determinants that were never originally sampled 39 . Moreover, repeated measurements tend to re-select previously known con-figurations, making the discovery of new determinants prohibitively difficult. Classical selected CI methods, such as heat-bath CI (HCI) 40 and its stochastic variants (SHCI) 41 , approach this problem from the opposite di-rection, iteratively expanding the variational space based on a computationally efficient, deterministic connectiv-ity criterion. However, because candidates at each step are strictly drawn from the first-order interacting space of the current basis, a determinant lying several exci-tations away can only be reached through a continuous chain of intermediates. Importantly, each intermediate in this chain must independently survive the selection threshold. This stepwise discovery route becomes highly unreliable in strongly multireference regimes, where crit-ical dominant configurations are rarely connected to the reference by a smooth, heavily weighted excitation path. This leaves a critical gap – the need for a scalable mecha-nism to systematically grow the variational determinant space toward the wavefunction’s true support, bypassing the limitations of both finite hardware sampling and rigid classical excitation cutoffs. In this work, we introduce a hybrid framework, called Quantum Wavefunction Augmentation via Variational Autoencoders (Q-WAVE), that combines hardware-sampled and configuration interaction singles and double arXiv:2609.07972v1 [quant-ph] 7 Sep 2026 (CISD) determinants with a generative machine learn-ing (ML) architecture to iteratively expand the varia-tional space. Use of ML models to represent and ex-pand the quantum wave functions has previously been reported 19,42–48 . The classical CIgen approach 44 iter-atively trains a Restricted Boltzmann machine (RBM) on a CISD level wavefunction to generate important de-terminants. However, being seeded purely classically, the learned distribution remains confined to the mani-fold reachable from a single-reference excitation hierar-chy only. This limitation becomes decisive for strongly multireference systems. In a complementary direction, our earlier PIGen-SQD framework 45 introduced physics-informed generative model into the quantum-centric pipeline, but more towards a recovery setting – recon-structing the dominant configurations from noisy hard-ware measurements, with a reach ultimately bounded by the information content of the samples themselves. The present work unifies and extends both directions. Hard-ware samples inject a multireference character that no classically seeded generative model can reach, while the generative loop expands the subspace far beyond any-thing the hardware ever measured. Our method uses SqDRIFT circuits to gather relevant samples from the quantum hardware, which offers the advantage of being tunable in circuit depth. We aug-ment these hardware samples with deterministic CISD determinants to act as a base for the initial wavefunction. This combined set of determinants, filtered to conserve particle and Sz (the spin projection along z; Sz = 0 for all closed-shell systems studied here), is then fed into a custom β-annealed Variational Autoencoder (VAE) 49–52 .The VAE encodes the training data (set of determinants) onto a continuous latent space. By regularizing the con-tinuous latent space via Kullback-Leibler (KL) diver-gence, the VAE enforces an overlapping, densely packed representation of the determinant space. In this latent geometry, chemically related determinants occupy neigh-boring coordinates, transforming determinant discovery from a blind combinatorial search into a targeted ge-ometric exploration. We can thus sample random co-ordinates from this space and decode them to generate highly realistic, novel determinants not originally present in the initial training set. Specifically, we use a tailored 
+
+β-annealed VAE with clever prior sampling and poste-rior perturbation techniques for both broad and local exploration of new determinants. This exploration-and-exploitation mechanism enables VAE to efficiently reach completely new important determinants, as well as exam-ine determinants closer to those it has already seen during training. These generated determinants are evaluated for importance through classical Hamiltonian diagonaliza-tion and again added to the VAE training set. This way, the wavefunction slowly grows towards the true support of the ground state through a generation-diagonalization loop. Our method has been implemented to compute the ground-state energies of water, nitrogen, and ethylene molecules. As an extreme stress test, we also applied it to the strongly correlated metallic Cr 2 dimer. For all sys-tems, the method achieves chemical accuracy relative to FCI (where feasible) or other reference methods. For Cr 2,a standard second-order perturbative energy correction was required (like other classical selected CI methods) to reach this accuracy threshold; for all other systems, the variational energy at the end of the ML loop was already within sub-millihartree accuracy. More broadly, these results suggest that the route to scalability in quantum-centric electronic structure methods lies not in ever-larger shot budgets but in learning the wavefunction’s structure from a limited number of quantum samples.  
+
+> II. THEORY
+
+This section outlines the theoretical and algorithmic foundations of the Q-WAVE framework. In Subsection A, we briefly describe the SqDRIFT circuit preparation, which represents the sole quantum hardware-dependent step in our pipeline. Subsection B details the core gen-erative methodology, explaining how our custom VAE infrastructure identifies and generates dominant deter-minants. Subsection C outlines an iterative end-to-end protocol involving Q-WAVE together with the second-order perturbative correction that yields highly accurate molecular ground-state energetics. Finally, Subsection D describes the scalability of our method. This leads to the Results and Discussion section, where we apply our method to several molecular systems.  
+
+> A. The SqDRIFT method
+
+The initial samples from the quantum hardware are obtained using the SqDRIFT circuits together with an efficient F 2Q-style circuit mapping strategy that reduces the two-qubit gate cost by placing orbitals that appear together in the same excitation term on nearby qubit indices. This strategy follows the locality-optimization principle described in Ref. 38 , to which we refer the reader for technical details. SqDRIFT is a combination of SKQD and qDRIFT methods. Let ˆH be an n-qubit Hamiltonian with the exact ground state |ϕo⟩, |ψinit ⟩ be a reference wavefunction having a non-negligible overlap with |ϕo⟩, and t be a reference time. The SKQD protocol constructs d time-evolved states in a quantum hardware -
+
+|ψu⟩ = ( 
+
+> u
+
+Y
+
+> j=1
+
+e−i ˆHt ) |ψinit ⟩ = e−i ˆHut |ψinit ⟩ (1) for u ∈ { 0, 1, 2, ..., d − 1}. Samples are taken from the quantum hardware for each prepared state, |ψu⟩,then merged together, and the Hamiltonian is diagonal-ized in this subspace. However, the quantum circuits required to prepare Eq. 1 are deep for a highly non-local molecular Hamiltonian. Thus, a quantum stochastic drift 2(qDRIFT) method is used to compile these time-evolved circuits. Let the Hamiltonian be written as a sum of N
+
+terms: 
+
+ˆH =
+
+> N
+
+X
+
+> i=1
+
+ciˆhi (2) where, without loss of generality, ci > 0 and the largest eigenvalue of ˆhi be equal to 1 in absolute value. For ex-ample, in the decomposition of ˆH in the Pauli basis, ˆhi
+
+represents a Pauli string with a scalar weight ci. An-other way could be to decompose ˆH in terms of creation-annihilation operators. In this work, ˆhi is taken to be a combination of creation-annihilation string and its her-mitian conjugate. For example, a two-body term in H
+
+could be illustrated as: 
+
+ˆhi = ˆ a†
+
+> p
+
+ˆa† 
+
+> q
+
+ˆar ˆag + ˆ a† 
+
+> g
+
+ˆa† 
+
+> r
+
+ˆaq ˆap (3) where ˆa† and ˆa are the standard fermionic creation and annihilation operators acting on the respective spin-orbitals indexed by p, q, r, and g. This construction en-sures that each individual ˆhi remains Hermitian. The qDRIFT protocol aims to construct the time-evolution operator e−i ˆHut through the use of a unitary operator 
+
+ˆVk. Instead of using the entire Hamiltonian to form the 
+
+e−i ˆHut , it randomly samples terms from Eq. (2) weighted by their interaction strengths, ci. Let λ = P 
+
+> i
+
+ci. Then 
+
+ˆVk is constructed as 
+
+ˆVk =
+
+> N
+
+Y
+
+> j=1
+
+e−iˆhkj ut (λ/N ) (4) where the sequence of indices k = ( k1, k 2..., k N ) is ob-tained by randomly sampling terms ˆhi from the distri-bution defined by pi = ci/λ . Thus, in the qDRIFT method, the deterministic state preparation of |ψu⟩ (Eq. 1) is replaced by an ensemble of Nr stochastic states obtained through the use of ˆVk. It has been shown in Ref. 38 that one can trade circuit depth (lowering N in Eq. 4) for a higher randomized circuit realizations (in-creasing Nr ), significantly reducing the gate depths of the resulting circuits, while preserving the convergence guar-antees of KQD. Measuring these Nr states corresponding to each |ψu⟩ (Eq. 1, u ∈ { 1, 2, . . . , d − 1})in the com-putational basis yields a distribution of bitstrings rep-resenting physically relevant Slater determinants. Note that in this work, for u = 0 , we get Hartree-Fock (HF) state, which is our chosen reference. Thus we do not need to replace |ψ0⟩ with a stochastic ensemble of ˆVk. After particle and Sz conservation filtering, these determinants form the foundational dataset for the generative machine learning model.  
+
+> B. The Q-WAVE Method: Wavefunction Augmentation via Variational Autoencoders
+
+The SqDRIFT protocol uses quantum hardware to generate an initial pool of Slater determinants in the computational basis. This set, augmented with classi-cally generated CISD determinants, is used to form the initial dataset D(0) . While this subspace captures criti-cal features of the wavefunction, the remaining determi-nants corresponding to the true ground state, as well as the combinatorially long tail of determinants character-istic of strongly correlated systems, cannot be exhaus-tively sampled due to finite shot budgets and hardware noise. To systematically grow the variational subspace toward the true support of the wavefunction, we intro-duce the Quantum Wavefunction Augmentation via Vari-ational Autoencoders (Q-WAVE) method. Within this framework, each Slater determinant is mapped to a binary vector x ∈ { 0, 1}M , where M is the number of spin-orbitals (mapped via the Jordan-Wigner transformation). The core generative model is a 
+
+β-annealed Variational Autoencoder (VAE), which maps this discrete, high-dimensional physical space into a con-tinuous stochastic latent space, z ∈ Rℓ, where ℓ is the latent dimension. The VAE consists of two neural net-works parameterized by ϕ and θ: an encoder (the ap-proximate posterior), qϕ(z | x), which converts the input determinant into a Gaussian distribution in the latent space, and a decoder, pθ (x | z), which reconstructs a determinant from a given latent coordinate. A diagram-matic representation of the VAE neural network used in this work is given in Fig. 1 To ensure the VAE allocates its representational ca-pacity to the most chemically significant regions of the Hilbert space, the training data is explicitly biased. The dataset D(s) (s = 0 signifies the initial dataset, s ≥ 1 de-notes subsequent datasets during the iterative Q-WAVE method) is not passed to the VAE directly. First, the data is thresholded to discard any determinants with a squared coefficient |c|2 ≤ ϵthresh (|c|2 obtained via classi-cal diagonalization of the Hamiltonian within the D(s)
+
+subspace). The Hartree-Fock (HF) reference determi-nant itself is discarded as well. The surviving determi-nants are then resampled with replacement to form a fixed-size batch of 10 5 determinants. Importantly, each determinant is drawn with a frequency proportional to a temperature-tempered weight, |ci|2/T . This temper-ing is essential because the threshold is set considerably low ( ϵthresh = 10 −10 ). Resampling a batch of 10 5 deter-minants using the untempered Born-rule weights ( |ci|2)would statistically suppress determinants lying in the 
+
+10 −10 < |ci|2 < 10 −5 region, leading to an expected draw count of near zero. Setting the temperature parameter to T = 2 flattens the probability distribution, ensuring these lower-weight configurations are represented with appreciable frequency. The tempered probabilities are renormalized to unity before this resampling takes place. This batch of 10 5 determinants is used during training. 3FIG. 1. Architecture of the VAE used to propose new Slater determinants. Each Linear (A → B) block is a fully-connected neural network layer, y = W x + b for a trainable weight matrix W and bias b, mapping an A-dimensional input to a B-dimensional output; Linear layers are followed by a ReLU (rectified linear unit) nonlinearity, f (x) = max(0 , x ). The encoder 
+
+qϕ(z | x) passes x ∈ { 0, 1}M (M = qubit count of the target system, Table I) through two Linear+ReLU layers to a hidden representation of width h, then splits into two parallel Linear heads producing the mean μ and log-variance log σ2 of the approximate posterior. A latent sample is drawn via the reparameterization trick, z = μ + σ ⊙ ϵ with ϵ ∼ N (0 , I ), and passed to the decoder pθ (x | z), which mirrors the encoder in reverse and ends in a Linear layer followed by a Sigmoid activation, 
+
+f (x) = 1 /(1 + e−x) ∈ (0 , 1) , producing ˆx ∈ [0 , 1] M , the per-spin-orbital reconstruction probabilities of Eq. (7). The two networks are trained jointly to maximize the β-annealed ELBO of Eq. (5). The hidden width, h = max(256 , 8M ), follows a fixed, system-independent rule; the two Linear+ReLU encoder layers have output widths h then h/ 2, and the latent dimension 
+
+ℓ = 180 is identical for every system. The overall architecture is a standard VAE neural network (e.g., Ref. 49 ) fused with a custom β-annealing schedule and the clever dual prior-sampling/posterior-perturbation generation schemes that make Q-WAVE highly efficient for dominant determinant generation. 
+
+Notably, the explicit exclusion of the HF determinant is a deliberate design choice: since its CI coefficient is typ-ically much larger than those of the remaining dominant configurations, even after tempering it would dominate the resampled batch, which we anticipate would bias the VAE’s learned distribution toward over-representing the HF state. For training, the β-annealed VAE maximizes the Evi-dence Lower Bound (ELBO) for a given determinant in-stance xi at training epoch τ ,defined as: 
+
+Lβ (θ, ϕ ; xi) = Eqϕ(z|xi)[log pθ (xi | z)] 
+
+− β(τ ) DKL 
+
+ qϕ(z | xi) p(z) (5) The first term is the reconstruction loss, forcing the decoder to faithfully reproduce the dominant physical states. The second term is the Kullback-Leibler (KL) divergence, which acts as a regularizer. It penalizes the individual posteriors qϕ(z | xi) for deviating from the standard normal prior distribution, p(z) = N (0, I).In standard VAE implementations, β = 1 . However, mapping discrete combinatorial data (such as Slater de-terminants represented as x ∈ {0, 1}M ) to a contin-uous space frequently suffers from posterior collapse, wherein the KL penalty overwhelms the reconstruction loss. To circumvent this, we employ a sub-1 target value (βtarget < 1) coupled with an annealing schedule across training epochs τ (τ = 0 , 1, . . . , τ max − 1; τmax represent-ing the total number of training epochs): 
+
+β(τ ) = βtarget · f (τ ), f (τ ) = min 
+
+
+
+1, 2ττmax 
+
+
+
+, (6) a saturating linear ramp that reaches βtarget at the halfway point of training ( τ = τmax /2) and remains fixed at βtarget thereafter. The exact numerical values of βtarget and τmax are described in the subsequent sec-tions. During the start of the training (when τ = 0 = ⇒
+
+β(τ ) = 0 ), the autoencoder initially focuses on high-fidelity reconstruction, learning meaningful discrete fea-tures without topological constraints. As f (τ ) increases, the KL penalty gently forces these representations into an overlapping, densely packed Gaussian mixture, ensur-ing structural continuity without destroying the mutual information between the discrete determinant x and its continuous latent coordinate z.Once trained, Q-WAVE generates new determinants to expand the variational subspace. Since the decoder pa-rameterizes an independent Bernoulli distribution over each spin-orbital occupation (indexed by m), the recon-struction probability is: 4pθ (x | z) = 
+
+> M
+
+Y
+
+> m=1
+
+pθ,m (z)xm [1 − pθ,m (z)] 1−xm (7) where pθ,m (z) is the decoded output probability that the m-th spin-orbital is occupied. Consequently, the de-coder maps a latent coordinate z to an M -dimensional vector of orbital occupation probabilities. A candi-date determinant is then stochastically generated by sampling from these individual probabilities: xm ∼
+
+Bernoulli( pθ,m (z)) .New determinants are proposed through two com-plementary strategies that together realize an explore-exploit search of the latent manifold. In the exploratory mode, latent coordinates ( z) are drawn directly from the prior, z ∼ N (0, I) and decoded. This probes regions of the latent space, and by extension, the determinant space, that are not directly represented in the current training data but are consistent with the aggregate over-lapping structure learned by the encoder. In the exploita-tive mode, the entire batch of 10 5 training determinants is re-encoded, and the training-time reparameterization 
+
+z = μϕ(xi) + σϕ(xi) ⊙ ϵ is reused directly, but with its noise term inflated by a factor κ > 1:
+
+z = μϕ(xi) + κσϕ(xi) ⊙ ϵ, κ > 1. (8) This biases generation toward the local neighborhood of determinants already known to carry substantial CI weight. Because the amplitude-weighted training scheme concentrates the aggregate posterior density around the chemically dominant configurations of D(s), both genera-tion strategies preferentially propose determinants within the physically important region of Hilbert space rather than exploring it uniformly. Finally, the decoded bitstrings are not guaranteed apriori to have the correct number of α- and β-electrons. The independent Bernoulli decoder places no constraint on how many of the M spin-orbitals end up occupied. Each candidate determinant is therefore explicitly cor-rected before being added to the variational pool. This correction is applied independently to the α and β or-bital blocks: excess electrons are removed from orbitals with the lowest predicted occupation probabilities, while missing electrons are added to unoccupied orbitals with the highest predicted probabilities. Because the two spin channels are corrected independently rather than only their sum, the total electron count Ne = Nα + Nβ is automatically correct as well, and every generated deter-minant is guaranteed the correct Sz , with minimal dis-turbance to the decoder’s most confident predictions.  
+
+> C. End-to-End Iterative Q-WAVE Method
+
+The single generation step described above is embed-ded in a loop that repeatedly cycles between forming a training set, generating new determinants, and re-diagonalizing the expanded basis, progressively driving the subspace toward the true support of the ground state. Recall that s = 0 , 1, 2, . . . indexes each iteration of this loop, with D(s) the working determinant basis at iteration s; we further denote its CI vector c(s) and variational energy E(s). The initial basis D(0) is con-structed in three stages: the Hamiltonian is first diago-nalized in the hardware-sampled determinants alone (fil-tered for correct particle number and Sz ), and separately in the full CISD determinant set generated classically from the Hartree-Fock reference; each resulting CI vec-tor is thresholded independently at |c|2 > ϵ thresh (again excluding the Hartree-Fock determinant from the thresh-olding itself), and the union of the two thresholded sets, together with the Hartree-Fock determinant, is diagonal-ized once more, giving the final D(0) and c(0) used to seed the iterative loop. From here, each iteration advances through four steps - forming a training set, generating candidate determi-nants, expanding and re-diagonalizing the basis, and de-ciding whether to keep the result - before the cycle re-peats. 
+
+Step 1: Forming the training set. Rather than retrain Q-WAVE on the full basis D(s), only its chemically sig-nificant part is used. The basis is first thresholded, 
+
+D(s) 
+
+> active
+
+= {x ∈ D (s) : |c(s) 
+
+> x
+
+|2 > ϵ thresh } \ { HF } (9) explicitly removing the Hartree-Fock (HF) determinant from the training set, with ϵthresh = 10 −10 . D(s) 
+
+> active
+
+is then resampled with replacement into a fixed-size batch of 10 5
+
+determinants, each drawn with frequency proportional to 
+
+|c(s) 
+
+> x
+
+|2/T (T = 2 ), producing the training data actually fed to Q-WAVE. 
+
+Step 2: Generation. Q-WAVE is trained using the batch of 10 5 determinants drawn from D(s)
+
+> active
+
+. It then proposes a set of new determinants Q(s+1) via the prior-sampling and posterior-perturbation modes described in previous Subsection B. The number of prior sampled points ( nprior-samples ) is set as 500000 and the number of determinants obtained from posterior-modes is same as the training batch size of 100000 . These values are tunable and user defined. Here, we have used values that worked well for all molecular systems we tested this method on. Since D(s) 
+
+> active
+
+changes only incrementally be-tween iterations, Q-WAVE is warm-started rather than retrained from scratch: only s = 0 trains a randomly-initialized network to convergence ( τmax = 1000 epochs, learning rate = 1 .5 × 10 −3), while every subsequent it-eration fine-tunes the previous iteration’s weights for a fraction of the schedule ( τmax = 300 epochs, learning rate = 7 .5 × 10 −4), converging quickly since the bulk of the determinant manifold is already learned. 
+
+Step 3: Expansion and re-diagonalization. The newly generated determinants are added back to the active seed they were trained on, together with the Hartree-Fock de-terminant itself (withheld from training in Step 1, but 5always required as a variational reference). Writing this expanded set as 
+
+B(s+1) ≡ D (s) 
+
+> active
+
+∪ Q (s+1) ∪ { HF }, (10) every member of B(s+1) is further augmented by its spin-mirror image M(x) (obtained by exchanging the α- and 
+
+β-occupation strings of x, which for Nα = Nβ systems contribute comparably to the wavefunction and are there-fore included proactively at negligible extra cost), giving the expanded trial basis 
+
+˜D(s+1) = B(s+1) ∪ M 
+
+
+
+B(s+1) 
+
+. (11) The Hamiltonian is then re-diagonalized in this expanded trial basis, yielding a trial energy ˜E(s+1) and CI vector. 
+
+Step 4: Accept or reject. Because every subspace di-agonalization yields a variational upper bound to the ex-act ground-state energy, a strictly lower energy unam-biguously identifies a superior basis. The trial basis is therefore accepted or rejected based solely on this crite-rion: 
+
+D(s+1) , E (s+1) =
+
+( ˜D(s+1) , ˜E(s+1) if ˜E(s+1) < E (s),
+
+D(s), E (s) otherwise. (12) Importantly, this test is non-trivial. Step 1 discards every determinant in D(s) whose weight falls below ϵthresh , and Step 3 builds the trial basis from this truncated D(s)
+
+> active
+
+rather than the full D(s). Consequently, successive bases are not strictly nested ( ˜D(s+1) ⊉ D(s)). Because the vari-ational principle only guarantees a non-increasing energy for nested subspaces, the trial energy ˜E(s+1) will actually rise if the correlation energy recovered by the newly gen-erated determinants Q(s+1) fails to offset the energy lost by pruning the sub-threshold tail. If the trial basis were instead built by expanding the unpruned D(s), nesting would force ˜E(s+1) ≤ E(s) at every iteration, render-ing the test obsolete and forcing the basis to monotoni-cally accumulate unimportant determinants. Threshold-ing by ϵthresh keeps the variational space compact; the accept/reject rule makes that pruning safe. By demanding a strict energy decrease, E(s) is guaran-teed to be monotonically non-increasing and bounded be-low by the exact ground-state energy of the active space. The basis carried forward is thus always the best one found so far, eliminating the need to separately track a “best-so-far” state. If a trial basis is rejected, the loop does not terminate. Instead, it reverts to the current best basis and returns to Step 1, relying on stochastic resam-pling to provide the generative model with a fresh draw and another opportunity to discover energy-lowering de-terminants. This cycle continues until either the stag-nation criterion or the maximum iteration count Smax is reached. 
+
+Convergence. The cycle repeats until Smax iterations have elapsed, or until the energy fails to improve by more than Econv for W consecutive iterations: 
+
+E(s) − E(s−1) < E conv for W consecutive iterations .
+
+(13) One bookkeeping detail deserves explicit mention. Throughout the loop, we maintain a cumulative pool of every determinant that has ever entered an accepted ba-sis, 
+
+P(s) = D(0)  
+
+> active
+
+∪ { HF } ∪ 
+
+> s
+
+[
+
+> s′=1
+
+D(s′), (14) where the union runs over all the previous accepted bases till the current iteration. The proposed candidate determinants generated in Step 2 are filtered against P(s),so that Q(s+1) contains only determinants genuinely new to the entire search history. Additionally, this has two other practical consequences. First, a determinant that once entered the basis but subsequently fell below ϵthresh 
+
+is never re-proposed through the generative channel. Sec-ond, because rejected trial bases (Step 4) are never ab-sorbed into P(s), their proposals remain eligible in later iterations. 
+
+Step 5: Semistochastic Second Order Perturbative Cor-rection. The variational loop concludes with a con-verged variational subspace V ≡ D (s⋆), which spans the wavefunction |ΨV ⟩ = P 
+
+> I∈V
+
+cI |DI ⟩ and yields a corre-sponding variational energy EV ≡ E(s⋆). While V cap-tures the strongly correlated character of the system, it may fail to include weakly coupled determinants, specifi-cally in systems with strongly multi-reference wavefunc-tions (as seen in the case of Cr 2 in the Results and Dis-cussion section). Rather than discarding this residual correlation energy, we recover it using a second-order per-turbative (PT2) correction, following the semistochastic approach of Sharma et al. 41 . The exact correction ( Eo
+
+> PT2
+
+)is 
+
+Eo 
+
+> PT2
+
+= X
+
+> a / ∈V
+
+N 2
+
+> a
+
+EV − Haa 
+
+, Na = X
+
+> I∈V
+
+cI HaI , (15) where the sum runs over all external determinants a
+
+that are connected to V by nonzero off-diagonal Hamil-tonian matrix elements, but are not themselves contained in V. The term HaI ≡ ⟨ Da| ˆH|DI ⟩ is the matrix element between determinants a and I, and Haa ≡ ⟨ Da| ˆH|Da⟩
+
+is the diagonal energy of Da. However, due to the large number of connected determinants, evaluating Eq. (15) exhaustively is intractable. To make this calcu-lation feasible, two complementary approximations are employed 41 .First, the deterministic correction discards individual pairwise contributions that fall below a screening thresh-old ϵ2:6ED
+
+> PT2
+
+[ϵ2] = X
+
+> a / ∈V
+
+  P (ϵ2) 
+
+> I
+
+cI HaI 
+
+2
+
+EV − Haa 
+
+, (16) where P(ϵ2) 
+
+> I
+
+cI HaI includes only terms for which 
+
+|cI HaI | > ϵ 2. While this recovers Eq. (15) exactly in the limit ϵ2 → 0, storing every surviving determinant a
+
+becomes memory-prohibitive for tight values of ϵ2.Second, the stochastic correction circumvents this memory bottleneck by sampling Nd determinants with replacement from the entire space V. Each determi-nant is drawn independently with probability pI =
+
+|cI |/ P 
+
+> J∈V
+
+|cJ |. This yields N diff  
+
+> d
+
+≤ Nd distinct determi-nants (re-indexed as I = 1 , . . . , N diff  
+
+> d
+
+within the sample), each appearing with an integer multiplicity wI such that P 
+
+> I
+
+wI = Nd. The unbiased estimate of the stochastic second-order perturbation correction( ES
+
+> PT2
+
+) is given as: 
+
+ES
+
+> PT2
+
+[ϵ2] = 1
+
+Nd(Nd − 1) 
+
+ X
+
+> a / ∈V
+
+1
+
+EV − Haa 
+
+×
+
+ N diff 
+
+> d
+
+X
+
+> I=1
+
+wI yI
+
+2
+
++ 
+
+> Ndiff
+> d
+
+X
+
+> I=1
+
+wI
+
+(Nd − 1) pI − wI
+
+ y2
+
+> I
+
+ 
+
+> batch
+
+,
+
+(17) where yI ≡ cI HaI /p I and ⟨·⟩ batch denotes the average over Nbatch independent batches, with each batch repre-senting a fresh draw of Nd determinants. As in Eq. (16), each pairwise contribution cI HaI entering yI is addition-ally screened at ϵ2 (omitted from the notation for brevity, following Sharma et al. ). The semistochastic correction ultimately combines both approaches to further reduce the classical compu-tation time. A deterministic pass at a loose threshold 
+
+ϵd 
+
+> 2
+
+≫ ϵ2 captures the bulk of the correlation energy ex-actly, while a stochastic term recovers the difference be-tween the loose and tight thresholds: 
+
+EPT2 =
+
+
+
+ES
+
+> PT2
+
+[ϵ2] − ES
+
+> PT2
+
+[ϵd
+
+> 2
+
+]
+
+
+
++ ED
+
+> PT2
+
+[ϵd
+
+> 2
+
+]. (18) Importantly, both stochastic terms in Eq. (18) are evaluated using the same sampled batches. Because both thresholds are applied to identical sets of drawn determi-nants in every batch, their stochastic errors are strongly correlated and largely cancel out in the difference. This error cancellation is the primary source of the semis-tochastic estimator’s efficiency over a purely stochastic approach. We use ϵ2 = 10 −8 Ha and Nd = 200 throughout our study, matching the values used in Sharma et al. ; for the loose threshold, we use ϵd 
+
+> 2
+
+= 5 × 10 −6 Ha uniformly. The total correction is accumulated over N PT2 batch = 20 inde-pendent batches ( b = 1 , . . . , N PT2 batch ). Each batch yields an independent estimate E(b) 
+
+> PT2
+
+via Eq. (18). The re-ported PT2 correction is the mean over these batches, 
+
+EPT2 = 1 
+
+> NPT2 batch
+
+P 
+
+> b
+
+E(b)
+
+> PT2
+
+, with its standard error esti-mated directly from the batch-to-batch variance: 
+
+σPT2 =
+
+vuut 1
+
+N PT2 batch (N PT2 batch − 1) 
+
+> Nbatch
+
+X
+
+> b=1
+
+ E(b) 
+
+> PT2
+
+− EPT2 
+
+2.
+
+(19) Finally, the total energy reported by the end-to-end framework is: 
+
+Etotal = EV + EPT2 ± σPT2 . (20) Algorithm 1 summarizes the full cycle described above. 
+
+Algorithm 1 Iterative Q-WAVE basis augmentation  
+
+> 1:
+
+Initialize: diagonalize SqDRIFT and CISD pools sepa-rately, threshold each at ϵthresh ; D(0) ← union ∪ { HF },diagonalize → E(0) , c (0)  
+
+> 2:
+
+D(0)  
+
+> active
+
+← { x ∈ D (0) : |c(0)  
+
+> x
+
+|2 > ϵ thresh } \ { HF } 
+
+> 3:
+
+P(0) ← D (0)  
+
+> active
+
+∪ { HF }; stagnation ← 0 
+
+> 4:
+
+for s = 0 , 1, . . . , S max − 1 do  
+
+> 5:
+
+Step 1: Threshold D(s) by |c(s)|2 → D (s)
+
+> active
+
+; resample by |c(s)|2/T → training batch  
+
+> 6:
+
+Step 2: Train VAE on batch (from scratch if s =0, else warm-started); generate Q(s+1) (Sz -corrected; novelty-filtered against P(s)) 
+
+> 7:
+
+Step 3: B(s+1) ← D (s) 
+
+> active
+
+∪ Q (s+1) ∪ { HF }; ˜D(s+1) ←B(s+1) ∪ M (B(s+1) ); diagonalize → ˜E(s+1) , ˜c(s+1)  
+
+> 8:
+
+Step 4: ∆ ← E(s) − ˜E(s+1)  
+
+> 9:
+
+if ∆ > 0 then  
+
+> 10:
+
+Accept: (D(s+1) , E (s+1) , c (s+1) ) ←
+
+( ˜D(s+1) , ˜E(s+1) , ˜c(s+1) ); P(s+1) ← P (s) ∪ ˜D(s+1)  
+
+> 11:
+
+stagnation ← stagnation + 1 if ∆ < E conv else 0 
+
+> 12:
+
+else  
+
+> 13:
+
+Reject: (D(s+1) , E (s+1) , c (s+1) ) ←
+
+(D(s), E (s), c (s)), P(s+1) ← P(s); stagnation ←
+
+stagnation + 1  
+
+> 14:
+
+end if  
+
+> 15:
+
+▷ D(s+1) , c (s+1) now feed Step 1 of the next iteration  
+
+> 16:
+
+if stagnation ≥ W then  
+
+> 17:
+
+break  
+
+> 18:
+
+end if  
+
+> 19:
+
+end for  
+
+> 20:
+
+Step 5: (V, E V , c ) ← (D(s⋆), E (s⋆), c (s⋆)), s⋆ the final index reached; semistochastic PT2 → EPT2 ± σPT2  
+
+> 21:
+
+return Etotal = EV + EPT2 ± σPT2 
+
+D. Scalability of Q-WAVE 
+
+The scalability of Q-WAVE is governed by three com-ponents: the number of VAE model’s parameters which are optimized through training and later used during 7determinant generation, the size of the basis in which Hamiltonian is diagonalized, and the final PT2 correc-tion cost. We characterize the scaling of each below. 
+
+Number of VAE parameters scales polynomially. 
+
+Both the training and determinant generation processes are dependent on the parameters of the VAE neural net-work. During training, the parameters are optimized through ELBO maximization (Eq. 5). The total number of generated determinants is kept fixed (( 5 × 10 5 prior samples plus 10 5 posterior-perturbed samples)) across all studied systems. However, each generated deter-minant uses the trained parameters (Eq. 7, Eq. 8). VAE neural network’s parameter count is dictated by 
+
+h = max(256 , 8M ) and ℓ = 180 . Concretely, each Linear layer in Fig. 1 connects every one of its A in-put values to every one of its B output values through independently adjustable weights and biases, totaling 
+
+(A × B) + B numbers (the additional B is due to the bias of the neural network layer). The VAE’s total pa-rameter count is just the sum of these weights and bi-ases over all seven layers of Fig. 1. For M ≥ 32 (the 
+
+h = 8 M regime), the total parameter count comes out as Nparams (M ) = 80 M 2 + (12 ℓ + 25) M + 2 ℓ. In the strict asymptotic limit M ≫ ℓ, the total parameter count scales as O(M 2). However, at the qubit counts stud-ied here ( M = 24 -60 , comparable to ℓ), the linear term ((12 ℓ + 25) M ) remains a sizable fraction of the total, and the observed growth is sub-quadratic. For example, doubling M from 40 to 80 grows the parameter count of our VAE neural network from 215,760 to 687,160, a factor of ≈ 3.2, approaching the asymptotic factor of 4 only once M ≫ ℓ. Thus, the total VAE parameter count scales polynomially in qubit count and remains indepen-dent of |H FCI | (the dimension of the full particle and Sz
+
+conserving determinant space). Training cost is further reduced by warm-starting: only the first iteration trains a randomly initialized network to convergence, and every subsequent iteration fine-tunes for a fixed, small number of epochs. 
+
+Diagonalization happens in a compact, basis-restricted representation, never the full Hilbert space. The Hamil-tonian is diagonalized only within the adaptively selected variational basis D(s). The largest basis ever diagonal-ized in the pipeline, whether the initial, separate diago-nalizations of the particle- and Sz -filtered hardware pool and the CISD pool used to construct D(0) (Sec. II.C), or the largest basis reached during the ML loop itself, remains, by construction, only a small fraction of the full CI space |H FCI | (Table V). A sparse representation of the Hamiltonian matrix restricted to D(s) is built once per it-eration via Slater-Condon rules and never touches deter-minants outside D(s). The ground state is then obtained by the Davidson iteration, a sequence of sparse matrix vector products against this stored (never dense, never full-qubit-space) Hamiltonian matrix. Per-iteration di-agonalization cost therefore tracks |D (s)| which is con-siderably lower than |H FCI | (see Results and Discussion Section). 
+
+The PT2 correction’s cost is set by reference-space connectivity. Step 5’s deterministic term ED
+
+> PT2
+
+[ϵd
+
+> 2
+
+] (Eq. (16)) evaluates, for every determinant in the converged space V, its screened connections to external determi-nants. Sharma et al. 41 establish that the number of such nonzero connections scales as O(n2v2|V| ) (where n
+
+and v are the occupied/virtual orbital counts, and |V| 
+
+is the number of determinants in the variational space). This is linear in |V| with a connectivity factor polyno-mial in system size. The stochastic term (Eq. (17)) grows sublinearly with |V| (as reported in 41 ), since low-weight reference determinants are sampled only rarely. A purely deterministic evaluation at the tight thresh-old ϵ2 is memory-prohibitive at the reference-space sizes reached here, since every external determinant surviving screening must be stored. A purely stochastic evalua-tion at ϵ2 avoids this, but needs many samples to con-trol its statistical error at such a tight threshold. The semistochastic combination (Eq. (18)) instead evaluates the stochastic term at both ϵ2 and ϵd 
+
+> 2
+
+using the same 
+
+sampled batch of Nd determinants, so the two stochastic errors are strongly correlated and largely cancel in their difference. Because the perturbative cost scales with |V| 
+
+rather than |H FCI |, and |V| itself remains a vanishing fraction of |H FCI | as system size grows (see Results and Discussion section), the PT2 correction benefits from Q-WAVE’s compact variational wavefunction rather than becoming a bottleneck.   
+
+> III. RESULTS AND DISCUSSION A. Computational setup
+
+We assess the end-to-end iterative Q-WAVE proto-col on four molecular systems of increasing difficulty: H2O ( rOH = 0 .958 Å, ∠HOH = 104 .5◦ at equilibrium) and N 2 (rNN = 1.1 Å at equilibrium) in the 6-31G basis (canonical Restricted Hartree Fock orbitals and frozen core) across their dissociation profiles, C 2H4 (6-31G basis, canonical Restricted Hartree Fock orbitals and all-electron) at its experimental equilibrium geom-etry ( rC=C = 1 .339 Å, rC–H = 1 .086 Å, ∠HCH = 117 .6◦,
+
+∠HCC = 121 .2◦) as a 52-qubit scalability test, and the Cr 2 dimer at r = 1 .5 Å in the Ahlrichs VDZ basis as a strongly correlated stress test. For Cr 2, we work in a (24e, 30o) active space of CASSCF(12,12) natural orbitals (60 qubits). Reference energies are exact FCI for H 2O and N 2, all-electron CCSD(T) for C 2H4, and the extrapolated DMRG re-sult of Ref. 53 for Cr 2. Table I lists the per-system quantum-sampling parameters; the qDRIFT sequence length ( N = 15 ), evolution time ( t = 0 .15 ), and Krylov dimension ( d = 5 ) are common to all systems, while the shot budget and number of randomized realizations Nr
+
+vary modestly, as noted. We gradually increased the shot size and Nr with the increasing size of the molecular sys-tem to accommodate the increasing size of the Hilbert 8TABLE I. Systems and quantum-sampling parameters. All runs use qDRIFT sequences of N = 15 gates, evolution time                                                   
+
+> t= 0 .15 , and Krylov dimension d= 5 .|H FCI |is the dimension of the full particle- and Sz-conserving determinant space. Depth is the transpiled circuit depth on the production backend (ibm_kingston for H 2O/N 2/Cr 2, ibm_boston for C 2H4;optimization_level=3), reported as the median (min-max) over 20 randomly sampled qDRIFT realizations per nontrivial Krylov index k= 1 , . . . , 4; each realization draws an independent random Pauli-term sequence, so depth is a distribution rather than a fixed number. The k= 0 circuit, which contains only the constant-depth Hartree-Fock state-preparation gates and no qDRIFT evolution blocks, is excluded. System Space Qubits |H FCI |Shots / NrDepth (median, range) H2O (6-31G) (8e, 12o) 24 2.45 ×10 51024 / 100 532 (116–2194) N2(6-31G) (10e, 16o) 32 1.91 ×10 75120 / 100 1142 (244–2672) C2H4(6-31G) (16e, 26o) 52 2.44 ×10 12 5120 / 200 1757 (142–5596) Cr 2(VDZ) (24e, 30o) 60 7.48 ×10 15 5120 / 200 1445 (217–5631)
+
+space and the Hamiltonian. All Q-WAVE hyperparame-ters are collected in Table II. They are identical across all systems studied; no per-molecule tuning was performed. Five determinant-selection strategies are compared throughout: 1. Q-WAVE (SqDRIFT+CISD) represents the full protocol. This strategy serves as the primary method and is seeded by a combination of both hardware samples and Configuration Interaction Singles and Doubles (CISD) determinants. 2. Q-WAVE (CISD-only) is the first of two seed ab-lations. This strategy is used to evaluate the im-pact of the hardware data by omitting the hardware samples entirely and relying strictly on the CISD support for the initial seed. 3. Q-WAVE (HW-only) is the complementary seed ablation. In contrast to the CISD-only approach, this version omits the CISD support completely and relies exclusively on the hardware samples to seed the protocol. 4. Random proposals serves as a matched baseline that replaces the generative model with uniform random draws from the particle- and Sz -conserving determinant space, explicitly excluding the cumu-lative pool P(s) of every determinant that has ever entered an accepted basis (Eq. (14)). To ensure a rigorous comparison, this baseline is perfectly matched to the Q-WAVE (SqDRIFT+CISD) run at every other level. It starts from the same seed basis D(0) (the exact same hardware samples and CISD determinants) and, at each iteration s+1 ,draws exactly as many random determinants as the Q-WAVE (SqDRIFT+CISD) run’s generative model contributed as genuinely new accepted pro-posals. Mirror augmentation, the variational ac-cept/reject rule (Eq. (12)), and the final semis-tochastic PT2 correction (Sec. II.C, Step 5; with identical ϵ2, ϵd
+
+> 2
+
+, Nd, and Nbatch ) are all applied without modification. Therefore, the only differ-ence from the full protocol is the source of new determinants – a trained generative model versus random uniform sampling from the untouched de-terminant space. 5. SQD (Sample-based Quantum Diagonalization) is run for comparison using the baseline methodology of Ref. 27 . This strategy applies the configuration-recovery algorithm of qiskit_addon_sqd 54 directly to the identical raw hardware bitstrings used to seed Q-WAVE. SQD’s configuration-recovery hyperparameters, specifically a batch count of 
+
+N SQD batch = 10 , 300 samples per batch, and a car-ryover probability threshold of 10 −5, are held fixed across every system. Following standard SQD prac-tice, the number of retained configuration strings is capped independently at 2000 per spin sector; be-cause the diagonalized subspace is the direct prod-uct of the two sectors, this imposes a hard ceiling of 2000 2 = 4 × 10 6 on the total diagonalization di-mension. SQD is run until it reaches either its own convergence test ( |∆E| < 10 −5 Ha for 5 consecu-tive iterations, applied identically for every system) or the 4×10 6 determinant ceiling, whichever comes first. Unlike the Q-WAVE protocols, SQD receives no PT2 correction. All molecular integrals, the Hartree-Fock reference, and the CASSCF natural-orbital active space (for Cr 2)are generated using PySCF 55 . The resulting fermionic Hamiltonian is mapped to qubits using the Jordan-Wigner transformation. Circuit construction and tran-spilation are handled by Qiskit 54 , with execution per-formed on IBM Quantum hardware using their Heron r2/r3 quantum processors.  
+
+> B. Compact nature of variational Q-WAVE wavefunction
+
+Figure 2 details a single Q-WAVE run for H 2O at equi-librium and establishes how all subsequent figures are read. All three Q-WAVE variants enter the chemical-accuracy window ( ±1.6 mHa around FCI, shaded) within one to two iterations and converge to within 0.007 mHa of FCI, terminating after 10-11 iterations with a maximum 9TABLE II. Q-WAVE hyperparameters. All values are identical for every system studied; no per-molecule tuning was performed. The hidden width h follows a fixed, system-independent rule in the qubit count M (Fig. 1). Sampling parameters specific to the SqDRIFT stage are given separately in Table I. Parameter Value Parameter Value                                                            
+
+> VAE architecture and training Iterative loop
+> Latent dimension, ℓ180 Selection threshold, ϵthresh 10 −10
+> Hidden width, hmax(256 ,8M)Maximum iterations, Smax 100
+> Training batch size 10 5Stagnation window, W5
+> Tempering temperature, T2Convergence tolerance, Econv 10 −5Ha Annealing target, βtarget 0.3Semistochastic PT2
+> Epochs, cold start ( s= 0 ), τmax 1000 Tight screening threshold, ϵ210 −8Ha Epochs, warm start ( s≥1), τmax 300 Sampled determinants per batch, Nd200
+> Learning rate, warm start 7.5×10 −4Number of batches, NPT2 batch 20
+> Determinant generation (per iteration) Implementation
+> Prior samples, nprior-samples 5×10 5Optimizer Adam Posterior-perturbed samples 10 5Framework PyTorch Posterior-perturbation scale, κ6
+
+subspace that was ever diagonalized during the iterative procedure consisting of only ∼ 31 k determinants [Fig. 2(b)]. The subsequent perturbative step is correspond-ingly tiny ( EPT2 = −8.4 μHa). For an extremely good variational Q-WAVE basis, PT2 acts as a consistency check rather than a correction. Two comparisons iso-late why the method works. First, the matched random baseline with the same seed, same budget, same proto-col, only difference being the generative model replaced with a random determinant generator, stalls at +2 .0 mHa (variational energy). This proves that the Q-WAVE ac-tually guides the growth of the wavefunction towards the dominant determinants. Second, SQD requires 147 k de-terminants (60% of this system’s entire FCI space) to finally converge. Thus, Q-WAVE produces a compact wavefunction while maintaining high energy accuracy.  
+
+> C. Potential energy surfaces
+
+Chemical accuracy at a single geometry is necessary but not sufficient; a useful method must be uniformly accurate along a potential surface. Figures 3 and 4 show the dissociation profiles of H 2O (symmetric O–H stretch) and N 2 over bond-length scale factors of 0.75–2.5 using the developed Q-WAVE(SqDRIFT+CISD) method. For water [Fig. 3(a)], both the variational and PT2-corrected errors are below 0.015 mHa at every geometry. For N 2
+
+[Fig. 4(a)], the variational error grows smoothly from 
+
+0.12 to 0.30 mHa as the triple bond is stretched and the PT2 correction returns every geometry to within 
+
+0.17 mHa of FCI. Panels (b) illustrate the accompany-ing cost: the maximal subspace is essentially geometry-independent for water (30–34k determinants, 12–14% of its FCI space), while for N 2 it grows from 161k at com-pressed geometry to 338k toward dissociation. For N 2,this is around 1.8% of the 1.9 × 10 7-determinant FCI space. Thus throughout the potential energy surfaces of H2O and N 2, we get highly accurate ground state ener-gies with very compact wavefunctions.  
+
+> D. Beyond exact diagonalization and a stress test
+
+Ethylene molecule (C 2H4, 52 qubit) has a FCI determi-nant space of 2.4 × 10 12 , which is beyond exact diagonal-ization [Fig. 5]. SQD saturates the 4 × 10 6 determinant cap and stalls 17 mHa above CCSD(T), while all three Q-WAVE variants converge smoothly to under ∼ +0 .6
+
+mHa variationally with ∼ 850 k determinants. The PT2-corrected energies land below CCSD(T) for every vari-ant, though not uniformly: Q-WAVE(SqDRIFT+CISD) and Q-WAVE(HW-only) land ∼ 0.85 mHa below ( −0.85 
+
+and −0.86 mHa respectively), while Q-WAVE(CISD-only) lands closer to CCSD(T) at ∼ 0.45 mHa below. Since Evar + EPT2 is not variational and CCSD(T) is it-self approximate, we regard sub-mHa mutual agreement between these two independent methods on this single-reference system as cross-validation of both. Interest-ingly, the random baseline has a flat variational profile. This follows directly from how its per-iteration draw bud-get scales against the determinant space. Each iteration draws only as many random determinants as the novel determinants proposed by VAE in the corresponding Q-WAVE(SqDRIFT+CISD) run. This draw is very small compared to the 2.4 × 10 12 FCI determinant space. Ran-dom draws rarely produce determinants that lower the energy below the current minimum. Under the standard variational accept/reject rule (Step 4 in Section IIC), these proposals are almost universally rejected, causing the algorithm to revert to the previous best variational space and leaving the reported trajectory essentially flat. Cr 2 at 1.5 Å is a canonical worst case for electronic-structure methods: in the (24e, 30o) natural-orbital ac-tive space, the determinant space contains 7.5×10 15 con-figurations. Figure 6 summarizes the outcome, measured against the DMRG reference energy of −2086 .42095 Ha. SQD, which performed respectably for the weakly cor-10 FIG. 2. (a) Ground-state energy of H 2O (6-31G, equilibrium) versus iteration for the five selection strategies. Iteration 0
+
+denotes the initial basis D(0) , prior to any generative expansion. The shaded band marks chemical accuracy ( ±1.6 mHa) around FCI (dashed line); the black-edged symbols beyond the final iteration show each method’s energy after the semistochastic PT2 correction, drawn as one additional step on its own trajectory. SQD does not receive a PT2 step. (b) Subspace sizes: filled symbols with solid lines show the diagonalization dimension; open symbols with dashed lines show the number of determinants above the selection threshold ϵthresh = 10 −10 .
+
+FIG. 3. Potential energy surface of H 2O (6-31G, symmetric O–H stretch), compared across all five selection strategies (color/marker key in panel (b), shared with panel (a)). Bond-length scale factor of 1.00 represents the equilibrium geometry and the other scales are factors by which both O–H bonds are stretched. (a) Absolute energy error |E − EFCI | (log scale) at each geometry, using each method’s final reported energy ( Evar + EP T 2). SQD has no PT2 correction. The chemical-accuracy threshold ( 1.6 mHa) is marked by the dashed line, with the region below it shaded. (b) Maximal diagonalization dimension reached by each method at each geometry, shown as grouped bars on a log scale. 
+
+related systems, degrades sharply: its configuration-recovery iterations saturate the same 4×10 6-determinant cap used elsewhere in this study after only 12 iterations, without approaching convergence – an error of +180 
+
+mHa, two orders of magnitude outside chemical accu-racy. The random baseline variationally saturates 256 
+
+mHa above the reference and, notably, the end PT2 cor-rection evaluated on that reference is not merely inaccu-rate but unphysical, overshooting far below the DMRG energy ( Evar +EPT2 = −2086 .60477 Ha, i.e. −183 .8 mHa on the wrong side of the reference). Because the PT2 de-nominators and the first-order interacting space are both 11 FIG. 4. Potential energy surface for N 2 (6-31G), compared across all five selection strategies (color/marker key in panel (b), shared with panel (a)). Bond-length scale factor of 1.00 represents the equilibrium geometry and the other scales are factors by which N–N bond is stretched. (a) Absolute energy error |E − EFCI |(log scale) at each geometry, using each method’s final reported energy ( Evar + EP T 2). SQD has no PT2 correction. The chemical-accuracy threshold ( 1.6 mHa) is marked by the dashed line, with the region below it shaded; the three Q-WAVE variants remain within or close to this band at every geometry, while random proposals and SQD grow substantially worse as the bond is stretched. (b) Maximal diagonalization dimension reached by each method at each geometry, shown as grouped bars on a log scale; SQD requires roughly an order of magnitude more determinants than any Q-WAVE variant at every geometry. 
+
+FIG. 5. (a) Ground-state energy of all-electron C 2H4 (6-31G; rC=C = 1 .339 Å, rC–H = 1 .086 Å, ∠HCH = 117 .6◦, ∠HCC =121 .2◦) versus iteration for the five selection strategies, referenced to CCSD(T). The shaded band marks chemical accuracy (±1.6 mHa) around CCSD(T) (dashed line); black-edged symbols beyond the final iteration show each method’s energy after the semistochastic PT2 correction, drawn as one additional step on its own trajectory. SQD does not receive a PT2 step: its configuration-recovery iterations saturate the 4 × 10 6-determinant cap while stalling 17 mHa above CCSD(T), whereas all three Q-WAVE variants converge into the CCSD(T) band with a roughly five-fold smaller basis. (b) Subspace sizes: filled symbols with solid lines show the diagonalization dimension; open symbols with dashed lines show the number of determinants above the selection threshold ϵthresh = 10 −10 .
+
+12 inherited from the variational reference, PT2 amplifies rather than repairs a qualitatively wrong wavefunction. The three Q-WAVE variants all converge smoothly to variational errors of 15 –16 mHa with ∼ 1.8–1.9 mil-lion determinants – a mere 2.6 × 10 −10 of the full de-terminant space. The decisive comparison, however, is at the chemical-accuracy threshold: the CISD-only and hardware-only seeds finish at central values +4 .43 ± 1.61 
+
+and +5 .22 ± 2.05 mHa respectively, just outside the win-dow, while the full SqDRIFT+CISD protocol is the only variant to land inside , at 
+
+Evar + EPT2 = −2086 .41958 ± 0.00174 Ha 
+
+(+1 .37 ± 1.74 mHa vs. DMRG ).
+
+The full protocol gives the lowest error, and is the only variant whose central value falls inside the window, though the three are not separated beyond the PT2 sta-tistical uncertainty for the case of Cr 2. Nevertheless, this highlights a key structural advantage of the method: the user-defined seed. While a user may choose for a purely classical (CISD) or purely quantum (hardware) initialization, combining them captures the best of both domains. Neither ingredient suffices alone, as hardware samples provide unique determinant combinations inac-cessible to the CISD-seeded model. Although this syner-gistic advantage is partially masked by statistical noise in Cr 2, integrating both sources is designed to yield su-perior performance in larger, more challenging systems. Moreover, as quality of hardware improves, we will ob-tain more meaningful hardware samples, making the ini-tial seed better.  
+
+> E. Classical resource cost: generative model versus diagonalization
+
+A natural objection to any generative model-assisted selected CI method is that the model itself might become the classical bottleneck it is meant to avoid. We address this directly for Cr 2 (the hardest system studied here) by recording, for the full 100-iteration Q-WAVE (Sq-DRIFT+CISD) run, two isolated measures: the VAE’s peak Graphical Processing Unit (GPU) memory and the diagonalizer’s memory. The Cr 2 has the same geometry as studied in Figure 6. Fig. 7 records this study and tells a clear story. The GPU memory footprint of VAE (VAE lives in GPU) is low and remains constant throughout the iterative pro-cess. This is because the number of VAE parameters remain fixed for a given qubit number (see Section IID). The wall time for VAE also remains constant, except for the first iteration, where the model must undergo 1000 
+
+training epochs. On the other hand, the diagonaliza-tion memory footprint and wall time grows as new dom-inant determinants inflate the subspace. We take this as direct evidence against the concern that motivates this section: not only is the VAE cost small, it remains al-most fixed with the increase in the subspace size. On the other hand, the diagonalization cost is exactly where classical resource pressure concentrates. The end PT2 is a one step computation. As showcased in Ref. 56 , it is highly parallelizable and very efficient implementation is described in the same reference. Hence, the study of PT2 cost is left out of this discussion of whether VAE cost becomes a bottleneck or not.  
+
+> F. Comparative study with other methods
+
+All our studied molecules already contain a compari-son with standard SQD (configuration recovery). Here we perform additional comparisons: (a) with HI-VQE 57 ,(b) comparison with another standard generative model -Restricted Boltzmann machine (RBM), and (c) the clas-sical HCI 40 . 
+
+> 1. Comparison with HI-VQE
+
+HI-VQE 57 uses a variationally optimized circuit to pro-pose electronic configurations that are then diagonalized classically. As HI-VQE manuscript contains a tabular representation of the Ammonia (NH 3) molecule’s results, we run iterative Q-WAVE (SqDRIFT + CISD) for this molecule (Fig. 8). In particular, we take NH 3 at the coor-dinates r(N –H) = 1 .0190 Å and ∠(H –N–H) = 105 .998 ◦.We independently run Hartree-Fock and Complete Ac-tive Space CI (CASCI) which match with their reported values. This confirms our geometry is exactly same as theirs. The full CI space consists of 9,018 ,009 determi-nants. Figure 8 reveals a clear story. Q-WAVE converges to a better accuracy using fewer determinants. The ad-vantage appears well before convergence. By iteration 3, Q-WAVE has already matched HI-VQE’s best energy with a maximum diagonalization dimension of 121 ,224 
+
+determinants (HI-VQE takes 199 ,809 to reach its best). Q-WAVE’s remaining iterations take its energy error to 
+
+0.070 mHa (from CASCI) compared to the 0.24 mHa for HI-VQE.  
+
+> 2. Comparison with Restricted Boltzmann Machine
+
+The restricted Boltzmann machine (RBM) is a stan-dard generative model that has been used extensively to describe molecular wavefunctions 44,58,59 . Moreover, it has been used as a determinant generator 19,43,45 . For ex-ample, PIGen-SQD 45 , developed by our group, describes a novel method of utilizing an RBM together with clever perturbative determinant formation to produce accurate and compact molecular wavefunctions. In this method, a major fraction of the dominant determinants are folded into the variational space at the start by using efficient perturbative measures. Subsequently, the RBM acts as a standard generative engine, expanding this subspace 13 FIG. 6. (a) Ground-state energy of Cr 2 (r = 1 .5 Å, Ahlrichs VDZ, (24e,30o) CASSCF(12,12) natural orbitals) versus iteration for the five selection strategies, referenced to DMRG ( −2086 .42095 Ha). The shaded band marks chemical accuracy ( ±1.6 mHa) around DMRG (dashed line); black-edged symbols beyond the final iteration show each method’s energy after the semistochastic PT2 correction, drawn as one additional step on its own trajectory. SQD does not receive a PT2 step. The three Q-WAVE variants are indistinguishable on this scale and overlap; the lower strip replays their last 12 iterations and final PT2-corrected points on a linear, zoomed scale (deviation from DMRG in mHa, with the same chemical-accuracy band shaded): only the full SqDRIFT+CISD variant lands inside the band after PT2 ( +1 .37 ± 1.74 mHa), while CISD-only ( +4 .43 ± 1.61 mHa) and HW-only ( +5 .22 ± 2.05 mHa) fall just outside it. The random baseline’s PT2 result lies far off scale on the main panel (marker pinned at the lower edge, labeled with its true value). (b) Subspace sizes: filled symbols with solid lines show the diagonalization dimension; open symbols with dashed lines show the number of determinants above the selection threshold ϵthresh = 10 −10 .
+
+to produce highly compact wavefunctions and accurate ground state energies. While the RBM is a well known generative model for wavefunction representation, the primary innovative step of Q-WAVE is the custom-built VAE architecture, which combines a β-annealing sched-ule with a two-step sampling process: sampling from the prior and from an inflated latent-space representation of the training determinants. A natural question is whether the VAE’s role as the generative determinant proposer is essential, or whether a simpler, standard generative model would perform com-parably. We address this by replacing the VAE with an RBM while holding every other part of the iterative Q-WAVE protocol fixed: the same SqDRIFT+CISD seed, the same 600 ,000 determinant generation budget per it-eration, and the same accept/rollback convergence logic. PT2 is omitted from this comparison so that the gener-ator is the sole variable. We evaluate the performance on N 2 stretched to 2.5 Req and on Cr 2, the same sys-tems used in the previous sections. N2 acts as a small control system, verifying that the RBM, set up at PIGen-SQD’s published settings, functions as a sound standard generator within the iterative Q-WAVE pipeline. Cr 2
+
+is a highly correlated system with a large |H FCI |; gen-erating dominant determinants within such a large and strongly correlated space provides a demanding environ-ment in which to distinguish the capabilities of the two generators. The RBM implementation (including its hy-perparameters) is a direct, operation-for-operation copy of our published PIGen-SQD implementation 45 ; we sim-ply swap the VAE generator in the iterative Q-WAVE method (Section IIC) with this RBM. Table III reports the variational energy at termination, the absolute er-ror against the respective reference (FCI for N 2, DMRG for Cr 2), and the maximum diagonalization dimension reached by each generator. On N 2 the two generators are indistinguishable. Both reach well inside chemical accuracy – 0.299 mHa (VAE) and 0.251 mHa (RBM). Moreover, during the iterative Q-WAVE run with the RBM for N 2, the calculation passes through a diagonalization dimension of 424 ,507 , the point in its trajectory closest to the VAE’s final 337 ,781 al-though still 26% larger, and at that point its error rela-tive to FCI is 0.266 mHa. The RBM, at PIGen-SQD’s published settings, therefore functions as a sound gener-ator inside the Q-WAVE pipeline, and at this system size the choice between the two is immaterial. On Cr 2, the larger (60-qubit) system, the picture 14 FIG. 7. VAE versus diagonalization classical resource cost, Cr 2 (Q-WAVE SqDRIFT+CISD protocol, no PT2 at the end). Iteration 0 comprises three separate diagonalizations run before the ML loop begins (hardware determinant diagonalization, CISD determinant diagonalization, and their combined/filtered basis); the value plotted at iteration 0 in each panel is the maximum of the three, with all three individual values given in the figure. (a) Peak memory per iteration: diagonalization footprint grows from 1.09 GB at iteration 0 to 4.82 GB at iteration 100 as the basis expands; the VAE’s isolated GPU peak (blue) is constant at 0.44 GB across iterations 1-100 (it has no iteration-0 call). (b) Wall time per step: diagonalization grows from 1.8s to 49 s; the VAE settles to ∼29 s after a one-time 93 s cold-start training pass at iteration 1. TABLE III. VAE versus RBM generator, SqDRIFT+CISD variant, Evar only (no PT2). Errors are absolute deviations from FCI (N 2) or DMRG (Cr 2). Both Cr 2 runs terminated at the Smax = 100 iteration cap without satisfying the convergence criterion. System Generator Evar at termination (Ha) Error (mHa) Max. diag. dim. N2 (2.5 Req ) VAE −108 .83948254 0.299 337 ,781 
+
+RBM −108 .83953059 0.251 694 ,337 
+
+Cr 2
+
+VAE −2086 .40533223 15 .618 1,923 ,282 
+
+RBM −2086 .27965233 141 .298 1,332 ,171 
+
+changes. The RBM’s error is 9.0× larger than the VAE’s, and it reaches this worse energy while diagonal-izing a smaller maximum subspace despite an identical per-iteration generative budget of 600 ,000 . Both gener-ators run to the same Smax = 100 -iteration cap without satisfying the convergence criterion of energy improve-ment on Cr 2. So the RBM’s smaller subspace cannot be attributed to premature stopping; it reflects fewer domi-nant determinants surviving the screening per iteration. We attribute this to the comparative diffuseness of the RBM’s proposal distribution. In N 2’s modest Hilbert space, diffuse proposals still land on genuinely new dom-inant determinants, so the only cost is a larger maxi-mum diagonalization subspace for comparable accuracy. In Cr 2’s far larger space, they land predominantly on de-terminants that are screened out, and the growth of the variational space stalls. Importantly, during the itera-tive Q-WAVE run with the VAE for Cr 2, the calculation passes through a comparable diagonalization dimension of 1,337 ,543 (against the RBM’s final 1,332 ,171 ) at one of its iterative steps, and at that point its error is 21 .9
+
+mHa, already far smaller than the RBM’s final 141 .3 mHa at essentially the same subspace size. Returning to the question posed at the outset: the VAE is not needed everywhere, but it is needed exactly where Q-WAVE is meant to be deployed. At N 2’s system size, a standard RBM generator, at published settings and with no re-tuning, matches the VAE, and the choice of generative model is of no practical consequence. The separation appears only as the Hilbert space grows. On Cr 2, un-der an identical generation budget and an identical iter-ation cap, the RBM converges to an energy 9.0× further from the DMRG reference, and remains worse by a fac-tor of six even when the VAE is compared against it at a 15 FIG. 8. Comparison with HI-VQE for NH 3 in the 6-31G basis ( 15 orbitals, 10 electrons, 30 qubits). (a) Error with respect to CASCI against diagonalization subspace size. Both axes are logarithmic. Squares are the three HI-VQE calculations using their tuning parameter m. Circles trace the entire iterative Q-WAVE, with the filled circle marking the iteration at which we match the best HI-VQE energy and the star, the converged Q-WAVE variational result. We do not invoke the end PT2 correction for Q-WAVE to keep it analogous to HI-VQE. (b) Converged Q-WAVE variational result relative to the best HI-VQE calculation. The number of determinants for Q-WAVE is taken to be the maximum diagonalization space encountered during its iterative run. Values below unity indicate simultaneous improvement in both accuracy and subspace size. 
+
+matched subspace dimension. Since the regime in which a quantum-assisted method is worth deploying at all is precisely the regime of large, strongly correlated Hilbert spaces, the generator’s behavior there, not its behavior on moderate systems, is what decides the design. On that criterion, the custom VAE architecture is fully justified.  
+
+> 3. Comparison with Heat-Bath Configuration Interaction
+
+Heat-bath configuration interaction (HCI) 40 con-structs its variational space deterministically, admitting determinants from the first-order interacting space whose estimated coefficient exceeds a threshold ϵ1. It is among the most determinant-efficient classical solvers available for strongly correlated systems, and Ref. 41 reports Cr 2
+
+in the Ahlrichs VDZ basis at r = 1 .5 Å with a frozen Mg core (24 electrons in 30 orbitals), using natural orbitals from a (12e, 12o) CASSCF. This is the same Hamilto-nian, active space, and orbital set employed here, so the two methods may be compared directly. This comparison is given in Table IV Since Q-WAVE already adopts the semistochastic perturbative stage of SHCI 41 , the com-parison isolates what actually differs between them: how the variational space is built. The two methods sit at opposite ends of the same trade-off (Table IV). On determinant count, HCI is de-cisively compact: its 42 ,945 -determinant wavefunction is smaller than the Q-WAVE seed subspace, and Q-WAVE requires 430 ,471 determinants, a factor of ten more, be-                                       
+
+> TABLE IV. Cr 2(24e, 30o, Ahlrichs VDZ, r=1.5Å): Q-WAVE against HCI 40 , the latter runs at ϵ1=1mHa,
+> ϵ2=10 μHa. Deviations are signed, relative to the con-verged DMRG value 53 . The HCI variational energy is quoted in Ref. 40 to three decimal places, so the corresponding devia-tion carries an uncertainty of ±0.5mHa. Method Ndet Evar (Ha) Evar +EPT2 (Ha) HCI ( ϵ1= 1 mHa) 42 ,945 −2086 .368 −2086 .42130
+> Q-WAVE 1,923 ,282 −2086 .40533 −2086 .41958
+> DMRG 53 ——−2086 .42095
+
+fore its variational energy falls below the HCI value. This is the expected consequence of the two selection mecha-nisms. HCI evaluates an importance criterion directly from the Hamiltonian matrix elements and admits only determinants connected to the current space, which is maximally efficient but confines growth to the first-order interacting space at every step. Q-WAVE proposes deter-minants from a learned latent geometry with no locality restriction and no explicit selection rule, and pays for that reach in compactness. The ordering reverses on the quality of the variational wavefunction. Q-WAVE reaches Evar = −2086 .40533 Ha, 
+
+37 mHa below the HCI variational energy at ϵ1 = 1 mHa, and correspondingly requires a perturbative correction of only −14 .25 mHa against HCI’s −53 .3 mHa. The total energies bracket the DMRG reference, HCI overshooting by 0.35 mHa and Q-WAVE falling short by 1.4 mHa, both within chemical accuracy. Because the second-order cor-16 rection is a perturbative expansion about a space that is incomplete, it is the least controlled component of a selected-CI estimator; a variational energy standing closer to the reference before any correction is applied is a meaningful property in its own right. We note that 
+
+ϵ1 = 1 mHa is one point on the HCI accuracy-cost curve, selected because it is the point for which Ref. 56 reports the determinant count; smaller ϵ1 yields larger variational spaces and lower variational energies. These two profiles, economical but local selection against expansive but nonlocal proposal, are complemen-tary rather than competing, a point we return to in Sec-tion IV.  
+
+> G. Discussion
+
+Three observations organize the results (Table V). 
+
+The generative model, not basis growth, drives conver-gence. For every system studied, the matched random baseline fails to enter the chemical-accuracy window vari-ationally, stalling at 2 mHa (H 2O eq.) to 256 mHa (Cr 2). For weakly correlated systems, PT2 can still repair the random basis. As correlation strengthens, this rescue collapses and finally inverts into large overcorrection for Cr 2. PT2 is trustworthy when the underlying reference is sound, a regime the generative expansion reaches and uniform sampling does not. 
+
+Compactness compared to FCI space is the enabling property. Q-WAVE’s subspaces undercut SQD’s by fac-tors of ≈ 2 − 21 at equal or better accuracy, and the gap widens with system size: at the Cr 2 scale, the work-ing basis occupies ten orders of magnitude less than the full determinant space. Because the classical diagonal-ization dominates the wall time at these scales, compact-ness translates directly into reach – the largest Cr 2 di-agonalizations ( ∼1.9M determinants) remain routine for the Davidson solver, while the quantum resource require-ments stay fixed and modest (no more than 5120 shots per circuit, N = 15 qDRIFT blocks). 
+
+Hardware samples earn their place. While our method’s modular initialization allows users to rely on a purely classical CISD seed, which proves sufficient for weakly correlated systems where the seed ablations are nearly degenerate, the value of combining CISD deter-minants with hardware sampled determinants becomes indicative in more challenging regimes. As we move to a larger, more difficult system (Cr 2), it is the only initial-ization that successfully drives the final energy (central value) to chemical accuracy. However, the central value energies using all three initialization (SqDRIFT+CISD, CISD only, and HW only) seeds follow closely, falling within a standard deviation of one another. For Cr 2,combining the seeds yields an overall improvement, even if neither individual seed clearly dominates the gain. Be-cause seed selection in our framework is fully modular, accepting any determinant set to initialize the VAE, we anticipate this balance will shift over time. As hardware sampling quality advances, the SqDRIFT seed will be-come a more decisive contributor. Moreover, as molecu-lar size and wavefunction complexity scale, a standalone CISD seed will ultimately prove inadequate.  
+
+> IV. CONCLUSION AND FUTURE DIRECTIONS
+
+We have introduced Q-WAVE, a hybrid quantum-classical framework in which a β-annealed variational autoencoder learns the support structure of a molecu-lar ground-state wavefunction. Seeded by a synergis-tic combination of SqDRIFT-sampled hardware determi-nants and CISD space, the VAE generates new dominant determinants that lie strictly outside both the sampled distribution and any fixed excitation hierarchy. By reg-ularizing the continuous latent space via the KL term in the ELBO, the model places chemically related de-terminants at neighboring latent coordinates. This con-verts determinant discovery from a blind combinatorial search to a targeted geometric one: prior sampling ex-plores regions of the latent manifold not directly repre-sented in the training data, while inflated posterior sam-pling exploits the neighborhoods of configurations that already carry large CI weight. Embedded in a generation-diagonalization loop, our method systematically grows a compact variational subspace toward the true support of the ground state. Across four benchmark systems of increasing difficulty, our method achieves chemical accuracy with a very com-pact wavefunction representation. The hardware samples become important precisely where the classical excitation hierarchy ceases to be a useful organizing principle. This underscores the core advantage of our user-defined ini-tialization: uniting the CISD and SqDRIFT seeds cap-tures the best of both domains, injecting essential mul-tireference determinants that enable the generative loop to explore a richer chemical space. Broadly, this sug-gests that the route to scalability in quantum-centric elec-tronic structure lies not in ever-larger shot budgets but in learning the wavefunction’s structure from a limited number of highly informative quantum samples. Mea-sured against other quantum-centric methods, Q-WAVE is consistently more accurate using a compact wavefunc-tion. It achieves energies equal to or better than those of standard SQD with 2-21 × fewer determinants. Also, compared to the state-of-the-art HI-VQE, it achieves higher accuracy with fewer determinants. The genera-tor (VAE), with seeds drawn from hardware and elec-tronic structure calculations, itself is what carries this. In summary, Q-WAVE therefore stands currently as the most determinant-efficient route among quantum-centric solvers. Several methodological extensions follow naturally. First, the Bernoulli decoder used here places no con-straint on particle number or spin projection, both of which are currently restored by an explicit post hoc cor-rection applied separately to the α and β blocks. Autore-17 TABLE V. Summary of final energies and subspace sizes for some of the representative systems studied here. Errors are reported relative to the reference in the second column ( ∆Evar ). Parenthetical values in the ∆( Evar + EPT2 ) column give the statistical uncertainty ( σPT2 ) in units of the last digit(s) of the preceding number [e.g. −0.0029(46) mHa denotes −0.0029 ± 0.0046 mHa]. 
+
+Dmax is the largest diagonalization dimension reached. Q-WAVE denotes the full SqDRIFT+CISD protocol. System Ref. ∆Evar (mHa) EPT2 (mHa) ∆( Evar +EPT2 ) (mHa) DQ-WAVE  
+
+> max
+
+DSQD  
+
+> max
+
+DQ-WAVE  
+
+> max
+
+/|H FCI |
+
+H2O eq. FCI +0 .005 −0.008 −0.0029(46) 31 .6k 147 k 13% 
+
+H2O 2.5× FCI +0 .009 −0.013 −0.0046(82) 33 .6k 178 k 14% 
+
+N2 eq. FCI +0 .122 −0.087 +0 .035(27) 194 k 4.0M 1.0% 
+
+N2 2.5× FCI +0 .299 −0.347 −0.05(25) 338 k 4.0M 1.8% 
+
+C2H4 eq. CCSD(T) +0 .531 −1.379 −0.85(20) 857 k 4.0M 3.5 × 10 −7
+
+Cr 2 1.5 Å DMRG +15 .62 −14 .25 +1 .4(17) 1.92 M 4.0M 2.6 × 10 −10 
+
+gressive or masked decoders that enforce Nα and Nβ by construction would eliminate this correction and likely improve the yield of accepted proposals per generated candidate. Another direction is merging Q-WAVE directly with HCI. The two methods are complementary in a way that the present work only partially exploits: we currently adopt the semistochastic perturbative stage of SHCI, while VAE generation-diagonalize-threshold criterion for the variational stage. HCI proposes determinants from the first-order interacting space. Reaching a configura-tion several excitations away requires HCI to traverse a continuous chain of intermediates that must each sur-vive the selection threshold, a route that routinely breaks down in strongly multireference regimes. The generative model possesses the exact opposite profile: its propos-als carry no locality restriction and can jump far from the current support. A hybrid approach, in which the VAE supplies nonlocal candidates in combination with an HCI-like interacting space, would combine a globally aware proposal distribution. Combining the strengths of both HCI and Q-WAVE would result in a highly compact dominant determinant space that can be reached quickly. Finally, because nothing in the generative loop is strictly limited to ground-state, extensions to excited states and extended transition-metal systems, all follow directly from the machinery established here. 
+
+V. ACKNOWLEDGMENT 
+
+We acknowledge the use of IBM Quantum Credits Pro-gram for this work. SH acknowledges the Council of Scientific and Industrial Research (CSIR) for their fel-lowship. CP acknowledges the University Grants Com-mission (UGC) for the fellowship. RM acknowledges the financial support from the Industrial Research and Con-sultancy Centre (IRCC), IIT Bombay. 
+
+AUTHOR DECLARATIONS Conflict of Interest: 
+
+The authors have no conflict of interest to disclose. 
+
+DATA AVAILABILITY 
+
+The code implementing the Q-WAVE pipeline de-scribed in Sec. II, including the hardware-sampled data underlying the N 2 (2.5×) result reported here, is openly available at https://github.com/theomolsci/QWAVE .
+
+REFERENCES:         
+
+> 1A. Peruzzo, J. McClean, P. Shadbolt, M.-H. Yung, X.-Q. Zhou, P. J. Love, A. Aspuru-Guzik, and J. L. OâĂŹbrien, “A variational eigenvalue solver on a photonic quantum processor,” Nature com-munications 5, 4213 (2014).
+> 2J. R. McClean, J. Romero, R. Babbush, and A. Aspuru-Guzik, “The theory of variational hybrid quantum-classical algorithms,” New Journal of Physics 18 , 023023 (2016).
+> 3A. Kandala, A. Mezzacapo, K. Temme, M. Takita, M. Brink, J. M. Chow, and J. M. Gambetta, “Hardware-efficient variational quantum eigensolver for small molecules and quantum magnets,” Nature 549 , 242–246 (2017).
+> 4J. Romero, R. Babbush, J. R. McClean, C. Hempel, P. J. Love, and A. Aspuru-Guzik, “Strategies for quantum computing molec-ular energies using the unitary coupled cluster ansatz,” Quantum Science and Technology 4, 014008 (2018).
+> 5H. R. Grimsley, S. E. Economou, E. Barnes, and N. J. Mayhall, “An adaptive variational algorithm for exact molecular simula-tions on a quantum computer,” Nature Communications 10 , 3007 (2019).
+> 6M. Cerezo, A. Arrasmith, R. Babbush, S. C. Benjamin, S. Endo, K. Fujii, J. R. McClean, K. Mitarai, X. Yuan, L. Cincio, and P. J. Coles, “Variational quantum algorithms,” Nature Reviews Physics 3, 625–644 (2021).
+> 7E. R. Anschuetz and B. T. Kiani, “Quantum variational algo-rithms are swamped with traps,” Nature Communications 13 ,7760 (2022).
+> 8J. R. McClean, S. Boixo, V. N. Smelyanskiy, R. Babbush, and H. Neven, “Barren plateaus in quantum neural network training landscapes,” Nature Communications 9, 4812 (2018).
+> 9M. Larocca, S. Thanasilp, S. Wang, K. Sharma, J. Biamonte, P. J. Coles, L. Cincio, J. R. McClean, Z. Holmes, and M. Cerezo,
+
+18 “Barren plateaus in variational quantum computing,” Nature Re-views Physics , 1–16 (2025). 
+
+> 10
+
+H. R. Grimsley, G. S. Barron, E. Barnes, S. E. Economou, and N. J. Mayhall, “Adaptive, problem-tailored variational quantum eigensolver mitigates rough parameter landscapes and barren plateaus,” npj Quantum Information 9, 19 (2023). 
+
+> 11
+
+Y. Matsuzawa and Y. Kurashige, “Jastrow-type decomposition in quantum chemistry for low-depth quantum circuits,” Journal of chemical theory and computation 16 , 944–952 (2020). 
+
+> 12
+
+Y. S. Yordanov, D. R. Arvidsson-Shukur, and C. H. Barnes, “Ef-ficient quantum circuits for quantum computational chemistry,” Physical Review A 102 , 062612 (2020). 
+
+> 13
+
+J. Rivera-Dean, P. Huembeli, A. Acín, and J. Bowles, “Avoid-ing local minima in variational quantum algorithms with neural networks,” arXiv preprint arXiv:2104.02955 (2021). 
+
+> 14
+
+D. Mondal, D. Halder, S. Halder, and R. Maitra, “Development of a compact Ansatz via operator commutativity screening: Dig-ital quantum simulation of molecular systems,” The Journal of Chemical Physics 159 , 014105 (2023). 
+
+> 15
+
+S. Halder, C. Patra, D. Mondal, and R. Maitra, “Machine learn-ing aided dimensionality reduction toward a resource efficient projective quantum eigensolver: Formal development and pi-lot applications,” The Journal of Chemical Physics 158 (2023), 244101. 
+
+> 16
+
+D. Halder, D. Mondal, and R. Maitra, “Noise-independent route toward the genesis of a compact ansatz for molecular energet-ics: A dynamic approach,” The Journal of Chemical Physics 160 
+
+(2024). 
+
+> 17
+
+C. Patra, S. Halder, and R. Maitra, “Projective quantum eigen-solver via adiabatically decoupled subsystem evolution: A re-source efficient approach to molecular energetics in noisy quan-tum computers,” The Journal of Chemical Physics 160 (2024). 
+
+> 18
+
+C. Patra, D. Mukherjee, S. Halder, D. Mondal, and R. Maitra, “Toward a resource-optimized dynamic quantum algorithm via non-iterative auxiliary subspace corrections,” The Journal of Chemical Physics 161 (2024). 
+
+> 19
+
+S. Halder, A. Dey, C. Shrikhande, and R. Maitra, “Ma-chine learning assisted construction of a shallow depth dy-namic ansatz for noisy quantum hardware,” Chemical Sci-ence 15 , 3279–3289 (2024), https://pubs.rsc.org/sc/article-pdf/15/9/3279/9402549/d3sc05807g.pdf. 
+
+> 20
+
+C. Patra and R. Maitra, “Energy landscape plummeting in variational quantum eigensolver: Subspace optimization, non-iterative corrections, and generator-informed initialization for im-proved quantum efficiency,” The Journal of Chemical Physics 
+
+163 , 024112 (2025). 
+
+> 21
+
+Z. Ding, Y. Zhan, J. Preskill, and L. Lin, “Simple and efficient end-to-end quantum thermal and ground state preparation,” Na-ture Physics , 1–5 (2026). 
+
+> 22
+
+Y. Wang, I. Avdic, and D. A. Mazziotti, “Shadow ansatz for the many-fermion wave function in scalable molecular simulations on quantum computing devices,” Physical Review A 112 , 022432 (2025). 
+
+> 23
+
+S. Patel, P. Jayakumar, R. Huang, T. Zeng, and A. F. Izmaylov, “Quantum seniority-based subspace expansion: Linear combina-tions of short-circuit unitary transformations for the electronic structure problem,” Journal of Chemical Theory and Computa-tion 22 , 3937–3949 (2026). 
+
+> 24
+
+D. Mondal, A. K. Patra, and R. Maitra, “Advancing practi-cal quantum embedding simulations via operator commutativity based state preparation for complex chemical systems,” Chemical Science (2026). 
+
+> 25
+
+N. Yoshioka, M. Amico, W. Kirby, P. Jurcevic, A. Dutt, B. Fuller, S. Garion, H. Haas, I. Hamamura, A. Ivrii, R. Majumdar, Z. Minev, M. Motta, B. Pokharel, P. Rivero, K. Sharma, C. J. Wood, A. Javadi-Abhari, and A. Mezzacapo, “Krylov diagonal-ization of large many-body hamiltonians on a quantum proces-sor,” Nature Communications 16 , 5014 (2025). 
+
+> 26
+
+K. Kanno, M. Kohda, R. Imai, S. Koh, K. Mitarai, W. Mizukami, and Y. O. Nakagawa, “Quantum-selected configuration interac-tion: Classical diagonalization of hamiltonians in subspaces se-lected by quantum computers,” Physical Review Research 8,023268 (2026). 
+
+> 27
+
+J. Robledo-Moreno, M. Motta, H. Haas, A. Javadi-Abhari, P. Jurcevic, W. Kirby, S. Martiel, K. Sharma, S. Sharma, T. Shirakawa, I. Sitdikov, R.-Y. Sun, K. J. Sung, M. Takita, M. C. Tran, S. Yunoki, and A. Mezzacapo, “Chemistry beyond the scale of exact diagonalization on a quantum-centric supercomputer,” Science Advances 11 , eadu9991 (2025), https://www.science.org/doi/pdf/10.1126/sciadv.adu9991. 
+
+> 28
+
+A. Shajan, D. Kaliakin, A. Mitra, J. Robledo Moreno, Z. Li, M. Motta, C. Johnson, A. A. Saki, S. Das, I. Sitdikov, et al. ,“Toward quantum-centric simulations of extended molecules: Sample-based quantum diagonalization enhanced with density matrix embedding theory,” Journal of Chemical Theory and Computation 21 , 6801–6810 (2025). 
+
+> 29
+
+D. Danilov, J. Robledo-Moreno, K. J. Sung, M. Motta, and J. Shee, “Enhancing the accuracy and efficiency of sample-based quantum diagonalization with phaseless auxiliary-field quantum monte carlo,” Journal of Chemical Theory and Computation 21 ,11585–11594 (2025). 
+
+> 30
+
+M. Mikkelsen and Y. O. Nakagawa, “Quantum-selected configu-ration interaction with time-evolved state,” Physical Review Re-search 7, 043043 (2025). 
+
+> 31
+
+K. M. Merz Jr, A. Shajan, D. Kaliakin, F. Liang, Y. Otsuka, T. Shirakawa, L. Broers, H. Xu, M. Tsuji, M. Sato, et al. ,“Crossing the 12,000-atom barrier with heterogeneous quantum-classical supercomputing: quantum chemistry of protein-ligand complexes,” arXiv preprint arXiv:2605.01138 (2026). 
+
+> 32
+
+T. Shirakawa, J. Robledo-Moreno, T. Itoko, V. Tripathi, K. Ueda, Y. Kawashima, L. Broers, W. Kirby, H. Pathak, H. Paik, et al. , “Closed-loop calculations of electronic structure on a quantum processor and a classical supercomputer at full scale,” Future Generation Computer Systems , 108731 (2026). 
+
+> 33
+
+A. Shajan, D. Kaliakin, F. Liang, T. Pellegrini, H. Doga, S. Bhowmik, S. Das, A. Mezzacapo, M. Motta, and K. M. Merz Jr, “Molecular quantum computations on a protein,” Jour-nal of Chemical Theory and Computation 22 , 6041 (2026). 
+
+> 34
+
+Q. Wang, K. J. Sung, R. DâĂŹCunha, M. R. Hermes, T. Gu-jarati, Y. Kawashima, Y.-y. Ohnishi, G. O. Jones, M. Motta, and L. Gagliardi, “Localized sample-based quantum diagonalization for strongly correlated chemistry,” Proceedings of the National Academy of Sciences 123 , e2603914123 (2026). 
+
+> 35
+
+K. Yamamoto, R. Masui, T. Nakajima, M. Tsuji, M. Sato, P. Schow, L. Heidemann, M. Burke, P. Seitz, O. J. Back-house, et al. , “Quantum-hpc hybrid computation of biomolecular excited-state energies,” arXiv preprint arXiv:2601.15677 (2026). 
+
+> 36
+
+M. Kamoshita and K. Mitarai, “Qsci-cmp: Quantum-selected configuration interaction with chemically motivated preselec-tion,” arXiv preprint arXiv:2608.05766 (2026). 
+
+> 37
+
+J. Yu, J. R. Moreno, J. T. Iosue, L. Bertels, D. Claudino, B. Fuller, P. Groszkowski, T. S. Humble, P. Jurcevic, W. Kirby, T. A. Maier, M. Motta, B. Pokharel, A. Seif, A. Shehata, K. J. Sung, M. C. Tran, V. Tripathi, A. Mezzacapo, and K. Sharma, “Quantum-centric algorithm for sample-based krylov diagonal-ization,” (2025), arXiv:2501.09702 [quant-ph]. 
+
+> 38
+
+S. Piccinelli, A. Baiardi, S. Barison, M. Rossmannek, A. C. Vazquez, F. Tacchino, S. Mensa, E. Altamura, A. Alavi, M. Motta, J. Robledo-Moreno, W. Kirby, K. Sharma, A. Mezza-capo, and I. Tavernelli, “Quantum chemistry with provable con-vergence via randomized sample-based krylov quantum diagonal-ization,” (2026), arXiv:2508.02578 [quant-ph]. 
+
+> 39
+
+P. Reinholdt, K. M. Ziems, E. R. Kjellgren, S. Coriani, S. P. A. Sauer, and J. Kongsted, “Critical limitations in quantum-selected configuration interaction methods,” Journal of Chemical The-ory and Computation 21 , 6811–6822 (2025), pMID: 40586729, https://doi.org/10.1021/acs.jctc.5c00375. 
+
+> 40
+
+A. A. Holmes, N. M. Tubman, and C. J. Umrigar, “Heat-bath configuration interaction: An efficient selected configuration interaction algorithm inspired by heat-bath 
+
+19 sampling,” Journal of Chemical Theory and Computa-tion 12 , 3674–3680 (2016), https://pubs.acs.org/jctcce/article-pdf/12/8/3674/13458861/ct6b00407.pdf. 
+
+> 41
+
+S. Sharma, A. A. Holmes, G. Jeanmairet, A. Alavi, and C. J. Umrigar, “Semistochastic heat-bath configuration interaction method: Selected configuration interaction with semistochastic perturbation theory,” Journal of Chemical Theory and Compu-tation 13 , 1595–1604 (2017), https://pubs.acs.org/jctcce/article-pdf/13/4/1595/6792391/ct6b01028.pdf. 
+
+> 42
+
+G. Carleo and M. Troyer, “Solving the quantum many-body prob-lem with artificial neural networks,” Science 355 , 602–606 (2017), https://www.science.org/doi/pdf/10.1126/science.aag2302. 
+
+> 43
+
+S. Halder, K. Anand, and R. Maitra, “Construction of chemistry-inspired dynamic ansatz utilizing generative ma-chine learning,” The Journal of Physical Chemistry A
+
+129 , 5889–5900 (2025), https://pubs.acs.org/jpcafh/article-pdf/129/26/5889/40721968/jp5c02346.pdf. 
+
+> 44
+
+B. Herzog, B. Casier, S. LebÃĺgue, and D. Rocca, “Solv-ing the schrÃűdinger equation in the configuration space with generative machine learning,” Journal of Chemical The-ory and Computation 19 , 2484–2490 (2023), pMID: 37043718, https://doi.org/10.1021/acs.jctc.2c01216. 
+
+> 45
+
+C. Patra, D. Mondal, S. Halder, D. Halder, M. R. Laskar, R. Goel, and R. Maitra, “Accelerated quantum-centric supercom-puting through perturbation-theoretic measures and generative machine learning,” Quantum Science and Technology 11 , 035075 (2026). 
+
+> 46
+
+A. K. Patra, A. K. S. V., R. Bhat, S. S. P., R. Maitra, and J. G, “Machine-learned compact subspace generation for quantum se-lected configuration interaction within density matrix embedding framework,” (2026), arXiv:2607.20585 [quant-ph]. 
+
+> 47
+
+N. B. Vargas, “Machine learning for sample-based quantum diag-onalization: generative configuration recovery and the classical-simulability frontier,” (2026), arXiv:2608.05314 [quant-ph]. 
+
+> 48
+
+J. P. Coe, “Machine learning configuration interac-tion for ab initio potential energy curves,” Jour-nal of Chemical Theory and Computation 15 ,6179–6189 (2019), https://pubs.acs.org/jctcce/article-pdf/15/11/6179/6176093/ct9b00828.pdf. 
+
+> 49
+
+D. P. Kingma and M. Welling, “Auto-encoding variational bayes,” (2022), arXiv:1312.6114 [stat.ML]. 
+
+> 50
+
+D. J. Rezende, S. Mohamed, and D. Wierstra, “Stochastic back-propagation and approximate inference in deep generative mod-els,” (2014), arXiv:1401.4082 [stat.ML]. 
+
+> 51
+
+I. Higgins, L. Matthey, A. Pal, C. Burgess, X. Glorot, M. Botvinick, S. Mohamed, and A. Lerchner, “beta-VAE: Learn-ing basic visual concepts with a constrained variational frame-work,” in International Conference on Learning Representations 
+
+(2017). 
+
+> 52
+
+S. R. Bowman, L. Vilnis, O. Vinyals, A. M. Dai, R. Jozefowicz, and S. Bengio, “Generating sentences from a continuous space,” (2016), arXiv:1511.06349 [cs.LG]. 
+
+> 53
+
+R. Olivares-Amaya, W. Hu, N. Nakatani, S. Sharma, J. Yang, and G. K.-L. Chan, “The ab-initio density matrix renormalization group in practice,” The Journal of Chemical Physics 142 , 034102 (2015). 
+
+> 54
+
+H. Abraham et. al , “Qiskit: An open-source framework for quan-tum computing,” (2021). 
+
+> 55
+
+Q. Sun, X. Zhang, S. Banerjee, P. Bao, M. Barbry, N. S. Blunt, N. A. Bogdanov, G. H. Booth, J. Chen, Z.-H. Cui, J. J. Eriksen, Y. Gao, S. Guo, J. Hermann, M. R. Hermes, K. Koh, P. Ko-val, S. Lehtola, Z. Li, J. Liu, N. Mardirossian, J. D. McClain, M. Motta, B. Mussard, H. Q. Pham, A. Pulkin, W. Purwanto, P. J. Robinson, E. Ronca, E. R. Sayfutyarova, M. Scheurer, H. F. Schurkus, J. E. T. Smith, C. Sun, S.-N. Sun, S. Upad-hyay, L. K. Wagner, X. Wang, A. White, J. D. Whitfield, M. J. Williamson, S. Wouters, J. Yang, J. M. Yu, T. Zhu, T. C. Berkel-bach, S. Sharma, A. Y. Sokolov, and G. K.-L. Chan, “Recent de-velopments in the pyscf program package,” The Journal of Chem-ical Physics 153 , 024109 (2020). 
+
+> 56
+
+A. A. Holmes, N. M. Tubman, and C. J. Umrigar, “Heat-bath configuration interaction: An efficient selected configuration in-teraction algorithm inspired by heat-bath sampling,” Journal of Chemical Theory and Computation 12 , 3674–3680 (2016), pMID: 27428771, https://doi.org/10.1021/acs.jctc.6b00407. 
+
+> 57
+
+A. Pellow-Jarman, S. McFarthing, D. H. Kang, P. Yoo, E. E. Elala, R. Pellow-Jarman, P. M. Nakliang, J. Kim, and J.-K. K. Rhee, “Hivqe: Handover iterative variational quantum eigen-solver for efficient quantum chemistry calculations,” (2025), arXiv:2503.06292 [quant-ph]. 
+
+> 58
+
+G. Carleo and M. Troyer, “Solving the quantum many-body prob-lem with artificial neural networks,” Science 355 , 602–606 (2017). 
+
+> 59
+
+K. Choo, A. Mezzacapo, and G. Carleo, “Fermionic neural-network states for ab-initio electronic structure,” Nature com-munications 11 , 2368 (2020). 
+
+20

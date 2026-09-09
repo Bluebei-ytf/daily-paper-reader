@@ -41,17 +41,17 @@
 <section class="dpr-home-dashboard-card dpr-home-report-card">
   <div class="dpr-home-dashboard-header">
     <div>
-      <span class="dpr-home-dashboard-kicker">2026-09-08</span>
+      <span class="dpr-home-dashboard-kicker">2026-09-09</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">共 7 篇</strong>
+    <strong class="dpr-home-dashboard-count">共 19 篇</strong>
   </div>
   <dl class="dpr-home-dashboard-stats">
     <div class="dpr-home-dashboard-stat"><dt>累计更新</dt><dd>1 次</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>3</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>4</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>7</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>12</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-09-08 23:09:11 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-09-09 22:13:07 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -62,9 +62,9 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>今日精读聚焦机器学习力场与二维光催化筛选，速读涵盖电解质、聚合物及定向进化综述。</p>
-<p>最值得关注：Hessian构象增强可提升机器学习原子间势效率（9.0分），PBE金属性修复实现HSE06级二维光催化剂筛选（8.0分）。</p>
-<p>建议普通读者优先看光催化产氢材料筛选方向，机器学习加速设计逻辑清晰且应用前景明确。</p>
+<p>今日完成19篇文献扫描，其中7篇精读、12篇速读，重点聚焦AI驱动的药物分子设计与计算化学方法。</p>
+<p>最值得关注的是两篇精读高分工作：基于方差爆炸扩散模型的“PocketVE”实现稳定且性质可控的结构基药物设计，以及用固定维潜流生成可变尺寸3D分子的新框架。</p>
+<p>普通读者可优先跟进扩散模型在靶点口袋药物设计中的最新应用，同时留意机器学习势函数和液相保留时间预测的主动失效模式分析进展。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -73,12 +73,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">精读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">3 篇</strong>
+    <strong class="dpr-home-dashboard-count">7 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Hessian-based molecular conformation augmentation for a scalable and efficient strategy of machine learning interatomic potentials">Hessian-based molecular conformation augmentation for a scalable and efficient strategy of machine learning interatomic potentials</span></li><li><span class="dpr-home-dashboard-paper-title" title="Repairing PBE-Spurious Metallicity for HSE06-Level Screening of 2D Photocatalysts for Green Hydrogen Production">Repairing PBE-Spurious Metallicity for HSE06-Level Screening of 2D Photocatalysts for Green Hydrogen Production</span></li><li><span class="dpr-home-dashboard-paper-title" title="Molecular Déjà Vu: Digit-Level Retrieval of Published Values in Frontier Language Models">Molecular Déjà Vu: Digit-Level Retrieval of Published Values in Frontier Language Models</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="PocketVE: Stable and Property-Guided Structure-Based Drug Design with Variance-Exploding Diffusion">PocketVE: Stable and Property-Guided Structure-Based Drug Design with Variance-Exploding Diffusion</span></li><li><span class="dpr-home-dashboard-paper-title" title="Fixed-Dimensional Latent Flow for Generating Variable-Size 3D Molecules">Fixed-Dimensional Latent Flow for Generating Variable-Size 3D Molecules</span></li><li><span class="dpr-home-dashboard-paper-title" title="Discretization-Aware Fine-Tuning for Quantum Machine Learning with Chemical Foundation Models">Discretization-Aware Fine-Tuning for Quantum Machine Learning with Chemical Foundation Models</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>3</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>4</strong></span><span class="dpr-home-dashboard-tag">smc <strong>3</strong></span></div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-skim-card">
   <div class="dpr-home-dashboard-header">
@@ -86,12 +86,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">速读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">4 篇</strong>
+    <strong class="dpr-home-dashboard-count">12 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Prototype-guided transfer of sparse literature knowledge for electrolyte additive discovery">Prototype-guided transfer of sparse literature knowledge for electrolyte additive discovery</span></li><li><span class="dpr-home-dashboard-paper-title" title="HiPoly: a hierarchical polymer-native AI framework for property prediction and generative design">HiPoly: a hierarchical polymer-native AI framework for property prediction and generative design</span></li><li><span class="dpr-home-dashboard-paper-title" title="Advances in Machine Learning for Directed Evolution: A Five-Year Retrospective">Advances in Machine Learning for Directed Evolution: A Five-Year Retrospective</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Simulation-Supervised Foundation Models for Retention Time Prediction in High-Performance Liquid Chromatography beyond Experimental Data Coverage">Simulation-Supervised Foundation Models for Retention Time Prediction in High-Performance Liquid Chromatography beyond Experimental Data Coverage</span></li><li><span class="dpr-home-dashboard-paper-title" title="Quantum Wavefunction Augmentation via Variational Autoencoders">Quantum Wavefunction Augmentation via Variational Autoencoders</span></li><li><span class="dpr-home-dashboard-paper-title" title="MLIP Detective: Active Failure Mode Discovery Beyond Benchmark Scores for Machine-Learning Interatomic Potentials">MLIP Detective: Active Failure Mode Discovery Beyond Benchmark Scores for Machine-Learning Interatomic Potentials</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>3</strong></span><span class="dpr-home-dashboard-tag">smc <strong>1</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>12</strong></span></div>
 </section>
 </div>
 

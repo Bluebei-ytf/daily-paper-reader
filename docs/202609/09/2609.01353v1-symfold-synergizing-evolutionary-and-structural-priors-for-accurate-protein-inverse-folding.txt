@@ -1,0 +1,509 @@
+Title: SymFold: Synergizing Evolutionary and Structural Priors for Accurate Protein Inverse Folding
+
+URL Source: https://arxiv.org/pdf/2609.01353v1
+
+Published Time: Wed, 02 Sep 2026 01:32:27 GMT
+
+Number of Pages: 13
+
+Markdown Content:
+# SymFold: Synergizing Evolutionary and Structural Priors for Accurate Protein Inverse Folding 
+
+# Handong Wang 1,2, Jiaxin Qi 1, Baisheng Lai 1,2, Jianqiang Huang 1,21Computer Network Information Center, Chinese Academy of Sciences 
+
+> 2
+
+# University of Chinese Academy of Sciences wanghandong24@mails.ucas.ac.cn, jxqi@cnic.cn, bslai@cnic.cn, jqhuang@cnic.cn 
+
+# Abstract 
+
+Protein inverse folding aims to recover amino acid sequences for a given 3D protein structure, under-pinning broad applications such as enzyme engi-neering and drug discovery.Current methods often follow a serial pipeline, in which a structure en-coder predicts a coarse sequence, which is then re-fined by protein language models (PLMs). How-ever, because PLMs only perform post-hoc se-quence edits, the refinement is bounded by the quality of upstream predictions.Thanks to recent multimodal protein language models (MPLMs), we could directly encode structure to generate se-quences with pretrained structural knowledge, but we observe that they are not effective for inverse folding. Therefore, we introduce a symmetric dual-path architecture that both leverages PLMs for pre-trained sequence evolution knowledge and MPLMs for pretrained structural knowledge to iteratively guide protein sequence generation.Through exten-sive experiments across standard protein inverse folding benchmarks, our method achieves state-of-the-art performance, surpassing prior approaches, and ablation studies validate the rationale of our symmetric design, revealing a promising direction for the community. 
+
+# 1 Introduction 
+
+Protein sequence and structure are two sides of the same coin. The protein sequence specifies the order of amino acids (residues), and once known, the corresponding protein can be chemically synthesized Defresne et al. [2021]; Khakzad 
+
+et al. [2023]; Huang et al. [2016]. Conversely, protein se-quences naturally fold into higher-order three-dimensional (3D) structures, and distinct structures typically confer dis-tinct functions Gao et al. [2020]. Mapping between sequence and structure in both directions is therefore a central theme in protein science Kuhlman and Baker [2000]. The forward direction is the well-known protein folding task, which pre-dicts structure (and hence function) from sequence Jumper et al. [2021]; Baek et al. [2021]; Abramson et al. [2024]. In this work, we focus on the opposite direction, protein inverse folding , which aims to design an amino acid sequence that will stably fold into a specified 3D structure Dauparas et al. 
+
+[2022]; Gao et al. [2022a]; Yi et al. [2023]; Ren et al. [2024], enabling applications such as enzyme engineering and drug discovery. For example, to add a new binding site on the sur-face of an existing enzyme, researchers first design the local 3D structure required for binding, then use inverse folding methods to derive candidate sequences for synthesis and ex-perimental validation. Traditional protein inverse folding methods directly en-code the 3D structure and perform position-wise amino acid (residue) classification (one-to-one mapping), as shown in Figure 1(a). Constrained by dataset scale and model capac-ity, their performance is limited. Besides, since the structure encoder ignores sequence context, the resulting sequences are usually biologically unreasonable. With the advent of large pretrained protein sequence models, i.e., protein lan-guage models (PLMs) Rives et al. [2021]; Lin et al. [2023]; Madani et al. [2023]; Elnaggar et al. [2021]; Brandes et al. 
+
+[2022], recent methods Gao et al. [2023]; Zhu et al. [2024] often append a post-hoc refinement stage that uses PLMs to revise the output of the structure encoder. For example, as shown in Figure 1(b), if the encoder proposes “. . . LISE. . . ” but assigns low confidence to “I”, the PLM could leverage pretrained sequence knowledge to decide whether “I” should be replaced by another residue, conditioning on the context of “I”, thereby improving sequence plausibility. However, such refinement is decoupled from the original structural evi-dence and is inherently upper-bounded by the first-stage out-put: when the proposed sequence already violates structural constraints, PLM edits may further degrade structural com-patibility, compounding errors for inverse folding. To bridge the gap between pretrained knowledge and given structures during refinement, we find that recent large pre-trained multimodal protein models, i.e., multimodal protein language models (MPLMs) Hayes et al. [2025]; Wang et al. 
+
+[2024]; Hsieh and others [2025], can directly map 3D struc-tures to sequences and are naturally suited to the inverse fold-ing task, even in a zero-shot manner. However, in practice, we find that MPLMs used in isolation are ineffective for this task, perhaps due to structural distribution shifts between pre-training and this task or their limited sequence modeling ca-pacity. Therefore, we introduce SymFold , a symmetric dual-path framework that harmonizes PLMs and MPLMs in par-allel to provide complementary evolutionary and structural arXiv:2609.01353v1 [cs.AI] 1 Sep 2026 Structure Encoder (a) Protein Inverse Folding 
+
+## 𝐀𭀀𝐀𫀀𝐀𭀀𝐀𬀀𫀀𮠀𭀀. . . 
+
+## (b) Current Method 
+
+## 𝐀𭀀𝐀𫀀𝐀𭀀𝐀𬀀𫀀𮠀𭀀. . . 𝐀𭀀𝐀𭀀𝐀𭀀𝐀𝐀𫀀𮠀𭀀. . . 
+
+## PLM 
+
+refine 
+
+## (c) Our Method 
+
+## 𝐀𭀀𝐀𫀀𝐀𭀀𝐀𬀀𫀀𮠀𭀀. . . 𝐀𭀀𝐀𭀀𝐀𭀀𝐀𫀀𝐀𝐀𭀀. . . 
+
+## PLM MPLM 
+
+refine 
+
+## Structure Enc. Structure Enc. Figure 1: Comparison of various inverse folding frameworks: (a) The baseline model is trained from scratch without utilizing any pretrained knowledge to directly predict amino acid sequence from the protein structure. (b) PLM-based methods refine the output sequence of the struc-ture encoder with pretrained sequence knowledge. (c) Our proposed SymFold symmetrically utilizes the pretrained knowledge of sequence and structure to refine the coarse sequence. 
+
+priors for sequence generation.Specifically, as shown in Fig-ure 1(c), our method first follows the traditional approach to derive a coarse sequence via a structure encoder, then we employ PLMs to provide pretrained sequence context knowl-edge, and meanwhile, leverage MPLMs to provide pretrained structural knowledge to refine the proposed sequence. Un-like the traditional uses of PLMs, our symmetric dual-path refinement simultaneously accounts for contextual dependen-cies and the residue-specific positional information, thereby addressing the refinement gap. Furthermore, because the dependence on structure and se-quence context varies across residues, we design an Adaptive Synergistic Fusion (ASF) module that dynamically integrates structure cues, context dependencies, and structural priors so that the refinement can maintain compatibility with residue-specific biochemical characteristics. We also introduce a self-correction iterative training strategy to align training with the inference routine. A structure encoder first proposes a coarse sequence, PLMs and MPLMs perform an initial refinement, and then stochastically mix the outputs with the coarse se-quence before the final refinement stage. This iterative pro-cedure mirrors the test-time iterative prediction manner and reduces the mismatch between training and testing. On standard inverse folding benchmarks, including the widely used CATH Orengo et al. [1997], TS50, and TS500 Li 
+
+et al. [2014], our method sets new state-of-the-art perfor-mance. Extensive ablations corroborate our findings and val-idate the proposed design, revealing the limitations of stand-alone MPLMs, the benefit of our symmetric dual-path archi-tecture, and the effectiveness of our adaptive integration and self-correction modules. Our main contributions are summa-rized as follows: • We diagnose the shortcomings of post-hoc refinement in current methods and argue that effective refinement must incorporate raw 3D evidence. • We introduce MPLMs into the inverse folding and em-pirically show that MPLMs alone are insufficient for this task. • We propose SymFold, which combines pretrained se-quence and structural knowledge via Adaptive Synergis-tic Fusion and self-correction for sequence generation, achieving SOTA performance across multiple bench-marks and informing future directions. 
+
+# 2 Related Work 
+
+Protein Inverse Folding . Early approaches in protein in-verse folding primarily relied on physics-based methods such as Rosetta Design Liu and Kuhlman [2006], which searched for low-energy sequences compatible with target backbones via sampling strategies like Monte Carlo simulation Kuhlman and Bradley [2019]. While foundational, these methods were limited by approximate energy functions and high computa-tional costs. The advent of deep learning Kingma and Welling [2013]; Goodfellow et al. [2014]; Vaswani et al. [2017]; LeCun et al. [2002]; Devlin et al. [2019]; Sohl-Dickstein 
+
+et al. [2015] enabled the use of geometric deep learning, where protein structures are modeled as graphs and processed with GNNs or equivariant networks to map structures to se-quences. Representative works include GraphTrans Ingraham 
+
+et al. [2019], GVP Jing et al. [2020], and ProteinMPNN Dau-paras et al. [2022], which achieved strong sequence recovery through optimized graph representations and message pass-ing. PiFold Gao et al. [2022a] further improved efficiency with non-autoregressive predictions. Despite these advances, purely geometric models rely on limited structure-sequence pairs and struggle to capture evolutionary covariation present in massive sequence databases. To address this, such as LM-Design Zheng et al. [2023], Knowledge-Design Gao et al. [2023], and Bridge-IF Zhu et al. [2024], couple protein lan-guage models (PLMs) Rives et al. [2021]; Lin et al. [2023] with geometric models. Typically, these methods follow a serial refinement pipeline, where a PLM refines the ini-tial output of a structure encoder. While effective, this se-rial pipeline suffers from decoupled refinement where PLMs lack access to structural constraints. In contrast, our Sym-Fold introduces a symmetric dual-path architecture that syn-ergizes evolutionary knowledge from PLMs with structural priors from MPLMs, ensuring that the sequence refinement remains grounded in both biological evolution and geometric constraints. 
+
+Multimodal Protein Language Models (MPLMs) . Re-cent MPLMs aim to unify sequences and structures under a single framework. ESM-3 Hayes et al. [2025] embodies this direction by jointly modeling sequences, atomic coordinates, and functional annotations with Transformers, though its dis-cretization of continuous coordinates constrains its direct ap-plication to inverse folding. Other notable MPLMs include DPLM-2 Wang et al. [2024], a diffusion-based framework capable of handling discrete and structural modalities, and Evolla Zhou et al. [2025], an 80B-parameter model that in-tegrates protein-specific knowledge for design and functional tasks. These models highlight the promise of MPLMs for generative protein tasks, though challenges remain in fully exploiting them for inverse folding. In this study, we harness the structure-aware capabilities of MPLMs through our pro-posed framework, further unlocking their potential for such tasks. 
+
+# 3 Method 
+
+3.1 Preliminaries 
+
+Baseline . Protein inverse folding seeks to recover an amino acid sequence s = ( s1, s 2, . . . , s ℓ) from a given protein struc-ture x = ( x1, x 2, . . . , x ℓ), where si ∈ S denotes the residue identity at position i, S is the set of amino acids, and xi
+
+denotes the atomic coordinates for residue i. The one-hot encoding of si is yi ∈ { 0, 1}|S| with components (yi)a =
+
+I{a = si}, a ∈ S , where I is the indicator function. Given training set D = {(x, y)}, the baseline methods learn a struc-ture encoder fe producing per-position prediction (with entire structure of the protein), and the per-sample training objective could be written as sequence-averaged cross-entropy loss: 
+
+Lbase = − 1
+
+ℓ
+
+> ℓ
+
+X
+
+> i=1
+
+yi · log exp( fe(x)i)
+
+P 
+
+> k
+
+exp( fe(x)i,k ) , (1) where exp( ·) is the exponential, fe(x)i ∈ R|S| is the predicted logits for si, and k indexes classes of S. In training, one minimizes the empirical mean of Lbase over all samples in the dataset D.
+
+PLM-based Method . To incorporate sequence evolution-ary knowledge, recent methods use a protein language model (PLM) fs to refine the predictions of an optimized structure encoder f ∗ 
+
+> e
+
+. Specifically, they first train a structure encoder fe
+
+via Eq. (1), and then finetune fs conditioning on the outputs of f ∗ 
+
+> e
+
+, to conduct post hoc refinement. The sequence-level training objective is: 
+
+Lplm = − 1
+
+ℓ
+
+> ℓ
+
+X
+
+> i=1
+
+yi · log exp( fs(ˆ s)i)
+
+P 
+
+> k
+
+exp( fs(ˆ s)i,k ) , ˆsj = argmax 
+
+> k
+
+f ∗ 
+
+> e
+
+(x)j,k ,
+
+(2) where ˆs is the output of the optimal (and frozen) structure encoder f ∗ 
+
+> e
+
+, the argmax is taken over the class index k for each residue j, and fs is trainable during finetuning. Note that, since no structure information x is available to fs during refinement, the post-hoc editing is inherently limited by f ∗ 
+
+> e
+
+.
+
+3.2 Our Method — SymFold 
+
+Overview . To address the limitations of structure-ignorant refinement in PLM-based methods, we introduce SymFold, a symmetric dual-path architecture that couples structural pri-ors from multimodal protein language models (MPLMs) with evolutionary priors from PLMs for stronger refinement. As shown in Figure 2, we first follow standard practice to train a structure encoder fe by Eq. (1). We then encode struc-ture knowledge via an MPLM and sequence knowledge via a PLM, and use them to adjust the sequence predictions through an Adaptive Synergistic Fusion module. A self-correction scheme is further proposed to align training and inference to mitigate exposure bias and reduce error accu-mulation. Together, these components enable a more harmo-nious and effective use of pretrained knowledge for protein inverse folding. 
+
+Symmetric Refinement . Following PLM-based practice, we first train a structure encoder via Eq. (1) to obtain f ∗ 
+
+> e
+
+. We then incorporate sequence priors using a PLM fs based on the predicted sequence ˆs = argmax f ∗ 
+
+> e
+
+(x) and incorporate 
+
+structure priors using an MPLM fm conditioned on x. These two signals are fused by a symmetric module fsym , and the per-sample training objective of our symmetric refinement is: 
+
+Lours = − 1
+
+ℓ
+
+> ℓ
+
+X
+
+> i=1
+
+yi · log exp( fsym (fs, ˆs, f m, x)i)
+
+P 
+
+> k
+
+exp( fsym (fs, ˆs, f m, x)i,k ) ,
+
+(3) where exp( ·) is the exponential function, · is the dot prod-uct, k indexes classes of S. To effectively fuse pretrained knowledge from both paths, we introduce an Adaptive Syn-ergistic Fusion Module that dynamically weights and blends their complementary cues. In addition, because inference aggregates more information sources, we propose a Self-Correction strategy that incrementally incorporates the dual paths step by step, thereby mitigating the train–test discrep-ancy. 
+
+Adaptive Synergistic Fusion . Unlike PLM-based refine-ment, which derives priors solely from sequence context, our symmetric refinement jointly leverages sequence context and structure signals. Since some residues are tightly constrained by local geometry while others depend more on long-range sequence dependencies, we design a residue-wise Adaptive Synergistic Fusion module that dynamically integrates these complementary cues: Structure Encoder  𝐀 𝐀 ∗
+
+## PLM MPLM 
+
+> 𝐀𭀀𝐀𝐀𝐀𭀀𝐀𝐀𝐀𝐀𭀀
+
+## 𝐀(𝐀) in 𭀀𫀀. (𝐀)    
+
+> ASF
+> Self-Correction for 𝐀 times
+
+# 𝐀𭀀𝐀𭀀𝐀𭀀𝐀𝐀𝐀𝐀𭀀 Figure 2: Overview of SymFold . SymFold employs a symmetric refinement framework integrating structural priors from MPLMs and evolutionary priors from PLMs. Starting with a pre-trained structure encoder f ∗    
+
+> e, initial predictions are refined through parallel structure and sequence branches. The Adaptive Synergistic Fusion module combines these signals using structure-aware coefficients α(x)in Eq.( 4), ⊙
+> denotes element-wise product, followed by iterative self-correction to align training with inference.
+
+fsym (fs, ˆs, f m, x)i = fs(ˆ s)i + α(x)i · fm(x, ˆs)i, (4) where ˆs denotes the sequence predicted by the frozen optimal structure encoder f ∗ 
+
+> e
+
+, · is the dot product, and fs and fm could be fine-tuned during training. The residue-wise structure-aware coefficient α(x) controls how strongly residue i is in-fluenced by the corresponding structure and could be realized as α(x) = w⊤f ∗ 
+
+> e
+
+(x), where w is a trainable projection vec-tor. 
+
+Self-Correction . Current PLM-based methods typically per-form iterative generation at inference, feeding the predicted sequence back into the PLM for several rounds, which in-duces a mismatch between one-step training and multi-step inference. Under our symmetric framework, this discrepancy can be amplified since multiple knowledge sources are fused at each step. To address this, we introduce a Self-Correction strategy that unrolls the symmetric refinement during train-ing to mirror the iterative inference procedure. The iterative process could be written as: 
+
+ˆs(0) = argmax f ∗ 
+
+> e
+
+(x) (5) 
+
+ˆs(t) 
+
+> i
+
+= argmax 
+
+> k
+
+fsym (fs, ˆs(t−1) , f m, x)i,k , (6) where t = 1 , . . . , T is iterative step and T is the total step. During training, we compute the loss using the refined pre-diction at T for the loss calculation. 
+
+# 4 Experiments 
+
+4.1 Experimental Protocol 
+
+Datasets. We train our model on CATH4.2 and CATH4.3. The CATH4.2 dataset consists of 18,024 proteins for training, 608 proteins for validation, and 1,120 proteins for testing, fol-lowing the same data splitting as GraphTrans Ingraham et al. 
+
+[2019]. The CATH4.3 dataset includes 16,153 structures for training, 1,457 for validation, and 1,797 for testing, following the same data splitting as ESMIF Hsu et al. [2022]. For comprehensive evaluation, we assess our model on multiple protein structure datasets. We test on the CATH4.2 test set with 1,120 proteins and the CATH4.3 test set with 1,797 proteins to measure performance on protein folds sim-ilar to those seen during training. Additionally, we evaluate on the TS50 and TS500 datasets, comprising 50 and 500 pro-teins respectively as established by Li et al. [2014]. To exam-ine our model’s generalization capabilities, we further test on the challenging CASP15 Elofsson [2023] and CASP16 Yuan 
+
+et al. [2025] monomeric tertiary structure targets, which in-clude 45 and 50 proteins respectively and represent novel pro-tein structures. The specific protein identifiers and their offi-cial release times for CASP15 and CASP16 are provided in Appendix to facilitate reproducibility and cross-study com-parison. 
+
+Baseline Models and Evaluation Metrics. We com-pare SymFold with recent graph-based models (StructGNN, GraphTrans Ingraham et al. [2019], GCA Tan et al. [2022], GVP Jing et al. [2020], GVP-large Hsu et al. [2022], Al-phaDesign Gao et al. [2022b], ESM-IF Hsu et al. [2022], ProteinMPNN Dauparas et al. [2022],PiFold Gao et al. 
+
+[2022a],GraDe-IF Yi et al. [2023]), and PLM-based opti-mized models (LM-Design Zheng et al. [2023], Knowledge-Design Gao et al. [2023], Bridge-IF Zhu et al. [2024]). We report perplexity and median recovery rate to assess perfor-mance(computation details in Appendix), with evaluations on the CATH dataset divided into three protein types: Short pro-teins (length ≤ 100), Single-chain proteins (with only 1 chain in CATH), and All proteins. 
+
+Implementation Details. SymFold employs a frozen pre-trained PiFold encoder for fundamental structural represen-tation, while only the Adaptive Synergistic Fusion module is fully fine-tuned. As language modeling backbones, we use the open-source ESM-3 (1.4B, MPLM) and its co-trained counterpart ESM-C (600M, PLM) Hayes et al. [2025]. LoRA Hu et al. [2022] is applied solely to MPLM and PLM with rank r = 8 , scaling factor α = 32 , and dropout 0.1, lead-ing to ∼0.1% trainable parameters in total (further config-uration details are provided in the Appendix). Training is performed on a single NVIDIA A800 GPU with batch size 4, cosine learning rate scheduling, and typically converges within 5 epochs. For the self-correction training strategy, we set T = 2 (more details about the inference phase setting of T
+
+are in Appendix). All results are reported based on this final configuration. 
+
+4.2 Results and Analysis 
+
+Through the following Q&A, we provide in-depth discus-sions of the experimental results for protein inverse folding, offering a comprehensive analysis of our SymFold model’s performance across various benchmarks. We address key questions regarding performance comparisons, architectural innovations, generalization capabilities, ablation studies, and biological plausibility to systematically evaluate our ap-proach’s contributions to the field. 
+
+Q1. How does SymFold perform on multiple bench-marks? 
+
+As shown in Table 1, SymFold achieves state-of-the-art performance across all evaluated benchmarks. On CATH4.2, it reaches a 63.11% overall sequence recovery rate, outper-forming the best previous PLM-based method, Knowledge-Design, by 2.34% and exceeding structure-only methods such as PiFold by 11.45 percentage points. The gains are es-pecially notable for diverse protein categories: recovery on short proteins (length ≤ 100 ) reaches 50.00%, an improve-ment of 5.34% over Knowledge-Design, while performance on single-chain proteins rises to 55.45%, 6.49% higher than Bridge-IF. These results highlight SymFold’s effectiveness in leveraging both sequence and structural information, partic-ularly for structurally constrained proteins. On CATH4.3, the model maintains its advantage with a recovery rate of 62.23%, showing consistent improvements across datasets. Furthermore, SymFold achieves the lowest perplexity across all protein categories, indicating more confident and accurate sequence predictions. As shown in Table 2, SymFold establishes new state-of-the-art results on both TS50 and TS500, which are more di-verse than CATH. On TS50, it achieves a perplexity of 2.84 and recovery of 66.02%, surpassing Knowledge-Design by 3.23 percentage points in recovery and reducing perplexity by 0.26. On the larger TS500, SymFold reaches 70.48% recov-ery with the lowest perplexity of 2.74. These consistent im-provements, with perplexity reductions of 8.4% (TS50) and 4.2% (TS500), demonstrate both scalability and robustness of the symmetric architecture in capturing sequence–structure relationships. To further validate our model’s generalization capabil-ity, we evaluated SymFold on the CASP15 and CASP16 datasets Yuan et al. [2025], which provide challenging bench-marks with the latest experimentally determined protein structures. As shown in Table 3, SymFold achieves 56.57% and 52.18% recovery rates on CASP15 and CASP16 respec-tively, outperforming ProteinMPNN (43.06% and 39.32%), PiFold (48.45% and 47.10%), and LM-Design (50.28% and 48.64%). We attempted to include Knowledge-Design and Bridge-IF, but encountered reproducibility issues with their released code. The consistent improvements over repro-ducible baselines demonstrate SymFold’s strong performance on novel protein structures. 
+
+Q2. Are the various module designs in SymFold rea-sonable and valuable? Ablations for our symmetric design . We conduct abla-tion studies to validate our symmetric dual-path design by evaluating four configurations: (1) the complete SymFold with both streams, (2) SymFold without the PLM branch (w/o PLM), and (3) SymFold without the MPLM branch (w/o MPLM). The results in Table 4 demonstrate the synergistic benefits of our symmetric dual-path architecture. The full SymFold model achieves the best performance across all metrics, with perplexity of 3.23 and recovery rate of 63.11% on the full test set. When we ablate the PLM branch (w/o PLM), keep-ing only the MPLM stream, performance drops significantly. Similarly, ablating the MPLM branch (w/o MPLM) while keeping only the PLM stream also degrades performance. These results confirm that both structural and sequence in-formation are essential and complementary. Notably,on the CATH4.2 and CATH4.3 datasets, direct zero-shot evaluation of a pretrained MPLM yields perplex-ities of 6.50/6.27 and recovery rates of 42.03%/40.98%, demonstrating its inability to generalize effectively to inverse folding. Despite further fine-tuning, performance remains limited, with perplexities only improving to 4.82/4.68 and recovery rates to 48.46%/48.73%. This raw performance un-derscores that while MPLMs encode rich structural priors, ef-fective adaptation—rather than direct application—is essen-tial for unlocking their potential. By contrast, our symmet-ric dual-path design with joint training leverages the comple-mentary strengths of PLMs and MPLMs, achieving signif-icantly stronger results. For completeness, additional com-parisons integrating the MPLM within another mainstream architecture are provided in the Appendix. 
+
+Ablations for our proposed modules . Table 6 summa-rizes the ablation study of SymFold’s three core compo-nents: the Prior training strategy, Adaptive Synergistic Fu-sion (ASF), and Self-Correction (SC). The Prior strategy uti-lizes a frozen pre-trained encoder to extract stable structural features, which consistently lowers perplexity and aids se-quence recovery. ASF optimizes decoding by dynamically integrating complementary signals from multiple expert mod-ules, while SC mitigates error propagation through iterative refinement of intermediate predictions. The results validate the specific contribution of each module: the Prior establishes a robust representation foundation, ASF enhances signal reli-ability, and SC ensures output quality. When combined, these components operate synergistically to achieve the lowest per-plexity and highest recovery across all categories, proving their collective essentiality for accurate and robust protein se-quence generation. 
+
+Q3. Is SymFold model-agnostic? 
+
+We evaluated the SymFold framework’s compatibility with different foundation models by integrating two distinct struc-ture encoders: ProteinMPNN and PiFold. These experi-ments were conducted under controlled conditions, utiliz-ing the same MPLM and PLM components while maintain-ing consistent training strategies. As shown in Table 5, our framework consistently enhances the performance of both en-coders across all evaluated categories. SymFold achieves sub-Table 1: Results comparison on the CATH4.2 and CATH4.3 datasets. Some benchmarked results are quoted from [Gao et al. , 2023; Zhu                                                                                                                                          
+
+> et al. , 2024]. Perplexity ( ↓) indicates sequence prediction uncertainty, where lower values are better; Recovery (% ↑) measures sequence accuracy, where higher is better. The best and suboptimal results are labeled with bold and underline. Model Perplexity ↓Recovery % ↑
+> Short Single-chain All Short Single-chain All
+> CATH4.2
+> StructGNN 8.29 8.74 6.40 29.44 28.26 35.91 GraphTrans 8.39 8.83 6.63 28.14 28.46 35.82 GCA 7.09 7.49 6.05 32.62 31.10 37.64 GVP 7.23 7.84 5.36 30.60 28.95 39.47 AlphaDesign 7.32 7.63 6.30 34.16 32.66 41.31 ProteinMPNN 6.21 6.68 4.61 36.35 34.43 45.96 PiFold 6.04 6.31 4.55 39.84 38.53 51.66 GraDe-IF 5.49 6.21 4.35 45.27 42.77 52.21 LM-Design 5.66 5.52 4.01 46.84 48.63 56.63 Knowledge-Design 5.48 5.16 3.46 44.66 45.45 60.77 Bridge-IF 5.68 5.06 3.83 43.86 48.96 58.59
+> SymFold 4.69 4.01 3.23 50.00 55.45 63.11 CATH4.3
+> GVP-large 7.68 6.12 6.17 32.60 39.40 39.20 ESM-IF 8.18 6.33 6.44 31.30 38.50 38.30 + 1.2M AF2 data 6.05 4.00 4.01 38.10 51.50 51.60 ProteinMPNN 6.35 6.25 4.89 40.73 41.18 47.69 PiFold 5.50 5.76 4.44 43.84 44.32 50.62 LM-Design 5.66 5.52 4.01 42.84 43.69 55.68 Knowledge-Design 5.47 5.23 3.49 43.89 45.95 60.38 Bridge-IF 5.17 4.63 3.68 50.00 53.49 58.93
+> SymFold 4.26 3.91 3.22 55.81 58.20 62.23
+> Table 2: Results comparison on the TS50&TS500 dataset. Some benchmarked results are quoted from [Gao et al. , 2023]. The best and suboptimal results are labeled with bold and underline.
+
+Model TS50 TS500 Perp. ↓ Rec. % ↑ Perp. ↓ Rec. % ↑
+
+StructGNN 5.40 43.89 4.98 45.69 GraphTrans 5.60 42.20 5.16 44.66 GVP 4.71 44.14 4.20 49.14 GCA 5.09 47.02 4.72 47.74 AlphaDesign 5.25 48.36 4.93 49.23 ProteinMPNN 3.93 54.43 3.53 58.08 PiFold 3.86 58.72 3.44 60.42 LM-Design 3.50 57.89 3.19 63.65 Knowledge-Design 3.10 62.79 2.86 69.19 
+
+SymFold 2.84 66.02 2.74 70.48 
+
+stantial improvements in sequence recovery for both Protein-MPNN (from 49.87% to 61.45%) and PiFold (from 51.66% to 63.11%), with corresponding perplexity reductions. No-tably, when equipped with the more advanced PiFold encoder, SymFold achieves superior performance across all metrics, indicating that better structure encoders provide more precise prior conditions for the synergistic generation process. These results confirm that the SymFold architecture is fundamen-tally model-agnostic while scaling its performance with the quality of underlying components. 
+
+> Table 3: Comparison of results on CASP15 and CASP16 datasets. The best and suboptimal results are labeled with bold and underline.
+
+Model CASP15 CASP16 Perp. ↓ Rec. % ↑ Perp. ↓ Rec. % ↑
+
+ProteinMPNN 5.69 43.06 7.19 39.32 PiFold 4.87 48.45 5.66 47.10 LM-Design 5.12 50.28 5.79 48.64 
+
+SymFold 3.90 56.57 4.50 52.18 Q4. Are the generated sequences biologically plausible? 
+
+To evaluate the biological plausibility of sequences gen-erated by SymFold, we conducted a validation experiment using AlphaFold3 Abramson et al. [2024] for structure pre-diction. We selected two proteins from CASP16 with vary-ing lengths: T1234 (377 residues) and T1266 (295 residues). For each target structure, we generated sequences using Sym-Fold, LM-Design, PiFold, and ProteinMPNN, then used AlphaFold3 to predict structures from these designed se-quences. As shown in Figure 3, SymFold-generated sequences ex-hibit stronger consistency with the intended target struc-tures across recovery, pLDDT, and TM-score. For T1234, our method achieves a sequence recovery of 61.65%, higher than LM-Design (57.52%), ProteinMPNN (50.49%), and Pi-Fold (56.31%). For T1266, SymFold attains 50.85% com-pared to 46.10%, 39.32%, and 48.14% for the respective PDBID:T1234 
+
+## Ours ProteinMPNN PiFold Target 
+
+> Recovery:61.65% TM-Score:0.85 pLDDT:78.24 Recovery:50.49% TM-Score:0.80 pLDDT:68.28 Recovery:56.31% TM-score:0.79 pLDDT:74.20
+
+## LM-Design 
+
+PDBID:T1266 Recovery:50.85% TM-Score:0.97 pLDDT:93.15 Recovery:48.14% TM-Score:0.94 pLDDT ：91.10 Recovery:39.32% TM-Score:0.88 pLDDT:90.05 
+
+> Recovery:57.52% TM-Score:0.81 pLDDT:74.15 Recovery:46.10% TM-Score:0.95 pLDDT:90.89
+
+Figure 3: Comparison of sequence recovery, structure prediction confidence (pLDDT), and structural similarity (TM-score) Zhang and Skolnick [2005] for sequences generated by SymFold, LM-Design, ProteinMPNN, and PiFold. The TM-score ranges from 0 to 1 (higher values indicate better structural similarity), while pLDDT ranges from 0 to 100 (higher values indicate greater prediction confidence). Table 4: Ablation results for the symmetric dual-path architecture. The full SymFold outperforms both single-path variants, confirming the complementary roles of PLM and MPLM. 
+
+## Variant Perp. ↓ Rec. % ↑
+
+## Short Single All Short Single All SymFold 4.69 4.01 3.23 50.00 55.45 63.11 
+
+## w/o PLM 6.11 5.66 4.05 42.55 45.21 56.62 
+
+## w/o MPLM 5.51 4.73 3.61 44.02 50.89 59.56 
+
+Table 5: Performance comparison of SymFold when using Protein-MPNN versus PiFold as the structure encoder on CATH4.2. 
+
+Encoder Perp. ↓ Rec. % ↑
+
+Short Single All Short Single All ProteinMPNN 6.21 6.68 4.57 36.35 34.43 49.87 
+
+with SymFold 5.02 4.56 3.34 48.96 52.28 61.45 PiFold 6.04 6.31 4.18 39.84 38.53 51.66 
+
+with SymFold 4.69 4.01 3.23 50.00 55.45 63.11 baselines. AlphaFold3 predictions suggest that sequences designed by SymFold yield more confident folding mod-els (pLDDT: 78.24 for T1234, 93.15 for T1266) with bet-ter structural alignment to the native backbone (TM-scores of 0.85 and 0.97, respectively). Additional visual comparisons on four more CASP16 tar-gets are provided in Appendix. These results provide pre-liminary in silico evidence that our dual-stream architec-ture can improve not only recovery metrics but also the pre-dicted structural plausibility of designed sequences. While AlphaFold-derived scores cannot substitute for experimental 
+
+Table 6: Ablation study of the three proposed components in Sym-Fold: Prior (frozen pre-trained structure encoder), ASF (Adaptive Synergistic Fusion of predictions), and SC (Self-Correction via iter-ative ). ✓ indicates the component is enabled, and × indicates it is disabled. 
+
+Prior ASF SC Perp. ↓ Rec. % ↑
+
+Short Single All Short Single All 
+
+× × × 4.98 4.40 3.46 49.52 53.00 61.26 
+
+× ✓ ✓ 4.92 4.32 3.40 48.56 53.26 61.85 
+
+✓ × ✓ 4.83 4.20 3.35 49.75 54.52 62.31 
+
+✓ ✓ × 4.80 4.18 3.32 49.81 54.60 62.43 
+
+✓ ✓ ✓ 4.69 4.01 3.23 50.00 55.45 63.11 
+
+verification, they offer encouraging indications that SymFold generated sequences are more compatible with the desired folds. 
+
+# 5 Conclusion 
+
+We introduce SymFold, a novel symmetric dual-path frame-work for protein inverse folding that addresses the limitations of serial architectures by fostering continuous interaction be-tween structural constraints and Sequence Evolution knowl-edge. Our Adaptive Synergistic Fusion and self-correction mechanisms enhance sequence design, achieving state-of-the-art performance across benchmarks. Despite these ad-vances, challenges remain. Our evaluations primarily rely on in silico metrics, and the limited extent of wet-lab validation leaves the functional viability of the generated sequences un-verified. Future work will explore stronger foundation mod-els to push the boundaries of computational protein design. 6 Supplementary Material 
+
+6.1 Comparative Architecture Designs with MPLM 
+
+To further investigate the role of cross-modal integration of MPLMs in protein inverse folding, we replaced the original protein language model (PLM) in the LM-Design framework with an MPLM. By systematically evaluating two representa-tive adapter schemes within this framework, this study thor-oughly examines how different connection strategies between multimodal protein language models and structure encoders affect downstream recovery performance, thereby providing clearer insights into the mechanisms of synergy across modal-ities.We evaluated two representat: (1) Structure-Aware Adapter (original LM-Design imple-mentation): This variant integrates high-dimensional embed-dings from a protein structure encoder through lightweight adapter modules. Cross-modal interaction is realized via multi-head attention, explicitly mixing coordinate-based in-formation with sequence embeddings. (2) Parameter-Tuning Adapter (modified version): Here, the attention-based fusion is removed. The adapter reduces to simple trainable MLP layers, leaving structural sensitivity to be modeled implicitly by the MPLM itself without direct feature injection. Both architectures were trained under identical setups (datasets, losses, optimizers, and hyperparameters). We fur-ther controlled two experimental factors: (i) Training Strategy 
+
+– training the structure encoder from scratch versus freezing pretrained encoder parameters; (ii) Input Modality – full mul-timodal input (amino-acid sequence + 3D coordinates) versus sequence-only input.              
+
+> Training Strategy Architecture Full Input Seq. Only
+> From Scratch Struct-Aware Adapter 52.46 53.68 Param-Tuning Adapter 53.60 53.12 Pretrained + Frozen Struct-Aware Adapter 53.95 54.56
+> Param-Tuning Adapter 55.33 54.01
+> Table 7: Recovery performance comparison of adapter architectures with MPLM backbone under different training strategies and input modalities.
+
+This counterintuitive result reveals a phenomenon we term the modality paradox : providing richer multimodal inputs does not automatically translate into better performance and may even lead to degradation due to issues such as fea-ture redundancy and optimization conflicts. In contrast, the Parameter-Tuning Adapter can more stably leverage the in-herently structure-aware capacity of MPLMs, indicating that effective cross-modal adaptation requires carefully designed fusion mechanisms. Based on these experiments, we prelim-inarily conclude that when integrating MPLMs (e.g., ESM3) into protein inverse folding frameworks, it is preferable to preserve their original architecture without substantial mod-ifications. Otherwise, as observed in the LM-Design frame-work introduced with MPLMs, performance may even de-cline. This finding provides strong foundational support for the SymFold framework proposed in this paper. 
+
+6.2 Iterative Inference Analysis 
+
+We analyzed the impact of iterative refinement steps ( T ) on DualFold’s performance with and without Self-Correction. Table 8 shows the results on CATH4.2. 
+
+T Recovery(%) ↑
+
+With Self-Correction Without Self-Correction 1 62.25 60.57 2 63.11 61.19 3 62.96 62.23 4 62.96 62.43 
+
+5 63.10 62.42  
+
+> Table 8: Impact of iterative refinement steps ( T) on sequence recov-ery rate (%).
+
+The results clearly demonstrate the effectiveness of the Self-Correction mechanism. With Self-Correction, the model achieves superior performance across all iteration counts, with the most significant improvements at lower iterations. Notably, Self-Correction enables the model to reach peak per-formance (63.11%) early in the refinement process. In con-trast, without Self-Correction, the model shows slower con-vergence and lower overall performance, never reaching the accuracy achieved by Self-Correction even with more itera-tions. 
+
+6.3 CASP15 and CASP16 Protein Details 
+
+For the purpose of ensuring reproducibility, this appendix summarizes the specific protein targets used in our exper-iments from the CASP15 and CASP16 datasets. Tables 9 and 10 provide the official release names and dates of each protein. This collection allows future studies to easily iden-tify and cross-reference proteins with their corresponding re-lease times. 
+
+6.4 Ablation on ASF Module Components 
+
+To effectively integrate the predictive capabilities of MPLMs and PLMs, we propose a residue-wise weighting strategy. We constructed a lightweight ResidueWeightingNetwork that utilizes features extracted by the encoder to capture lo-cal sequence dependencies through hybrid layers compris-ing Sigmoid Linear Units (SiLU) and local 1D convolutions (Conv1d). This network outputs normalized weights for each model at every position within the sequence. This residue-wise weighting mechanism allows the model to dynamically adjust the contribution of each component based on the spe-cific contextual environment of the amino acids, thereby achieving enhanced feature fusion at the local level.The spe-cific architecture diagram is shown in Figure 4. To further validate the effectiveness of the Adaptive Syner-gistic Fusion (ASF) module in our SymFold framework, we conducted ablation studies on its key components. The ASF module, as described in the main paper (Equation 4), dynami-cally integrates sequence priors from the PLM ( fs) and struc-tural priors from the MPLM ( fm) using a residue-wise gating Protein Name Release Time Protein Name Release Time Protein Name Release Time 
+
+T1104-D1 2022-07-11 T1106s1-D1 2022-06-06 T1106s2-D1 2022-06-06 T1109-D1 2022-05-31 T1119-D1 2022-06-08 T1120-D1 2022-07-14 T1120-D2 2022-07-14 T1121-D1 2022-06-08 T1121-D2 2022-06-08 T1123-D1 2022-05-19 T1124-D1 2022-07-16 T1129s2-D1 2022-07-05 T1133-D1 2022-07-18 T1137s1-D1 2022-06-22 T1137s1-D2 2022-06-22 T1137s2-D1 2022-05-30 T1137s2-D2 2022-05-30 T1137s3-D1 2022-05-31 T1137s3-D2 2022-06-22 T1137s4-D1 2022-06-22 T1137s4-D2 2022-06-22 T1137s4-D3 2022-06-22 T1137s5-D1 2022-06-22 T1137s5-D2 2022-06-22 T1137s6-D1 2022-06-22 T1137s6-D2 2022-06-22 T1137s7-D1 2022-06-01 T1137s8-D1 2022-06-01 T1137s9-D1 2022-06-01 T1139-D1 2022-06-01 T1145-D1 2022-08-18 T1145-D2 2022-08-18 T1150-D1 2022-06-11 T1157s1-D1 2022-09-01 T1157s1-D2 2022-09-01 T1157s1-D3 2022-09-01 T1157s2-D1 2022-09-01 T1157s2-D2 2022-09-01 T1157s2-D3 2022-09-01 T1170-D1 2022-07-28 T1170-D2 2022-07-28 T1180-D1 2022-08-24 T1187-D1 2022-08-05 T1188-D1 2022-08-05 T1194-D1 2022-08-05 Table 9: CASP15 protein names and release times. 
+
+Protein Name Release Time Protein Name Release Time Protein Name Release Time 
+
+T1237 2024-07-20 T1206 2024-07-17 T1234-D1 2024-09-09 T1276 2024-08-19 T1276-D1 2024-08-19 T1272s3 2024-07-29 T1279-D1 2024-07-25 T1214v1 2024-08-12 T1272s9 2024-11-14 T1212 2024-07-04 T1272s1 2024-07-29 T1259 2024-07-25 T1235 2024-07-04 T1279 2024-07-20 T1298-D1 2024-08-16 T1274-D1 2024-09-03 T1201-D1 2024-09-24 T1298-D2 2024-08-16 T1272s6-D1 2024-11-14 T1240-D1 2024-08-02 T1201 2024-05-19 T1212-D1 2024-07-04 T1237-D1 2024-07-20 T1266-D1 2024-07-02 T1235-D1 2024-09-09 T1234 2024-07-04 T1299-D1 2024-09-11 T1266 2024-07-02 T1272s7 2024-07-29 T1272s8-D1 2024-11-14 T1214v2 2024-08-12 T1272s2-D1 2024-08-03 T1299 2024-09-11 T1272s8 2024-11-14 T1274 2024-08-14 T1298 2024-08-16 T1272s6 2024-11-14 T1240 2024-08-01 T1210 2024-07-15 T1272s2 2024-11-14 T1214-D1 2024-09-12 T1272s4 2024-07-29 T1206-D1 2024-07-17 T1259-D1 2024-07-25 T1210-D1 2024-09-24 T1272s9-D1 2024-11-14 T1240-D2 2024-08-02 T1279-D2 2024-07-25 T1272s5 2024-07-29 T1214 2024-07-10 Table 10: CASP16 protein names and release times. 
+
+vector α(x) ∈ RL, where L is the sequence length. This al-lows the model to balance evolutionary and structural signals at a per-residue (token) level, conditioned on the structural embeddings from the frozen structure encoder f ∗ 
+
+> e
+
+.We compare the proposed token-level adaptive fusion against several variants: • Average Fusion : A simple uniform averaging of the logits from fs and fm, where each model contributes equally without any adaptive weighting ( α(x) = 0 .5 for all residues). • Model-Leval Fusion : A variant employing two learn-able global scalars ( α, β ) that assign fixed weights to the outputs of the PLM and MPLM, applied uniformly across all residues. • Sequence-Level Mixing : Adaptive weighting at the se-quence level, where all tokens in a sequence share a sin-gle weight vector derived from global structural features. • Token-Level Mixing (Ours) : The proposed residue-wise adaptive fusion, where each token has an indepen-dent weight computed via a lightweight projection net-work on per-residue embeddings. These variants were evaluated on the CATH4.2 benchmark, measuring sequence recovery rate (%) as the primary metric. The results are summarized in Table 11. The results demonstrate that finer-grained adaptive fusion yields superior performance. The token-level mixing in our ASF outperforms coarser variants by up to 0.96%, highlight-ing the importance of residue-specific balancing. This is par-ticularly beneficial for proteins where structural constraints vary across residues (e.g., core vs. surface regions). Coarser fusions, such as sequence-level or global weighting, fail to capture these local variations, leading to suboptimal inte-gration of priors. These findings corroborate the rationale Structure Encoder 
+
+> PiFold,ProteinMPNN,GVP,etc.
+> Weighting Network
+
+# LayerNorm 
+
+# 𝐀 (𝐀 )
+
+# Linear SiLU Conv1d Linear Figure 4: This module takes features extracted by structure en-coders as input, processes them through a sequential layer com-prising Layer Normalization, Linear transformation, Sigmoid Lin-ear Unit , and 1D Convolution , and finally outputs position-wise adaptive normalized weighting coefficients α(x). 
+
+for ASF’s design, as coarser alternatives compound errors in structurally heterogeneous regions, while token-level adapta-tion enhances compatibility with both evolutionary and geo-metric constraints. 
+
+6.5 Additional Folding Results with Alphafold3 
+
+To further validate the biological plausibility of DualFold-generated sequences, we extended our Al-phaFold3 analysis to four additional CASP16 targets: T1214(length=652), T1235(length=114), T1299(length=68), and T1259(length=204). For each case, we compared the AlphaFold3-predicted structure of the sequence produced by DualFold against the native target backbone. As illustrated in Figure 5, the predicted structures of all four designed sequences align closely with their respective native folds. Visually, the confidence levels (pLDDT) remain consistently high, and the structural overlays show strong backbone agreement. These results further reinforce that Du-alFold is capable of generating sequences with not only im-proved design metrics but also high in silico structural plau-sibility across targets of different lengths and topologies. 
+
+6.6 LoRA Configuration for MPLM and PLM Fine-tuning 
+
+Both models employ identical LoRA hyperparameters to en-sure balanced adaptation. We use a rank of 8, which provides 
+
+Fusion Variant Recovery (%) 
+
+Average Fusion 62.31 Model-leval 62.15 Sequence-Level Mixing 62.35 Token-Level Mixing (Our ASF) 63.11  
+
+> Table 11: Ablation on ASF module components. Performance is reported as sequence recovery rate (%) on CATH4.2.
+
+a good balance between parameter efficiency and model ex-pressivity. The scaling factor is set to 32, offering sufficient learning capacity for the inverse folding task while maintain-ing stability. A dropout rate of 0.1 is applied to the LoRA layers for regularization, and we disable bias adaptation to further reduce the parameter count. This configuration results in approximately 0.1% trainable parameters relative to the full model size, significantly reduc-ing computational overhead while maintaining the models’ ability to adapt to the inverse folding task. The low rank ensures efficient adaptation, while the relatively high scaling factor compensates for the reduced parameter space, allowing the models to learn task-specific patterns effectively. The LoRA adaptation is implemented using the Parame-ter Efficient Fine-Tuning (PEFT) framework. During initial-ization, we load the pretrained ESM-3 and ESM-C models, configure the LoRA adapters with the specified hyperparam-eters, and freeze all base model parameters. Only the LoRA weights are updated during training, which prevents catas-trophic forgetting of the pretrained knowledge while allowing task-specific adaptation. The symmetric configuration across both models ensures balanced adaptation of sequence and structural knowledge during training. By targeting both attention and feed-forward components, we enable the models to adapt their represen-tation learning capabilities while preserving the fundamental understanding encoded in the pretrained weights. 
+
+6.7 Mathematical Formulations for Evaluation Metrics 
+
+Perplexity 
+
+Perplexity is a fundamental metric for evaluating the qual-ity of language model predictions, defined as the exponential of cross-entropy loss. In protein sequence design tasks, we utilize perplexity to assess the model’s accuracy in predicting authentic amino acid sequences. Given a protein sequence s = {s1, s 2, . . . , s ℓ}, where 
+
+si represents the amino acid at position i and ℓ is the se-quence length. The model outputs logits denoted as z =
+
+{z1, z2, . . . , zℓ}, where zi ∈ R|V| and |V| is the vocabulary size (20 standard amino acids). First, we compute the log probability distribution at each position: 
+
+pi(k) = exp( zi,k )
+
+P|V|  
+
+> j=1
+
+exp( zi,j ) (7) where zi,k represents the logit value for predicting amino acid k at position i.PDBID:T1214 
+
+> Recovery:64.30% TM-Score:0.99 pLDDT:92.14 Recovery:51.75% TM-Score:0.89 pLDDT:90.25 Recovery:57.14% TM-Score:0.96 pLDDT:93.68 Recovery:69.61% TM-Score:0.96 pLDDT:89.56
+
+# PDBID:T1235 PDBID:T1299 PDBID:T1259 Target Ours Target Ours Target Ours Target Ours Figure 5: AlphaFold3-predicted structures for sequences designed by DualFold on additional CASP16 targets (T1214, T1235, T1299, and T1259). Each row shows an overlay of the target structure and the predicted structure from the DualFold-designed sequence. Across all cases, the strong alignment provides further support for the biological plausibility of DualFold outputs. 
+
+The log-likelihood for the target amino acid is: 
+
+log pi(si) = log exp( zi,s i )
+
+P|V|  
+
+> j=1
+
+exp( zi,j )
+
+!
+
+= zi,s i −log 
+
+> |V|
+
+X
+
+> j=1
+
+exp( zi,j )
+
+(8) 
+
+Global Perplexity Calculation 
+
+Considering the presence of special tokens such as padding, class (cls), and end-of-sequence (eos) tokens in pro-tein sequences, we define a valid position mask: 
+
+Mi = ⊮[si̸ = pad ] · ⊮[si̸ = cls ] · ⊮[si̸ = eos ] · ci (9) where ci is the coordinate mask used to identify struc-turally valid positions, and ⊮[·] is the indicator function. The global average negative log-likelihood is: NLL global = −
+
+Pℓi=1 Mi · log pi(si)
+
+Pℓi=1 Mi
+
+(10) The final global perplexity is defined as: PPL global = exp( NLL global ) (11) 
+
+Sequence Recovery Rate 
+
+The sequence recovery rate measures the degree of match-ing between generated sequences and target sequences at the amino acid level, serving as a direct indicator for evaluating the accuracy of protein sequence design. Given a predicted sequence ˆs = {ˆs1, ˆs2, . . . , ˆsℓ} and a tar-get sequence s = {s1, s 2, . . . , s ℓ}, the sequence recovery rate is defined as the proportion of correct predictions at valid po-sitions. The correctness indicator function for individual positions: 
+
+δi = ⊮[ˆ si = si] · M i (12) where Mi is the valid position mask defined previously. 
+
+Sequence-level Recovery Rate 
+
+For a single sequence, the recovery rate is calculated as: Recovery seq =
+
+Pℓi=1 δi
+
+Pℓi=1 Mi
+
+(13) 
+
+Dataset-level Statistics 
+
+For a test set containing N sequences, we compute the re-covery rate for each sequence and then calculate the median as the final evaluation metric: Recovery median = median {Recovery (1)  
+
+> seq
+
+, . . . , Recovery (N ) 
+
+> seq
+
+}
+
+(14) The use of median instead of mean reduces the impact of outliers and better reflects the model’s overall performance. 7 Acknowledgments 
+
+This work was supported by the Strategic Priority Research Program of the Chinese Academy of Sciences under Grant No. XDA0460205 
+
+# References 
+
+Josh Abramson, Jonas Adler, Jack Dunger, Richard Evans, Tim Green, Alexander Pritzel, Olaf Ronneberger, Lind-say Willmore, Andrew J Ballard, Joshua Bambrick, et al. Accurate structure prediction of biomolecular interactions with alphafold 3. Nature , 630(8016):493–500, 2024. Minkyung Baek, Frank DiMaio, Ivan Anishchenko, Justas Dauparas, Sergey Ovchinnikov, Gyu Rie Lee, Jue Wang, Qian Cong, Lisa N Kinch, R Dustin Schaeffer, et al. Accu-rate prediction of protein structures and interactions using a three-track neural network. Science , 373(6557):871–876, 2021. Nadav Brandes, Dan Ofer, Yam Peleg, Nadav Rappoport, and Michal Linial. Proteinbert: a universal deep-learning model of protein sequence and function. Bioinformatics ,38(8):2102–2110, 2022. Justas Dauparas, Ivan Anishchenko, Nathaniel Bennett, Hua Bai, Robert J Ragotte, Lukas F Milles, Basile IM Wicky, Alexis Courbet, Rob J de Haas, Neville Bethel, et al. Ro-bust deep learning–based protein sequence design using proteinmpnn. Science , 378(6615):49–56, 2022. Marianne Defresne, Sophie Barbe, and Thomas Schiex. Pro-tein design with deep learning. International Journal of Molecular Sciences , 22(21):11741, 2021. Jacob Devlin, Ming-Wei Chang, Kenton Lee, and Kristina Toutanova. Bert: Pre-training of deep bidirectional trans-formers for language understanding. In Proceedings of the 2019 conference of the North American chapter of the as-sociation for computational linguistics: human language technologies, volume 1 (long and short papers) , pages 4171–4186, 2019. Ahmed Elnaggar, Michael Heinzinger, Christian Dallago, Ghalia Rehawi, Yu Wang, Llion Jones, Tom Gibbs, Tamas Feher, Christoph Angerer, Martin Steinegger, et al. Prot-trans: Toward understanding the language of life through self-supervised learning. IEEE transactions on pat-tern analysis and machine intelligence , 44(10):7112–7127, 2021. Arne Elofsson. Progress at protein structure prediction, as seen in casp15. Current opinion in structural biology ,80:102594, 2023. Wenhao Gao, Sai Pooja Mahajan, Jeremias Sulam, and Jef-frey J Gray. Deep learning in protein structural modeling and design. Patterns , 1(9), 2020. Zhangyang Gao, Cheng Tan, Pablo Chac´ on, and Stan Z Li. Pifold: Toward effective and efficient protein inverse fold-ing. arXiv preprint arXiv:2209.12643 , 2022. Zhangyang Gao, Cheng Tan, and Stan Z Li. Alphadesign: A graph protein design method and benchmark on al-phafolddb. arXiv preprint arXiv:2202.01079 , 2022. Zhangyang Gao, Cheng Tan, and Stan Z Li. Knowledge-design: Pushing the limit of protein design via knowledge refinement. arXiv preprint arXiv:2305.15151 , 2023. Ian J Goodfellow, Jean Pouget-Abadie, Mehdi Mirza, Bing Xu, David Warde-Farley, Sherjil Ozair, Aaron Courville, and Yoshua Bengio. Generative adversarial nets. Advances in neural information processing systems , 27, 2014. Thomas Hayes, Roshan Rao, Halil Akin, Nicholas JSofroniew, Deniz Oktay, Zeming Lin, Robert Verkuil, Vin-cent Q Tran, Jonathan Deaton, Marius Wiggert, et al. Sim-ulating 500 million years of evolution with a language model. Science , 387(6736):850–858, 2025. Chun-Yin Hsieh et al. Elucidating the design space of multimodal protein language models. arXiv preprint arXiv:2504.11454 , 2025. Chloe Hsu, Robert Verkuil, Jason Liu, Zeming Lin, Brian Hie, Tom Sercu, Adam Lerer, and Alexander Rives. Learn-ing inverse folding from millions of predicted structures. In International conference on machine learning , pages 8946–8970. PMLR, 2022. Edward J Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-Zhu, Yuanzhi Li, Shean Wang, Lu Wang, Weizhu Chen, et al. Lora: Low-rank adaptation of large language mod-els. ICLR , 1(2):3, 2022. Po-Ssu Huang, Scott E Boyken, and David Baker. The coming of age of de novo protein design. Nature ,537(7620):320–327, 2016. John Ingraham, Vikas Garg, Regina Barzilay, and Tommi Jaakkola. Generative models for graph-based protein de-sign. Advances in neural information processing systems ,32, 2019. Bowen Jing, Stephan Eismann, Patricia Suriana, Raphael JL Townshend, and Ron Dror. Learning from protein struc-ture with geometric vector perceptrons. arXiv preprint arXiv:2009.01411 , 2020. John Jumper, Richard Evans, Alexander Pritzel, Tim Green, Michael Figurnov, Olaf Ronneberger, Kathryn Tunyasu-vunakool, Russ Bates, Augustin ˇ Z´ ıdek, Anna Potapenko, et al. Highly accurate protein structure prediction with al-phafold. nature , 596(7873):583–589, 2021. Hamed Khakzad, Ilia Igashov, Arne Schneuing, Casper Goverde, Michael Bronstein, and Bruno Correia. A new age in protein design empowered by deep learning. Cell Systems , 14(11):925–939, 2023. Diederik P Kingma and Max Welling. Auto-encoding varia-tional bayes. arXiv preprint arXiv:1312.6114 , 2013. Brian Kuhlman and David Baker. Native protein sequences are close to optimal for their structures. Proceedings of the National Academy of Sciences , 97(19):10383–10388, 2000. Brian Kuhlman and Philip Bradley. Advances in protein structure prediction and design. Nature reviews molecular cell biology , 20(11):681–697, 2019. Yann LeCun, L´ eon Bottou, Yoshua Bengio, and Patrick Haffner. Gradient-based learning applied to document recognition. Proceedings of the IEEE , 86(11):2278–2324, 2002. Zhixiu Li, Yuedong Yang, Eshel Faraggi, Jian Zhan, and Yaoqi Zhou. Direct prediction of profiles of sequences compatible with a protein structure by neural networks with fragment-based local and energy-based nonlocal pro-files. Proteins: Structure, Function, and Bioinformatics ,82(10):2565–2573, 2014. Zeming Lin, Halil Akin, Roshan Rao, Brian Hie, Zhongkai Zhu, Wenting Lu, Nikita Smetanin, Robert Verkuil, Ori Kabeli, Yaniv Shmueli, et al. Evolutionary-scale prediction of atomic-level protein structure with a language model. 
+
+Science , 379(6637):1123–1130, 2023. Yi Liu and Brian Kuhlman. Rosettadesign server for protein design. Nucleic acids research , 34(suppl 2):W235–W238, 2006. Ali Madani, Ben Krause, Eric R Greene, Subu Subrama-nian, Benjamin P Mohr, James M Holton, Jose Luis Ol-mos Jr, Caiming Xiong, Zachary Z Sun, Richard Socher, et al. Large language models generate functional protein sequences across diverse families. Nature biotechnology ,41(8):1099–1106, 2023. Christine A Orengo, Alex D Michie, Susan Jones, David T Jones, Mark B Swindells, and Janet M Thornton. Cath– a hierarchic classification of protein domain structures. 
+
+Structure , 5(8):1093–1109, 1997. Milong Ren, Chungong Yu, Dongbo Bu, and Haicang Zhang. Accurate and robust protein sequence design with carbon-design. Nature Machine Intelligence , 6(5):536–547, 2024. Alexander Rives, Joshua Meier, Tom Sercu, Siddharth Goyal, Zeming Lin, Jason Liu, Demi Guo, Myle Ott, C Lawrence Zitnick, Jerry Ma, et al. Biological structure and function emerge from scaling unsupervised learning to 250 million protein sequences. Proceedings of the National Academy of Sciences , 118(15):e2016239118, 2021. Jascha Sohl-Dickstein, Eric Weiss, Niru Maheswaranathan, and Surya Ganguli. Deep unsupervised learning using nonequilibrium thermodynamics. In International confer-ence on machine learning , pages 2256–2265. pmlr, 2015. Cheng Tan, Zhangyang Gao, Jun Xia, Bozhen Hu, and Stan Z Li. Generative de novo protein design with global context. 
+
+arXiv preprint arXiv:2204.10673 , 2022. Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkor-eit, Llion Jones, Aidan N Gomez, Łukasz Kaiser, and Illia Polosukhin. Attention is all you need. Advances in neural information processing systems , 30, 2017. Xinyou Wang, Zaixiang Zheng, Fei Ye, Dongyu Xue, Shu-jian Huang, and Quanquan Gu. Dplm-2: A multi-modal diffusion protein language model. arXiv preprint arXiv:2410.13782 , 2024. Kai Yi, Bingxin Zhou, Yiqing Shen, Pietro Li` o, and Yuguang Wang. Graph denoising diffusion for inverse protein fold-ing. Advances in Neural Information Processing Systems ,36:10238–10257, 2023. Rongqing Yuan, Jing Zhang, Andriy Kryshtafovych, R Dustin Schaeffer, Jian Zhou, Qian Cong, and Nick V Grishin. Casp16 protein monomer structure prediction as-sessment. Proteins: Structure, Function, and Bioinformat-ics , 2025. Yang Zhang and Jeffrey Skolnick. Tm-align: a protein struc-ture alignment algorithm based on the tm-score. Nucleic acids research , 33(7):2302–2309, 2005. Zaixiang Zheng, Yifan Deng, Dongyu Xue, Yi Zhou, Fei Ye, and Quanquan Gu. Structure-informed language models are protein designers. In International conference on ma-chine learning , pages 42317–42338. PMLR, 2023. Xibin Zhou, Chenchen Han, Yingqi Zhang, Jin Su, Kai Zhuang, Shiyu Jiang, Zichen Yuan, Wei Zheng, Fengyuan Dai, Yuyang Zhou, et al. Decoding the molecular language of proteins with evolla. bioRxiv , pages 2025–01, 2025. Yiheng Zhu, Jialu Wu, Qiuyi Li, Jiahuan Yan, Mingze Yin, Wei Wu, Mingyang Li, Jieping Ye, Zheng Wang, and Jian Wu. Bridge-if: Learning inverse protein folding with markov bridges. Advances in Neural Information Process-ing Systems , 37:39901–39922, 2024.

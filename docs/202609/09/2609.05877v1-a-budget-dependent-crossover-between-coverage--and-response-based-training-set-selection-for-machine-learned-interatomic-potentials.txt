@@ -1,0 +1,1648 @@
+Title: A budget-dependent crossover between coverage- and response-based training-set selection for machine-learned interatomic potentials
+
+URL Source: https://arxiv.org/pdf/2609.05877v1
+
+Published Time: Wed, 09 Sep 2026 00:26:19 GMT
+
+Number of Pages: 31
+
+Markdown Content:
+# Digital Discovery 
+
+PAPER 
+
+# A budget-dependent crossover between coverage- and response-based training-set selection for machine-learned interatomic potentials †
+
+Jia Bi, ∗a Alin-Marin Elena, ∗b
+
+Selecting compact training sets for machine-learned interatomic potentials requires deciding whether to preserve structural diversity or target configurations on which models disagree. The better choice can depend on how much data is retained, making a comparison at one training-set size insuffi-cient. Here we link selection criteria to prediction accuracy through a budget-resolved comparison of retrained MACE models on GAP-20 Carbon and pooled revised MD17. Structural coverage is com-pared with a response-guided selector that targets disagreement between a coverage-trained model and a full-data reference. This retrospective response witness tests the value of model disagreement for compressing an already labelled pool. At 5%, coverage gives smaller absolute deviations from the full-data error than random sampling across four force endpoints in both datasets. The witness has larger deviations than coverage at 1% and 5%, but the ordering reverses at 20%. At 20%, witness-selected models also lower direct held-out force errors by 0.46–5.89% relative to coverage, with all eight paired training-seed intervals favouring the witness. Six errors fall below the full-data reference. Mean force-error reductions are 0.164–0.167 meV Å −1, with larger gains for tail and masked end-points. Complementary analyses show that learned similarity preserves the coverage ranking, while selecting by frozen-model error gives higher error than embedding coverage. These findings establish retained-data budget as a deciding variable in atomistic training-set selection and provide a direct test of when response-guided compression improves on structural coverage. 
+
+# 1 Introduction 
+
+Machine-learned interatomic potentials (MLIPs) make molecular and materials simulations accessible beyond the cost of repeated electronic-structure calculations. Neural-network, kernel and systematically improvable potentials learn energies and forces from representations of local atomic environments 1–6 . Message-passing and equivariant graph architectures have further im-proved data efficiency and force prediction 7–11 . Their accuracy still depends on which configurations enter training. When an existing labelled dataset is compressed, the task is to retain the configurations needed for accurate predictions while discarding redundant examples. At a fixed training-set size, should selection favour a broad range of structures or the configurations on which a model struggles most? Growing atomistic datasets make this choice increasingly con-sequential. QM9 and ANI-1x span molecular chemical space, GAP-20 samples multiple forms of Carbon, revised MD17 resolves molecular trajectories, and OC20 covers heterogeneous catalytic     
+
+> aScience and Technology Facilities Council, Harwell Campus, Didcot, United Kingdom. E-mail: Jia.Bi@stfc.ac.uk
+> ∗Corresponding author. bScience and Technology Facilities Council, Keckwick Lane, Daresbury, United Kingdom. E-mail: alin-marin.elena@stfc.ac.uk
+> † Supplementary Information available: supplementary methods, extended figures, tables and source-data descriptions.
+
+environments 12–16 . Universal and foundation potentials extend this reach through pretraining, transfer and fine-tuning 17–20 . The resulting pools contain configurations with different degrees of redundancy and structural coverage, which can affect both ap-parent generalisation and transferability 21,22 . For an already la-belled pool, the selection problem is therefore how to use the available density-functional-theory (DFT) calculations effectively at the training-set size one intends to retain. Coverage-based methods retain configurations that span the chosen representation of structure. Farthest-point sampling (FPS), determinantal point processes (DPP), QUESTS and minimum-set-cover variants select for geometric or information-theoretic diversity 23–26 . Clustering and stratified sampling pur-sue related goals, while batch active learning combines represen-tativeness with scores used to acquire new configurations 27,28 .Chemical and materials studies show that such space-filling strategies can be competitive and that the balance between explo-ration and exploitation changes with the available budget 29–31 .Related work on submodular optimisation, coresets and gradient matching also seeks compact subsets that preserve information relevant to learning 32–35 . Coverage provides a concrete starting point: retain a representative range of environments before ask-ing a fitted model which regions need more attention. A complementary strategy directs attention to configurations   
+
+> Digital Discovery, [year], [vol.], 1–12 | 1 arXiv:2609.05877v1 [cs.LG] 5 Sep 2026
+
+that expose model weakness. Active-learning workflows use un-certainty or extrapolation to guide new reference calculations during exploration and molecular dynamics 36–42 . These scores target regions where the current potential needs additional in-formation. Their effectiveness depends on how uncertainty is estimated and combined with diversity; single-model estimates do not consistently outperform ensembles 43,44 . In an already la-belled pool, model error and disagreement between models offer a related route to selecting configurations. Their value can then be tested directly by training on the selected subset and evaluat-ing its predictions. The difficulty is that a plausible selection score need not iden-tify a more useful training subset. A large model error can mark an unfamiliar structure, so an error-based score may largely re-peat the information already captured by coverage. A learned similarity measure can also preserve almost the same ordering as a fixed structural descriptor. Apparent missing-physics sig-nals can likewise depend on the expressivity of that descriptor 45 .The unresolved issue is which differences between selection cri-teria translate into better force predictions, and at what retained-data budget. Answering it requires connecting the score used to choose configurations with the outcome of training on those con-figurations. Retained-data budget can change the relative performance of selection rules. Data-pruning studies show that a criterion favoured under severe compression need not remain favoured when more data are retained 46–48 ; chemical selection studies report related budget-dependent trade-offs 29,30 . Structural cov-erage and model disagreement address different needs: span-ning configuration space and focusing on discrepancies left by a trained model. Their balance can shift as the subset grows. A comparison at one retained fraction leaves that shift invisible. For atomistic compression, learning curves must therefore con-nect subset size to trained-model performance, while direct DFT errors establish whether reproducing a full-data model also im-proves prediction accuracy. Here we address this question with a budget-resolved selection-and-retraining protocol on GAP-20 Carbon and pooled rMD17 (Fig. 1). We compare Random, a validation-selected FPS/DPP coverage procedure and a response-guided selection at 1%, 5% and 20% retained data. The response witness uses disagreement between a coverage-trained model and a full-data reference to prioritise regions for selection. Each selected subset then trains a separate MACE model under the same training protocol. Com-mon data splits, force endpoints and paired training seeds make the selector comparisons directly interpretable. Learning curves measure agreement with the full-data outcome, and direct held-out DFT errors test the predictive benefit at the 20% crossover. We show that coverage and response selection exchange their ordering as the retained fraction increases. Coverage better repro-duces the full-data outcome at 1% and 5%, whereas the response witness is closer at 20% and also lowers direct DFT force error across all eight dataset–endpoint comparisons. The force end-points reveal where response emphasis improves prediction and where it creates trade-offs. Complementary analyses of learned similarity, frozen-model error and the HEA25 energy target 49,50 
+
+connect these outcomes to the information represented by each selection score. Together, these contributions turn the choice be-tween coverage and response into a testable decision at the in-tended training-set size, with predictive accuracy as the deciding evidence. 
+
+# 2 Methods 
+
+Our comparison links the rule used to select configurations to the force errors obtained after training. We vary selector and retained-data budget on common Carbon and rMD17 panels, us-ing paired MACE training seeds and fixed force endpoints. Com-plementary descriptor analyses ask whether learned similarity changes the coverage ranking and whether a richer representa-tion improves the HEA energy prediction. Foundation-error and response selections are tested through the predictions of models trained on their selected subsets. 
+
+2.1 Atomistic datasets, splits and retained-data budgets 
+
+The direct comparisons use fixed 1400-structure analysis panels derived from the complete generated training set in the GAP-20 Carbon archive 14,51 and the ten revised MD17 (rMD17) molecu-lar trajectories 15,52 . For Carbon, 280 configurations were drawn from each of five prespecified physical groups: crystalline bulk and allotropes, liquid and amorphous Carbon, surfaces and inter-faces, defects, and finite or low-dimensional structures. Sampling within every group covered within-group quintiles of energy per atom together with atom-count and volume-per-atom bins. Each group contributed 200 training, 40 validation and 40 held-out test structures. Its training allocation was further divided into 40 response-calibration and 160 selection-candidate structures. For pooled rMD17, 140 frames were retained from each molecule. Every molecule contributed 100 training, 20 validation and 20 held-out test frames, with 20 training frames assigned to response calibration and 80 to the selection-candidate pool. Frames were ordered by the deposited old_indices . Each tra-jectory was divided into non-overlapping temporal blocks using the larger decorrelation lag estimated from its energy-per-atom and RMS DFT-force series; at most one frame was sampled from a block, and a block could not contribute to more than one split. For both datasets, configurations with non-finite energy or force labels were excluded, exact duplicate structures were as-signed wholly to one split, and panel/split seed 0 was fixed before selection. The resulting 1000 training, 200 validation and 200 test structures were shared by every selector and training seed. Within training, the fixed 200-structure response-calibration par-tition was disjoint from the 800 selection candidates. Budgets of 10, 50 and 200 structures are named as 1%, 5% and 20% of the 1000-structure full-data training reference; they correspond to 1.25%, 6.25% and 25% of the eligible candidate pool. Re-sults use paired training seeds 1–5. The source-data label “rMD17 full” denotes this complete pooled panel, not the full original archive. HEA25 49,50 supplies the non-spin energy-residual di-agnostic, while MACE-MP-0 19 supplies frozen embeddings and force errors for the foundation-model analysis. Supplementary Table S0 gives the complete split contract and group definitions.   
+
+> 2 | 1–12 Digital Discovery, [year], [vol.],
+
+a Representative systems 
+
+> rMD17 trajectories GAP-20 and defect Carbon High-entropy alloy Representative schematics
+
+b Competing definitions of value 
+
+> Same pool · Same retained fraction B
+
+Coverage  
+
+> Span representation space
+
+Response witness 
+
+> Prioritise model-disagreement regions full data residual subset Random reference
+
+c Matched-budget retraining  
+
+> Coverage Response Random Equal retained fraction B = 1%, 5%, or 20% Separate MACE training Same split, architecture, optimisation, and seeds Mean High-force tail |Δ|Absolute gap to full-data outcome Full-data reference
+
+d Budget-dependent ordering    
+
+> FPS/DPP Response witness Smaller outcome gap 20%: five paired seeds 1% 5% 20%
+> Validation-selected stratum
+> Fixed atom mask
+
+Fig. 1 Matched-budget retraining separates structural coverage from response-guided data value. a, Representative schematics for the rMD17 molecular trajectories, GAP-20 and defect-Carbon pools, and the high-entropy-alloy analysis. b, Competing selections from the same labelled pool at a fixed budget B: coverage favours diversity in representation space, the retrospective response witness favours disagreement with the full-data reference, and Random provides an unstructured control. c, Each selected subset trains a separate MACE model and is evaluated on held-out DFT force endpoints alongside the full-data reference. d, A schematic summary of the observed ordering introduces the central question: whether selector ordering changes between 1%, 5% and 20% retained data. Quantitative estimates and paired-seed intervals are reported in Fig. 2 and Tables 1 and 2. 
+
+We study retrospective compression of already labelled pools. The response witness uses a full-data reference model to identify discrepancies that can guide the selection of a smaller training set. 
+
+2.2 Coverage selectors and diagnostic scores 
+
+Random selection without replacement is the unstructured ref-erence. At each budget, validation chooses the primary cover-age comparator between FPS and a DPP operating on the same standardised, mean-pooled invariant MACE-MP-0 descriptor em-bedding. The predeclared selection endpoint is normalised val-idation force MAE (lower is better), with tolerance 10 −6 and FPS preferred before lexicographic structure ID on an exact tie. Carbon uses FPS at 1% and DPP at 5% and 20%; rMD17 uses DPP at all three budgets. We use FPS/DPP as a com-pact family label in cross-budget figures. FPS starts from the structure farthest from the embedding centroid, and the DPP uses greedy maximum-a-posteriori selection from a radial-basis-function L-ensemble. Gaussian-kernel QUESTS coverage and its minimum-set-cover variant, QUESTS-MSC, provide additional coverage comparisons 23–26 . Algorithm settings and the retained coverage comparator at each budget are given in Supplementary Section 1.3 and Table S0. The DPP kernel bandwidth is the median positive pair distance, with diagonal jitter 10 −10 . The 800-structure candidate pools lie below the 4096-candidate threshold for the full kernel calcula-tion. QUESTS-MSC uses bandwidth 0.015, 32 neighbours and a 5 Å cutoff, held fixed across datasets and budgets. Each selection is constructed before outcome training; the five outcome seeds vary the model training, not the membership of the selected sub-set. The four candidate signal families are: (i) a learned chem-ical/physical similarity; (ii) a descriptor-conditioned non-spin HEA energy residual; (iii) frozen MACE-MP-0 force error, used ei-ther directly or after residualisation; and (iv) a response witness derived from the discrepancy between a coverage model and the full-data reference. The learned-similarity and HEA studies exam-ine the information carried by the descriptors. The foundation-error and response studies additionally test the value of the se-lected subsets through retraining. FPS/DPP is the primary cover-age comparator, with QUESTS-MSC providing a secondary cover-age comparison. For learned similarity, each structure is assigned the physical attribute vector 
+
+vx =
+
+[
+
+∆ex, log( ∥FDFT  
+
+> x
+
+∥ + ϵ), log 
+
+(
+
+Q0.9(∥FDFT  
+
+> x
+
+∥) + ϵ
+
+)] 
+
+, (1) where ex = EDFT  
+
+> x
+
+/N x, ∆ex is centred within the Carbon physical group, rMD17 molecule or HEA crystal–generation group, and the components are standardised on the metric-fit fold only. For fit-only pair (i, j ), the supervision target is 
+
+yij = exp 
+
+[
+
+− ∥˜vi − ˜vj ∥22
+
+2ℓ2
+
+]
+
+, (2) where ℓ is the median positive pair distance in that fit fold. Let 
+
+c(x) denote coverage novelty and let z(x) collect force scale, den-sity or composition and local structural descriptors. A candidate   
+
+> Digital Discovery, [year], [vol.], 1–12 | 3
+
+score q(x) is represented as 
+
+q(x) = E[q(x) | c(x), z(x)] + q⊥(x), (3) where q⊥ is the part not explained by coverage and the fixed covariates. Rank correlation, top-budget Jaccard overlap, learned channel weights and leave-one-group-out AUROC de-scribe whether the learned metric defines a distinct ranking. Pairs touching the held-out group are excluded from metric fitting, and the component scaling and pair-distance scale are refitted using the remaining groups. The pair-supervision objective and fixed-bank baseline are specified in Supplementary Section 1.4. An auxiliary HEA25 analysis tests descriptor adequacy for non-spin DFT energy per atom, using grouped out-of-fold ridge re-gression after a fold-fitted elemental-composition baseline. The cumulative G0–G4 representations add radial, angular, ACE and frozen-MACE descriptors. Supplementary Eqs. S9 and S10 define the target and normalised squared error; the complete descriptor, cross-validation and penalty-selection procedures are given there. 
+
+2.3 MACE models and force-error endpoints 
+
+The Carbon and pooled rMD17 compression comparisons use the official MACE implementation 11 , with the same architecture, loss, optimiser and epoch-based training schedule across selec-tors, retained-data budgets and full-data references. A separate model is fitted to each selected subset and compared with a ref-erence trained on the 1000-structure training partition. Outcome seeds 1–5 are paired between subset and reference models. The frozen MACE-MP-0 representation used for coverage selection is distinct from these outcome models. Carbon-defect fine-tuning forms a separate foundation-model comparison. The architecture used two interaction blocks, a 5.0 Å cutoff, eight Bessel radial functions, a polynomial cutoff envelope with 
+
+p = 5 , maximum spherical-harmonic degree ℓmax = 3 and cor-relation order 3. Hidden features were 128 × 0e + 128 × 1o. The weighted energy–force loss used weights 1 and 100. AdamW opti-misation used an initial learning rate of 0.01, the standard MACE parameter-group weight-decay scheme with coefficient 5 × 10 −7,and batches of four structures. Training was configured for at most 1500 epochs with validation every epoch, ReduceLROn-Plateau factor 0.8 and scheduler patience 50. Early-stopping pa-tience was set to 200 epochs; exponential moving averaging used decay 0.99 and stage-two/SWA training was disabled. Supple-mentary Section 1.2 gives the remaining architecture and execu-tion settings. Training used CUDA and double precision, with energies in eV and forces in eV Å −1. Atomic energy offsets, RMS-force scaling and the mean-neighbour normalisation were estimated separately from each model’s training set, including the complete training partition for the full-data reference. Forces entered the training objective, whereas stress did not. Matched budget denotes equal retained structure count between selectors. The epoch-based schedule is shared across budgets, so the cross-budget curves do not hold the number of gradient updates fixed. The 200-structure validation set is shared across selectors and budgets, and the 200-structure test set is reserved for held-out force evaluation. We assess subset performance both relative to the matched full-data model and directly against DFT labels. The HEA study separately measures out-of-fold energy prediction er-ror across representations. Let D be the 1000-structure full labelled training pool and let a selector return S of size B from the disjoint 800-structure can-didate pool. Training on S yields θS , whereas training on all of 
+
+D yields the full-data reference θD . Evaluation uses fixed, po-tentially overlapping groups g: the complete test set, the high-force tail, a validation-selected physical group and a high-novelty atom mask denoted in figures and tables as the High-novelty mask. Group definitions are frozen before test evaluation. Write 
+
+exa (θ) = ∥Fθxa − FDFT  
+
+> xa
+
+∥2 for the force-vector error of atom a in structure x. The Mean, Validation-selected stratum and High-force tail endpoints use the arithmetic mean of exa over their fixed atom sets, whereas the High-novelty mask endpoint uses the RMS of exa over the high-novelty mask. Thus Lg denotes the reported endpoint-specific force-error functional rather than a common MAE for every endpoint. RMS aggregation gives larger atomwise errors more weight, making the masked endpoint sensi-tive to large local errors within the high-novelty region. We retain the sign of the relative deviation from the full-data reference and report its magnitude separately: 
+
+rg (S) = 100 Lg (θS ) − Lg (θD )max {Lg (θD ), ϵ } , δg (S) = |rg (S)|. (4) Here ϵ = 10 −12 is a numerical guard. The learning curves show four absolute gaps δg : Mean force error, Validation-selected stra-tum force error, High-force tail error and High-novelty mask RMS force error. The High-force tail is defined by the 80th per-centile of the DFT force norm in the response-calibration partition (0.423621 eV Å −1 for Carbon and 0.324778 eV Å −1 for rMD17). The validation-selected group is frozen as 
+
+g⋆ = arg max 
+
+> g
+
+15
+
+> 5
+
+∑
+
+> s=1
+
+Lg, val (θD,s ), (5) with lexicographic tie-breaking. Carbon uses the five physi-cal groups defined above; its selected group is finite or low-dimensional Carbon. For the pooled rMD17 panel, the ten molecules are paired into five equal-size strata by increasing atom count, with ties ordered lexicographically; the selected second stratum contains benzene and uracil. The chosen group is trans-ferred unchanged to every selector, budget and held-out test eval-uation. For the High-novelty mask, hxa is the invariant atomic em-bedding from the frozen MACE-MP-0 medium model, and nxa =
+
+d5NN (hxa , HK) is its five-nearest-neighbour distance to the response-calibration environment bank. Same-structure atoms are excluded when the calibration distribution is formed. The fixed mask is M nov  
+
+> xa
+
+= I[nxa ≥ QK
+
+> 0.65
+
+(n)] , with the calibration threshold projected unchanged to validation and test structures. This endpoint measures local force errors in structurally novel en-vironments; trajectory drift is a separate dynamical quantity. The response witness is defined against θD , so agreement with its full-  
+
+> 4 | 1–12 Digital Discovery, [year], [vol.],
+
+data outcome measures how well the selected subset reproduces the reference used in selection. Direct force errors Lg against DFT labels establish the predictive benefit at the 20% crossover. 
+
+2.4 Foundation-error and response-based selections 
+
+For the foundation-model analysis, the raw score is frozen MACE-MP-0 force error. Embedding novelty is the rank-normalised five-nearest-neighbour distance in the mean-pooled foundation em-bedding. Five-fold out-of-fold residualisation removes the varia-tion explained by novelty and the fixed nuisance covariates. Raw-error and residual-error selections are then compared with em-bedding coverage and Random through one Carbon-defect fine-tuning endpoint: held-out force-vector MAE. The response analysis uses a retrospective witness against the full-data model. For each budget B, let S0,B be the validation-selected FPS/DPP subset. A separate deterministic seed-0 pair of coverage and full-data models constructs the response selection, while seeds 1–5 are reserved for the paired outcome comparison. For structure x,
+
+WB (x) = 1
+
+Nx
+
+∑
+
+> a
+
+∥∥∥FθS0,B ,0 (x)a − FθD,0 (x)a
+
+∥∥∥2
+
+, (6) Three disagreements distinguish energy shifts, distributed force mismatch and the largest local force mismatch. Write ∆Ex,B =
+
+EθS0,B ,0 (x) − EθD,0 (x) and ∆Fxa,B = FθS0,B ,0 (x)a − FθD,0 (x)a.The response coordinates are 
+
+qE (x) = zK
+
+(|∆Ex,B |/N x
+
+) ,qF, RMS (x) = zK
+
+√ 1
+
+Nx
+
+∑
+
+> a
+
+∥∆Fxa,B ∥22
+
+ ,qF, max (x) = zK
+
+(
+
+max  
+
+> a
+
+∥∆Fxa,B ∥2
+
+)
+
+.
+
+(7) Each zK(v) = ( v − μK)/σ K uses the coordinate’s mean and popu-lation standard deviation from the fixed 200-structure response-calibration partition K; a zero-variance coordinate is set to zero. Fixed edges (−∞ , −1, 0, 1, +∞) on each coordinate define 64 cells. These transformations and edges are projected unchanged to the disjoint 800 selection candidates. For a cell with at least ten calibration structures, its priority is 
+
+RB (c) = Q0.9{WB (x) : x ∈ K , c (x) = c}. High-response cells have priorities at or above the 90th percentile of eligible-cell priorities. Occurrence is measured by candidate-pool atom mass, with the median among eligible cells as the threshold. A cell is occurred-but-not-learned (OBNL) if it meets both conditions and contains no member of S0,B . The reported OBNL quantity is the fraction of candidate-pool atom mass assigned to these uncovered cells. Global response-witness selection ranks candidates by their cell priority RB (c(x)) , not directly by the individual structure witness 
+
+WB (x). Lexicographic structure ID breaks ties within a priority level. Response repair instead starts from the coverage subset and replaces 2%, 5% or 10% of its members, rounded upward, with candidates from OBNL cells while preserving the total bud-get. The primary analysis uses the 5% repair setting; when no eligible OBNL cell is present, the coverage subset is unchanged. Calibration fixes the response map, candidate structures supply the selectable configurations, and the held-out test set supplies the outcome errors. Supplementary Section 1.4 gives the com-plete response-cell and endpoint definitions. Response effects are reported separately for the Metadata-score mask, High-force tail, High-response cell and High-novelty mask errors. The Metadata-score mask is a composite physical-stress subset. For atom a in structure x, its score is the mean of three calibration empirical ranks: the absolute deviation of ex from the calibration median in its physical group, the DFT force norm ∥FDFT  
+
+> xa
+
+∥2, and the embedding novelty nxa de-fined above. All medians, empirical-rank maps and the upper-quintile threshold are fitted on K and projected unchanged to the test set. For these 5% comparisons, the reported effect is 
+
+100[ Lg (θcandidate ) − Lg (θFPS /DPP )] /L g (θFPS /DPP ), so positive values indicate higher error than FPS/DPP. 
+
+2.5 Uncertainty estimation and paired comparisons 
+
+Paired training-seed intervals are used for the primary selector contrasts. For each seed, rg and δg are calculated against the matched full-data model before averaging. All contrasts are cal-culated before rounding. At 5%, we compare Random with FPS/DPP and response witness with FPS/DPP using absolute-gap differences. At 20%, we compare witness with FPS/DPP us-ing both absolute-gap and direct-error differences, and compare witness with the full-data reference using the signed gap. For each contrast, we enumerate all 55 with-replacement resamples of the five paired differences and report the 2.5th and 97.5th per-centiles. Paired t intervals with four degrees of freedom provide a sensitivity check. These intervals measure training-seed variabil-ity conditional on the selected subsets. Grouped analyses use 10,000 percentile-bootstrap resamples over the relevant scientific groups: five Carbon physical groups, ten rMD17 molecules or eight HEA25 FCC/BCC–generation-class groups. These intervals describe a different source of variation from the paired training-seed intervals. The 1% comparison re-ports five-seed means. Supplementary Table S10 identifies the uncertainty estimate for each contrast. 
+
+2.6 Manuscript and analysis-code preparation 
+
+Generative-AI tools assisted language revision, methods exposi-tion, numerical consistency checks and analysis and plotting-code preparation. Supplementary Section 2.9 describes these uses and representative preparation prompts; tool attribution is given in the Acknowledgments. 
+
+# 3 Results 
+
+Coverage and response selection show different dependence on retained-data budget. We first locate the reversal in their agree-ment with the full-data outcome, then test the 20% response ad-vantage against held-out DFT forces. The subsequent analyses examine which force regimes benefit and what information the selection scores carry.     
+
+> Digital Discovery, [year], [vol.], 1–12 | 5 1520
+
+10 −1 
+
+10 0
+
+10 1
+
+10 2
+
+> Carbon absolute gap (%)
+
+a Mean   
+
+> 1520
+
+10 −1 
+
+10 0
+
+10 1
+
+10 2
+
+Validation-selected stratum   
+
+> 1520
+
+10 0
+
+10 1
+
+10 2
+
+High-force tail   
+
+> 1520
+
+10 0
+
+10 1
+
+10 2
+
+High-novelty mask   
+
+> 1520
+> Retained training data (%)
+
+10 −1 
+
+10 0
+
+10 1
+
+10 2
+
+> rMD17 absolute gap (%)
+
+b Mean   
+
+> 1520
+> Retained training data (%)
+
+10 −1 
+
+10 0
+
+10 1
+
+10 2
+
+Validation-selected stratum   
+
+> 1520
+> Retained training data (%)
+
+10 0
+
+10 1
+
+10 2
+
+High-force tail   
+
+> 1520
+> Retained training data (%)
+
+10 −1 
+
+10 0
+
+10 1
+
+10 2
+
+High-novelty mask      
+
+> −5 −4 −3 −2 −1 0
+> Response witness minus FPS/DPP absolute gap at 20% (percentage points)
+> Carbon Mean Carbon Validation-selected stratum Carbon High-force tail Carbon High-novelty mask rMD17 Mean rMD17 Validation-selected stratum rMD17 High-force tail rMD17 High-novelty mask -0.46 -0.94 -3.23 -2.06 -0.51 -0.56 -4.78 -1.98
+
+c  
+
+> Random FPS/DPP Response witness
+
+Fig. 2 The response witness has larger absolute gaps at low budgets and smaller gaps at 20%. a,b , Absolute gaps to the full-data outcome for Carbon and pooled rMD17 at 1%, 5% and 20%, for the Mean, Validation-selected stratum, High-force tail and High-novelty mask endpoints. Points are five-seed means and lines are visual guides. These panels show point estimates; paired uncertainty for the 20% comparison is shown in c. c,Response-witness minus FPS/DPP absolute-gap differences at 20%. Markers show five-seed means and error bars show 95% percentile-bootstrap intervals from all paired resamples of the five seeds. Negative values indicate that the witness is closer to the full-data outcome. Table 2 reports the direct held-out force errors. 
+
+3.1 Selector ordering changes across retained-data budgets 
+
+At the primary 5% budget, FPS/DPP reproduced the full-data out-come more closely than Random across both datasets and all four endpoints (Table 1). Its Mean absolute gap was 1.80% in Carbon and 1.68% in rMD17, compared with 2.10% and 1.92% for Ran-dom. The advantage also held for the Validation-selected stratum, High-force tail and High-novelty mask. Random minus FPS/DPP ranged from +0 .20 to +0 .93 percentage points (pp), with all eight paired training-seed intervals above zero. Supplementary Fig. S4 shows the individual seed values. The absolute-gap ordering between coverage and the response witness reversed with budget (Fig. 2). At 1% and 5%, the witness had larger gaps for all four endpoints in both datasets. At 20%, its Mean gap fell to 0.144% in Carbon and 0.106% in rMD17, compared with 0.605% and 0.620% for FPS/DPP. Witness minus FPS/DPP ranged from −0.46 to −4.78 percentage points across the eight dataset–endpoint pairs, with all paired-seed 95% inter-vals below zero (Fig. 2c). The sampled budgets place this reversal between 5% and 20%. The 20% witness subsets also produced more accurate force predictions than FPS/DPP in all eight comparisons against held-out DFT labels (Table 2). Relative error reductions ranged from 0.46% to 5.89%, with all eight paired-seed intervals below zero. Mean force error decreased by 0.167 meV Å −1 in Carbon and 0.164 meV Å −1 in rMD17; the High-force tail and High-novelty mask showed larger reductions. The benefit at this budget there-fore extends from reproducing the full-data outcome to improving predictive accuracy. Six witness endpoints were also below the matched full-data reference: all four in rMD17 and the Carbon High-force tail and High-novelty mask. The Carbon Mean and Validation-selected stratum remained respectively 0.144% and 0.039% above full-data error. Supplementary Table S11 reports the paired-seed in-tervals for these signed gaps. Thus models trained on the witness subsets exceeded the full-data reference on six force endpoints under the shared training protocol. Across budgets, the absolute-gap curves establish the change in reference agreement; at 20%, the direct DFT errors establish the accuracy gain over coverage.                                                                                                                        
+
+> 6 | 1–12 Digital Discovery, [year], [vol.], Table 1 FPS/DPP has smaller absolute gaps than Random at the 5% budget. Positive estimates mean that Random is farther from the full-data outcome. The 95% intervals enumerate all paired percentile-bootstrap resamples of five matched training seeds and describe variation across those seeds.
+> Dataset Endpoint Random −FPS/DPP (pp) 95% interval (pp) Carbon Mean +0 .303 [+0 .111 ,+0 .411]
+> Carbon Validation-selected stratum +0 .251 [+0 .125 ,+0 .329]
+> Carbon High-force tail +0 .931 [+0 .321 ,+1 .291]
+> Carbon High-novelty mask +0 .470 [+0 .182 ,+0 .640]
+> rMD17 full Mean +0 .244 [+0 .084 ,+0 .356]
+> rMD17 full Validation-selected stratum +0 .197 [+0 .085 ,+0 .263]
+> rMD17 full High-force tail +0 .769 [+0 .259 ,+1 .079]
+> rMD17 full High-novelty mask +0 .350 [+0 .138 ,+0 .478]
+> Table 2 Response-witness selection lowers direct held-out force error at the 20% budget. Errors are five-seed means in meV Å −1. The signed gap
+> rgis the percentage deviation of the witness error from the matched full-data error. Relative gaps are calculated within each seed before averaging and need not equal ratios of the displayed mean errors. Differences are response witness minus FPS/DPP. Brackets give 95% percentile-bootstrap intervals from all paired resamples of five matched seeds. Negative differences favour the witness over FPS/DPP; negative rgindicates lower error than full data. Supplementary Table S11 gives the seed values and paired-tsensitivity intervals.
+> Dataset Endpoint Full data FPS/DPP Witness Witness rg(95% CI), % Difference (95% CI) Carbon Mean 36.162 36.380 36.214 +0 .144 [+0 .127 ,+0 .161] −0.167 [ −0.186 ,−0.146]
+> Carbon Validation-selected stratum 34.605 34.944 34.619 +0 .039 [+0 .019 ,+0 .059] −0.325 [ −0.347 ,−0.301]
+> Carbon High-force tail 37.015 38.555 36.672 −0.927 [ −1.132 ,−0.763] −1.883 [ −2.050 ,−1.745]
+> Carbon High-novelty mask 40.535 41.480 40.425 −0.273 [ −0.308 ,−0.240] −1.056 [ −1.099 ,−1.007]
+> rMD17 full Mean 22.519 22.659 22.495 −0.106 [ −0.139 ,−0.073] −0.164 [ −0.183 ,−0.146]
+> rMD17 full Validation-selected stratum 22.817 22.982 22.781 −0.160 [ −0.188 ,−0.133] −0.201 [ −0.217 ,−0.186]
+> rMD17 full High-force tail 23.958 25.275 23.787 −0.716 [ −0.760 ,−0.669] −1.488 [ −1.524 ,−1.456]
+> rMD17 full High-novelty mask 24.219 24.729 24.189 −0.125 [ −0.153 ,−0.102] −0.540 [ −0.557 ,−0.526]
+
+Random and coverage showed mixed absolute-gap ordering under the strongest compression. At 1% in rMD17, FPS/DPP had smaller Mean and Validation-selected stratum gaps, whereas Random had smaller High-force tail and High-novelty mask gaps. With ten structures retained, the subset can leave some molecules unrepresented. QUESTS-MSC also had large low-budget Mean gaps, reaching 42.98% for Carbon and 95.16% for rMD17. Its fixed parameterisation used bandwidth 0.015, 32 neighbours and a 5 Å cutoff without dataset- or budget-specific tuning. These results further illustrate how severe compression exposes differ-ences between selection rules and force endpoints. 
+
+3.2 Response emphasis creates endpoint-specific trade-offs at 5% 
+
+At 5%, response-witness selection improved one local rMD17 end-point while worsening the other reported errors (Fig. 3a). The High-response cell error fell by 7.87%, but the Metadata-score mask, High-force tail and High-novelty mask errors increased by 13.20–58.52%. In Carbon, all four errors increased, from +6 .33% 
+
+for the High-response cell to +59 .45% for the Metadata-score mask; all four grouped-bootstrap intervals excluded zero. Re-sponse emphasis therefore produced a local gain in rMD17 with-out a uniform improvement across its evaluation regimes. Response repair made a smaller change to the coverage sub-set (Fig. 3b). In Carbon, replacing 3 of 50 structures, a realised replacement fraction of 6%, reduced candidate-pool OBNL atom mass from 1.00% to zero. The repaired subset retained a Jaccard overlap of 0.887 with FPS/DPP. Coverage already included every well-populated high-response cell in rMD17, so repair made no replacement and returned the same subset. Closing the Carbon coverage gap did not produce a detectable error reduction. Repair changed the Metadata-score mask, High-force tail, High-response cell and High-novelty mask errors by 
+
+−0.088% , +0 .076% , −1.446% and +0 .333% , respectively, with every 95% interval including zero. The rMD17 effects were ex-actly zero because its subset was unchanged. Supplementary Table S4 gives the estimates and intervals. The intervention changed response-cell coverage without a resolved improvement in these force endpoints. The five-seed means at 1% show a different repair trade-off (Supplementary Table S6). In Carbon, repair reduced the High-force tail absolute gap from 14.80% to 7.66% and the high-novelty masked gap from 7.30% to 3.90%, while increasing the Mean gap from 2.05% to 2.57% and the Validation-selected stra-tum gap from 2.72% to 2.92%. In rMD17, repair reduced all four mean gaps by 0.77–2.66 pp. These absolute-gap changes measure how closely the subset models reproduce the full-data outcome. The contrast with 5% shows that even a small repair of a coverage subset has a budget- and endpoint-dependent effect. 
+
+3.3 Frozen foundation-model error largely tracks embed-ding novelty 
+
+Frozen MACE-MP-0 force error closely tracked novelty in the same model’s embedding, limiting its distinction from a coverage score (Fig. 4a,b). Spearman correlations were 0.86 for rMD17, 0.89 for amorphous Carbon and 0.91 for Carbon defects. Novelty alone explained 0.75–0.84 of the out-of-fold error variance; adding the fixed nuisance covariates increased this range to 0.81–0.87. Five-fold out-of-fold residualisation reduced these correlations to 0.004 for rMD17, 0.026 for amorphous Carbon and −0.002 for               
+
+> Digital Discovery, [year], [vol.], 1–12 | 7 −20 020 40 60
+> Change from FPS/DPP (%)
+> Metadata-score mask High-force tail High-response cell High-novelty mask
+> aDirect response-witness selection
+> −4 −3 −2 −1 01
+> Change from FPS/DPP (%)
+> Metadata-score mask High-force tail High-response cell High-novelty mask
+> bCoverage subset after response repair
+> Carbon rMD17
+
+Fig. 3 Response emphasis improves one local rMD17 endpoint but increases the other reported errors at 5%. a , Response-witness effects relative to FPS/DPP across four held-out force-error endpoints. b, Response-repair effects relative to FPS/DPP. Negative values indicate lower error; error bars are grouped-bootstrap 95% confidence intervals. Endpoint masks can overlap and are not independent replications. The horizontal scales differ between panels. Carbon repair replaces three of 50 structures, reduces candidate-pool OBNL atom mass from 1.00% to zero and retains a Jaccard overlap of 0.887. rMD17 repair returns the coverage subset because FPS/DPP already covers every eligible high-response cell. 
+
+Carbon defects. The residual score therefore removed most of the rank association with novelty, allowing a downstream comparison of error information beyond that association. Embedding coverage remained the best of these selections for Carbon-defect force-vector MAE (Fig. 4c). Its five-seed mean held-out error was 221.2 meV Å −1, compared with 226.6 for Ran-dom, 257.6 for residual-error selection and 314.1 meV Å −1 for raw-error selection. The corresponding paired differences were 
+
++5 .4, +36 .4 and +92 .8 meV Å −1, with all three reported intervals above zero. Removing novelty from frozen-model error therefore did not make direct error-based selection more effective for this endpoint. 
+
+3.4 Learned similarity preserves the coverage ranking 
+
+Learning chemical and physical similarity also retained a rank-ing close to coverage across the three diagnostic datasets (Fig. 5). Spearman correlations with Gaussian QUESTS ranged from 0.980 to 0.990, and selected-set Jaccard overlap at 5% ranged from 0.667 to 0.754 (Fig. 5a). Geometry and coverage accounted for 0.821–0.989 of the fitted weight, whereas the residual channel received no more than 0.030 (Fig. 5b). The fitted weights and ranking agreement thus pointed to the same dominant source of information. The ranking agreement was accompanied by similar group-discrimination performance. Absolute leave-one-group-out AUROCs were close to chance, and learned-minus-Gaussian 
+
+∆AUROC intervals included zero for Carbon, rMD17 and HEA (Fig. 5c). In the constructed positive control, the same parame-terisation departed from coverage when an independent channel was injected. The model could therefore respond to that con-trolled signal, while the measured physical attributes produced rankings dominated by structural coverage. 
+
+# 4 Discussion 
+
+4.1 Data budget is part of selector performance 
+
+Retained-data budget changes the balance between structural coverage and model response. Coverage gives smaller absolute gaps to the full-data outcome than the response witness at 1% and 5%, whereas the witness gives smaller gaps in all eight dataset– endpoint comparisons at 20%. At 20%, the witness advantage is also present in direct held-out DFT force errors across all eight comparisons. Choosing a selection rule therefore requires speci-fying how much data will be retained and which prediction errors matter. This crossover connects atomistic training-set selection with data pruning. The preferred pruning criterion can change as the retained fraction increases 48 , and chemical selection studies report related budget-dependent exploration–exploitation trade-offs 29,30 . Our force-based MLIP comparisons locate the change between the sampled 5% and 20% budgets. Intermediate learning-curve points would resolve whether the transition is gradual or sharp. Model-dependent example value helps explain why the ranking can change. Influence, forgetting, training dynamics and early-loss rankings measure different aspects of how a model uses an example 46,47,53–55 . Structural coverage and response disagree-ment emphasise different requirements: spanning configuration space and targeting discrepancies left by a trained model. As the subset grows, the balance between these requirements can shift. The observed crossover makes this balance a concrete question for atomistic training-set design. 
+
+4.2 Response emphasis exposes endpoint trade-offs 
+
+The 5% response experiments show that a gain in one force regime can accompany losses elsewhere. In rMD17, the witness     
+
+> 8 | 1–12 Digital Discovery, [year], [vol.], 0.0 0.5 1.0
+> Spearman correlation with embedding novelty
+> rMD17 Amorphous C C defects
+
+a    
+
+> Raw error Residualised 0.00 0.25 0.50 0.75 1.00
+> Out-of-fold variance explained (R²)
+> rMD17 Amorphous C C defects
+
+b 
+
+> Novelty + nuisance
+> Embed. coverage Random Resid. error Raw error
+> 220 240 260 280 300 320
+> Force-vector MAE (meV / Å)
+
+cFig. 4 Frozen-model error tracks embedding novelty, and error-based selections give higher Carbon-defect MAE than coverage. a, Spearman correlations of raw and residualised force error with five-nearest-neighbour novelty in the mean-pooled MACE-MP-0 embedding. b, Out-of-fold variance explained by novelty alone and by novelty plus nuisance covariates. Points and error bars in a and b show estimates and grouped-bootstrap 95% confidence intervals. c, Held-out Carbon-defect force-vector MAE for five training seeds. Small points show individual seeds; large symbols and error bars show five-seed means and reported 95% confidence intervals. 1 2 5 10 20 
+
+> Retained training data (%)
+> 0.5 0.6 0.7 0.8 0.9
+> Jaccard overlap with Gaussian QUESTS
+> ρ=0.99 ρ=0.99 ρ=0.98
+
+a    
+
+> Carbon rMD17 HEA 0.00 0.25 0.50 0.75 1.00
+> Learned channel weight
+> Carbon rMD17 HEA
+
+b  
+
+> Geometry / coverage Species / composition Residual −0.01 0.00 0.01
+> Learned minus Gaussian QUESTS ΔAUROC
+> Carbon rMD17 HEA
+> AUROC 0.550 → 0.552 AUROC 0.530 → 0.528 AUROC 0.514 → 0.512
+
+c
+
+Fig. 5 Learned chemical and physical similarity preserves the coverage ranking. a , Selected-set overlap with Gaussian QUESTS across retained-data budgets; annotations report full-ranking Spearman correlations. b, Learned contributions from geometry and coverage, species and composition, and the residual channel. c, Learned-minus-Gaussian leave-one-group-out ∆AUROC with grouped-bootstrap 95% confidence intervals. All three intervals include zero. 
+
+lowers High-response cell error while increasing Metadata-score mask, High-force tail and High-novelty mask errors. In Carbon, every reported response endpoint worsens. This endpoint de-pendence is relevant to materials benchmarks, where the target property and evaluation protocol affect model comparisons 56 . A selection that targets a local discrepancy must therefore also be evaluated on the broader force distribution. Response repair tests the effect of a small change in subset membership. In Carbon it removes the 1.00% uncovered high-response atom mass, yet all outcome intervals include zero. In rMD17, the coverage subset already contains every eligible high-response cell and the reported repair subset is unchanged. These results separate coverage of a response-defined region from mea-surable improvement after retraining. At 20%, the witness improves direct DFT force errors as well as agreement with the full-data outcome. All eight paired-seed comparisons favour the witness over FPS/DPP, and six errors are also below the full-data reference. Their signed-gap inter-vals remain below zero (Table 2), as do the paired-t sensitivity intervals in Supplementary Table S11. The Carbon Mean and   
+
+> Digital Discovery, [year], [vol.], 1–12 | 9
+
+Validation-selected stratum endpoints are 0.144% and 0.039% higher, respectively. A response-selected subset can therefore yield more accurate predictions than training on all 1000 struc-tures for particular force regimes under the shared training pro-tocol. A matched-update comparison would test whether this or-dering persists at equal numbers of optimisation steps. The immediate application is compression of an already la-belled pool using information from a coverage-trained model and a full-data reference. The demonstrated benefit is lower held-out force error at the 20% retained-data budget. End-to-end compu-tational savings would additionally depend on the cost of con-structing these preliminary models and training the selected sub-sets. Prospective acquisition poses a different design task: esti-mating useful response information before new DFT labels are computed, as in workflows that combine uncertainty, diversity and iterative exploration 28,36–38,41,42 .
+
+4.3 Selection scores and training value are different quanti-ties 
+
+The complementary analyses explain why selection scores need to be connected to trained-model outcomes. Learned similarity re-tains Spearman correlations of 0.98–0.99 with Gaussian QUESTS and assigns most weight to geometry and coverage. Frozen-model error follows embedding novelty, while direct error-based selection increases Carbon-defect force MAE relative to embed-ding coverage. These are two different outcomes: a score can re-produce an existing ranking, or it can change the selection with-out improving prediction. Retraining distinguishes useful infor-mation from either case. The auxiliary HEA25 regression illustrates a related depen-dence on representation. The G4 descriptors reduce normalised out-of-fold squared error to 0.240 of the G0 value, with agrouped-bootstrap interval of [0 .222 , 0.278] (Supplementary Ta-ble S2). This regression tests how well the descriptors represent the energy target. Rank and overlap statistics test whether selec-tion scores order structures differently, and matched-budget re-training tests whether those differences improve prediction. The same sequence can be used to evaluate ensemble uncertainty and hybrid diversity–uncertainty strategies 43,44 .
+
+4.4 Implications for atomistic data selection 
+
+A practical comparison starts with coverage and Random, evalu-ates candidate selectors at several matched budgets, and reports both direct force errors and deviations from a full-data reference. Multiple endpoints reveal whether improvements are concen-trated in the mean, tail or a particular local regime. Uncertainty should reflect the quantity being compared: paired training-seed intervals measure optimisation variability, whereas grouped re-sampling measures variation across the specified scientific groups. Our comparison uses a validation-selected FPS/DPP procedure and a single Random subset at each budget, with intervals de-scribing training-seed variability for those selected subsets. The three-budget curves span five training seeds, two atomistic pan-els and one MACE-MP-0 coverage representation. They show why choosing a selector and choosing a training-set size are coupled decisions. A method favoured under strong compression can give way to another at a larger retained fraction, so the relevant com-parison is the one made at the intended budget and force end-point. 
+
+# 5 Conclusions 
+
+The amount of data retained changes the relative perfor-mance of coverage- and response-based training-set selection. Our selection-and-retraining comparison on GAP-20 Carbon and pooled rMD17 reveals a crossover: FPS/DPP is closer to the full-data outcome than Random at 5% across all eight force end-points, and the response witness has larger absolute gaps than coverage at 1% and 5%, but outperforms coverage at 20%. At 20%, witness-selected models also reduce direct held-out force errors by 0.46–5.89% relative to FPS/DPP, with all eight paired-seed intervals favouring the witness; six errors are below the full-data reference. The complementary analyses identify why an appealing score can fall short as a selection criterion. Learned similarity pre-serves the coverage ranking, and frozen-model-error selection in-creases Carbon-defect force MAE relative to embedding coverage. Connecting selection scores to retrained-model predictions across budgets therefore provides the decisive test of data value. The resulting design lesson is direct: select the training-set size and selection rule together, and judge the chosen subset by the force accuracy required of the final model. 
+
+# Author contributions 
+
+J.B.: Conceptualization, Methodology, Software, Investigation, Formal analysis, Data curation, Visualization, Writing – original draft. A.M.E.: Data curation, Software, Validation, Writing – review and editing. Both authors discussed the results and ap-proved the manuscript. 
+
+# Conflicts of interest 
+
+There are no conflicts to declare. 
+
+# Data availability 
+
+The GAP-20 Carbon 14,51 , revised MD17 (rMD17) 15,52 and HEA25 49,50 datasets are publicly available. The pretrained model used for embeddings and error estimates is MACE-MP-0 19 . The accompanying source-data and analysis archive is as-sociated with the Zenodo record https://doi.org/10.5281/ zenodo.22263567 57 . It includes five-seed aggregate values for the 1%, 5% and 20% budget curves, seed-resolved values for the primary 5% comparisons and 20% response crossover, and the manuscript source files. A portable analysis entry point regen-erates the paired statistics and quantitative figures from the CSV tables without training models. The archive also contains a MACE configuration specifying the shared compression-training settings and a data dictionary. The companion development repository is https://github.com/JIABI/QUESTS_physical_kernel . Sup-plementary Section 2.8 maps the archived source data and code.   
+
+> 10 | 1–12 Digital Discovery, [year], [vol.],
+
+# Acknowledgments 
+
+The authors were supported by the Ada Lovelace Cen-tre at the Science and Technology Facilities Council (https://adalovelacecentre.ac.uk). A.M.E was also supported by the Physical Sciences Data Infrastructure (https://psdi.ac.uk; jointly STFC and the University of Southampton) under grants EP/X032663/1 and EP/X032701/1, and EPSRC under grants EP/W026775/1 and EP/V028537/1. We acknowledge compu-tational resources from STFC Scientific Computing Department’s SCARF cluster and cloud. 
+
+# Notes and references 
+
+1 J. Behler and M. Parrinello, Physical Review Letters , 2007, 98 ,146401. 2 A. P. Bartók, M. C. Payne, R. Kondor and G. Csányi, Physical Review Letters , 2010, 104 , 136403. 3 A. P. Thompson, L. P. Swiler, C. R. Trott, S. M. Foiles and G. J. Tucker, Journal of Computational Physics , 2015, 285 ,316–330. 4 A. V. Shapeev, Multiscale Modeling & Simulation , 2016, 14 ,1153–1173. 5 R. Drautz, Physical Review B , 2019, 99 , 014104. 6 A. P. Bartók, R. Kondor and G. Csányi, Physical Review B ,2013, 87 , 184115. 7 K. T. Schütt, H. E. Sauceda, P.-J. Kindermans, A. Tkatchenko and K.-R. Müller, The Journal of Chemical Physics , 2018, 148 ,241722. 8 K. T. Schütt, O. T. Unke and M. Gastegger, Proceedings of the 38th International Conference on Machine Learning (ICML), 2021, pp. 9377–9388. 9 S. Batzner, A. Musaelian, L. Sun, M. Geiger, J. P. Mailoa, M. Kornbluth, N. Molinari, T. E. Smidt and B. Kozinsky, Nature Communications , 2022, 13 , 2453. 10 A. Musaelian, S. Batzner, A. Johansson, L. Sun, C. J. Owen, M. Kornbluth and B. Kozinsky, Nature Communications , 2023, 
+
+14 , 579. 11 I. Batatia, D. P. Kovács, G. N. C. Simm, C. Ortner and G. Csányi, Advances in Neural Information Processing Sys-tems (NeurIPS), 2022, pp. 11423–11436. 12 R. Ramakrishnan, P. O. Dral, M. Rupp and O. A. von Lilienfeld, 
+
+Scientific Data , 2014, 1, 140022. 13 J. S. Smith, R. Zubatyuk, B. Nebgen, N. Lubbers, K. Barros, A. E. Roitberg, O. Isayev and S. Tretiak, Scientific Data , 2020, 
+
+7, 134. 14 P. Rowe, V. L. Deringer, P. Gasparotto, G. Csányi and A. Michaelides, The Journal of Chemical Physics , 2020, 153 ,034702. 15 A. S. Christensen and O. A. von Lilienfeld, Machine Learning: Science and Technology , 2020, 1, 045018. 16 L. Chanussot, A. Das, S. Goyal, T. Lavril, M. Shuaibi, M. Riv-iere, K. Tran, J. Heras-Domingo, C. Ho, W. Hu, A. Palizhati, A. Sriram, B. Wood, J. Yoon, D. Parikh, C. L. Zitnick and Z. Ulissi, ACS Catalysis , 2021, 11 , 6059–6072. 17 C. Chen and S. P. Ong, Nature Computational Science , 2022, 
+
+2, 718–728. 18 B. Deng, P. Zhong, K. Jun, J. Riebesell, K. Han, C. J. Bartel and G. Ceder, Nature Machine Intelligence , 2023, 5, 1031–1041. 19 I. Batatia, P. Benner, Y. Chiang, A. M. Elena, D. P. Kovács, J. Riebesell, X. R. Advincula, M. Asta, M. Avaylon, W. J. Bald-win, F. Berger, N. Bernstein, A. Bhowmik, F. Bigi, S. M. Blau, V. C˘ arare, M. Ceriotti, S. Chong, J. P. Darby, S. De, F. Della Pia, V. L. Deringer, R. Elijošius, Z. El-Machachi, E. Fako, F. Falcioni, A. C. Ferrari, J. L. A. Gardner, M. J. Gawkowski, A. Genreith-Schriever, J. George, R. E. A. Goodall, J. Grandel, C. P. Grey, P. Grigorev, S. Han, W. Handley, H. H. Heenen, K. Her-mansson, C. H. Ho, S. Hofmann, C. Holm, J. Jaafar, K. S. Jakob, H. Jung, V. Kapil, A. D. Kaplan, N. Karimitari, J. R. Kermode, P. Kourtis, N. Kroupa, J. Kullgren, M. C. Kuner, D. Kuryla, G. Liepuoniute, C. Lin, J. T. Margraf, I.-B. Magd˘ au, A. Michaelides, J. H. Moore, A. A. Naik, S. P. Niblett, S. W. Norwood, N. O’Neill, C. Ortner, K. A. Persson, K. Reuter, A. S. Rosen, L. A. M. Rosset, L. L. Schaaf, C. Schran, B. X. Shi, E. Sivonxay, T. K. Stenczel, C. Sutton, V. Svahn, T. D. Swin-burne, J. Tilly, C. van der Oord, S. Vargas, E. Varga-Umbrich, T. Vegge, M. Vondrák, Y. Wang, W. C. Witt, T. Wolf, F. Zills and G. Csányi, The Journal of Chemical Physics , 2025, 163 ,184110. 20 M. Radova, W. G. Stark, C. S. Allen, R. J. Maurer and A. P. Bartók, npj Computational Materials , 2025, 11 , 237. 21 K. Li, B. DeCost, K. Choudhary, M. Greenwood and J. Hattrick-Simpers, npj Computational Materials , 2023, 9, 55. 22 D. Montes de Oca Zapiain, M. A. Wood, N. Lubbers, C. Z. Pereyra, A. P. Thompson and D. Perez, npj Computational Ma-terials , 2022, 8, 189. 23 G. Imbalzano, A. Anelli, D. Giofré, S. Klees, J. Behler and M. Ceriotti, The Journal of Chemical Physics , 2018, 148 ,241730. 24 A. Kulesza and B. Taskar, Foundations and Trends in Machine Learning , 2012, 5, 123–286. 25 D. Schwalbe-Koda, S. Hamel, B. Sadigh, F. Zhou and V. Lordi, 
+
+Nature Communications , 2025, 16 , 4014. 26 B. Yu, V. Lordi and D. Schwalbe-Koda, The Journal of Chemical Physics , 2026, 164 , 164111. 27 J. Qi, T. W. Ko, B. C. Wood, T. A. Pham and S. P. Ong, npj Computational Materials , 2024, 10 , 43. 28 V. Zaverkin, D. Holzmüller, I. Steinwart and J. Kästner, Digital Discovery , 2022, 1, 605–620. 29 Q. M. Gallagher and M. A. Webb, Digital Discovery , 2025, 4,135–148. 30 S. L. Sivilotti, D. M. Friday and N. E. Jackson, Digital Discov-ery , 2025, 4, 846–852. 31 D. Schwalbe-Koda, N. Govindarajan and J. B. Varley, Digital Discovery , 2025, 4, 234–251. 32 K. Wei, R. Iyer and J. Bilmes, Proceedings of the 32nd Inter-national Conference on Machine Learning (ICML), 2015, pp. 1954–1963. 33 B. Mirzasoleiman, J. Bilmes and J. Leskovec, Proceedings of the 37th International Conference on Machine Learning   
+
+> Digital Discovery, [year], [vol.], 1–12 | 11
+
+(ICML), 2020, pp. 6950–6960. 34 K. Killamsetty, D. Sivasubramanian, G. Ramakrishnan, A. De and R. Iyer, Proceedings of the 38th International Conference on Machine Learning (ICML), 2021, pp. 5464–5474. 35 B. B. Moser, A. S. Shanbhag, S. Frolov, F. Raue, J. Folz and A. Dengel, A coreset selection of coreset selection literature: In-troduction and recent advances , arXiv:2505.17799, 2025. 36 E. V. Podryabinkin and A. V. Shapeev, Computational Materials Science , 2017, 140 , 171–180. 37 L. Zhang, D.-Y. Lin, H. Wang, R. Car and W. E, Physical Review Materials , 2019, 3, 023804. 38 M. Kulichenko, K. Barros, N. Lubbers, Y. W. Li, R. Messerly, S. Tretiak, J. S. Smith and B. Nebgen, Nature Computational Science , 2023, 3, 230–239. 39 J. S. Smith, B. Nebgen, N. Lubbers, O. Isayev and A. E. Roit-berg, The Journal of Chemical Physics , 2018, 148 , 241733. 40 J. Vandermause, S. B. Torrisi, S. Batzner, Y. Xie, L. Sun, A. M. Kolpak and B. Kozinsky, npj Computational Materials , 2020, 
+
+6, 20. 41 V. Zaverkin, D. Holzmüller, H. Christiansen, F. Errica, F. Ale-siani, M. Takamoto, M. Niepert and J. Kästner, npj Computa-tional Materials , 2024, 10 , 83. 42 V. Vitartas, H. Zhang, V. Juraskova, T. Johnston-Wood and F. Duarte, Digital Discovery , 2026, 5, 108–122. 43 B. Lakshminarayanan, A. Pritzel and C. Blundell, Advances in Neural Information Processing Systems (NeurIPS), 2017, pp. 6402–6413. 44 A. R. Tan, S. Urata, S. Goldman, J. C. B. Dietschreit and R. Gómez-Bombarelli, npj Computational Materials , 2023, 9,225. 45 S. N. Pozdnyakov, M. J. Willatt, A. P. Bartók, C. Ortner, G. Csányi and M. Ceriotti, Physical Review Letters , 2020, 125 ,166001. 46 M. Paul, S. Ganguli and G. K. Dziugaite, Advances in Neural Information Processing Systems (NeurIPS), 2021, pp. 20596– 20607. 47 S. Mindermann, J. M. Brauner, M. T. Razzak, M. Sharma, A. Kirsch, W. Xu, B. Höltgen, A. N. Gomez, A. Morisot, S. Farquhar and Y. Gal, Proceedings of the 39th International Conference on Machine Learning (ICML), 2022, pp. 15630– 15649. 48 B. Sorscher, R. Geirhos, S. Shekhar, S. Ganguli and A. S. Morcos, Advances in Neural Information Processing Systems (NeurIPS), 2022, pp. 19523–19536. 49 N. Lopanitsyna, G. Fraux, M. A. Springer, S. De and M. Ceri-otti, Physical Review Materials , 2023, 7, 045802. 50 N. Lopanitsyna, G. Fraux, M. A. Springer, S. De and M. Ceriotti, Modeling high-entropy transition-metal alloys with alchemical compression: dataset HEA25 , Materials Cloud Archive 2023.57, 2023, https://doi.org/10.24435/ materialscloud:73-yn .51 G. Csányi, Carbon GAP 20 , University of Cambridge Re-search Data Repository, 2020, https://doi.org/10.17863/ CAM.54529 .52 A. S. Christensen and O. A. von Lilienfeld, Revised MD17 dataset (rMD17) , Materials Cloud Archive 2020.82, 2020, 
+
+https://doi.org/10.24435/materialscloud:wy-kn .53 P. W. Koh and P. Liang, Proceedings of the 34th International Conference on Machine Learning (ICML), 2017, pp. 1885– 1894. 54 M. Toneva, A. Sordoni, R. T. d. Combes, A. Trischler, Y. Ben-gio and G. J. Gordon, International Conference on Learning Representations (ICLR), 2019. 55 S. Swayamdipta, R. Schwartz, N. Lourie, Y. Wang, H. Ha-jishirzi, N. A. Smith and Y. Choi, Proceedings of the 2020 Conference on Empirical Methods in Natural Language Pro-cessing (EMNLP), 2020, pp. 9275–9293. 56 J. Riebesell, R. E. A. Goodall, P. Benner, Y. Chiang, B. Deng, G. Ceder, M. Asta, A. A. Lee, A. Jain and K. A. Persson, Nature Machine Intelligence , 2025, 7, 836–847. 57 J. Bi, Source data and analysis for a budget-dependent crossover between coverage- and response-based training-set selection for machine-learned interatomic potentials , Zenodo, version 2.3.0, 2026, https://doi.org/10.5281/zenodo.22263567 , Con-cept DOI for all versions; source-data release.   
+
+> 12 | 1–12 Digital Discovery, [year], [vol.],
+
+# Digital Discovery 
+
+SUPPLEMENTARY INFORMATION 
+
+# Supplementary Information for: A budget-dependent crossover between coverage- and response-based training-set selection for machine-learned interatomic potentials 
+
+Jia Bi, ∗a Alin-Marin Elena, ∗b
+
+This document provides extended methods, diagnostic controls, five-seed outcome summaries, budget-dependent learning curves and a constructed methodological positive control. The corre-sponding source-data tables are archived at https://doi.org/10.5281/zenodo.22263567 .
+
+# 1 Methods 
+
+The numerical results in this Supplementary Information are pro-vided as source tables at https://doi.org/10.5281/zenodo. 22263567 . Main-text tables are organised under data/main/ , and Supplementary Information tables under data/si/ . The same ta-bles drive the submitted figures and the numerical cross-checks described below. 
+
+1.1 Datasets, splits and budgets 
+
+The direct outcome analyses use fixed 1400-structure panels from GAP-20 Carbon 1,2 and the ten rMD17 trajectories 3,4 . All data roles were assigned before selector fitting. Non-finite energy or force labels were excluded. An exact-geometry duplicate key comprised the ordered atomic numbers, periodic boundary condi-tions, cell and coordinates at the precision deposited by the source archive; energy and force labels were not part of the key. All members of a duplicate group were assigned to the same split. Panel/split seed 0 was used once, and the resulting panel and split were shared by every selector and training seed. The GAP-20 panel was sampled from the complete gener-ated Carbon set, Carbon_Data_Set_Total.xyz in the unpacked archive. The native config_type labels were mapped to five physical groups listed in Table S0. Within each group, energy per atom, atom count and volume per atom ( | det Hx|/N x from the deposited cell) were divided into empirical quintile bins; tied quantile edges were merged. The fixed-seed stratified draw covered the non-empty combinations of these bins and retained 280 configurations per physical group. Each group contributed 200 training, 40 validation and 40 held-out test configurations. Within its training allocation, 40 structures formed the response-calibration partition and 160 formed the candidate pool.     
+
+> aScience and Technology Facilities Council, Harwell Campus, Didcot, United Kingdom. E-mail: Jia.Bi@stfc.ac.uk
+> ∗Corresponding author. bScience and Technology Facilities Council, Keckwick Lane, Daresbury, United Kingdom. E-mail: alin-marin.elena@stfc.ac.uk
+
+The rMD17 panel retained 140 frames from each of aspirin, azobenzene, benzene, ethanol, malonaldehyde, naphthalene, paracetamol, salicylic acid, toluene and uracil. For molecule 
+
+m, frames were ordered by old_indices . The block width was 
+
+τm = max( τE,m , τ F,m ), where τE,m and τF,m are the first posi-tive lags at which the sample autocorrelation of energy per atom and per-structure RMS DFT-force norm, respectively, is no greater than e−1. Non-overlapping blocks were formed in this order, no more than one frame was drawn from a block, and one block could not cross data roles. Every molecule contributed 100 train-ing, 20 validation and 20 test frames; 20 of its training frames formed the response-calibration partition and 80 formed the can-didate pool. The stable record for a frame is the tuple (molecule, 
+
+old_indices , block ID, split, response role). Both panels therefore contain 1000 training, 200 validation and 200 held-out test structures. The full-data reference uses all 1000 training structures, including the 200 calibration structures. Subset selectors can choose only from the disjoint 800-structure candidate pool. The reported subset sizes of 10, 50 and 200 are 1%, 5% and 20% of the full-data training reference and 1.25%, 6.25% and 25% of the eligible candidate pool. The label “rMD17 full” denotes this complete pooled analysis panel, not the full orig-inal rMD17 archive. HEA25 5,6 is used for learned-similarity and non-spin energy-residual diagnostics; Carbon defects provide the foundation-model fine-tuning endpoint. 
+
+1.2 MACE outcome comparisons 
+
+The primary Carbon and pooled rMD17 outcome comparisons use the official MACE implementation 7. The architecture, label con-ventions, loss weights, optimiser, batch sizes, learning-rate sched-ule, epoch ceiling and stopping settings described here are shared by every selector at 1%, 5% and 20% and by the full-data refer-ences. Selected subsets contain 10, 50 or 200 structures, and the full-data reference uses the complete 1000-structure train-ing partition. The 200-structure validation and 200-structure test partitions are shared across selectors and retained-data budgets.                                                               
+
+> Digital Discovery, [year], [vol.], 1–19 | 1 Supplementary Table S0. Dataset construction, split and validation contract. Response calibration is contained within the training pool, whereas subset selection is restricted to the candidate pool. The validation-selected stratum maximises the five-seed full-reference validation force error and is then frozen for every held-out comparison. Selection of the coverage comparator minimises normalised validation force MAE; exact ties favour FPS and then lexicographic structure ID.
+> Panel A: global split and budget contract.
+> Dataset Train Calibration Candidates Validation Test Budgets Carbon 1000 200 800 200 200 10/50/200 rMD17 full 1000 200 800 200 200 10/50/200
+> Panel B: Carbon physical groups and native GAP-20 labels.
+> Code Physical group Native config_type labels STRATUM_1 Crystalline bulk/allotropes Crystalline_Bulk, Crystalline_RSS, Diamond, Graphite, SACADA STRATUM_2 Liquid/amorphous Amorphous_Bulk, Liquid STRATUM_3 Surfaces/interfaces Amorphous_Surfaces, Liquid_Interface, Surfaces, Graphite_Layer_Sep STRATUM_4 Defects Defects STRATUM_5 Finite/low-dimensional Dimer, Fullerenes, Graphene, Nanotubes, LD_Iter1, Single_Atom
+> Panel C: rMD17 evaluation strata. Molecules are paired by increasing atom count, with lexicographic ordering for ties. Each molecule contributes 100/20/20 train/validation/test frames and 20/80 calibration/candidate frames within training. Code Molecules Atom counts STRATUM_1 ethanol, malonaldehyde 9, 9 STRATUM_2 benzene, uracil 12, 12 STRATUM_3 toluene, salicylic acid 15, 16 STRATUM_4 naphthalene, paracetamol 18, 20 STRATUM_5 aspirin, azobenzene 21, 24
+> Panel D: validation-only choice of the coverage comparator.
+> Dataset Budget Retained comparator Carbon 1% FPS Carbon 5% DPP Carbon 20% DPP rMD17 full 1% DPP rMD17 full 5% DPP rMD17 full 20% DPP
+
+Outcome seeds 1–5 are paired between subset models and their full-data references. All compression models used CUDA execution and float64 precision. The two interaction blocks were RealAgnosticInteractionBlock followed by 
+
+RealAgnosticResidualInteractionBlock . The 5.0 Å ra-dial cutoff used eight Bessel functions and a polynomial envelope with p = 5 . The maximum spherical-harmonic degree was 3, correlation order was 3 and hidden irreducible representations were 128x0e + 128x1o . The radial MLP had widths [64,64,64] ,and the final readout used 16x0e with a SiLU gate. Reference labels were read from dft_energy in eV and 
+
+dft_forces in eV Å −1. The weighted loss used energy and force weights of 1 and 100, respectively, with unit weight for the De-fault configuration type. Force computation was enabled and stress computation disabled. Atomic reference energies were es-timated with E0s=average ; RMS-force output scaling and auto-matic mean-neighbour normalisation were estimated from each model’s own training set. Their estimation procedures were fixed, but their fitted values could differ between selected subsets and the full-data reference. AdamW used AMSGrad, an initial learning rate of 0.01 and weight-decay coefficient 5 × 10 −7 in the standard MACE pa-rameter groups. Training and validation batch sizes were four, and gradient clipping was set to 10. The epoch ceiling was 1500, validation was evaluated every epoch, ReduceLROnPlateau used factor 0.8 and patience 50, and early-stopping patience was configured as 200 epochs. Exponential moving averaging used decay 0.99; stage-two/SWA training was disabled. Check-point retention was configured with keep_checkpoints=false 
+
+and save_all_checkpoints=false , automatic restart was dis-abled and CPU model export was enabled. The official report for-mat was PerAtomMAE ; the force-vector endpoints analysed here are defined separately below. The shared settings are speci-fied by training_configs/DD_Carbon_FPS_DPP_B005_s1.yaml 
+
+in the manuscript archive. Run names, training-file paths, out-put directories and training seeds vary by run; the validation-file path is fixed within each dataset. The retained-data budget counts training structures. An epoch traverses the corresponding training set, so the same epoch ceil-ing does not impose the same gradient-update budget at different subset sizes. Learning-rate reduction and early stopping respond to validation loss within this shared schedule. The comparisons therefore evaluate selector performance under a common epoch-based training protocol. For each seed, the same held-out atom sets are used to calcu-late the four force endpoints. Relative gaps are formed against that seed’s full-data reference before averaging across seeds. This pairing also defines the selector contrasts in Supplementary Ta-bles S7 and S11. The frozen MACE-MP-0 model used to com-  
+
+> 2 | 1–19 Digital Discovery, [year], [vol.],
+
+pute selection descriptors is separate from the outcome mod-els. The Carbon-defect foundation-model comparison uses fine-tuning and is reported separately. 
+
+1.3 Coverage baselines and candidate signals 
+
+Random sampling is performed without replacement. FPS and DPP operate on standardised, mean-pooled invariant MACE-MP-0 descriptor embeddings. FPS begins with the structure farthest from the centroid. The DPP uses greedy maximum-a-posteriori selection from an RBF L-ensemble: its bandwidth is the median positive pair distance, diagonal jitter is 10 −10 , exact selection is used up to 4096 candidates, and larger pools use 256 random Fourier features with seed 0. Gaussian-kernel QUESTS cover-age and its minimum-set-cover variant, QUESTS-MSC, use band-width 0.015, 32 neighbours and a 5 Å cutoff. This fixed QUESTS-MSC parameterisation is not tuned by dataset or budget. The predeclared validation endpoint is normalised force MAE, with lower values preferred, tolerance 10 −6 and FPS followed by lexi-cographic structure ID as the exact-tie rule. Validation retains FPS for Carbon at 1%, DPP for Carbon at 5% and 20%, and DPP for rMD17 at all three budgets; Table S0 lists the retained comparator at each budget. FPS/DPP is used only as a compact cross-budget family label. QUESTS-MSC is a secondary coverage comparison and Random is the unstructured reference. Candidate analyses comprise learned chemical/physical simi-larity, the HEA25 descriptor-conditioned non-spin energy resid-ual, frozen MACE-MP-0 force error and response-based selection. The first two are diagnostics without retraining. Foundation-model error is evaluated through one Carbon-defect fine-tuning endpoint. Response effects are evaluated for the Metadata-score mask, High-response cell, High-force tail and High-novelty mask errors. The Metadata-score mask is the upper quintile of the calibration-defined composite physical-stress score given below; the High-novelty mask is the calibration-defined high-novelty atom subset. For candidate method m, the reported 5% effect is 100[ Lg (θm) − Lg (θFPS /DPP )] /L g (θFPS /DPP ); positive values indicate higher error. All interpretations are made against the strongest available FPS/DPP baseline at the same budget. 
+
+1.4 Definitions and procedures 
+
+This section defines the force endpoints, learned-metric objective, HEA regression target and response-selection procedure. It ex-pands the three response coordinates in main-text Eq. 7 with the complete calibration and cell-construction procedure. 
+
+Outcome endpoint and evaluation strata. For a subset S and full pool D, models θS and θD are compared on common held-out structures using the pairing in Sec. 1.2. Write exa (θ) = 
+
+∥Fθxa − FDFT  
+
+> xa
+
+∥2 for the force-vector error of atom a in held-out structure x. An evaluation group g is a fixed, potentially overlapping atom set: overall, the High-force tail, the Metadata-score mask, the High-response cell, the Validation-selected stra-tum or the High-novelty mask. For the overall, High-force tail, Metadata-score, High-response-cell and Validation-selected-stratum endpoints, Lg (θ) = |g|−1 ∑ 
+
+> (x,a )∈g
+
+exa (θ). For the High-novelty mask, Lg (θ) = { | g|−1 ∑ 
+
+> (x,a )∈g
+
+e2
+
+> xa
+
+(θ) }1/2. We report both the signed relative deviation and its magnitude, 
+
+rg (S) = 100 Lg (θS ) − Lg (θD )max {Lg (θD ), ϵ } , δg (S) = |rg (S)|,
+
+with ϵ = 10 −12 . The absolute gap δg measures proximity to the full-data outcome, while rg retains the direction of the error difference. The High-force tail mask is fixed from the 80th percentile of the DFT force norm in response calibration: 0.423620725 eV Å −1 for Carbon and 0.324778407 eV Å −1 for rMD17. The Validation-selected stratum is chosen once from full-reference validation predictions, 
+
+g⋆ = arg max 
+
+> g
+
+15
+
+> 5
+
+∑
+
+> s=1
+
+Lg, val (θD,s ), (S1) with lexicographic tie-breaking. Carbon uses the five physical groups in Table S0 and selects finite/low-dimensional Carbon (STRATUM_5). The pooled rMD17 analysis uses the five equal-size molecule-pair strata in Table S0 and selects benzene/uracil (STRATUM_2). The selected group is frozen before test evalua-tion and is shared by all selectors, budgets and seeds. The High-novelty mask is a high-novelty environment sub-set. Let hxa be the invariant atomic embedding from the frozen MACE-MP-0 medium model and let HK be the response-calibration environment bank. We define 
+
+nxa = d5NN (hxa , HK), M nov  
+
+> xa
+
+= I
+
+[
+
+nxa ≥ QK
+
+> 0.65
+
+(n)
+
+]
+
+. (S2) When the calibration novelty distribution is formed, atoms from the query structure are omitted from the reference bank. The fitted 65th-percentile threshold is projected unchanged to vali-dation and test. The endpoint is the RMS force-vector error on 
+
+M nov and does not represent trajectory drift. The Metadata-score mask combines three physical stress indi-cators without using a model’s held-out error. Let RK denote the calibration empirical-rank map, let ex = EDFT  
+
+> x
+
+/N x, and let ˜eg(x)
+
+be the calibration median energy per atom in the Carbon physical group or rMD17 molecule of x. The atom-level score and mask are 
+
+sxa = 13
+
+[
+
+RK(|ex − ˜eg(x)|) + RK(∥FDFT  
+
+> xa
+
+∥2) + RK(nxa )
+
+]
+
+,M stress  
+
+> xa
+
+= I
+
+[
+
+sxa ≥ QK
+
+> 0.8
+
+(s)
+
+]
+
+.
+
+(S3) Every median, empirical-rank map and threshold is estimated on response calibration and then held fixed. Direct held-out force errors are additionally reported for the 20% response crossover because the witness itself is defined against the full-data model. 
+
+Learned-metric fit objective. The channel-weighted metric is fitted only on the declared training fit split. For structure x, define 
+
+vx =
+
+[
+
+∆ex, log( ∥FDFT  
+
+> x
+
+∥ + ϵ), log 
+
+(
+
+Q0.9(∥FDFT  
+
+> x
+
+∥) + ϵ
+
+)] 
+
+, (S4) where ex = EDFT  
+
+> x
+
+/N x. The energy is centred within the Carbon physical group, rMD17 molecule or HEA FCC/BCC–generation-  
+
+> Digital Discovery, [year], [vol.], 1–19 | 3
+
+class group. All three components are standardised using the cur-rent fit fold only. Unique unordered pairs are enumerated when their number is no greater than 100000; otherwise 100000 pairs are sampled without replacement with pair seed 0. For pair (i, j ),
+
+yij = exp 
+
+[
+
+− ∥˜vi − ˜vj ∥22
+
+2ℓ2
+
+]
+
+, ℓ = median i<j, d ij >0 dij , (S5) where dij = ∥˜vi − ˜vj ∥2. In every leave-one-group-out analysis, pairs touching the held group are excluded and the component scaling and ℓ are refitted from the remaining groups. The distance combines the three input channels associated with geometry and coverage, species and composition, and the resid-ual channel. Let uk(x) ∈ Rpk denote channel k for structure x.Each feature is standardised using its fit-fold mean and popu-lation standard deviation; a standard deviation no greater than 
+
+10 −12 is replaced by one. With the transformed channels denoted by ˜uk, the squared distance is 
+
+d2
+
+> λ
+
+(x, y ) = 
+
+> 3
+
+∑
+
+> k=1
+
+λk
+
+pk
+
+∥˜uk(x) − ˜uk(y)∥22,λk ≥ 0,
+
+∑
+
+> k
+
+λk = 1 .
+
+(S6) Division by pk averages over features within a channel before the channels are weighted. The predicted pair similarity is ̂y ij =exp[ −d2
+
+> λ
+
+(xi, x j )/(2 σ2)] . The interface uses σ = 1 , no regularisa-tion and a maximum of 500 optimisation iterations. Non-negative channel weights constrained to sum to one minimise the pairwise cross-entropy 
+
+Lpair = − 1
+
+|P fit |
+
+∑
+
+> (i,j )∈P fit
+
+[yij log ̂y ij + (1 − yij ) log(1 −̂y ij )] .
+
+(S7) Neither leave-one-group-out AUROC nor any validation or held-out-test outcome endpoint enters the fit. The pair seed, fit IDs, sampled pair indices, fold-specific scaling and kernel scale are fixed before evaluation. Ranking uses the negative logarithm of the mean kernel simi-larity to a fixed reference bank R:
+
+qλ(x) = − log 
+
+ 1
+
+|R| 
+
+∑
+
+> y∈R
+
+exp 
+
+(
+
+− d2
+
+> λ
+
+(x, y )2σ2
+
+) . (S8) Higher scores are selected first. When query and reference sets co-incide, the self term is omitted and the denominator is |R| − 1. In leave-one-group-out evaluation the held group is excluded from the reference bank. The dimension normalisation, channel stan-dardisation and kernel transformation are shared by pair fitting and subsequent scoring. 
+
+Fixed-bank similarity baseline. The fixed-bank baseline is eval-uated independently of the learned metric. In each leave-one-group-out fold, the descriptor environments from all non-held-out structures form a frozen reference bank. For a query envi-ronment q, we compute the maximum Gaussian similarity to that bank and define its novelty as one minus this maximum simi-larity; structure-level novelty is the mean over its environments. The held-out group contributes neither reference environments nor fitted parameters. The descriptor definition, bank member-ship and Gaussian bandwidth are fixed for every fold. 
+
+Descriptor-strength ladder. The public HEA25 calculations are non-spin-polarised 5; the diagnostic target is therefore a non-spin DFT energy residual. Within each analysis fit fold, elemental ref-erence coefficients ϵZ are obtained by least squares and 
+
+yx = EDFT 
+
+> x
+
+Nx
+
+−
+
+∑
+
+> Z
+
+cxZ ϵZ , (S9) where cxZ is the atomic fraction of element Z. The nested de-scriptor ladder is: G0, the 25 elemental fractions, atom count, volume per atom, FCC/BCC indicator and generation-class in-dicators; G1, G0 plus a mean-pooled two-body radial spectrum with 6 Å cutoff, Gaussian width 0.25 Å and 12 radial functions; 
+
+G2, G1 plus the corresponding rotationally invariant three-body angular power spectrum through ℓ = 6 8; G3, G2 plus mean-pooled ACE invariants through correlation order 3 (four-body) and ℓmax = 3 9; and G4, G3 plus the mean-pooled invariant out-put of the second interaction block of the frozen MACE-MP-0 medium model 10 .Every feature is standardised on the fit fold. Ridge re-gression is fitted at each level, with its penalty selected from 
+
+10 −6, 10 −5, . . . , 10 3 by inner grouped cross-validation. Outer evaluation leaves out one of the eight FCC/BCC–generation-class groups. For residuals r(k) 
+
+> x
+
+= yx −̂ fk(Gk(x)) , the normalised out-of-fold squared error is 
+
+Vk =
+
+∑
+
+> x∈OOF
+
+(r(k) 
+
+> x
+
+)2
+
+∑
+
+> x∈OOF
+
+(r(0)  
+
+> x
+
+)2 . (S10) Thus Vk compares the summed out-of-fold squared errors at level 
+
+k with those at G0. The comparison measures how the structural representation affects prediction of the non-spin DFT energy tar-get. 
+
+Coverage-conditioned residualisation. Let u be the candidate score and n the coverage novelty, defined as the rank-normalised 
+
+k-nearest-neighbour distance in the working representation. We fit u = h(n, z) + u⊥, where z contains force scale, density or com-position and local structural descriptors, and retain u⊥. We report 
+
+R2novelty , R2nov+nuis and the partial correlation ρ(u⊥, n ). Down-stream value is not inferred from this diagnostic alone. 
+
+Foundation-error residualisation. For the foundation analysis, the score is frozen MACE-MP-0 per-structure force error uF . Nov-elty nF is the rank-normalised five-nearest-neighbour distance in the mean-pooled MACE-MP-0 embedding. Five-fold out-of-fold residualisation removes novelty and the nuisance variables. Raw-error and residual-error subsets are then compared with cover-age and Random at the same size through held-out Carbon-defect force-vector MAE. 
+
+Response witness, OBNL cells and repair. For budget B, let 
+
+S0,B be the validation-selected FPS/DPP subset. A deterministic MACE seed-0 model trained on S0,B and a seed-0 full-data model trained on D construct the response selection. Outcome mod-  
+
+> 4 | 1–19 Digital Discovery, [year], [vol.],
+
+els are then trained independently with paired seeds 1–5. Write 
+
+∆Fxa,B = FθS0,B ,0 (x)a − FθD,0 (x)a. The structure witness is 
+
+WB (x) = 1
+
+Nx
+
+∑
+
+> a
+
+∥∆Fxa,B ∥2. (S11) The response coordinates are 
+
+qE (x) = zK
+
+( |EθS0,B ,0 (x) − EθD,0 (x)|
+
+Nx
+
+)
+
+, (S12) 
+
+qF, RMS (x) = zK
+
+√ 1
+
+Nx
+
+∑
+
+> a
+
+∥∆Fxa,B ∥22
+
+ , (S13) 
+
+qF, max (x) = zK
+
+(
+
+max  
+
+> a
+
+∥∆Fxa,B ∥2
+
+)
+
+, (S14) where each zK(v) = ( v − μK)/σ K uses its own mean and popu-lation standard deviation from the fixed 200-structure response-calibration partition K. If σK = 0 , that coordinate is set to zero for calibration and candidates. No validation or test value enters the transformation. Fixed edges (−∞ , −1, 0, 1, +∞) on each coordinate form a 4 ×
+
+4 × 4 grid. The fitted transforms and edges assign both calibration structures and the disjoint 800 selection candidates to cells. Acell is eligible if it contains at least ten calibration structures. Its response priority is 
+
+RB (c) = Q0.9{WB (x) : x ∈ K , c (x) = c}. (S15) An eligible cell is high response when RB (c) is at or above the 90th percentile of priorities across eligible cells. Its candidate-pool occurrence mass is O(c) = ∑ 
+
+> x∈P
+
+NxI[c(x) = c], and it is occurred when O(c) is at or above the median across eligible cells. A cell is OBNL when it is both high response and occurred but 
+
+S0,B contains no member of that cell. Candidate-pool OBNL mass is ∑ 
+
+> x∈P
+
+NxI[c(x) ∈ C OBNL ]/ ∑ 
+
+> x∈P
+
+Nx.Global response-witness selection ranks candidates by 
+
+RB (c(x)) and breaks cell-level ties by lexicographic structure ID. Response repair replaces a specified fraction of S0,B with candidates from OBNL cells while preserving B; replacement fractions of 2%, 5% and 10% are rounded upward. The primary 5% setting replaces three of 50 Carbon structures, realising 6.0%. In rMD17, coverage spans every high-response cell at 5%, so no replacement is made. The frozen selection is trained with seeds 1–5 and evaluated only on the held-out test set. Because its construction requires a full-data model, the witness is a retrospective compression diagnostic rather than a pre-labelling acquisition rule. 
+
+Statistical analysis. Paired training-seed contrasts use outcome seeds 1–5. Relative gaps are calculated within each seed against the matched full-data reference and then averaged. For Random minus FPS/DPP and witness minus FPS/DPP absolute gaps at 5%, all 55 with-replacement resamples of each five-value paired-difference vector are enumerated. The 2.5th and 97.5th per-centiles use linear interpolation. At 20%, the same procedure is applied to witness–FPS/DPP absolute-gap and direct-error differ-ences and to the witness signed gap from the full-data reference. Paired t intervals use four degrees of freedom. These intervals describe training-seed variability conditional on the selected sub-sets. Grouped intervals use 10,000 percentile-bootstrap resamples of the relevant scientific groups: five Carbon physical groups, ten rMD17 molecules or eight HEA25 FCC/BCC–generation-class groups. The constructed learned-metric positive control uses its separately stated 2,000-resample protocol. The 1% compar-ison reports five-seed means. Supplementary Table S10 identi-fies the uncertainty estimate for each contrast. CI half-widths are 
+
+(CI high − CI low )/2.
+
+# 2 Extended results 
+
+2.1 Static physical proxy diagnostics 
+
+Two descriptor diagnostics complement the retraining compar-isons. Learned chemical/physical similarity is compared with Gaussian QUESTS through ranking and leave-one-group-out eval-uation (main-text Sec. 3.4). Its fitting objective is Eq. S7; AUROC is evaluated after fitting. The auxiliary HEA analysis measures the normalised out-of-fold squared error of the non-spin DFT energy target across G0–G4. These diagnostics concern ranking distinct-ness and descriptor adequacy, respectively. The learned metric preserves much of the Gaussian QUESTS ranking (Supplementary Fig. S1a–c). Spearman ρS is 0.990 for Carbon, 0.990 for rMD17 full and 0.980 for HEA, with corre-sponding top-5% Jaccard overlaps of 0.754, 0.724 and 0.667. Overlap increases across the 1–20% range: from 0.667 to 0.852 for Carbon, 0.538 to 0.878 for rMD17 full and 0.538 to 0.794 for HEA. Leave-one-group-out AUROCs remain close to the Gaussian QUESTS and fixed-bank baselines; the learned-minus-Gaussian 
+
+∆AUROC interval includes zero in each dataset. Geometry and coverage dominate the fitted channel weights (Supplementary Table S1); the residual channel receives at most 0.030. Together with ρS ≥ 0.980 , the increasing top-budget over-lap and the near-zero AUROC differences, these weights describe a metric that remains closely aligned with coverage under the evaluated parameterisation. This ranking result is distinct from the retrained outcomes reported for the response and foundation-error selectors. The normalised out-of-fold squared error decreases at each step of the descriptor ladder (Supplementary Table S2). G4 reaches 0.240 of the G0 value, with a grouped-bootstrap inter-val of [0 .222 , 0.278] . The richer representation therefore predicts the non-spin DFT energy target more accurately under grouped cross-validation. This comparison measures descriptor adequacy rather than the downstream value of a selected training subset. 
+
+2.2 Foundation-model error analysis 
+
+We evaluate frozen-model error as a selection signal in two steps (Sec. 3.3). First, we relate MACE-MP force error to embedding novelty and nuisance covariates. We then compare raw-error and residual-error selections through Carbon-defect fine-tuning. Frozen-model error tracks embedding novelty in rMD17 full, amorphous Carbon and Carbon defects. Their raw error–novelty   
+
+> Digital Discovery, [year], [vol.], 1–19 | 5
+
+1 2 5 10 20 
+
+Retained training data (%) 
+
+0.00 0.25 0.50 0.75 1.00 
+
+> Top-budget Jaccard
+
+a Carbon 
+
+1 2 5 10 20 
+
+Retained training data (%) 
+
+0.00 0.25 0.50 0.75 1.00 
+
+> Top-budget Jaccard
+
+b rMD17 full 
+
+1 2 5 10 20 
+
+Retained training data (%) 
+
+0.00 0.25 0.50 0.75 1.00 
+
+> Top-budget Jaccard
+
+c HEA 
+
+> Carbon rMD17 full HEA
+
+0.00 0.25 0.50 0.75 1.00 
+
+> Learned weight
+
+d   
+
+> Geometry coverage Species Residual
+> Carbon rMD17 full HEA
+
+0.4 0.5 0.6 0.7 
+
+> Leave-one-group-out AUROC
+
+e
+
+Carbon rMD17 full HEA −0.04 −0.02 0.00 0.02 
+
+> Learned  − Gaussian  ΔAUROC
+
+f  
+
+> Gaussian QUESTS Fixed-bank similarity Learned metric
+
+Fig. S1 Learned chemical/physical similarity remains aligned with Gaussian QUESTS coverage. a–c , Top-budget Jaccard overlap from 1% to 20% for Carbon, rMD17 full and HEA, respectively. d, Learned channel weights across datasets. e, Leave-one-group-out AUROC for Gaussian QUESTS, fixed-bank similarity and the learned metric. f, Held-out-group learned-minus-Gaussian ∆AUROC values; black markers show grouped-bootstrap means and 95% confidence intervals. 
+
+Table S1 Summary statistics for learned similarity. Panel A reports rank consistency, top-budget overlap and leave-one-group-out AUROC. Panel B reports fitted channel weights. ∆AUROC is the learned metric minus Gaussian QUESTS; brackets show grouped-bootstrap 95% confidence intervals. 
+
+Dataset ρS J1% J2% J5% J10% J20% AUROC Gauss AUROC fixed AUROC learned ∆AUROC Carbon 0.990 0.667 0.667 0.754 0.835 0.852 0.550 0.549 0.552 +0 .002 [−0.003 , +0 .008 ]rMD17 full 0.990 0.538 0.667 0.724 0.786 0.878 0.530 0.528 0.528 −0.002 [−0.007 , +0 .003 ]HEA 0.980 0.538 0.600 0.667 0.739 0.794 0.514 0.513 0.512 −0.002 [−0.013 , +0 .007 ]Dataset wgeom wspecies wres 
+
+Carbon 0.989 n/a 0.011 
+
+rMD17 full 0.880 0.101 0.020 
+
+HEA 0.821 0.149 0.030 
+
+Table S2 Normalised out-of-fold squared error for non-spin HEA energy prediction. The regression target and error normalisation are defined in Eqs. S9 and S10, and the cumulative G0–G4 feature sets are specified in the descriptor-strength ladder. Values are out-of-fold residual sums of squares normalised to G0; intervals are 95% grouped-bootstrap intervals over the eight FCC/BCC–generation-class groups. 
+
+Level Cumulative representation Normalised squared error (95% CI) G0 Composition, cell and generation controls 1.000 [1 .000 , 1.000] 
+
+G1 G0 + two-body radial spectrum 0.720 [0 .669 , 0.805] 
+
+G2 G1 + three-body angular spectrum 0.500 [0 .466 , 0.560] 
+
+G3 G2 + ACE invariants 0.320 [0 .290 , 0.371] 
+
+G4 G3 + frozen MACE embedding 0.240 [0 .222 , 0.278]   
+
+> 6 | 1–19 Digital Discovery, [year], [vol.], rMD17 full amorphous carbon carbon defects 0.72 0.74 0.76 0.78 0.80 0.82 0.84 0.86 0.88
+> Out-of-fold  R2 of frozen error
+
+a
+
+> novelty only novelty + nuisance
+> rMD17 full amorphous carbon carbon defects 0.0 0.2 0.4 0.6 0.8
+> Spearman  ρ with novelty
+
+b  
+
+> raw error residualised error
+> Random Residual Raw 020 40 60 80 100
+> Paired  ΔMAE vs coverage (meV Å −1 )
+
+cFig. S2 Foundation-model error analysis. a , Out-of-fold variance explained by embedding novelty alone and by novelty plus nuisance covariates across rMD17, amorphous Carbon and Carbon defects. b, Raw and residualised error correlations with novelty. In a and b, points and error bars show the reported estimates and 95% confidence intervals. c, Carbon-defect force-MAE differences from embedding coverage: open points show all five paired training seeds and filled points with error bars show the reported aggregate differences and 95% confidence intervals. Force MAE is in meV Å −1.
+
+correlations are 0.860, 0.885 and 0.911, respectively, and novelty alone explains 0.75, 0.80 and 0.84 of the out-of-fold error vari-ance. Residualisation reduces the corresponding correlations to 0.004, 0.026 and −0.002 .Across seeds 1–5, mean held-out force MAEs are 226.62 for Random, 221.22 for Embedding coverage, 257.61 for Residu-alised error and 314.06 meV Å −1 for Raw error. Relative to em-bedding coverage, the paired differences are +5 .40 , +36 .39 and 
+
++92 .84 meV Å −1 for Random, Residualised error and Raw error, respectively. Removing the rank association with novelty does not improve the error-based selector in the Carbon-defect comparison (Sup-plementary Table S3). Embedding coverage gives the lowest mean held-out force MAE. Random, residual-error and raw-error selection are higher by 5.40, 36.39 and 92.84 meV Å −1, respec-tively, with all three paired intervals above zero. The residual score therefore changes which error variation is selected without improving this fine-tuning endpoint. 
+
+2.3 Response witness and repair 
+
+Response witness and repair test the consequences of selecting high-response regions (Sec. 3.2). At each budget, validation selects FPS or DPP to define S0,B . The seed-0 coverage and full-data models then provide WB and the three response co-ordinates in Eqs. S11 and S14. Their standardisation, 64-cell grid and priority RB (c) (Eq. S15) are fixed on calibration and projected to the disjoint candidate pool P. An OBNL cell has at least ten calibration structures, upper-decile response prior-ity, candidate-pool atom mass at or above the eligible-cell me-dian, and no member in S0,B . Its reported mass is ηOBNL =
+
+∑ 
+
+> x∈P
+
+NxI[c(x) ∈ C OBNL ]/ ∑ 
+
+> x∈P
+
+Nx. Witness selection ranks candidates by RB (c), whereas repair replaces a fixed fraction of S0,B with candidates from COBNL . Both selections are con-structed without validation or test structures and retrained with paired seeds 1–5 for held-out evaluation. At 5%, coverage leaves 1.00% of the Carbon candidate-pool atom mass in OBNL cells, compared with 0.00% for rMD17 (Fig. S3; Table S4). The repair-versus-coverage Jaccard over-laps are 0.887 and 1.000, respectively. Carbon witness selection raises all four risks by +6 .33% to +59 .45% , while all four re-pair intervals include zero. In rMD17, witness selection lowers High-response cell risk by 7.87% but raises the other three risks. FPS/DPP already covers every high-response cell at this budget, so rMD17 repair makes no replacement and has zero effect at every endpoint. 
+
+2.4 Outcome-gap evaluation 
+
+We separate the outcome-gap comparison in Sec. 3.1 into training-seed and evaluation-stratum results. For Carbon and rMD17, we report Mean, High-force tail and High-novelty mask gaps alongside the distribution across the five strata. All percent-age gaps use δg (S) = 100 |Lg (θS ) − Lg (θD )|/ max {Lg (θD ), ϵ }.Lower values indicate closer agreement with the full-data out-come; the signed DFT-risk difference is assessed separately. Across seeds 1–5, the 5% FPS/DPP mean gaps are 1.80% for Carbon and 1.68% for rMD17. Random selection gives mean gaps of 2.10% and 1.92%, respectively, whereas QUESTS-MSC and response-witness selection deviate more strongly. The validation-selected stratum gaps for FPS/DPP are 2.17% for Carbon and 1.56% for rMD17; the corresponding high-force-tail gaps are 10.52% and 9.11%. At 5%, FPS/DPP High-novelty mask gaps are 5.55% for Car-bon and 4.01% for rMD17. The rMD17 repair reproduces the FPS/DPP subset and therefore has identical outcomes. FPS/DPP has smaller 5% gaps than Random for all four end-points in both datasets (Supplementary Table S5). Fully enumer-ated paired-seed bootstrap intervals for Random minus FPS/DPP are above zero in all eight comparisons (main-text Table 1). These intervals describe variation over five training seeds. QUESTS-MSC and response-witness selection have larger gaps. Carbon   
+
+> Digital Discovery, [year], [vol.], 1–19 | 7
+
+70 80 90 
+
+Response threshold (percentile) 
+
+0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 
+
+> Candidate-pool OBNL mass (%)
+
+a
+
+> Carbon rMD17 full
+
+5 10 
+
+Realised replacement (%) 
+
+−2.0 −1.5 −1.0 −0.5 0.0 0.5 
+
+> Change vs FPS/DPP (%)
+> Metadata-score mask High-force tail High-response cell High-novelty mask
+
+b
+
+0.0 0.5 1.0 
+
+Selected-cell fraction 
+
+Carbon rMD17 full 
+
+> J=0.89 Retained 94% OBNL 6% J=1.00 Retained 100% Matched control = 0%
+
+cFig. S3 Response-cell and repair sensitivity. a, Candidate-pool OBNL atom mass as the response threshold varies for Carbon and rMD17. b,Five-seed mean Carbon effects relative to FPS/DPP across realised replacement fractions of 2%, 6% and 10%; curves are labelled by endpoint. c,Selected-cell composition and repair-versus-coverage Jaccard overlap at the primary 5% budget. Carbon retains 94% of the coverage subset and replaces 6% with OBNL-cell representatives; rMD17 retains 100%. Cells and thresholds are fitted on training calibration and projected to the disjoint candidate pool. Panels show point estimates from the sensitivity analysis. Rnd. FPS/ DPP MSC Wit. Rep. 
+
+10 1
+
+> Carbon gap to full-data reference (%) 5% subset budget
+
+a Mean   
+
+> Rnd. FPS/ DPP MSC Wit. Rep.
+
+10 1
+
+b Validation-selected stratum   
+
+> Rnd. FPS/ DPP MSC Wit. Rep.
+
+10 1
+
+c High-force tail   
+
+> Rnd. FPS/ DPP MSC Wit. Rep.
+
+10 1
+
+d High-novelty mask   
+
+> Rnd. FPS/ DPP MSC Wit. Rep.
+
+10 1
+
+> rMD17 full gap to full-data reference (%) 5% subset budget
+
+e  
+
+> Rnd. FPS/ DPP MSC Wit. Rep.
+
+10 1
+
+f  
+
+> Rnd. FPS/ DPP MSC Wit. Rep.
+
+10 1
+
+g  
+
+> Rnd. FPS/ DPP MSC Wit. Rep.
+
+10 1
+
+h
+
+> Open markers: seeds 1–5; coloured bar: five-seed mean; grey lines pair Random and FPS/DPP by seed.
+
+Fig. S4 Outcome gaps for seeds 1–5 at the 5% budget. Carbon ( a–d ) and rMD17 ( e–h ) panels show seed-level values and five-seed means for Random, FPS/DPP, QUESTS-MSC, response witness and response repair across the Mean, Validation-selected stratum, High-force tail and High-novelty mask endpoints. Grey lines join Random and FPS/DPP values from the same training seed. Lower absolute gaps indicate closer agreement with the full-data training outcome.   
+
+> 8 | 1–19 Digital Discovery, [year], [vol.],
+
+Table S3 Foundation-model error statistics. Panel A reports the decomposition across rMD17, amorphous Carbon and Carbon defects. Panels B and C report the Carbon-defect five paired seeds and grouped-bootstrap contrasts at the 5% budget. 
+
+> Panel A: error decomposition and residualisation.
+
+# Dataset Metric Estimate 95% CI rMD17 Novelty-only out-of-fold R2 0.750 [0 .727 , 0.770] 
+
+# rMD17 Novelty+nuisance out-of-fold R2 0.810 [0 .792 , 0.825] 
+
+# rMD17 Raw error–novelty Spearman ρ 0.860 [0 .842 , 0.873] 
+
+# rMD17 Residual–novelty Spearman ρ 0.004 [−0.043 , 0.057] 
+
+# Amorphous Carbon Novelty-only out-of-fold R2 0.800 [0 .772 , 0.822] 
+
+# Amorphous Carbon Novelty+nuisance out-of-fold R2 0.840 [0 .819 , 0.859] 
+
+# Amorphous Carbon Raw error–novelty Spearman ρ 0.885 [0 .866 , 0.901] 
+
+# Amorphous Carbon Residual–novelty Spearman ρ 0.026 [−0.041 , 0.099] 
+
+# Carbon defects Novelty-only out-of-fold R2 0.840 [0 .814 , 0.858] 
+
+# Carbon defects Novelty+nuisance out-of-fold R2 0.870 [0 .854 , 0.884] 
+
+# Carbon defects Raw error–novelty Spearman ρ 0.911 [0 .897 , 0.922] 
+
+# Carbon defects Residual–novelty Spearman ρ −0.002 [−0.070 , 0.072] 
+
+> Panel B: Carbon-defect five-seed held-out force MAE (meV Å −1).
+
+Selector Seed 1 Seed 2 Seed 3 Seed 4 Seed 5 Mean 95% CI Random 218 .94 224 .71 227 .83 232 .46 229 .18 226 .62 [222 .40 , 230 .25] 
+
+Embedding coverage 210 .74 218 .61 228 .23 225 .16 223 .38 221 .22 [215 .46 , 226 .03] 
+
+Residualised error 249 .47 255 .94 260 .82 264 .13 257 .69 257 .61 [253 .35 , 261 .55] 
+
+Raw error 304 .31 310 .76 315 .58 322 .47 317 .19 314 .06 [308 .18 , 319 .07] 
+
+> Panel C: Carbon-defect grouped-bootstrap paired differences (meV Å −1).
+
+# Comparison ∆MAE 95% CI Random minus embedding coverage +5 .40 [+2 .44 , +7 .48] 
+
+# Residualised error minus embedding coverage +36 .39 [+34 .16 , +38 .55] 
+
+# Raw error minus embedding coverage +92 .84 [+89 .89 , +95 .53] 
+
+repair remains close to FPS/DPP, with all four direct-effect inter-vals spanning zero; rMD17 repair reproduces FPS/DPP because no replacement occurs at this budget. The budget comparison extends the baseline, response-witness and repair results from the primary 5% setting to 1% and 20%. These additional points test whether the selector ordering persists as the retained subset grows. Selector ordering changes with budget. FPS/DPP has lower 5% gaps than Random on all four endpoints in both datasets, but the 1% rMD17 comparison is mixed: FPS/DPP is closer on the Mean and Validation-selected stratum endpoints, whereas Random is closer on the High-force tail and High-novelty mask endpoints. At 20%, the two baselines are close. Response-witness gaps are largest at 1% and fall below FPS/DPP at 20% across all four end-points in both datasets. Fully enumerated paired-seed intervals support the 20% reversal; the 1% comparison describes the or-dering of the five-seed means. The 1–20% comparison places the primary 5% result on a bud-get curve. Tables S5 and S6 connect training-seed variation with the cross-budget reversal. At 20%, response witness has both smaller ab-solute gaps and lower direct DFT risk than FPS/DPP across both datasets and all four endpoints. Supplementary Table S11 gives the five paired seeds, fully enumerated paired-bootstrap intervals and paired-t sensitivity intervals. 
+
+2.5 Confidence-interval precision and ranking stability 
+
+The 95% confidence-interval half-width, (CI high −CI low )/2, sum-marises the precision of each reported contrast. Panels A and C of Supplementary Table S7 use paired training-seed intervals; Panel B retains the grouped response-effect intervals. Table S7 reports the recalculated CI half-widths. Carbon wit-ness intervals indicate higher risk at all four endpoints. The rMD17 witness has one lower-risk and three higher-risk inter-vals, Carbon repair intervals all include zero, and rMD17 repair is identical to FPS/DPP at 5%. The paired-seed Random-minus-   
+
+> Digital Discovery, [year], [vol.], 1–19 | 9 Table S4 Response-witness and repair summary at the 5% budget. Panel A reports candidate-pool OBNL mass and fixed-selection overlap. Panel B reports effects relative to FPS/DPP; positive values indicate higher risk. Carbon replaces 3/50 structures, while rMD17 makes no replacement.
+> Panel A: frozen-selection occurrence and overlap summaries.
+
+System Quantity Estimate Uncertainty interval Definition Carbon repair Jaccard vs FPS/DPP 0.887 Not applicable (fixed value) fixed-budget set overlap Carbon candidate-pool OBNL mass (%) 1.000 Not applicable (fixed value) candidate-pool atom-weighted mass rMD17 full repair Jaccard vs FPS/DPP 1.000 Not applicable (fixed value) fixed-budget set overlap rMD17 full candidate-pool OBNL mass (%) 0.000 Not applicable (fixed value) candidate-pool atom-weighted mass 
+
+> Panel B: response effects at the primary 5% budget.
+
+Dataset Method Endpoint Effect 95% CI Interpretation Carbon Repair Metadata-score mask −0.088% [−0.365% , +0 .178%] CI includes zero Carbon Repair High-force tail +0 .076% [−0.395% , +0 .570%] CI includes zero Carbon Repair High-response cell −1.446% [−3.484% , +0 .672%] CI includes zero Carbon Repair High-novelty mask +0 .333% [−0.049% , +0 .724%] CI includes zero Carbon Witness Metadata-score mask +59 .446% [+49 .127% , +71 .695%] Higher risk Carbon Witness High-force tail +40 .471% [+33 .509% , +48 .234%] Higher risk Carbon Witness High-response cell +6 .329% [+2 .185% , +13 .521%] Higher risk Carbon Witness High-novelty mask +46 .095% [+38 .435% , +54 .332%] Higher risk rMD17 Repair Metadata-score mask 0.000% [0 .000% , 0.000%] Identical subset rMD17 Repair High-force tail 0.000% [0 .000% , 0.000%] Identical subset rMD17 Repair High-response cell 0.000% [0 .000% , 0.000%] Identical subset rMD17 Repair High-novelty mask 0.000% [0 .000% , 0.000%] Identical subset rMD17 Witness Metadata-score mask +58 .515% [+50 .864% , +67 .402%] Higher risk rMD17 Witness High-force tail +13 .200% [+5 .481% , +21 .187%] Higher risk rMD17 Witness High-response cell −7.872% [−16 .547% , −1.607%] Lower risk rMD17 Witness High-novelty mask +16 .971% [+12 .175% , +21 .919%] Higher risk 
+
+FPS/DPP intervals are above zero for all eight absolute-gap end-points; they quantify variation across five training seeds rather than observation-level groups. The top-budget margin describes score separation at the coverage-selection boundary. For a standardised raw coverage score scov (x), transformed with parameters fitted on the training pool, the empirical margin is ̂
+
+γ B = scov 
+
+(x(B)
+
+) − scov 
+
+(x(B+1) 
+
+) ,
+
+where x(B) and x(B+1) are the structures at the budget boundary under the coverage ranking. In an ideal calibrated-score case, a perturbation smaller than ̂γ B /2 cannot change the top-B set except for ties. Here the margin is only a descriptive boundary diagnostic and is interpreted alongside rank correlation, Jaccard overlap and group-discrimination performance. The learned metric changes membership near the budget boundary, particularly for HEA at small budgets (Supplementary Table S8). Full-ranking correlations nevertheless remain close to unity, and leave-one-group-out AUROC differences remain cen-tred near zero. The boundary margins complement these ob-served rank and overlap statistics. 
+
+2.6 Learned-metric positive-control capacity test 
+
+The strong rank agreement on the physical datasets motivates a capacity test of the bounded metric. A constructed positive con-trol supplies an independent value channel by injecting a known signal into generated feature vectors. This tests whether the same parameterisation can depart from Gaussian QUESTS coverage. We drew 2,000 eight-dimensional Gaussian geometry vectors and assigned an independent high-value label with 15% preva-lence. A stratified frozen split placed 1,000 samples in a metric-fit pool and 1,000 in an evaluation pool. Coverage novelty 
+
+c(x) was the mean five-nearest-neighbour distance from each evaluation sample to the fit pool. The structured channel was 
+
+v(x) = 2 y(x) + ϵ, with ϵ ∼ N (0 , 1) ; the null channel contained no label signal, and the shuffled control randomly permuted the structured channel. Pair targets and metric weights were fitted only on the fit pool. All ranks, top-budget overlaps and AUROCs were computed on the evaluation pool against the frozen fit ref-erence. Intervals are percentile intervals from 2,000 paired boot-strap resamples of the evaluation structures. The injected channel changes the learned ranking (Supple-mentary Fig. S6). Under the null control, the metric remains coverage-dominated, with Spearman ρS = 0 .832 , top-5% Jaccard overlap of 0.429 and coverage-channel weight 0.797. The pos-itive control shifts weight to the injected value channel, which receives 0.878; ρS falls to 0.226 and Jaccard overlap to 0.031. Evaluation AUROC increases from 0.482 for coverage to 0.797 for the learned metric. Shuffling the channel gives AUROC 0.486 and a paired ∆AUROC interval that includes zero. The metric detects the structured channel in this constructed setting (Supplementary Table S9). The paired ∆AUROC inter-vals include zero for the null and shuffled controls. With the in-   
+
+> 10 | 1–19 Digital Discovery, [year], [vol.], Table S5 Outcome-gap statistics across five seeds and evaluation strata at the 5% budget. All gaps are absolute percentages relative to the corresponding full-data training outcome. Panel B first averages each coded stratum over seeds 1–5, then reports the median and IQR across exactly STRATUM_1–STRATUM_5; it excludes the Mean, High-force tail and High-novelty mask endpoints. Its final column is the validation-selected coded stratum.
+> Panel A: seed-level mean gap to full.
+
+Dataset Selector Seed 1 Seed 2 Seed 3 Seed 4 Seed 5 Mean Carbon Random 1.59% 1.96% 2.30% 2.11% 2.54% 2.10% 
+
+Carbon FPS/DPP 1.67% 1.59% 1.90% 1.69% 2.14% 1.80% 
+
+Carbon QUESTS-MSC 5.54% 5.31% 4.53% 4.41% 5.15% 4.99% 
+
+Carbon Response witness 58 .12% 58 .46% 56 .30% 54 .45% 59 .03% 57 .27% 
+
+Carbon Response repair 1.74% 1.57% 2.04% 1.76% 2.20% 1.86% 
+
+rMD17 full Random 1.71% 1.91% 2.02% 2.09% 1.86% 1.92% 
+
+rMD17 full FPS/DPP 1.77% 1.63% 1.68% 1.69% 1.62% 1.68% 
+
+rMD17 full QUESTS-MSC 6.37% 6.35% 7.37% 6.90% 6.92% 6.78% 
+
+rMD17 full Response witness 22 .40% 24 .76% 24 .23% 24 .12% 25 .16% 24 .13% 
+
+rMD17 full Response repair 1.77% 1.63% 1.68% 1.69% 1.62% 1.68% 
+
+> Panel B: summary across evaluation strata.
+
+Dataset Selector Median across strata IQR across strata Validation-selected stratum Carbon Random 2.10% [1 .75% , 2.42%] 2.42% 
+
+Carbon FPS/DPP 1.94% [1 .55% , 2.17%] 2.17% 
+
+Carbon QUESTS-MSC 5.05% [4 .80% , 5.76%] 5.94% 
+
+Carbon Response witness 57 .85% [52 .04% , 60 .73%] 60 .73% 
+
+Carbon Response repair 1.92% [1 .41% , 2.35%] 2.35% 
+
+rMD17 full Random 1.76% [1 .25% , 2.10%] 1.76% 
+
+rMD17 full FPS/DPP 1.56% [1 .10% , 1.90%] 1.56% 
+
+rMD17 full QUESTS-MSC 6.94% [6 .47% , 7.33%] 6.94% 
+
+rMD17 full Response witness 24 .20% [22 .92% , 24 .29%] 22 .72% 
+
+rMD17 full Response repair 1.56% [1 .10% , 1.90%] 1.56% 
+
+> Panel C: five-seed high-force-tail gaps.
+
+Dataset Selector Seed 1 Seed 2 Seed 3 Seed 4 Seed 5 Mean Carbon Random 10 .08% 10 .69% 12 .26% 11 .18% 13 .04% 11 .45% 
+
+Carbon FPS/DPP 10 .35% 9.61% 10 .98% 9.85% 11 .81% 10 .52% 
+
+Carbon QUESTS-MSC 17 .54% 19 .15% 16 .61% 16 .76% 17 .63% 17 .54% 
+
+Carbon Response witness 56 .24% 56 .61% 54 .19% 52 .23% 56 .98% 55 .25% 
+
+Carbon Response repair 10 .38% 9.55% 11 .23% 10 .03% 11 .82% 10 .60% 
+
+rMD17 Random 9.68% 9.57% 9.99% 10 .14% 10 .03% 9.88% 
+
+rMD17 FPS/DPP 9.91% 8.70% 8.97% 9.02% 8.96% 9.11% 
+
+rMD17 QUESTS-MSC 25 .52% 22 .69% 25 .52% 22 .57% 25 .29% 24 .32% 
+
+rMD17 Response witness 21 .34% 24 .67% 23 .46% 23 .61% 24 .50% 23 .52% 
+
+rMD17 Response repair 9.91% 8.70% 8.97% 9.02% 8.96% 9.11% 
+
+> Panel D: five-seed High-novelty mask gaps.
+
+Dataset Selector Seed 1 Seed 2 Seed 3 Seed 4 Seed 5 Mean Carbon Random 5.19% 5.62% 6.28% 6.11% 6.90% 6.02% 
+
+Carbon FPS/DPP 5.29% 5.08% 5.66% 5.44% 6.28% 5.55% 
+
+Carbon QUESTS-MSC 11 .11% 12 .19% 10 .32% 10 .55% 11 .25% 11 .08% 
+
+Carbon Response witness 54 .96% 55 .40% 53 .31% 51 .54% 55 .81% 54 .20% 
+
+Carbon Response repair 5.61% 5.26% 6.19% 5.85% 6.59% 5.90% 
+
+rMD17 Random 4.16% 4.32% 4.45% 4.51% 4.36% 4.36% 
+
+rMD17 FPS/DPP 4.23% 3.92% 3.98% 4.01% 3.91% 4.01% 
+
+rMD17 QUESTS-MSC 11 .34% 10 .69% 11 .94% 10 .04% 11 .62% 11 .13% 
+
+rMD17 Response witness 20 .15% 22 .37% 21 .59% 21 .65% 22 .55% 21 .66% 
+
+rMD17 Response repair 4.23% 3.92% 3.98% 4.01% 3.91% 4.01%   
+
+> Digital Discovery, [year], [vol.], 1–19 | 11 10 0
+> Carbon
+> gap to full-data reference (%)
+
+a Mean 
+
+> 10 0
+
+b Validation-selected stratum 
+
+> 10 1
+
+c High-force tail d High-novelty mask   
+
+> 1520
+
+Retained training data (%) 
+
+> 10 0
+> 10 1
+> rMD17 full
+> gap to full-data reference (%)
+
+e  
+
+> 1520
+
+Retained training data (%) 
+
+> 10 0
+> 10 1
+
+f  
+
+> 1520
+
+Retained training data (%) 
+
+> 10 1
+
+g  
+
+> 1520
+
+Retained training data (%) 
+
+> 10 1
+
+h   
+
+> FPS/DPP Random Fig. S5 Random and FPS/DPP outcome gaps across budget. Carbon and rMD17 panels compare the two baselines at 1%, 5% and 20% for four absolute gap endpoints. Points are five-seed means and lines are visual guides; the pale band marks the primary 5% budget, not an uncertainty interval. Error bars in the FPS/DPP mean panels show the reported 95% intervals.
+
+jected signal, the value channel receives weight 0.878 and the selected subset enriches the high-value group by 4.67 ×. This con-trol shows that the bounded metric can reorder selections in re-sponse to the specified independent signal; the physical datasets assess its behaviour with measured energy, force and structural attributes. 
+
+2.7 Uncertainty available for each outcome contrast 
+
+Supplementary Table S10 maps each outcome comparison to its uncertainty estimate. Grouped intervals describe variation across scientific groups, whereas paired-seed intervals describe variation across matched training seeds. Comparisons without direct con-trast intervals are described by five-seed means. 
+
+2.8 Data and code map 
+
+The source-data tables are associated with https://doi.org/10. 5281/zenodo.22263567 . They contain five-seed aggregate values for the 1%, 5% and 20% budget curves, seed-resolved values for the primary 5% comparisons, and seed-resolved risks and paired contrasts for the 20% response crossover. The latter include signed comparisons with the full-data reference. The accompa-nying archive combines these source tables with the manuscript, data dictionary, analysis scripts and quantitative-figure renderers. Running reproduce.sh recalculates the paired contrasts, checks them against the source tables and regenerates the quantitative figures without model training. The paired 5% witness–FPS/DPP absolute-gap intervals in Supplementary Table S7 are calculated from data/si/figS5_ seed_strata.csv ; the updated output is analysis/generated/ tableS7_5pct_witness_vs_coverage.csv . The other paired statistics are regenerated from the same 5% seed table and the 20% response seed table. These derived files are kept sep-arate from the recorded source tables. The companion de-velopment repository is https://github.com/JIABI/QUESTS_ physical_kernel . Supplementary Table S12 describes the archive scope, and Supplementary Table S13 maps figures and tables to their inputs. 
+
+2.9 Generative-AI assistance during preparation 
+
+AI-assisted tools were used during manuscript preparation for language editing, proofreading and quality-control support. They did not generate or modify primary data, perform the reported numerical analyses, select models or decision rules, or create im-ages or multimedia. The authors verified all AI-assisted output and take responsibility for the submitted work.    
+
+> 12 | 1–19 Digital Discovery, [year], [vol.], Table S6 Direct outcome gaps across budget. Values are five-seed means relative to the full-data training outcome; lower absolute gaps indicate closer agreement. “Validation-selected stratum” denotes the coded stratum fixed on validation data.
+
+Dataset Budget Selector Mean Validation-selected stratum High-force tail High-novelty mask Carbon 1% Random 6.50% 7.22% 16 .50% 8.00% 
+
+Carbon 5% Random 2.10% 2.42% 11 .45% 6.02% 
+
+Carbon 20% Random 0.63% 0.95% 4.35% 2.25% 
+
+Carbon 1% FPS/DPP 2.05% 2.72% 14 .80% 7.30% 
+
+Carbon 5% FPS/DPP 1.80% 2.17% 10 .52% 5.55% 
+
+Carbon 20% FPS/DPP 0.60% 0.98% 4.16% 2.33% 
+
+Carbon 1% QUESTS-MSC 42 .98% 44 .76% 65 .59% 45 .99% 
+
+Carbon 5% QUESTS-MSC 4.99% 5.94% 17 .54% 11 .08% 
+
+Carbon 20% QUESTS-MSC 1.01% 1.41% 6.19% 4.01% 
+
+Carbon 1% Response witness 212 .31% 213 .22% 222 .86% 189 .40% 
+
+Carbon 5% Response witness 57 .27% 60 .73% 55 .25% 54 .20% 
+
+Carbon 20% Response witness 0.14% 0.04% 0.93% 0.27% 
+
+Carbon 1% Response repair 2.57% 2.92% 7.66% 3.90% 
+
+Carbon 5% Response repair 1.86% 2.35% 10 .60% 5.90% 
+
+Carbon 20% Response repair 0.60% 0.98% 4.16% 2.33% 
+
+rMD17 full 1% Random 10 .51% 9.87% 14 .61% 10 .31% 
+
+rMD17 full 5% Random 1.92% 1.76% 9.88% 4.36% 
+
+rMD17 full 20% Random 0.65% 0.70% 5.70% 2.04% 
+
+rMD17 full 1% FPS/DPP 7.03% 6.41% 24 .55% 12 .03% 
+
+rMD17 full 5% FPS/DPP 1.68% 1.56% 9.11% 4.01% 
+
+rMD17 full 20% FPS/DPP 0.62% 0.72% 5.50% 2.11% 
+
+rMD17 full 1% QUESTS-MSC 95 .16% 95 .92% 134 .58% 98 .03% 
+
+rMD17 full 5% QUESTS-MSC 6.78% 6.94% 24 .32% 11 .13% 
+
+rMD17 full 20% QUESTS-MSC 1.80% 2.14% 11 .10% 4.32% 
+
+rMD17 full 1% Response witness 190 .79% 184 .26% 181 .53% 184 .24% 
+
+rMD17 full 5% Response witness 24 .13% 22 .72% 23 .52% 21 .66% 
+
+rMD17 full 20% Response witness 0.11% 0.16% 0.72% 0.13% 
+
+rMD17 full 1% Response repair 6.25% 5.58% 21 .89% 10 .86% 
+
+rMD17 full 5% Response repair 1.68% 1.56% 9.11% 4.01% 
+
+rMD17 full 20% Response repair 0.62% 0.72% 5.50% 2.11%   
+
+> Digital Discovery, [year], [vol.], 1–19 | 13
+
+Table S7 Confidence intervals for outcome contrasts at the 5% budget. Panel A reports response-witness minus FPS/DPP absolute-gap differences; Panel C reports Random minus FPS/DPP absolute-gap differences. Both enumerate all 55 paired training-seed bootstrap resamples. Panel B reports relative response-risk effects with the grouped intervals from Supplementary Table S4. Panels A and C are in percentage points; Panel B is in percent. The CI half-width is one half of the unrounded 95% interval width. 
+
+Panel Dataset/method Endpoint Change vs FPS/DPP 95% CI CI half-width Interpretation A Carbon Mean gap +55 .474 [+53 .908 , +56 .795] 1.443 Witness farther from full-data outcome A Carbon Validation-selected stratum gap +58 .565 [+56 .943 , +59 .875] 1.466 Witness farther from full-data outcome A Carbon High-force tail gap +44 .728 [+43 .245 , +46 .189] 1.472 Witness farther from full-data outcome A Carbon High-novelty mask gap +48 .654 [+47 .124 , +49 .902] 1.389 Witness farther from full-data outcome A rMD17 Mean gap +22 .458 [+21 .492 , +23 .219] 0.863 Witness farther from full-data outcome A rMD17 Validation-selected stratum gap +21 .156 [+20 .172 , +21 .888] 0.858 Witness farther from full-data outcome A rMD17 High-force tail gap +14 .404 [+12 .863 , +15 .591] 1.364 Witness farther from full-data outcome A rMD17 High-novelty mask gap +17 .652 [+16 .764 , +18 .395] 0.816 Witness farther from full-data outcome B Carbon witness Metadata-score mask +59 .446% [+49 .127% , +71 .695%] 11 .284% Higher risk B Carbon witness High-force tail +40 .471% [+33 .509% , +48 .234%] 7.363% Higher risk B Carbon witness High-response cell +6 .329% [+2 .185% , +13 .521%] 5.668% Higher risk B Carbon witness High-novelty mask +46 .095% [+38 .435% , +54 .332%] 7.948% Higher risk B Carbon repair Metadata-score mask −0.088% [−0.365% , +0 .178%] 0.272% CI includes zero B Carbon repair High-force tail +0 .076% [−0.395% , +0 .570%] 0.483% CI includes zero B Carbon repair High-response cell −1.446% [−3.484% , +0 .672%] 2.078% CI includes zero B Carbon repair High-novelty mask +0 .333% [−0.049% , +0 .724%] 0.386% CI includes zero B rMD17 witness Metadata-score mask +58 .515% [+50 .864% , +67 .402%] 8.269% Higher risk B rMD17 witness High-force tail +13 .200% [+5 .481% , +21 .187%] 7.853% Higher risk B rMD17 witness High-response cell −7.872% [−16 .547% , −1.607%] 7.470% Lower risk B rMD17 witness High-novelty mask +16 .971% [+12 .175% , +21 .919%] 4.872% Higher risk B rMD17 repair Metadata-score mask 0.000% [0 .000% , 0.000%] 0.000% Identical subset B rMD17 repair High-force tail 0.000% [0 .000% , 0.000%] 0.000% Identical subset B rMD17 repair High-response cell 0.000% [0 .000% , 0.000%] 0.000% Identical subset B rMD17 repair High-novelty mask 0.000% [0 .000% , 0.000%] 0.000% Identical subset C Carbon Mean gap +0 .303 [+0 .111 , +0 .411] 0.150 FPS/DPP closer C Carbon Validation-selected stratum gap +0 .251 [+0 .125 , +0 .329] 0.102 FPS/DPP closer C Carbon High-force tail gap +0 .931 [+0 .321 , +1 .291] 0.485 FPS/DPP closer C Carbon High-novelty mask gap +0 .470 [+0 .182 , +0 .640] 0.229 FPS/DPP closer C rMD17 Mean gap +0 .244 [+0 .084 , +0 .356] 0.136 FPS/DPP closer C rMD17 Validation-selected stratum gap +0 .197 [+0 .085 , +0 .263] 0.089 FPS/DPP closer C rMD17 High-force tail gap +0 .769 [+0 .259 , +1 .079] 0.410 FPS/DPP closer C rMD17 High-novelty mask gap +0 .350 [+0 .138 , +0 .478] 0.170 FPS/DPP closer 
+
+Table S8 Top-budget stability and coverage alignment. Panel A reports top-budget margins for the standardised Gaussian QUESTS coverage score and Jaccard overlap with the learned-metric selection. Panel B reports the 5% comparison. Margins are descriptive boundary diagnostics rather than formal guarantees. 
+
+Panel A: boundary-margin estimates for Gaussian QUESTS 
+
+Dataset Budget ̂ γ B Jaccard vs learned metric Stability interpretation Carbon 1% 2.022 × 10 −3 0.667 Frozen boundary diagnostic Carbon 2% 6.238 × 10 −4 0.667 Frozen boundary diagnostic Carbon 5% 5.501 × 10 −4 0.754 Primary-budget diagnostic Carbon 10% 1.060 × 10 −3 0.835 Frozen boundary diagnostic Carbon 20% 3.719 × 10 −5 0.852 Frozen boundary diagnostic rMD17 full 1% 7.458 × 10 −4 0.538 Frozen boundary diagnostic rMD17 full 2% 3.078 × 10 −3 0.667 Frozen boundary diagnostic rMD17 full 5% 8.435 × 10 −4 0.724 Primary-budget diagnostic rMD17 full 10% 1.924 × 10 −3 0.786 Frozen boundary diagnostic rMD17 full 20% 1.687 × 10 −4 0.878 Frozen boundary diagnostic HEA 1% 1.144 × 10 −3 0.538 Frozen boundary diagnostic HEA 2% 3.291 × 10 −3 0.600 Frozen boundary diagnostic HEA 5% 7.504 × 10 −4 0.667 Primary-budget diagnostic HEA 10% 3.102 × 10 −3 0.739 Frozen boundary diagnostic HEA 20% 1.546 × 10 −4 0.794 Frozen boundary diagnostic 
+
+Panel B: primary-budget learned-metric alignment 
+
+Dataset Spearman ρS Top 5% Jaccard Learned −Gaussian ∆AUROC Interpretation Carbon 0.990 0.754 +0 .002 [−0.003 , +0 .008 ] Coverage-aligned; no resolved AUROC gain rMD17 full 0.990 0.724 −0.002 [−0.007 , +0 .003 ] Coverage-aligned; no resolved AUROC gain HEA 0.980 0.667 −0.002 [−0.013 , +0 .007 ] Coverage-aligned; no resolved AUROC gain 
+
+14 | 1–19 Digital Discovery, [year], [vol.], Coverage Null Positive Shuffled 0.0 0.2 0.4 0.6 0.8 1.0 
+
+> Evaluation AUROC
+
+a
+
+0.0 0.1 0.2 0.3 
+
+ΔAUROC vs coverage 
+
+Null Positive Shuffled 
+
+b
+
+Coverage Null Positive Shuffled 0.0 0.2 0.4 0.6 0.8 1.0 
+
+> Spearman rank correlation
+
+c
+
+Coverage Null Positive Shuffled 0.0 0.2 0.4 0.6 0.8 1.0 
+
+> Top-5% Jaccard overlap
+
+d
+
+Null Positive Shuffled 0.0 0.2 0.4 0.6 0.8 1.0 
+
+> Learned weight
+
+e
+
+Null Positive Shuffled 1234
+
+> Top-5% target enrichment
+
+f  
+
+> coverage value residual
+
+Fig. S6 The learned metric responds to an injected independent value channel. a , Evaluation AUROC for the coverage baseline and learned metric under null, positive and shuffled controls. b, Learned-minus-coverage ∆AUROC with paired-bootstrap 95% confidence intervals. c, Spearman rank correlation with the coverage ordering. d, Top-5% Jaccard overlap with the coverage subset. e, Learned channel weights under the three control settings. f, Top-5% enrichment of the target group; the dashed line marks no enrichment. This methodological control uses generated features with a known injected signal and disjoint fitting and evaluation pools. 
+
+Table S9 Learned-metric positive-control statistics. Null, positive and shuffled channels test the metric’s response to a known signal independent of geometry. Metric fitting and evaluation use disjoint frozen pools. Spearman ρS and top-5% Jaccard are computed relative to nearest-neighbour coverage; ∆AUROC is paired against the coverage baseline. 
+
+Panel A: rank agreement and injected-group detection. 
+
+Setting Value-channel condition ρ(c, v ) Spearman ρS Top 5% Jaccard AUROC ∆AUROC Coverage baseline Coverage baseline −0.0003 1.000 1.00 0.482 [0.433 , 0.529 ] 0.000 
+
+Learned metric, null No structured independent value channel 
+
+−0.0003 0.832 0.429 0.508 [0.461 , 0.555 ] +0 .026 [−0.003 , +0 .056 ]Learned metric, posi-tive control Structured injected value chan-nel 
+
+−0.0003 0.226 0.031 0.797 [0.761 , 0.831 ] +0 .315 [+0 .265 , +0 .367 ]Learned metric, shuf-fled control Shuffled injected channel −0.0003 0.700 0.266 0.486 [0.432 , 0.537 ] +0 .004 [−0.038 , +0 .043 ]
+
+Panel B: learned channel weights and interpretations. 
+
+Setting wcov wval wres Interpretation Coverage baseline 1.000 0.000 0.000 Frozen reference comparator Learned metric, null 0.797 0.091 0.111 No statistically resolved AUROC gain Learned metric, positive control 0.098 0.878 0.024 Can reorder and enrich target group Learned metric, shuffled control 0.656 0.263 0.081 No reliable AUROC gain   
+
+> Digital Discovery, [year], [vol.], 1–19 | 15
+
+Table S10 Uncertainty estimates for the outcome comparisons. Every budget comprises five training seeds. Grouped intervals resample the stated scientific groups with paired seeds; paired-seed intervals resample the five matched training seeds. The primary 5% coverage contrast and the 20% response crossover have paired-seed intervals. The 1% comparison reports the ordering of five-seed means. 
+
+Contrast Evidence at 5% Evidence at 1% and 20% Supported interpretation Random − FPS/DPP absolute gap Five paired seeds for all four endpoints; fully enumerated 55 paired-seed bootstrap Five-seed means are reported at both budgets; no additional Random–FPS/DPP interval is shown Direct paired interval at 5%; descriptive ordering at 1% and 20% Witness − FPS/DPP absolute gap Five paired seeds for all four endpoints; 55
+
+paired-seed bootstrap Five-seed means at 1%; paired-seed interval at 20% Paired-seed contrasts at 5% and 20% Witness or repair − FPS/DPP risk Grouped effect intervals for all four endpoints Five-seed means are reported at both budgets; witness direct DFT-risk intervals are shown at 20% Endpoint trade-offs at 5%; lower witness DFT risk across all eight 20% comparisons Witness signed gap from full-data risk Not used for the primary 5% contrast Five matched seeds with fully enumerated paired bootstrap and paired-t intervals at 20% Witness risk below full-data risk in six of eight 20% comparisons FPS/DPP gap to full-data outcome Reported mean-gap intervals Reported mean-gap intervals at 1% and 20% Uncertainty in gap magnitude; direct 20% direction is assessed through paired DFT risks Repair − FPS/DPP absolute gap Five paired-seed summaries; grouped risk effects Five-seed means are reported at both budgets; no additional direct interval is shown Selection identity is established only for rMD17 at 5% QUESTS-MSC direct contrast Five-seed summaries; no direct contrast interval reported Five-seed means are reported at both budgets; no direct contrast interval is shown Descriptive secondary coverage anchor 
+
+16 | 1–19 Digital Discovery, [year], [vol.], Table S11 Training-seed sensitivity for the primary 5% coverage comparison and the 20% response crossover. Panel A compares Random with FPS/DPP using absolute-gap differences in percentage points. Panel B lists response-witness minus FPS/DPP held-out DFT-risk differences in meV Å −1 for each matched seed. Panel C summarises the corresponding witness–FPS/DPP absolute-gap contrast plotted in Fig. 2c. Panel D reports the signed response-witness gap from the matched full-data DFT risk. Bootstrap intervals enumerate all 55 paired-seed resamples; paired-t intervals use four degrees of freedom. Positive values in Panel A favour FPS/DPP. Negative values in Panels B and C favour response witness; negative values in Panel D indicate lower witness risk than the full-data reference.                                                      
+
+> Panel A: Random minus FPS/DPP absolute-gap differences at 5%.
+> Dataset Endpoint Mean difference Bootstrap 95% interval Paired-t95% interval Carbon Mean +0 .303 [+0 .111 ,+0 .411] [+0 .038 ,+0 .569]
+> Carbon Validation-selected stratum +0 .251 [+0 .125 ,+0 .329] [+0 .075 ,+0 .427]
+> Carbon High-force tail +0 .931 [+0 .321 ,+1 .291] [+0 .090 ,+1 .772]
+> Carbon High-novelty mask +0 .470 [+0 .182 ,+0 .640] [+0 .070 ,+0 .870]
+> rMD17 full Mean +0 .244 [+0 .084 ,+0 .356] [+0 .023 ,+0 .466]
+> rMD17 full Validation-selected stratum +0 .197 [+0 .085 ,+0 .263] [+0 .042 ,+0 .351]
+> rMD17 full High-force tail +0 .769 [+0 .259 ,+1 .079] [+0 .065 ,+1 .473]
+> rMD17 full High-novelty mask +0 .350 [+0 .138 ,+0 .478] [+0 .055 ,+0 .645]
+> Panel B: response witness minus FPS/DPP direct DFT-risk differences at 20%.
+
+Dataset Endpoint Seed 1 Seed 2 Seed 3 Seed 4 Seed 5 Bootstrap 95% interval Paired-t 95% interval Carbon Mean −0.147 −0.177 −0.201 −0.136 −0.173 [−0.186 , −0.146] [−0.199 , −0.134] 
+
+Carbon Validation-selected stratum −0.300 −0.350 −0.344 −0.287 −0.345 [−0.347 , −0.301] [−0.362 , −0.288] 
+
+Carbon High-force tail −1.867 −1.914 −2.207 −1.712 −1.717 [−2.050 , −1.745] [−2.134 , −1.632] 
+
+Carbon High-novelty mask −1.033 −1.091 −1.124 −0.970 −1.061 [−1.099 , −1.007] [−1.129 , −0.983] 
+
+rMD17 full Mean −0.180 −0.152 −0.195 −0.156 −0.134 [−0.183 , −0.146] [−0.193 , −0.134] 
+
+rMD17 full Validation-selected stratum −0.222 −0.186 −0.224 −0.192 −0.183 [−0.217 , −0.186] [−0.226 , −0.177] 
+
+rMD17 full High-force tail −1.546 −1.465 −1.514 −1.434 −1.484 [−1.524 , −1.456] [−1.543 , −1.434] 
+
+rMD17 full High-novelty mask −0.546 −0.533 −0.573 −0.529 −0.520 [−0.557 , −0.526] [−0.566 , −0.515]                                                        
+
+> Panel C: response witness minus FPS/DPP absolute-gap differences at 20% (percentage points).
+> Dataset Endpoint Mean difference Bootstrap 95% interval Paired-t95% interval Carbon Mean −0.461 [−0.514 ,−0.404] [−0.550 ,−0.371]
+> Carbon Validation-selected stratum −0.940 [−1.003 ,−0.870] [−1.046 ,−0.833]
+> Carbon High-force tail −3.234 [−3.341 ,−3.135] [−3.398 ,−3.070]
+> Carbon High-novelty mask −2.058 [−2.096 ,−1.996] [−2.142 ,−1.974]
+> rMD17 full Mean −0.513 [−0.554 ,−0.485] [−0.569 ,−0.457]
+> rMD17 full Validation-selected stratum −0.563 [−0.596 ,−0.536] [−0.611 ,−0.514]
+> rMD17 full High-force tail −4.780 [−4.936 ,−4.653] [−4.994 ,−4.567]
+> rMD17 full High-novelty mask −1.981 [−2.019 ,−1.945] [−2.040 ,−1.922]
+> Panel D: response-witness signed gap from the full-data DFT risk at 20% (percent). The bootstrap intervals also appear in main-text Table 2; the seed values and paired-tintervals are retained here.
+
+Dataset Endpoint Seed 1 Seed 2 Seed 3 Seed 4 Seed 5 Bootstrap 95% interval Paired-t 95% interval Carbon Mean +0 .167 +0 .157 +0 .117 +0 .154 +0 .126 [+0 .127 , +0 .161] [+0 .117 , +0 .171] 
+
+Carbon Validation-selected stratum +0 .073 +0 .037 +0 .014 +0 .057 +0 .015 [+0 .019 , +0 .059] [+0 .007 , +0 .071] 
+
+Carbon High-force tail −0.825 −1.001 −1.312 −0.772 −0.723 [−1.132 , −0.763] [−1.225 , −0.629] 
+
+Carbon High-novelty mask −0.239 −0.299 −0.334 −0.227 −0.268 [−0.308 , −0.240] [−0.328 , −0.219] 
+
+rMD17 full Mean −0.157 −0.076 −0.139 −0.105 −0.055 [−0.139 , −0.073] [−0.159 , −0.054] 
+
+rMD17 full Validation-selected stratum −0.210 −0.123 −0.177 −0.159 −0.130 [−0.188 , −0.133] [−0.204 , −0.116] 
+
+rMD17 full High-force tail −0.695 −0.770 −0.774 −0.627 −0.714 [−0.760 , −0.669] [−0.791 , −0.641] 
+
+rMD17 full High-novelty mask −0.106 −0.138 −0.176 −0.114 −0.091 [−0.153 , −0.102] [−0.166 , −0.084] 
+
+Table S12 Source-data and analysis archive scope. Locations are relative to the archive root. The reproduction entry point checks paired-statistic arithmetic and agreement with the corresponding source tables. 
+
+Artifact Location Scope Main-text source tables data/main/ CSV tables for main-text figures and tables, including the 20% paired response contrast Supplementary source tables data/si/ CSV tables including seed-level and budget-sensitivity analyses Method metadata method_metadata/ Endpoint-membership and calibration metadata, physical-group definitions and coverage-comparator choices Release metadata README.md , DATA_DICTIONARY.md , VALUE_ PROVENANCE.md , FILE_INVENTORY.csv 
+
+Definitions, recorded and derived values, and file inven-tory Analysis and tests analysis/ ; reproduce.sh Fully enumerated paired-bootstrap and paired-t com-parisons; no model training Quantitative-figure code plotting/ Portable renderers for Main Figs. 2–5 and the six Sup-plementary Figures Training configuration training_configs/ Shared MACE compression-training settings, provided in the Carbon FPS/DPP 5%, seed-1 configuration Manuscript and figure assets manuscript/ ; figures/ Main article, SI, editable LaTeX sources and figure assets 
+
+Digital Discovery, [year], [vol.], 1–19 | 17 Table S13 Result-figure and result-table source-data map. Paths are relative to the aggregate Zenodo release. Wildcards denote all CSV files with the stated prefix. Historical file basenames are retained for compatibility and need not match the current figure or table number; the data dictionary maps legacy fields to the displayed endpoints. 
+
+Item Archived source-data file(s) Main Fig. 1 Author-supplied conceptual workflow; no numerical source table Main Fig. 2 data/si/figS6_budget_sensitivity.csv ; data/main/table2_20pct_response_crossover.csv 
+
+Main Fig. 3 data/main/fig5_witness_effects.csv ; data/main/fig5_repair_effects.csv ; auxiliary OBNL quantities in data/main/fig5_obnl_overlap. csv 
+
+Main Fig. 4 data/main/fig4_foundation_summary.csv ; data/main/fig4_finetuning_outcomes.csv ; data/si/figS3_seed_outcomes.csv ; data/si/ tableS3_foundation_error.csv 
+
+Main Fig. 5 data/main/fig2_rank_summary.csv ; data/si/figS1_budget_summary.csv ; data/main/fig2_weights.csv ; data/main/fig2_logo_auroc. csv ; data/main/fig2_logo_delta.csv 
+
+Main Table 1 data/si/figS5_seed_strata.csv ; regenerated in analysis/generated/table1_5pct_random_vs_coverage.csv 
+
+Main Table 2 data/main/table2_20pct_response_crossover.csv ; signed-gap intervals from data/si/tableS11_20pct_response_paired_summary.csv , re-produced in Supplementary Table S11, Panel D Supplementary Fig. S1 data/si/figS1_budget_summary.csv ; data/main/fig2_weights.csv ; data/si/figS1_logo_auroc.csv ; data/si/figS1_logo_group_delta. csv ; data/si/figS1_logo_delta_summary.csv ; data/si/tableS1_learned_similarity.csv 
+
+Supplementary Fig. S2 data/si/figS3_foundation_summary.csv ; data/main/fig4_finetuning_outcomes.csv ; data/si/figS3_seed_outcomes.csv ; data/si/ figS3_paired_differences.csv ; data/si/tableS3_foundation_error.csv 
+
+Supplementary Fig. S3 data/si/figS4_*.csv 
+
+Supplementary Fig. S4 data/si/figS5_seed_strata.csv ; data/si/figS6_budget_sensitivity.csv 
+
+Supplementary Fig. S5 data/si/figS6_budget_sensitivity.csv ; data/main/table4_empirical_resolution_budget.csv 
+
+Supplementary Fig. S6 data/si/tableS9_positive_control.csv ; data/si/figS7_positive_control_summary.csv ; data/si/figS7_positive_control_weights. csv 
+
+Supplementary Table S0 Panel-construction procedure in Supplementary Methods; method_metadata/comparator_validation.csv ; method_metadata/direct_worst_ stratum_freeze_v3.csv 
+
+Supplementary Table S1 data/si/tableS1_learned_similarity.csv 
+
+Supplementary Table S2 data/si/tableS2_residual_gap.csv 
+
+Supplementary Table S3 data/si/tableS3_foundation_error.csv 
+
+Supplementary Table S4 data/si/tableS4_response_audit.csv 
+
+Supplementary Table S5 data/si/tableS5_outcome_gap.csv 
+
+Supplementary Table S6 data/si/tableS6_budget_sensitivity.csv 
+
+Supplementary Table S7 Panel A: analysis/generated/tableS7_5pct_witness_vs_coverage.csv , derived from data/si/figS5_seed_strata.csv ; Panel B: data/si/ tableS7_empirical_resolution_materiality.csv ; Panel C: analysis/generated/table1_5pct_random_vs_coverage.csv .Supplementary Table S8 data/si/tableS8_gamma_stability.csv 
+
+Supplementary Table S9 data/si/tableS9_positive_control.csv 
+
+Supplementary Table S10 data/si/figS5_seed_strata.csv ; data/si/figS6_budget_sensitivity.csv ; grouped intervals in the files mapped above Supplementary Table S11 data/si/figS5_seed_strata.csv ; data/main/table2_20pct_response_crossover.csv ; data/si/tableS11_20pct_response_seed_ results.csv ; data/si/tableS11_20pct_response_paired_summary.csv 
+
+18 | 1–19 Digital Discovery, [year], [vol.], Notes and references 
+
+1 P. Rowe, V. L. Deringer, P. Gasparotto, G. Csányi and A. Michaelides, The Journal of Chemical Physics , 2020, 153 ,034702. 2 G. Csányi, Carbon GAP 20 , University of Cambridge Re-search Data Repository, 2020, https://doi.org/10.17863/ CAM.54529 .3 A. S. Christensen and O. A. von Lilienfeld, Machine Learning: Science and Technology , 2020, 1, 045018. 4 A. S. Christensen and O. A. von Lilienfeld, Revised MD17 dataset (rMD17) , Materials Cloud Archive 2020.82, 2020, 
+
+https://doi.org/10.24435/materialscloud:wy-kn .5 N. Lopanitsyna, G. Fraux, M. A. Springer, S. De and M. Ceri-otti, Physical Review Materials , 2023, 7, 045802. 6 N. Lopanitsyna, G. Fraux, M. A. Springer, S. De and M. Ceriotti, Modeling high-entropy transition-metal alloys with alchemical compression: dataset HEA25 , Materials Cloud Archive 2023.57, 2023, https://doi.org/10.24435/ materialscloud:73-yn .7 I. Batatia, D. P. Kovács, G. N. C. Simm, C. Ortner and G. Csányi, Advances in Neural Information Processing Sys-tems (NeurIPS), 2022, pp. 11423–11436. 8 A. P. Bartók, R. Kondor and G. Csányi, Physical Review B ,2013, 87 , 184115. 9 R. Drautz, Physical Review B , 2019, 99 , 014104. 10 I. Batatia, P. Benner, Y. Chiang, A. M. Elena, D. P. Kovács, J. Riebesell, X. R. Advincula, M. Asta, M. Avaylon, W. J. Bald-win, F. Berger, N. Bernstein, A. Bhowmik, F. Bigi, S. M. Blau, V. C˘ arare, M. Ceriotti, S. Chong, J. P. Darby, S. De, F. Della Pia, V. L. Deringer, R. Elijošius, Z. El-Machachi, E. Fako, F. Falcioni, A. C. Ferrari, J. L. A. Gardner, M. J. Gawkowski, A. Genreith-Schriever, J. George, R. E. A. Goodall, J. Grandel, C. P. Grey, P. Grigorev, S. Han, W. Handley, H. H. Heenen, K. Her-mansson, C. H. Ho, S. Hofmann, C. Holm, J. Jaafar, K. S. Jakob, H. Jung, V. Kapil, A. D. Kaplan, N. Karimitari, J. R. Kermode, P. Kourtis, N. Kroupa, J. Kullgren, M. C. Kuner, D. Kuryla, G. Liepuoniute, C. Lin, J. T. Margraf, I.-B. Magd˘ au, A. Michaelides, J. H. Moore, A. A. Naik, S. P. Niblett, S. W. Norwood, N. O’Neill, C. Ortner, K. A. Persson, K. Reuter, A. S. Rosen, L. A. M. Rosset, L. L. Schaaf, C. Schran, B. X. Shi, E. Sivonxay, T. K. Stenczel, C. Sutton, V. Svahn, T. D. Swin-burne, J. Tilly, C. van der Oord, S. Vargas, E. Varga-Umbrich, T. Vegge, M. Vondrák, Y. Wang, W. C. Witt, T. Wolf, F. Zills and G. Csányi, The Journal of Chemical Physics , 2025, 163 ,184110.

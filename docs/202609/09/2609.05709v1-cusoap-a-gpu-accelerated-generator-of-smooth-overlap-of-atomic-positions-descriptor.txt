@@ -1,0 +1,618 @@
+Title: cuSOAP: a GPU-accelerated Generator of Smooth Overlap of Atomic Positions Descriptor
+
+URL Source: https://arxiv.org/pdf/2609.05709v1
+
+Published Time: Wed, 09 Sep 2026 00:14:49 GMT
+
+Number of Pages: 23
+
+Markdown Content:
+# cuSOAP: a GPU-accelerated Generator of Smooth Overlap of Atomic Positions Descriptor 
+
+## Hongyu Yan 1, Yuqing Xia 2, Yong Wei 3, Minghan Chen 4, and Hanning Chen 5* 1School of Engineering and Physical Sciences, Heriot-Watt University, Edinburgh EH14 4AS, UK 
+
+2School of Artificial Intelligence, Chinese University of Hong Kong, Shatin, Hong Kong 
+
+3Department of Computer Science and Cybersecurity, University of North Georgia, Dahlonega, Georgia 30597, USA 
+
+4Department of Computer Science, Wake Forest University, Winston-Salem, North Carolina 27104, USA 
+
+5Texas Advanced Computing Center, The University of Texas at Austin, Austin, Texas 78758, USA 
+
+*Corresponding authors: hanning.chen@austin.utexas.edu 
+
+Abstract 
+
+The Smooth Overlap of Atomic Positions (SOAP) descriptor is one of the most widely adopted representations of atomic environments in molecular machine learning, but the cost of evaluating it and its derivatives remains a principal bottleneck of SOAP-based interatomic potentials, particularly at the large radial and angular basis sizes demanded by complex, multi-species condensed-phase environments. We present cuSOAP , a GPU-accelerated generator of atom-wise SOAP vectors and their analytic derivatives. Built on PyTorch , cuSOAP evaluates closed-form expressions or quadratures for the projection coefficients and their Cartesian gradients for Gaussian-type-orbital and polynomial radial bases, through fused CUDA and Triton kernels that eliminate the multi-gigabyte intermediates of a naive tensor formulation. The package is a drop-in replacement for the CPU-based reference DScribe , reproducing its constructor signature, feature ordering, and output to within ∼10 −6, and accepts structures directly as Atomistic Simulation Environment (ASE) Atoms objects. On an NVIDIA Grace–Blackwell (GB200) node, a single Blackwell GPU generates the full descriptor-plus-Jacobian workload for a 1000-molecule water cluster up to two orders of magnitude faster than DScribe , i.e., from 13 × to 227 × across the entire ( nmax , l max )hyperparameter map, with the speedup growing with the angular band limit lmax . Descriptor-only generation scales as t ∝ n1.34 , close to linear, up to a million-atom water cluster, which is processed in 19.5 s on one GPU and, through a shared-memory multiprocessing driver, in 5.7 s on the four GPUs of the node, demonstrating ∼ 90% parallel efficiency with no sign of saturation as devices are added. These results bring on-the-fly SOAP evaluation for large-scale condensed-phase simulation within reach. 
+
+1arXiv:2609.05709v1 [physics.chem-ph] 4 Sep 2026 1 Introduction 
+
+The rapid maturation of artificial intelligence has reshaped the molecular and materials sciences, where machine-learning (ML) models now routinely predict potential energy surfaces, forces, and electronic prop-erties at a fraction of the cost of first-principles calculations. [2,3,6] The predictive power and transferability of such models hinge less on the regression algorithm than on the way an atomic structure is encoded: the mathematical descriptor that maps a set of Cartesian coordinates and chemical identities onto a fixed-length feature vector. [1, 7] A useful descriptor must be invariant to the symmetries of physics (i.e., translation, rotation, reflection, and permutation of like atoms), while remaining a faithful, differentiable representation of the local environment. [1, 5] Among the descriptors developed to meet these requirements, the Smooth Overlap of Atomic Positions (SOAP) has become one of the most widely adopted. [1,5] SOAP represents each atomic neighborhood as a smooth Gaussian-smeared density that is expanded in a basis of radial functions and spherical harmonics; contracting this expansion into the rotationally invariant power spectrum yields a descriptor with several attractive properties. Its invariances are built in by construction rather than learned from data. [1] Replacing the atomic Dirac deltas with Gaussians makes both the descriptor and the derived similarity kernel vary smoothly and differentiably with the atomic coordinates, so that analytic forces are well defined. [1] The representation converges systematically toward completeness as a small number of ad-justable hyperparameters such as radial basis size nmax , angular band limit lmax , and cutoff radius rcut are increased, providing a controllable trade-off between accuracy and cost. [1,5] The associated SOAP kernel in-duces a proper, positive-definite metric d(X, X ′) = p2 − 2 ˆ p(X) · ˆp(X′) on the space of environments, giving a well-defined and physically meaningful measure of structural similarity. [5] Finally, because SOAP arises from a body-order expansion of the atomic density, it offers a systematic, many-body route to a complete description of the local environment. [1] These strengths, however, come at a substantial computational cost, which is the principal obstacle to applying SOAP to large systems. The dominant drawback is the sheer size and expense of the descriptor. The power spectrum comprises elements indexed by every pair of radial functions, each angular channel, and every ordered pair of chemical species, so its dimension scales as O(n2max lmax S2) for S species, and the cost of evaluating it grows steeply with the basis size and with the number of neighbors in the cutoff sphere. [1,5,8] The analytic derivatives required for forces aggravate this further: they must be accumulated with respect to the position of every neighbor, inflating the cost by a factor of roughly 3 Nneigh . [8] As a consequence, SOAP-based potentials are typically orders of magnitude slower than simple descriptors or classical force fields. A second difficulty is redundancy. The rotationally invariant power spectrum contains many correlated, near-degenerate components, so that the representation is generically overcomplete; [1] 2for large systems the resulting memory footprint becomes prohibitive, and practitioners routinely resort to sparsification or dimensionality reduction. For example, the compression of a 252-dimensional SOAP vector to 50 components was needed by a principal-component analysis. [8] A third challenge is that the accuracy of SOAP is sensitive to its hyperparameters: the cutoff radius, Gaussian width, nmax , and lmax must be tuned for each system, and a poorly chosen cutoff hard-limits the physics the descriptor can capture, since it fixes the length scale on which structural differences are resolved. [5] Taken together, these factors make an efficient SOAP generator highly desirable, particularly for large systems with complex, multi-species chemical environments. Graphics processing units (GPUs) are exceptionally well matched to this workload. The generation of SOAP descriptors is embarrassingly parallel over atomic centers, over the neighbors within each cutoff sphere, and over the ( n, l, m ) and species indices of the expansion coefficients—exactly the kind of massively data-parallel, arithmetically dense computation for which the GPU’s thousands of lightweight cores and high-bandwidth memory are designed. In contrast to a CPU, which devotes most of its transistors to control logic and caching for a handful of latency-optimized threads, a GPU dedicates its die area to throughput-optimized arithmetic units, so that the many independent spherical-harmonic evaluations, radial-basis contractions, and per-neighbor derivative accumulations that dominate SOAP can be executed concurrently and their memory traffic hidden behind computation. The regular, predictable access pattern of the power-spectrum contraction maps naturally onto coalesced memory accesses and fast on-chip shared memory, while the derivative computation, which is the most expensive stage on a CPU, exposes precisely the additional parallelism that a GPU thrives on. These hardware advantages are matched by a mature software stack: programming models such as CUDA, together with tensor libraries that expose GPU kernels through Python and automatic-differentiation frameworks, allow high-performance descriptor kernels to be written once and integrated directly into modern ML pipelines, [4] whereas the established SOAP implementations remain CPU-bound. [7, 8] With these considerations in mind, we present cuSOAP , a GPU-accelerated software package for the gener-ation of SOAP descriptors and their analytic derivatives for molecular systems. cuSOAP recasts the descriptor and force evaluation as GPU kernels that exploit the parallelism inherent in the SOAP construction, and exposes them through a convenient Python interface suitable for direct use in machine-learning workflows. In the following sections we present the mathematical formulation underlying the implementation (Sec. 2), describe the numerical and computational design of the GPU kernels (Sec. 3), benchmark the accuracy and performance of cuSOAP against existing CPU-based generators (Sec. 4), and summarize our conclusions (Sec. 5). 32 Mathematical Derivations 
+
+## 2.1 Gaussian-smeared atomic density and its basis-set projection 
+
+The SOAP construction begins by replacing the atoms surrounding a given central atom with smooth Gaussian densities. [1] For each chemical species μ, the neighbor density seen by the central atom is 
+
+ρμ(r) =  
+
+> Nμa
+
+X
+
+> i=1
+
+exp − |r − riμ |2
+
+2σ2
+
+!
+
+, (1) where the sum runs over the N μa atoms of species μ located within the cutoff radius rcut of the central atom, 
+
+riμ is the position of the i-th such atom relative to the central atom, and σ is the width of the smearing Gaussians. Depending on convention, the central atom itself may be included in the density of its own species; its contribution is made explicit below. Keeping one density per species preserves the chemical identity of the neighbors and yields the familiar multi-species (“partial”) power spectrum. [5, 7] Within the cutoff sphere, the density of Eq. (1) is expanded in a basis of radial functions gnl (r) and spherical harmonics Ylm (θ, ϕ ), 
+
+ρμ(r) = 
+
+> nmax
+
+X
+
+> n=1
+> lmax
+
+X
+
+> l=0 +l
+
+X
+
+> m=−l
+
+cμnlm gnl (r) Ylm (θ, ϕ ), (2) where nmax is the number of radial functions and lmax the maximum angular momentum. Following the convention of DScribe , [7, 8] the Ylm are taken to be the real spherical harmonics, so that all expansion coefficients are real and no complex conjugation needs to be tracked. If the radial functions are orthonormal for each angular channel, the expansion coefficients are obtained by direct projection, 
+
+cμnlm =
+
+Z rcut 
+
+> 0
+
+dr r 2
+
+Z
+
+dΩ gnl (r) Ylm (θ, ϕ ) ρμ(r, θ, ϕ ), (3) where the angular integration extends over the full solid angle, dΩ = sin θ dθ dϕ.The rotationally invariant SOAP descriptor is assembled from the coefficients of Eq. (3) as the partial power spectrum [1, 8] 
+
+pμν nn ′l = π
+
+r 82l + 1 
+
+> +l
+
+X
+
+> m=−l
+
+cμnlm cνn′lm , (4) collected over all species pairs ( μ, ν ) and all unique combinations of the basis-function indices ( n, n ′, l ); this is the origin of the O(n2max lmax S2) scaling of the descriptor dimension discussed in Sec. 1. Because Eq. (4) is a simple quadratic contraction, the derivatives of the descriptor with respect to the position Rj of any 4atom j follow from the product rule, [8] 
+
+∇j pμν nn ′l = π
+
+r 82l + 1 
+
+> +l
+
+X
+
+> m=−l
+
+h
+
+(∇j cμnlm ) cνn′lm 
+
++ cμnlm (∇j cνn′lm )
+
+i
+
+, (5) so that the entire problem of evaluating SOAP vectors and the analytic derivatives needed for forces reduces to obtaining closed-form expressions for cμnlm and ∇cμnlm . Since the coefficients are functions of the interatomic separations only, translational invariance implies that the derivative with respect to the central atom is the negative of the sum over its neighbors’ derivatives, and only atoms inside the cutoff sphere contribute nonzero terms. In the remainder of this section we derive such closed forms for the two radial-basis families implemented in cuSOAP : Gaussian-type orbitals (Sec. 2.2) and cubic and higher-order polynomials (Sec. 2.3). 
+
+## 2.2 Gaussian-type-orbital radial functions 
+
+The first family of radial functions consists of linear combinations of spherical Gaussian-type orbitals (GTOs), [7, 8] 
+
+gnl (r) = 
+
+> nmax
+
+X
+
+> k=1
+
+βlnk rle−αkl r2
+
+, (6) where the αkl are fixed primitive widths and the coefficients βlnk orthonormalize the basis within each angular channel l. The primitive overlap matrix required for the orthonormalization is available in closed form, 
+
+Slkk ′ =
+
+Z rcut 
+
+> 0
+
+dr r 2l+2 e−(αkl +αk′l)r2
+
+= Γ l + 32
+
+ − Γ l + 32 , (αkl + αk′l) r2cut 
+
+
+
+2 ( αkl + αk′l) l+3 /2 , (7) where Γ( s) and Γ( s, x ) denote the gamma function and the upper incomplete gamma function, respectively. The widths are chosen so that every primitive has decayed essentially to zero at the cutoff, αkl r2cut ≫ 1; the incomplete-gamma correction in Eq. (7) is then negligible and 
+
+Slkk ′ ≈ Γ l + 32
+
+
+
+2 ( αkl + αk′l) l+3 /2 . (8) The orthonormalization coefficients follow by symmetric (L¨ owdin) orthogonalization, 
+
+βl =  Sl−1/2 . (9) 5For the primitive widths, cuSOAP adopts the convention of DScribe 2.1, [8] in which the k-th primitive of angular momentum l decays to a threshold value of 10 −3 at a distance zk, with the zk spaced uniformly between 1 ˚ A and the cutoff radius: 
+
+αkl = − ln  10 −3/z lk
+
+
+
+z2
+
+> k
+
+, zk = 1 + ( k − 1) rcut − 1
+
+nmax − 1 , (10) with distances expressed in ˚ angstr¨ om. The virtue of the GTO basis is that the projection integral of Eq. (3) can be evaluated in closed form. Substituting Eqs. (1) and (6) into Eq. (3), each neighbor–primitive pair contributes a three-dimensional Gaussian integral against rlYlm . This integral is evaluated by expanding the off-center smearing Gaussian in modified spherical Bessel functions of the first kind, il(z), exp − |r − r′|2
+
+2σ2
+
+!
+
+= 4 π exp 
+
+
+
+− r2 + r′2
+
+2σ2
+
+
+
+×
+
+> ∞
+
+X
+
+> l=0 +l
+
+X
+
+> m=−l
+
+il
+
+ rr ′
+
+σ2
+
+
+
+Ylm (ˆ r) Ylm (ˆ r′), (11) whereupon the angular integral selects the ( l, m ) channel and the remaining radial integral is elementary once the upper limit is extended to infinity (again permissible because αkl r2cut ≫ 1), 
+
+Z ∞
+
+> 0
+
+dr r l+2 e−pr 2
+
+il(c r ) = 
+
+√π c l
+
+2 l+2 p l+3 /2 ec2/4p, (12) with p = αkl + 1 /(2 σ2) and c = riμ /σ 2. Collecting all prefactors yields the closed-form projection coefficients 
+
+cμnlm = (2 π)3/2σ3 
+
+> Nμa
+
+X
+
+> i=1
+> nmax
+
+X
+
+> k=1
+
+βlnk 
+
+r liμ Ylm (ˆ riμ )(1 + 2 σ2αkl )l+3 /2
+
+× exp − αkl r2
+
+> iμ
+
+1 + 2 σ2αkl 
+
+!
+
++ δl0 δm0
+
+√2 πσ 3
+
+> nmax
+
+X
+
+> k=1
+
+β0
+
+> nk
+
+(1 + 2 σ2αk0)3/2 , (13) where riμ = |riμ | and ˆ riμ = riμ /r iμ . The second term is the on-site contribution of the central atom itself, obtained from the first term in the limit riμ → 0, where only the l = 0, m = 0 channel survives (rlYlm → δl0δm0/√4π as r → 0); it is present only when the central atom is of species μ and is included in the neighbor density. Because this term is independent of all atomic positions, it shifts the l = 0 coefficients by a constant and does not contribute to any derivative. 6Equation (13) is smooth in the neighbor coordinates, and its Cartesian gradients follow from the product rule applied to the solid harmonic rlYlm (ˆ r) and to the Gaussian envelope. Using the gradient recursion for solid harmonics, the derivative with respect to the x coordinate of neighbor j of species μ reads 
+
+∂c μnlm 
+
+∂x jμ 
+
+= (2 π)3/2σ3
+
+> nmax
+
+X
+
+> k=1
+
+βlnk r l−1
+
+> jμ
+
+(1 + 2 σ2αkl )l+3 /2 exp − αkl r2
+
+> jμ
+
+1 + 2 σ2αkl 
+
+! " 
+
+12
+
+r (l − m)( l − m − 1)(2 l + 1) 2l − 1 Yl−1,m +1 (ˆ rjμ )
+
+− 12
+
+r (l + m)( l + m − 1)(2 l + 1) 2l − 1 Yl−1,m −1(ˆ rjμ ) − 2αkl xjμ rjμ 
+
+1 + 2 σ2αkl 
+
+Ylm (ˆ rjμ )
+
+#
+
+, (14) with entirely analogous expressions for the y and z components. The first two terms of the bracket are the gradient of the solid harmonic, here written in terms of the complex spherical harmonics for compact-ness; the corresponding relations for the real harmonics used in the implementation are obtained by taking the appropriate real and imaginary combinations, or equivalently the Cartesian derivatives of Ylm can be generated directly by stable hardware-friendly recursions of the kind implemented in sphericart . [4] The last term arises from the Gaussian envelope. Only the term i = j of Eq. (13) survives differentiation, so the cost of a single coefficient derivative is independent of the neighbor count, while the full derivative array spans all 3 Nneigh neighbor coordinates, as anticipated in Sec. 1. 
+
+## 2.3 Cubic and higher-order polynomial radial functions 
+
+The second family of radial functions is built from polynomials that vanish smoothly at the cutoff, [7] 
+
+gn(r) = 
+
+> nmax
+
+X
+
+> k=1
+
+Wnk 
+
+(rcut − r)k+2 
+
+Nk
+
+, (15) where the lowest member is cubic, guaranteeing that every basis function and its first two radial derivatives vanish at r = rcut . In contrast to the GTO basis, the polynomial radial functions are independent of the angular channel. The normalization factors are 
+
+Nk =
+
+sZ rcut 
+
+> 0
+
+(rcut − r)2( k+2) dr =
+
+s
+
+r 2k+5 cut 
+
+2k + 5 , (16) and the overlap matrix of the normalized primitives is 
+
+Skk ′ =
+
+Z rcut 
+
+> 0
+
+dr (rcut − r)k+2 (rcut − r)k′+2 
+
+NkNk′
+
+=
+
+p(5 + 2 k)(5 + 2 k′)5 + k + k′ , (17) 7so that the orthonormalization coefficients again follow from L¨ owdin orthogonalization, W = S−1/2.Inserting Eqs. (1) and (15) into Eq. (3) and using the expansion of Eq. (11), the angular integrals are again evaluated analytically, leaving one radial integral per neighbor, primitive, and angular channel: 
+
+cμnlm = 4 π 
+
+> Nμa
+
+X
+
+> i=1
+
+e−r2
+
+> iμ /2σ2
+
+Ylm (ˆ riμ )
+
+> nmax
+
+X
+
+> k=1
+
+Wnk 
+
+Nk
+
+Ikl (riμ ), (18) with 
+
+Ikl (riμ ) = 
+
+Z rcut 
+
+> 0
+
+dr r 2 (rcut − r)k+2 e−r2/2σ2
+
+il
+
+ r r iμ 
+
+σ2
+
+
+
+. (19) Unlike the GTO case, the integrals Ikl possess no elementary closed form. They are, however, dominated by a sharp Gaussian peak at r = riμ : combining the large-argument form of the Bessel function, il(z) ≃
+
+(ez /2z)1 − l(l + 1) /(2 z), with a Laplace (steepest-descent) expansion of the remaining integrand about riμ 
+
+gives, to first order in σ2,
+
+Ikl (riμ ) ≈
+
+r π
+
+2 σ3 e r2
+
+> iμ /2σ2
+
+(rcut − riμ )k+2 
+
+×
+
+"
+
+1 − l(l + 1) σ2
+
+2r2
+
+> iμ
+
+− (k + 2) σ2
+
+riμ (rcut − riμ )+ (k + 2)( k + 1) σ2
+
+2 ( rcut − riμ )2
+
+#
+
+. (20) The exponential factor cancels exactly against the prefactor e−r2
+
+> iμ /2σ2
+
+of Eq. (18), and with 4 πpπ/ 2 = (2 π)3/2 the projection coefficients become 
+
+cμnlm ≈ (2 π)3/2σ3 
+
+> Nμa
+
+X
+
+> i=1
+
+Ylm (ˆ riμ )
+
+> nmax
+
+X
+
+> k=1
+
+Wnk 
+
+Nk
+
+(rcut − riμ )k+2 
+
+×
+
+"
+
+1 − l(l + 1) σ2
+
+2r2
+
+> iμ
+
+− (k + 2) σ2
+
+riμ (rcut − riμ )+ (k + 2)( k + 1) σ2
+
+2 ( rcut − riμ )2
+
+#
+
+. (21) The expansion is asymptotic in the ratio of σ to the distances riμ and rcut − riμ , and is therefore accurate in the physically relevant regime in which the smearing width is small compared with both the interatomic separations and the distance of each neighbor from the cutoff sphere. The on-site contribution of the central atom, for which riμ = 0 and Eq. (20) does not apply, affects only the l = 0 channel [ il(0) = δl0] and can be evaluated once from the one-dimensional integral Ik0(0); like its GTO counterpart, it is independent of the atomic positions and does not contribute to the derivatives. 8Differentiating the radial part of Eq. (21) with respect to the neighbor distance, and retaining terms through O(σ2), gives 
+
+∂c μnlm 
+
+∂r jμ 
+
+= (2 π)3/2σ3 Ylm (ˆ rjμ )
+
+> nmax
+
+X
+
+> k=1
+
+Wnk 
+
+Nk
+
+(rcut − rjμ )k+1 
+
+"
+
+− (k + 2) + l(l + 1) σ2 (rcut − rjμ )
+
+r3
+
+> jμ
+
++ (k + 2) l(l + 1) + 2 σ2
+
+2r2
+
+> jμ
+
++ (k + 1)( k + 2) σ2
+
+rjμ (rcut − rjμ ) − k(k + 1)( k + 2) σ2
+
+2 ( rcut − rjμ )2
+
+#
+
+. (22) The full Cartesian gradient then follows from the chain rule. Writing the contribution of neighbor j to Eq. (21) as Ylm (ˆ rjμ ) fnl (rjμ ), with fnl the radial factor whose derivative is given by Eq. (22), 
+
+∂c μnlm 
+
+∂x jμ 
+
+= xjμ 
+
+rjμ 
+
+Ylm (ˆ rjμ ) ∂f nl 
+
+∂r jμ 
+
++ fnl (rjμ ) ∂Y lm (ˆ rjμ )
+
+∂x jμ 
+
+, (23) and analogously for yjμ and zjμ , where the Cartesian derivatives of the spherical harmonics are evaluated with the same recursions used in the GTO case [cf. Eq. (14)]. [4] Equations (13)–(14) and (21)–(23), combined with the contractions of Eqs. (4) and (5), constitute the complete closed-form working equations implemented in cuSOAP . Their evaluation is independent for every (center, neighbor, n, l, m, species) tuple, a structure that maps directly onto the massively parallel execution model of the GPU; the corresponding kernel design is described in Sec. 3. 
+
+# 3 Numerical Implementations 
+
+The closed-form working equations of Sec. 2 are exact but, by themselves, say nothing about how the descriptor should be laid out in memory or scheduled across the arithmetic units of a GPU. This section describes how cuSOAP turns those equations into a fast, GPU-resident implementation. We first outline the software architecture and the user-facing interface (Sec. 3.1), then describe the custom CUDA and Triton kernels that carry the cost of the derivative evaluation (Sec. 3.2), and finally the shared-memory multiprocessing layer that distributes the work across several GPUs (Sec. 3.3). 
+
+## 3.1 Architecture and interface 
+
+cuSOAP is built on PyTorch , which provides the tensor abstraction, the device-agnostic dispatch onto CUDA, and the reverse-mode automatic-differentiation engine on which one of the two derivative backends rests. The entire descriptor pipeline—neighbor search, spherical-harmonic evaluation, radial-basis contraction, coeffi-cient accumulation, and the power-spectrum assembly—executes on the GPU, so that a structure supplied as host arrays is transferred to the device once and the final descriptor or Jacobian is returned without 9further host–device traffic. The package is designed as a drop-in replacement for the widely used DScribe SOAP generator. [7, 8] The central SOAP class reproduces the DScribe constructor signature—the cutoff radius r cut , the basis sizes n max and l max , the smearing width sigma , the radial-basis selector rbf ("gto" or "polynomial" ), an optional radial weighting , the crossover flag controlling whether off-diagonal species pairs are re-tained, the average mode, the species list, and the periodic and sparse flags—augmented only by the arguments needed to steer the hardware backend ( device , the internal quadrature order quad n , and an optional cap max num neighbors on the neighbor count). Descriptors are produced by create() (aliased to generate() ), which returns one feature row per requested center as an ( ncenters , n features ) tensor, and derivatives by derivatives() , which returns an ( ncenters , n atoms , 3, n features ) tensor in the DScribe index convention. Both accept an explicit list of centers and an include /exclude atom selection, and the fea-ture ordering—the nested loop over species pairs ( μ, ν ), the radial-index triangle ( n, n ′), and the angular channel l—is chosen to match DScribe element for element, so that existing analysis and machine-learning pipelines can adopt cuSOAP without changing the downstream code. The four averaging modes of DScribe 
+
+are all supported: the per-center power spectrum ( "off" ), the two density-averaged variants ( "inner" and 
+
+"outer" ), and a "cc" mode that exposes the raw projection coefficients cμnlm themselves rather than their quadratic contraction. Three numerical choices are central to reproducing DScribe ’s output to near machine precision while run-ning on the GPU. First, although the user-facing dtype defaults to single precision, all internal arithmetic is carried out in float64 and only the final descriptor or Jacobian is cast down. This is not gratuitous: the L¨ owdin-orthonormalized GTO basis of Eq. (9) is severely ill-conditioned at large nmax , with orthonormal-ization coefficients that reach ∼ 10 6 and whose evaluation involves heavy cancellation, so a single-precision forward pass would lose roughly four significant digits. Double-precision accumulation followed by a final cast costs essentially nothing at these problem sizes and brings the descriptor to within ∼ 10 −6 of the ref-erence. Second, the angular functions are evaluated with sphericart , [4] which supplies the real spherical harmonics used in the forward pass and, for the analytic derivatives, the real solid harmonics rlYlm together with their exact Cartesian gradients through the stable, hardware-friendly recursions anticipated in Sec. 2. Because sphericart guarantees rlYlm (ˆ r) = |r|l Ylm (r/|r|) by construction, the harmonics entering the coef-ficients and those entering their gradients are mutually consistent to machine precision. Third, the basis-set constants are precomputed once at construction time: the GTO primitive widths and L¨ owdin coefficients of Eqs. (10) and (9), and, for the polynomial basis, the overlap matrix and its inverse square root—the latter evaluated, where SciPy is available, with exactly the same sqrtm ◦inv routine as DScribe so that the ill-conditioned S−1/2 agrees direction for direction with the reference. Radial integrals that lack a closed 10 form in the polynomial case are handled by a fixed Gauss–Legendre quadrature on [0 , r cut ]. Neighbor lists are built on the device. When torch cluster is installed, its GPU radius search is used directly; otherwise cuSOAP falls back to a chunked distance evaluation that rewrites the squared separation as 
+
+∥c∥2 + ∥n∥2 − 2 c · n so that the dominant cost becomes a single matrix–matrix product handled by cuBLAS ,with the intermediate distance buffer reused across chunks to limit allocation. For periodic systems the cell and periodic-boundary flags are honored by extending the neighbor set with the minimal set of periodic images within the padded cutoff. Because sphericart leaves the angular part undefined at the origin, edges of vanishing length—which arise when a center coincides with an atom—are dropped from the neighbor list and their exact analytic contribution is added separately: this is the on-site l = 0 self term of Eqs. (13) and (21), which is independent of the atomic positions and therefore leaves the forces unchanged. Finally, on CUDA devices the constructor performs a warm-up pass on a small dummy system. This trig-gers the just-in-time compilation of the custom kernels, the allocation of the cuBLAS handles and sphericart 
+
+buffers, and the pre-population of the caching memory allocator with a block large enough to serve the Jacobian and its workspaces, so that the first genuine create() or derivatives() call already runs at steady-state speed rather than paying one-off compilation and allocation costs. A companion profiler records per-segment timings when detailed performance breakdowns are required. 
+
+## 3.2 Acceleration with CUDA and Triton kernels 
+
+The forward evaluation of the descriptor maps naturally onto the batched tensor primitives of PyTorch .Following the coefficient expressions of Sec. 2, the radial factors, spherical harmonics, and smearing envelopes are formed for every neighbor edge at once, contracted over the primitive index with a single batched matrix multiplication per angular channel, and accumulated onto their centers with a scatter-add ( index add ). The power spectrum of Eq. (4) follows from one contraction over m per angular channel, after which the rotationally invariant elements are copied into the DScribe feature layout using a precomputed slice table. Every one of these operations is data-parallel over the (center, neighbor, n, l, m, species) index tuple, exactly the structure anticipated at the end of Sec. 2. The derivatives are the expensive part, and cuSOAP offers two backends for them. The general backend makes the entire forward pass differentiable and obtains the Jacobian by reverse-mode automatic differenti-ation; it is exact and covers every combination of radial basis, averaging mode, weighting, and periodicity, and is used whenever the fast path does not apply. The default backend is a closed-form evaluation of the analytic derivative equations themselves. Reverse-mode differentiation of a descriptor with nfeatures outputs per center requires on the order of ncenters × nfeatures vector–Jacobian passes and the materialization of a 11 large identity seed, whereas the closed-form path of Eqs. (13)–(14) and (21)–(23) evaluates the gradient in a single sweep over the neighbor edges. This replaces a reverse-mode cost that scales with the descriptor dimension by a handful of contractions, reducing both the run time and the memory footprint by orders of magnitude for the system sizes of interest (quantified in Sec. 4). The decisive step is to fuse the assembly of the derivative array into a small number of custom kernels written in Triton and compiled to PTX, rather than expressing it as a chain of library tensor operations. The naive tensor-operation route would materialize a per-edge gradient tensor of shape ( E, 3, n max , (lmax + 1) 2), scatter it into a still larger double-precision buffer indexed by center, included atom, and species, and evaluate the power-spectrum product rule of Eq. (5) through a sequence of per-l contractions with sizable intermediates. For a few-hundred-atom system at nmax = 10, lmax = 5 these intermediates run to several gigabytes and dominate the cost. The fused kernels avoid them entirely. A key simplification is exploited: for a single-image, non-periodic radius search each (center, atom) pair maps to at most one neighbor edge, so every output element is written by exactly one program instance. This removes the need for atomic accumulation, for a separate scatter buffer, and even for a zero-initialization pass—each program stores its result once, writing an explicit zero where the pair lies outside the cutoff or in the wrong species block. Three kernels implement this scheme. For the coefficient ( "cc" ) Jacobian a single kernel computes, per (center, atom, Cartesian direction) slot, the edge gradient d c/ dx = r ( ˆBnl Ylm ) + Bnl ∇Ylm , where Bnl 
+
+is the radial factor and ˆBnl its Gaussian-envelope partner [the two bracketed terms of Eq. (14)], applies the DScribe coefficient convention on the fly, and stores the result directly into the final single-precision layout. For the power-spectrum modes the assembly is split in two. A first kernel precontracts, for every edge, the solid harmonics and their gradients against that center’s coefficients to form the two intermediates 
+
+U = P 
+
+> m
+
+Ylm c and V = P 
+
+> m
+
+∇Ylm c; a second kernel then evaluates the product rule of Eq. (5) for each output feature as two fused multiply–adds against U and V , so that the inner sum over m disappears from the hot loop altogether—each derivative term costs two fused multiply–adds rather than a (2 l + 1)-element dot product. The kernel is launched on a pair-major one-dimensional grid so that the feature blocks belonging to one (center, atom) pair are launch-adjacent and reuse that pair’s radial and precontracted rows from cache instead of re-reading them from global memory. All arithmetic inside the kernels is carried out in double precision and the result is written once as single precision, so that the several-gigabyte intermediates of the tensor-operation route collapse to little more than the output tensor itself. When Triton is unavailable, or the request does not meet the fast-path conditions (CUDA device and single-precision output), a pure-
+
+PyTorch implementation of the same equations serves as a fallback, and a central-finite-difference backend is retained for validation. Two portability details are worth noting. The custom kernels depend on the CUDA assembler ptxas ;12 because the Triton -bundled assembler may not recognize very recent GPU targets, cuSOAP prefers a system CUDA toolkit ptxas when one is present. And because the angular functions carry a large share of the arithmetic, sphericart is expected to be built with CUDA support so that the harmonics and their gradients are evaluated on the device rather than on the host. 
+
+## 3.3 Multi-GPU parallelization by shared-memory multiprocessing 
+
+The generation of SOAP descriptors is embarrassingly parallel across atomic centers and across independent structures, and cuSOAP exploits this at the coarse grain to scale beyond a single accelerator. Because each center’s descriptor and its derivative block depend only on the atoms within that center’s cutoff sphere, distinct centers can be assigned to distinct GPUs with no inter-device communication and no reduction stage. The multi-GPU driver is built on PyTorch ’s shared-memory multiprocessing. One worker process is launched per visible device using the spawn start method required for CUDA, and each worker binds itself to its own cuda: ⟨rank ⟩ device and constructs an independent SOAP instance there. The work is first enumerated as a flat list of tasks, each task being one batch of atomic centers drawn from one structure; the batch size is a tunable that trades kernel-launch overhead against per-call memory. Tasks are distributed over the workers round-robin by rank, so that with W workers each device processes every W -th batch. This static, stride-based assignment needs no central scheduler and keeps all devices busy whenever the number of batches comfortably exceeds the number of GPUs. Coordination uses only lightweight shared-memory primitives. Each worker signals readiness through a shared result queue once its SOAP object is constructed and its CUDA kernels are warmed up, and then blocks on a shared start event; the driver releases every worker simultaneously once all have reported ready. This barrier ensures that the one-off construction and compilation costs fall outside the timed region, so that the measured wall time reflects steady-state descriptor generation rather than start-up. Each worker transfers its finished descriptors and derivatives to host memory and pushes them onto the result queue, keyed by structure and batch index, and the driver reassembles the complete output as the results arrive. Because the workload partitions cleanly and no gradients or coefficients ever cross device boundaries, the scheme is data-parallel in the strict sense and its scaling is limited only by load imbalance across the task list and by the host-side cost of collecting results—both quantified in Sec. 4. The same center-batching mechanism also serves, in the single-GPU case, to bound the peak memory of a single call, so that arbitrarily large structures can be processed by streaming their centers through the device in batches. 13 4 Results 
+
+All benchmarks reported in this section were executed on a single NVIDIA Grace–Blackwell (GB200) com-pute node equipped with two Grace CPUs, four Blackwell GPUs, and 1.8 TB of memory. The test systems are water clusters (H 2O) n of increasing size, a convenient two-species ( S = 2) benchmark whose neighbor count per cutoff sphere is representative of condensed-phase simulations. Unless stated otherwise, the de-scriptors were generated with the GTO radial basis, a cutoff radius rcut = 10 ˚ A, the ”average=off” mode, and nmax = 7, lmax = 3. This choice of basis size is not arbitrary: it mimics the largest atomic orbitals of the naturally occurring elements, whose occupied shells extend to principal quantum number n = 7 and to 
+
+f orbitals ( l = 3), so that the benchmark reflects the resolution required to describe an arbitrary chemical environment rather than a water-specific minimum. All timings measure the steady-state generation of de-scriptors (and, where indicated, of their analytic derivatives) for every atom in the system: as described in Sec. 3.1, the one-off kernel compilation, buffer allocation, and warm-up costs are incurred at construction time and excluded from the timed region. The reference CPU implementation is DScribe , [7, 8] run on the Grace CPUs of the same node; as noted in Sec. 3.1, the cuSOAP descriptors and Jacobians agree with the 
+
+DScribe reference to within ∼ 10 −6, so the comparison below is between numerically equivalent outputs. 
+
+## 4.1 Comparison with DScribe: descriptors and derivatives 
+
+Figure 1 compares the time required by cuSOAP and DScribe to produce the complete output needed for training and running a machine-learned force field—the per-atom SOAP vectors together with their deriva-tives with respect to every atomic coordinate—for clusters ranging from a single water molecule to (H 2O) 1000 .The two codes show qualitatively different behavior. For the single molecule, DScribe is in fact faster (0 .4 ms versus 6 .8 ms): at this size the GPU computation is entirely dominated by fixed kernel-launch and synchro-nization latency, which no amount of parallelism can hide. This overhead, however, is essentially all there is to the cuSOAP cost over a wide range of sizes—the GPU time is nearly flat at 7–9 ms from n = 1 to 
+
+n = 100, because the device is latency-bound rather than throughput-bound until tens of thousands of (center, neighbor) pairs are in flight—whereas the CPU time grows steeply from the outset. The crossover occurs already below n = 10, where cuSOAP takes the lead (7 .4 ms versus 11 .0 ms). At n = 100 the gap has widened to two orders of magnitude (9 .1 ms versus 0 .97 s), and at n = 1000—a cluster of 3000 atoms with roughly 4 × 10 2 neighbors per 10-˚ A cutoff sphere— cuSOAP delivers the full descriptor and Jacobian in 0 .15 s while DScribe requires 29 .8 s: a speedup factor of ≈ 200. The practical consequence is that descriptor plus force evaluation for a thousand-molecule cluster moves from half a minute per configuration to a fraction of a second, approaching the cadence of a molecular-dynamics time step. The benchmark was capped at 14 Figure 1: Execution time (seconds, logarithmic scale) for the generation of the atom-wise SOAP vectors and 
+
+their analytic derivatives for water clusters (H 2O) n with n = 1–1000, using nmax = 7 and lmax = 3. Green: 
+
+cuSOAP on a single Blackwell GPU; red: DScribe on the Grace CPU of the same GB200 node. 15 Figure 2: Speedup factor of cuSOAP over DScribe for the generation of the atom-wise SOAP vectors and their derivatives for (H 2O) 1000 , as a function of the radial basis size nmax = 1–7 and the angular band limit 
+
+lmax = 0–3. 
+
+n = 1000 because the dense Jacobian—one 3 × nfeatures block per (center, atom) pair—grows quadratically with system size and, in the DScribe workflow, exhausts the 1 .8 TB of node memory beyond this point; the streaming center-batch mechanism of Sec. 3.3 lets cuSOAP itself proceed to larger systems by bounding the per-call output size. 
+
+## 4.2 Speedup across the hyperparameter space 
+
+Because the relative cost of the radial contraction, the angular recursion, and the power-spectrum assembly shifts with the basis-set hyperparameters, a single ( nmax , l max ) point does not characterize the acceleration. Figure 2 therefore maps the speedup factor of cuSOAP over DScribe for the full descriptor-plus-derivative workload on (H 2O) 1000 across all 28 combinations of nmax = 1–7 and lmax = 0–3. The speedup grows monotonically toward the large-basis corner of the map, from 13 × in the least favorable corner, ( nmax , l max ) = 16 (1 , 0), to 227 × at the largest basis, ( nmax , l max ) = (7 , 3). Two trends are apparent. First, at fixed lmax the speedup rises steeply with the radial basis size up to nmax ≈ 3 (at lmax = 3, from 121 × at nmax = 1 to 210 ×
+
+at nmax = 3) and then saturates: the additional radial channels supply the arithmetic intensity needed to fill the GPU lanes and to amortize the fixed launch overhead, whereas on the CPU the same channels are paid for at full price from the outset. Second, and more importantly for applications, at fixed nmax the speedup grows 
+
+with the angular band limit throughout the map: at nmax = 7 it climbs from 89 × at lmax = 0 to 135 ×, 170 ×,and 227 × at lmax = 1, 2, and 3, respectively. This is precisely the regime in which the fused-kernel design of Sec. 3.2 pays off: the ( lmax + 1) 2 angular channels are evaluated by the hardware-friendly sphericart 
+
+recursions on the device, [4] the precontraction over m removes the (2 l + 1)-element inner products from the derivative hot loop, and the added angular work largely fills GPU lanes that would otherwise sit idle, whereas on the CPU the same work is paid for at full price. High angular resolution is exactly what complex, anisotropic condensed-phase environments demand of a SOAP model, so the acceleration is largest where it is needed most: a large lmax , prohibitive in a CPU-bound workflow, becomes essentially free on the GPU. 
+
+## 4.3 Scaling with system size 
+
+Many workflows—screening, clustering, kernel-based similarity analysis, and inference with descriptor-based models that do not require forces—need only the SOAP vectors themselves. This workload is far lighter than the Jacobian evaluation in both time and memory: for (H 2O) 1000 the vectors alone take 8 .2 ms against 0 .15 s for vectors plus derivatives, and the output grows only linearly, rather than quadratically, with the atom count. Figure 3 probes how far a single GPU can be pushed in this mode, extending the cluster size from a single molecule to (H 2O) 333 334 —one million atoms. The timing exhibits the two regimes anticipated above. Up to n ≈ 10 3 the execution time is essentially constant at 6–8 ms, pinned by kernel-launch latency: within this window, systems three orders of magnitude apart in size cost the same, so the device is effectively free until it saturates. Beyond n = 10 3 the time follows a clean power law, t ∝ n1.34 , over more than two further decades of system size. The exponent is close to the ideal linear scaling expected for a fixed-density system, in which the number of neighbors per cutoff sphere is constant and the descriptor work grows proportionally to the number of centers; the mild super-linearity is attributable to the pairwise distance screen of the fallback neighbor search (Sec. 3.1), whose cost grows quadratically with the atom count within each chunk, and it leaves the absolute cost remarkably small: the million-atom cluster is processed in 19 .5 s on one GPU, and the 3 × 10 5-atom cluster in 2 .5 s. 17 Figure 3: Execution time (seconds) for the generation of the atom-wise SOAP vectors (without derivatives) by cuSOAP on a single Blackwell GPU for water clusters (H 2O) n with n = 1–333 334, on a double-logarithmic scale. The red line is a power-law fit to the large-system regime ( n ≥ 10 3), t ∝ n1.34 .18 Figure 4: Execution time (seconds; blue, left axis) and parallel speedup relative to the single-GPU run (red, right axis) for the generation of the atom-wise SOAP vectors for the million-atom cluster (H 2O) 333 334 
+
+as a function of the number of Blackwell GPUs employed by the shared-memory multiprocessing driver of Sec. 3.3. Percentages give the parallel efficiency, i.e., the speedup divided by the number of devices. 19 4.4 Multi-GPU parallelization for a million-atom system 
+
+Finally, Fig. 4 examines how the single-node, shared-memory multiprocessing layer of Sec. 3.3 distributes the million-atom workload of Fig. 3 across the four Blackwell GPUs of the GB200 node. Batches of atomic centers are assigned round-robin to one worker process per device, with the synchronized-start barrier ensuring that construction and warm-up fall outside the timed region. The execution time decreases from 20 .4 s on one GPU to 10 .4 s on two, 7 .6 s on three, and 5 .7 s on four, and the corresponding parallel speedup, shown on the right axis of Fig. 4, climbs monotonically to 1 .96 ×, 2 .70 ×, and 3 .59 ×—parallel efficiencies of 98 .2%, 90 .1%, and 89 .8%, respectively. The near-ideal two-GPU speedup confirms that the center-partitioned workload requires no inter-device communication, exactly as the data-parallel analysis of Sec. 3.3 predicts; the modest departure from the ideal slope at three and four devices is consistent with the residual load imbalance of the static round-robin assignment and with the serialized host-side collection of results through the shared queue, both of which grow in relative weight as the per-device compute time shrinks. Notably, the speedup curve shows no sign of saturation up to the four devices available on the node: each added GPU continues to contribute at close to 90% of its nominal capacity. With no algorithmic coupling between GPUs, the same driver therefore ports directly to nodes with more accelerators: descriptor generation for ultra-large systems scales out by simply adding devices, and a million-atom SOAP evaluation completes in under six seconds on a single GB200 node. 
+
+# 5 Conclusions 
+
+We have presented cuSOAP , a GPU-accelerated generator of atom-wise SOAP descriptors and their analytic derivatives for molecular systems. The package rests on the closed-form working equations of Sec. 2 for both the Gaussian-type-orbital and the polynomial radial bases, evaluated on the device through the fused CUDA and Triton kernels of Sec. 3, which eliminate the multi-gigabyte intermediates of a naive tensor-operation formulation and reduce the derivative hot loop to a pair of fused multiply–adds per output element. The resulting performance was quantified in Sec. 4: for the full descriptor-plus-Jacobian workload on (H 2O) 1000 ,a single Blackwell GPU outpaces the CPU-based reference DScribe [7, 8] by up to two orders of magnitude (i.e., 13 × to 227 × across the ( nmax , l max ) hyperparameter map, with the largest gain at the largest basis), while reproducing its output to within ∼ 10 −6; descriptor-only generation scales as t ∝ n1.34 , close to linear, up to a million atoms, which are processed in 19 .5 s on one GPU and 5 .7 s on the four GPUs of a GB200 node—a parallel speedup of 3 .59 ×, i.e., about 90% efficiency, with no sign of saturation as devices are added. The practical significance of these numbers lies in what they make routine. The efficient generation 20 of atom-wise SOAP vectors and, above all, of their derivatives is the central bottleneck of SOAP-based molecular machine learning: forces are required for training and running interatomic potentials, yet their evaluation inflates the descriptor cost by a factor of roughly 3 Nneigh . [8] At the same time, faithfully resolving multi-species chemical environments in the condensed phase can demand a large cutoff radius, a large radial basis nmax , and most critically for anisotropic coordination, a large angular band limit lmax . [1, 5] Precisely these physically motivated settings are the most punishing for CPU-bound implementations, whereas the speedup of cuSOAP grows with both nmax and, above all, lmax (Sec. 4.2): the angular resolution that complex environments require, prohibitive in a CPU workflow, becomes essentially free on the GPU. Descriptor and force evaluation for a thousand-molecule water cluster thereby drops from half a minute to a fraction of a second, bringing on-the-fly SOAP evaluation for condensed-phase simulation within reach. Adoption costs are deliberately kept low. cuSOAP reproduces the constructor signature, feature order-ing, and derivative index convention of DScribe element for element (Sec. 3.1), so existing pipelines can switch generators without modifying downstream code. Its Python interface, built on PyTorch , accepts structures directly as Atoms objects of the widely used Atomistic Simulation Environment ( ASE ), [9] through which nearly every modern computational-chemistry and molecular-machine-learning package already ex-changes structural data; integration with existing workflows—dataset featurization, kernel-model training, or descriptor-based analysis of trajectories—therefore requires only a few lines of code. Two directions will guide future development. First, the shared-memory multiprocessing driver of Sec. 3.3 is confined to the GPUs of a single node; because the center-partitioned workload requires no inter-device communication, extending the same data-parallel scheme to distributed-memory architectures via message passing is straightforward and will allow descriptor generation for systems of tens of millions of atoms to scale out across GPU clusters. Second, the user-facing interface will be extended beyond Python to compiled languages such as C and Fortran, enabling cuSOAP to serve as an embedded descriptor engine within established molecular-dynamics and electronic-structure codes rather than solely as a library for Python-based workflows. 
+
+# Code availability 
+
+Our cuSOAP code is freely available at https://github.com/TACC/cuSOAP. 21 Acknowledgements 
+
+Computational resources were provided by the Texas Advanced Computing Center at the University of Texas at Austin. 
+
+# References 
+
+[1] Albert P. Bart´ ok, Risi Kondor, and G´ abor Cs´ anyi. On representing chemical environments. Phys. Rev. B, 87(18):184115, 2013. [2] Albert P. Bart´ ok, Mike C. Payne, Risi Kondor, and G´ abor Cs´ anyi. Gaussian approximation potentials: The accuracy of quantum mechanics, without the electrons. Phys. Rev. Lett. , 104(13):136403, 2010. [3] J¨ org Behler and Michele Parrinello. Generalized neural-network representation of high-dimensional potential-energy surfaces. Phys. Rev. Lett. , 98(14):146401, 2007. [4] Filippo Bigi, Guillaume Fraux, Nicholas J. Browning, and Michele Ceriotti. Fast evaluation of spherical harmonics with sphericart. J. Chem. Phys. , 159(6):064802, 2023. [5] Sandip De, Albert P. Bart´ ok, G´ abor Cs´ anyi, and Michele Ceriotti. Comparing molecules and solids across structural and alchemical space. Phys. Chem. Chem. Phys. , 18(20):13754–13769, 2016. [6] Volker L. Deringer, Albert P. Bart´ ok, Noam Bernstein, David M. Wilkins, Michele Ceriotti, and G´ abor Cs´ anyi. Gaussian process regression for materials and molecules. Chem. Rev. , 121(16):10073–10141, 2021. [7] Lauri Himanen, Marc O. J. J¨ ager, Eiaki V. Morooka, Filippo Federici Canova, Yashasvi S. Ranawat, David Z. Gao, Patrick Rinke, and Adam S. Foster. DScribe: Library of descriptors for machine learning in materials science. Comput. Phys. Commun. , 247:106949, 2020. [8] Jarno Laakso, Lauri Himanen, Henrietta Homm, Eiaki V. Morooka, Marc O. J. J¨ ager, Milica Todorovi´ c, and Patrick Rinke. Updates to the DScribe library: New descriptors and derivatives. J. Chem. Phys. ,158(23):234802, 2023. [9] Ask Hjorth Larsen, Jens Jørgen Mortensen, Jakob Blomqvist, Ivano E. Castelli, Rune Christensen, Marcin Dulak, Jesper Friis, Michael N. Groves, Bjørk Hammer, Cory Hargus, Eric D. Hermes, Paul C. Jennings, Peter Bjerre Jensen, James Kermode, John R. Kitchin, Esben Leonhard Kolsbjerg, Joseph Kubal, Kristen Kaasbjerg, Steen Lysgaard, J´ on Bergmann Maronsson, Tristan Maxson, Thomas Olsen, Lars Pastewka, 22 Andrew Peterson, Carsten Rostgaard, Jakob Schiøtz, Ole Sch¨ utt, Mikkel Strange, Kristian S. Thyge-sen, Tejs Vegge, Lasse Vilhelmsen, Michael Walter, Zhenhua Zeng, and Karsten W. Jacobsen. The atomic simulation environment—a Python library for working with atoms. J. Phys.: Condens. Matter ,29(27):273002, 2017. 23

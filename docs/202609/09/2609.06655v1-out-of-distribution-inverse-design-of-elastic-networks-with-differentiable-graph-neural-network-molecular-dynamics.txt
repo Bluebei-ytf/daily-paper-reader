@@ -1,0 +1,833 @@
+Title: Out-of-Distribution Inverse Design of Elastic Networks with Differentiable Graph Neural Network Molecular Dynamics
+
+URL Source: https://arxiv.org/pdf/2609.06655v1
+
+Published Time: Wed, 09 Sep 2026 01:51:39 GMT
+
+Number of Pages: 27
+
+Markdown Content:
+# Out-of-Distribution Inverse Design of Elastic Networks with Differentiable Graph Neural Network Molecular Dynamics 
+
+## Sergey A. Shteingolts 1, Salman N. Salman 1, Ron Levie 2, and Dan Mendels* 11The Wolfson Department of Chemical Engineering, Technion – Israel Institute of Technology, Haifa, 32000, Israel 
+
+> 2
+
+## Faculty of Mathematics, Technion – Israel Institute of Technology, Haifa 32000, Israel *Email: danmendels@technion.ac.il 
+
+Abstract 
+
+Machine-learning-based inverse design can accelerate the discovery of materials with targeted prop-erties, but conventional structure–property models often require large training datasets and generalize poorly beyond their training distribution. Here, we present a differentiable inverse design framework based on a graph neural network molecular dynamics simulator. By combining a short dynamical ini-tialization with physics-based refinement during simulation, the framework enables optimization well beyond the conditions represented in the training data. Using disordered elastic networks, we show that a simulator trained only on non-auxetic systems with Poisson’s ratios between 0.1 and 0.4 can design strongly auxetic networks with values as low as −0.3. The framework also produces stress–strain re-sponses outside the range observed during training, creates localized mechanical defects absent from the training data, and generalizes across system size, enabling optimization of networks tested up to 5000 nodes despite being trained only on networks with fewer than 200 nodes. 
+
+# 1 Introduction 
+
+Traditional computational molecular and materials discovery largely follows a forward design paradigm, in which candidate structures or configurations are iteratively evaluated against target objectives. Because each evaluation often requires costly physics-based calculations, this process is computationally intensive and fundamentally limits the exploration of vast design spaces.[1, 2] Inverse design offers a compelling alternative by searching directly for physical configurations that exhibit predefined properties.[3, 4] Modern approaches increasingly employ machine-learning (ML) structure–property models, including generative architectures, as fast surrogates for physics-based calculations. Once trained, these models can evaluate properties orders of magnitude faster, enabling large-scale screening in the forward direction and making inverse design practical through efficient search, optimization, and generation of structures with targeted properties.[5–7] However, such approaches tend to require large training datasets and struggle significantly with out-of-distribution (OOD) generalization, which can be essential for discovering novel engineering solutions.[8–17] One proposed strategy for overcoming these hurdles draws on the concept of ML-learned collective vari-ables [18–21] developed in the context of enhanced sampling methods. In this framework, machine-learning models are used to learn the mapping between a system’s elementary components and interactions and its functional modes, thereby enabling the identification of the salient microscopic features associated with these modes and their targeted modification to achieve desired functional changes [8, 9, 22–24]. Alternatively, it has recently been proposed that more data-efficient ML frameworks with improved OOD generalization can be developed by training models directly on dynamical data obtained from simulations or experiments. Rather than learning static structure-to-property mappings, these models learn the underlying dynamics and can subsequently be used to evaluate physical properties from the resulting trajectories.[25] One way to realize this approach is to train autoregressive ML-based simulators that predict a system’s next configuration from its current state and iteratively generate full trajectories, thereby learning the underlying 1arXiv:2609.06655v1 [physics.chem-ph] 6 Sep 2026 patterns that govern the dynamics of a given class of systems. When embedded within an optimization framework, such simulators can be used to iteratively modify an initial system configuration to achieve desired dynamical behaviors and macroscopic properties.[26] A critical challenge in implementing such a pipeline for gradient-based inverse design is that the ML-based simulator must generate accurate trajectories from structural information alone, i.e., under structure-only initialization (SOI). In practice, however, accurate dynamical predictions often require additional state information, such as particle velocities and accelerations, and may also depend on a history of preceding configurations. Such information is generally unavailable in inverse design settings, where each simulation must be initialized from a newly proposed static configuration. [25–28] To address this limitation, recent work has proposed two SOI strategies: a simulator-cascade approach, in which the initial rollout steps are handled by separately trained neural networks, and a bootstrap approach, in which a short transient trajectory is generated by a custom differentiable MD engine. Both approaches provide the dynamical context required to initialize the ML-based simulator within the inverse design framework.[28] Another potential challenge in applying an ML-based simulator within an inverse design framework is ensuring reliable performance outside the training distribution. This is particularly important for inverse design, where the objective is to identify novel configurations with targeted functionalities. Although dynam-ical ML-based simulators have been shown to outperform static structure–property models in OOD settings, their generalization remains limited when the system dynamics change substantially.[25] To address this challenge and extend the OOD capabilities of ML-based simulators, we recently introduced the Inference-Time Physics-Based Optimization (ITPO) approach.[28] ITPO ensures that the system satisfies predefined physics-based constraints during the rollout by refining the ML-based simulator’s initial predictions at reg-ular intervals. It has been shown to enable high-quality dynamical predictions even in regimes where the system exhibits qualitatively different and more complex dynamics than those present in the training data. In this work, we present a novel framework for OOD inverse design based on an autoregressive, dif-ferentiable graph neural network molecular dynamics simulator (GMDS). Previously, we showed that an ML-based MD simulator that relied solely on static structural input performed poorly and thus could not be used in the optimization framework.[28] However, when the simulator is initialized using minimal dynamical information generated by a custom differentiable bootstrap MD simulator and combined with the ITPO scheme during prediction rollouts, the framework enables substantial OOD optimization. The resulting sys-tems exhibit macroscopic functional behavior substantially different from that represented in the training data, together with qualitatively different and more complex dynamics. We investigate the proposed methodology in the context of disordered elastic networks (DENs), highly versatile model systems whose structures can be precisely tuned to realize a wide range of mechanical and thermodynamic behaviors.[9, 29–34] Specifically, we consider three design objectives: auxetic optimization, local defect embedding, and stress–strain curve tuning. Auxetic materials are uniquely characterized by a negative Poisson’s ratio ν = − dy dx , meaning they contract transversely rather than expand when compressed longitudinally. For auxetic optimization, we demonstrate that the proposed inverse design framework, incor-porating a GMDS trained exclusively on configurations with relatively high Poisson’s ratios, ν ∈ [0 .1, 0.4] ,can generate strongly auxetic DENs with Poisson’s ratios as low as −0.3. We further show that the same framework can engineer localized auxetic pockets within globally non-auxetic networks and concentrate a larger fraction of the network stress within prescribed local regions without substantially altering the macro-scopic stress, despite the absence of local inhomogeneities or defects in the training data. In addition, the framework can optimize DEN stress–strain responses beyond the range represented in the training distri-bution. Finally, we demonstrate effective generalization across system sizes, enabling the optimization of DENs with up to 5,000 nodes despite the GMDS having been trained exclusively on networks containing approximately 200 nodes. 
+
+# 2 Methods 
+
+## 2.1 Optimization algorithm 
+
+The proposed inverse design pipeline embeds the GMDS within a gradient-based optimization framework. As illustrated in Fig. 1, the optimization proceeds in a closed loop. First, specific modifications to a baseline system configuration are parameterized as learnable variables, such as node displacements or changes in 2harmonic bond stiffness. These modifications are applied to generate a candidate system, which is then provided to the GMDS to produce a rollout trajectory. The target macroscopic property, such as Poisson’s ratio ν or the stress–strain response, is subsequently evaluated, and its exact gradient with respect to the learnable structural parameters is computed through backpropagation. The optimizer uses this gradient to update the structure in order to minimize the objective function. This cycle is repeated until either the target macroscopic behavior is achieved or the maximum number of optimization epochs is reached. A detailed technical description of the optimization procedure is provided in Section 5.2. 
+
+Figure 1: Schematic diagram of the proposed inverse design framework. In the structure adjustment stage (blue container), the initial graph G0 is modified by the optimizer to yield the updated structure ˆGi. Dur-ing rollout generation (green container), historical context is generated via bootstrap initialization, and the GMDS coupled with inference-time physics-based optimization (ITPO) produces a rollout trajectory, shown with the final configuration ˆGf . In the property evaluation stage (yellow container), the target dynamical property is evaluated to compute the loss gradients. The black dashed arrow represents gradient backprop-agation from the objective function to the optimizer, while the red dotted line corresponds to the outer optimization loop. The proposed framework is highly modular. Because the GMDS is the only system-specific component, while the remainder of the pipeline is system-agnostic, the approach can be readily generalized to the inverse design of diverse material and molecular systems. The objective function is similarly flexible, allowing multiple target properties and structural constraints to be combined as interchangeable components. For example, in addition to the primary optimization target, geometric penalties, such as constraints on minimum node distances or bond angles in elastic networks, can be incorporated directly into the loss function. Such terms help ensure the physical validity of the engineered structures and stabilize the optimization process without requiring changes to the overall architecture. 
+
+## 2.2 Graph Neural Network simulator 
+
+The core of the optimization pipeline is the GMDS model that was implemented following the established architecture [25, 28, 35–37]. The objective of the GMDS is to auto-regressively generate trajectories by making consecutive single-step predictions based on a series of preceding system configurations. The simulator takes the structure of a DEN at time t as input, encoded into a graph Gt with nodes V
+
+(elastic network beads) and edges E (harmonic bonds and other non-bonded interactions), along with their associated node features x and edge features e. It then outputs predicted particle accelerations ˆat, which are used to calculate the next-step positions rt+1 via semi-implicit forward Euler integration, where ∆t = 1 :
+
+rt+1 = rt + vt∆t + ˆ at∆t2 (1) 3The number of prior system states included in the input graph defines the temporal history h. The simulator model used in this work utilizes a history of h = 3 , meaning that the node features x encode the velocities of the current and two preceding timesteps ( vt, vt−1, vt−2). More details on the GNN architecture as well as specifics about the simulator model implementation are available in Section 3 of the SI. 
+
+2.2.1 Dataset and Model training 
+
+The simulator training data consisted of MD simulations of uniaxial compression of DENs. The simulations were performed using the LAMMPS molecular dynamics package.[38] As part of the data preparation pro-cedure, the compression trajectories were coarse-grained by a factor of 200, i.e., one GMDS model timestep equals 200 ground truth MD timesteps. This temporal coarse-graining allows the model to capture larger strains in fewer prediction steps, effectively reducing error accumulation without significantly diminishing per-step accuracy. Moreover, this enables a substantial advantage of the GMDS compared to existing dif-ferentiable MD engines, namely substantially reducing the complexity of gradient step tracking during opti-mization. To test the OOD generalization capabilities of the proposed inverse design framework, the GMDS was trained exclusively on compression trajectories of highly non-auxetic DENs with ν above a predefined threshold. Furthermore, the simulator training was additionally restricted to a strain ϵ of 0.0005 .The GMDS was trained utilizing a multi-step training (MST) strategy. Instead of making isolated single-timestep predictions, for each training sample during the forward pass the model performs a short, continuous rollout. To maintain the training stability, the rollout length increases as a function of training epochs, starting at a single step and scaling up to 10 steps in later epochs. By supervising across this short rollout, the simulator model is exposed to its own state drift, effectively encouraging it to learn “self-correction”, which significantly reduces error accumulation (see Section 3.2 of the SI). A detailed description of the GMDS training protocol is provided elsewhere.[28] The GMDS model was trained on three distinct datasets. Each of the three datasets was composed of DENs compression trajectories, spanning a wide range of Poisson’s ratios ν ∈ [≈ − 0.6, 0.6] . All datasets were created with a two-step process. First, a set of unique, non-auxetic DENs was generated. These networks were then optimized using one of three optimization algorithms. The first dataset was created using the gradient-descent-based global node displacement strategy.[33] For the second dataset, we employed a variation of the harmonic bond stiffness tuning algorithm,[30] which relies on iteratively pruning individual harmonic bonds to minimize the ratio between network’s shear and bulk modulus GB . Lastly, we also generated a dataset of DENs using a random perturbation strategy, which involves repeatedly applying a random displacement to a certain percentage of nodes, as well as randomly pruning some of the network bonds, until it reaches a desired Poisson’s ratio value. The DENs generated using the random perturbation strategy were additionally augmented with non-bonded Lennard–Jones interactions, which we found to lead to more complex compression dynamics. Detailed description of the datasets generation is available in Section 2 of the SI. 
+
+## 2.3 Structure-only initialization 
+
+As described in the Introduction, one of the main challenges in employing dynamic ML-based simulators for inverse design is their reliance on dynamical state variables, such as velocities and accelerations, at the current timestep t as well as at preceding timesteps. In practice, because the model trajectory is coarse-grained in time, these quantities are typically computed from preceding reference frames. Consequently, the input to a typical ML-based simulator requires historical context (see Section 2.2). Previously, we presented two potential solutions to this structure-only initialization (SOI) problem.[28] In this work, we employ a custom-built, differentiable MD engine implemented using PyTorch [39, 40] and PyTorch Geometric [41, 42] to generate a short “bootstrap” trajectory from a single static input configuration. Specifically tailored for uniaxial compression of 2D DENs in the NPT ensemble, this MD engine generates a transient trajectory of length l = h · dcg , where h denotes the required model history and dcg is the coarse-grained timestep of the GMDS. By extracting the required sequence of configurations from this short simulation, we establish the initial dynamical context needed to initialize the simulator. 42.4 Inference-time physics-based optimization 
+
+Rollout stability and OOD generalization of the GMDS model are significantly enhanced by employing Inference-Time Physics-based Optimization (ITPO).[28] ITPO treats the GMDS’s predicted accelerations as a high-quality initial approximation, which is subsequently refined by enforcing predefined physical con-straints. This continuous trajectory correction noticeably improves the simulator’s performance in extrap-olative regimes. In this work, the ITPO refinement is applied at every rollout step; however, it can in principle be applied every N steps to reduce the computational cost. While a detailed description of the ITPO technique is available elsewhere,[28] we provide a brief overview here. The GMDS predicted accelerations ˆa are refined via gradient-based optimization using the following composite loss function: 
+
+Ltotal = Lanchor + αLphysics (2) where α is an empirical weighting coefficient. The anchor term Lanchor penalizes deviations from the initial prediction to preserve the learned compression dynamics. In contrast, Lphysics acts as a corrective penalty, steering the system toward a state that is consistent with the predefined physical constraints. For the uniaxial compression of DENs, Lphysics combines three domain-specific constraints: a barostat pressure penalty, the system potential energy, and the mean-squared per-particle force, briefly described below. 
+
+Barostat Term: Given a constant engineering strain applied along the x axis, a differentiable GMDS-coupled barostat regulates the instantaneous transverse internal pressure Py . This pressure comprises kinetic and virial contributions: 
+
+Py = kB N T A + 1
+
+A
+
+X
+
+> i<j
+
+fij,y rij,y (3) where A is the simulation box area, fij,y is the y-component of the harmonic bond force between nodes i and 
+
+j, and rij,y is their relative distance. The deviation of Py from the target external pressure, Pt, generates a thermodynamic driving force: 
+
+Ftotal = ( Py − Pt)Lx − γv ty (4) with γ serving as a frictional damping coefficient. The resulting box acceleration, aty = Ftotal /W y (where 
+
+Wy is the system piston mass), continuously updates the transverse box dimension, Ly :
+
+vty = vt−1 
+
+> y
+
++ aty ∆t (5) 
+
+Lt+1  
+
+> y
+
+= Lty + vty ∆t (6) 
+
+Potential Energy Term: Because non-physical trajectories tend to exhibit an artificial inflation of system energy, we minimize the total potential energy, formulated as the sum of all harmonic bond energies: 
+
+LU = X
+
+> i<j
+
+E(rij ) (7) 
+
+Per-Particle Net Force Term: Similarly, compounding rollout errors often manifest as large per-particle forces. To counteract this, we penalize the mean-squared net force along the y axis: 
+
+Lforce = 1
+
+N
+
+> N
+
+X
+
+> i=1
+
+(Fi,y )2 (8) where the net force Fi acting on node i is derived from its neighboring bonds: 
+
+Fi = X 
+
+> j∈N (i)
+
+−kij (l − l0) rij 
+
+l (9) Here, kij is the harmonic bond stiffness, while l and l0 represent the current and bond rest lengths, respec-tively. 53 Results 
+
+To evaluate the proposed framework’s capacity for OOD inverse design and optimization, we examined three distinct scenarios: i) designing DENs with Poisson’s ratios substantially lower than those represented in the training dataset, ii ) optimizing DENs for a target stress–strain response and iii ) introducing local inhomogeneities or “defects”, in the form of stress concentrations and localized variations in Poisson’s ratio. 
+
+## 3.1 Inverse Design of Auxetic Networks from High Poisson’s Ratio Configura-tions 
+
+Inverse design of auxetic DENs provides a useful case study for evaluating the OOD capabilities of the pro-posed dynamical optimization framework. As shown previously,[25] the compression trajectories of auxetic DENs exhibit substantially greater complexity than those of non-auxetic networks. Restricting the GMDS training data exclusively to non-auxetic, high-ν compression trajectories therefore provides a meaningful OOD benchmark. Specifically, the simulator used in this study was trained only on data from networks with ν ≥ 0.1. Despite this restriction, the framework consistently and reliably engineers auxetic DENs with negative Poisson’s ratios as low as ν = −0.3, starting from baseline configurations with ν ≥ 0.35 .
+
+3.1.1 Node displacement optimization 
+
+As demonstrated elsewhere [33], modifying node positions enables effective engineering of DENs with targeted Poisson’s ratios. The optimization module within our framework employs a similar strategy. Specifically, the Poisson’s ratio ν of a network is minimized by first modifying node positions and then recalculating the harmonic bond stiffnesses k so that the resulting configuration remains in mechanical equilibrium. Figure 2 shows an example of an optimized network topology. Using the dynamical optimization framework, we managed to consistently engineer DENs with Poisson’s ratios as low as ν = −0.10 starting from networks with ν ≥ 0.35 .
+
+Figure 2: A disordered elastic network before (a) and after (b) optimization of its Poisson’s ratio, together with the optimization trajectory (c), showing ν and the root-mean-square deviation (RMSD) of the node positions as functions of the optimization epoch. As noted in the Introduction, static structure-based surrogate models are known to exhibit limited generalization beyond their training distribution. To quantify this limitation and establish a baseline for comparison, we trained a comparable Encoder–Processor–Decoder model to predict the Poisson’s ratio ν
+
+6directly from the static input graph G, which encodes the DEN node coordinates r0 and edges e0 prior to compression. The model exhibited poor OOD generalization (Fig. S1) and, when incorporated into the gradient-based inverse design pipeline (Fig. 1), failed to generate valid structures with low Poisson’s ratio in the extrapolative regime (Fig. 3). 
+
+Figure 3: Randomly selected examples of Poisson’s ratio optimization of DENs via node displacement, using the proposed inverse design framework with the static ν-predictor model (a) and the GMDS (b). Blue and red dots correspond to the values of ν before and after optimization, respectively. The training-data cutoff in ν for both models is indicated by the black dashed line. Notably, the proposed dynamical optimization framework can identify optimized solutions while simul-taneously satisfying structural constraints. For instance, when using the node-displacement strategy, main-taining a physically valid network structure requires geometric constraints that penalize undesirable config-urations. Following previous work,[33] we imposed two such constraints: the minimum length of each bond was constrained to remain at least 30% of its original value, lmin = 0 .3 l0, and the angle between any two adjacent harmonic bonds was constrained to remain at least θmin = 20 °. To further test both the OOD limits of the GMDS and the flexibility of the inverse design framework, we introduced additional structural constraints, including an upper bound on the RMSD to limit the overall displacement of the network nodes. As illustrated by the optimization trajectory in Figure 2c, the RMSD rapidly approaches its prescribed upper bound at approximately 0.3, while the Poisson’s ratio ν continues to decrease before eventually reaching a plateau toward the end of the optimization. A further demonstration of the proposed framework’s OOD capabilities is its ability to generalize across varying system sizes. Despite the fact that the GMDS was trained exclusively on DENs with fewer than 200 nodes, the framework reliably engineered auxetic networks with up to 5000 nodes without modifying the optimization procedure (Fig. 4). Because the computational cost of optimizing larger DENs is dominated by the GMDS rollout, the proposed approach scales significantly better than conventional greedy algorithms, making generalization to larger systems advantageous for large-scale inverse design. 
+
+3.1.2 Bond stiffness tuning 
+
+We were also interested in evaluating the framework’s ability to perform OOD design through bond stiffness 
+
+k modifications. Previous studies [30, 31, 43–46] have shown that selective bond pruning using greedy algorithms can reduce the Poisson’s ratio of DENs. Motivated by these findings, we investigated whether the proposed inverse design framework could achieve similar reductions through continuous adjustment of 
+
+k. As in the previous experiments, the GMDS was trained exclusively on data from networks characterized by ν ≥ 0.1. Again, the framework proved highly effective at OOD optimization. In contrast to conventional greedy algorithms, which rely on a binary pruning decision, i.e., setting the stiffness to k = 0 or retaining its original value, optimizing a continuous stiffness parameter enables a more granular exploration of the design space. As illustrated in Fig. 5, the optimized bond stiffness distribution differs substantially from the original one. Following optimization, the original distribution k = 1 /l 0 was replaced by two distinct peaks: approximately 50% of the harmonic bonds had k ≈ 0, while a second local maximum appeared near k ≈ 1.15 .Compared to the node displacement strategy, optimizing individual bond stiffnesses is procedurally more 7Figure 4: Examples of auxetic DENs with approximately 150 (a) and 3000 nodes (b), obtained using the proposed inverse design framework. The GMDS training data consisted of networks with 150–200 nodes. straightforward, as it eliminates the need to impose structural constraints. Instead, the optimization is subject only to upper and lower bounds on the bond stiffness. In this case, the stiffness kij of each bond was constrained to deviate by no more than 90% from its original value. We also examined a joint optimization strategy combining node displacement and bond stiffness tuning. This strategy yielded lower values of ν for a given elastic network. The Poisson’s ratio reached values as low as −0.35 , compared with the minimum of approximately −0.1 typically obtained when either strategy was applied independently. In addition to yielding more strongly auxetic DENs, the joint optimization strategy provided a significant computational speedup, substantially reducing the number of epochs required to achieve a comparable negative Poisson’s ratio. As shown by the bond stiffness distribution in Fig. 5c and d, in the absence of additional structural constraints, within the joint optimization strategy the initial stiffness k of approximately half of the harmonic bonds tended to be uniformly reduced by 40% , while for the remaining bonds k was left largely unchanged. 
+
+## 3.2 Modifying the stress–strain curve 
+
+An alternative optimization target is the direct modification of the material’s macroscopic stress–strain response. In the small-strain regime ( ϵ ≤ 0.01 ), unmodified baseline DENs exhibit an almost perfectly linear 8Figure 5: Distributions of harmonic bond stiffnesses k before (blue) and after (red) optimization using bond stiffness tuning (a, b) and the combined strategy (c, d). Weakened and strengthened bonds are shown with blue and red, respectively. stress–strain relationship. By contrast, the introduction of non-bonded Lennard–Jones interactions produces a more complex, nonlinear response (Fig. 6a). Here, we investigated whether the proposed framework could engineer targeted mechanical responses in both cases. The inverse design framework successfully reshaped both the linear and nonlinear baseline stress–strain curves toward predefined targets. Continuous bond stiffness tuning produced the most robust results for this task, enabling shifts in the stress–strain response of up to 50% relative to the unoptimized baseline. Notably, as shown in Fig. 6b, the optimized stress–strain curve lies well outside the range of responses represented in the training dataset. 
+
+Figure 6: Optimization of the stress–strain response of DENs with additional non-bonded Lennard–Jones interactions: (a) evolution of the stress–strain curve during optimization; (b) comparison of the optimized response with those of DENs in the training dataset. In (a), successive curves are shown at intervals of 5 optimization epochs. 93.3 Engineering local defects 
+
+Beyond optimizing global mechanical properties, the proposed framework can also engineer localized defects within an existing elastic network. Specifically, we demonstrated that the framework could create local pockets whose dynamic responses differed substantially from those of the surrounding structure while leaving the global mechanical properties largely intact. We considered two examples of engineered local pockets: i) a region exhibiting a negative local Poisson’s ratio ν and ii ) a region exhibiting a localized stress concentration, characterized by σlocal  
+
+> xx
+
+. In both cases, the pocket was defined by a radial cutoff around a central node and typically contained 10% to 20% of the network’s nodes. By applying the optimization strategies discussed above exclusively to the nodes and/or bonds within the designated pocket, we introduced the targeted local behavior while largely preserving the network’s global mechanical response. 
+
+Figure 7: Examples of engineered local defects. (a) Increasing the load fraction γ within a pocket. (b) Engineering a locally auxetic pocket; solid and dashed lines show the global and local Poisson’s ratios ν as functions of strain, respectively. (c, d) Non-affine node displacement vectors before (c) and after (d) the introduction of an auxetic pocket. Results for the original and optimized structures are shown in blue and red, respectively. Figure 7a shows the results of introducing a high-stress pocket while keeping the global stress σxx ap-proximately unchanged. After optimization, the stress within the targeted pocket increased more rapidly with strain, while the macroscopic network stress remained largely unchanged. To quantify this localiza-tion, we computed the load fraction γ, defined as the fraction of the total network stress carried within the pocket. Optimization increased γ by nearly a factor of two to approximately 0.095 , indicating a substantial redistribution of load toward the targeted region. The embedding of an auxetic pocket is illustrated in Fig. 7b. A typical unoptimized DEN exhibits a positive global Poisson’s ratio ν ≈ 0.35 , which remains approximately constant with strain ϵ. Before opti-mization, both the global response νglobal and the local pocket response νpocket exhibited this behavior. After targeted optimization, νglobal decreased to approximately 0.2, whereas νpocket reached approximately −0.3.This contrast demonstrates that the optimization framework can strongly modify the mechanical response of a localized region while inducing comparatively modest changes in the global behavior of the network. The resulting changes in node dynamics are illustrated in Fig. 7c and d. Consistent with the behavior represented in the GMDS training set, node motion in the original DEN (Fig. 7c) was predominantly affine, with minimal non-affine displacements. After the auxetic pocket was introduced, the local node dynam-ics became substantially more complex (Fig. 7d), further illustrating the framework’s ability to generate 10 dynamical patterns absent from the training data. Notably, localized defects of this type are entirely absent from the GMDS training data. The ability to generate such responses suggests that the simulator captures node-level dynamics in sufficient detail to resolve how localized structural modifications influence the overall compression trajectory. More broadly, these results provide further evidence that the framework supports OOD optimization, enabling the generation of network structures and mechanical responses not represented in the training data. 
+
+# 4 Conclusion 
+
+In this work, we introduced an inverse design framework for dynamics-based optimization. At its core, the framework leverages an autoregressive graph neural network molecular dynamics simulator (GMDS), a fully differentiable surrogate model that accurately predicts dynamic trajectories while exhibiting significant out-of-distribution (OOD) generalization. Through the simulated compression of disordered elastic networks (DENs), we demonstrated that this methodology can both engineer specific macroscopic, network-wide properties and embed localized regions with targeted dynamical behavior that are entirely absent from the original training data. At the global scale, the framework produced highly auxetic networks with Poisson’s ratios as low as ν =
+
+−0.3, despite the GMDS having been trained exclusively on networks with ν ∈ [0 .1, 0.4] . This corresponds to a shift of ∆ν ≈ 0.7 relative to a typical unoptimized DEN with ν ≈ 0.4. The framework also enabled targeted modification of macroscopic stress–strain curves, yielding responses well beyond the training distribution. At the local scale, it embedded regions with distinct dynamical behaviors within otherwise standard non-auxetic networks, including isolated auxetic pockets and stress-concentrating regions that doubled the local load fraction γ relative to the surrounding network. These results were enabled primarily by two key advances: solving the structure-only initialization (SOI) problem and applying the Inference-Time Physics-Based Optimization (ITPO) technique. The SOI problem is addressed by generating a short transient trajectory, which provides the initial historical context required to initialize GMDS rollout. This, in turn, allows the gradient-based inverse design loop to start from a newly proposed static system configuration. ITPO further improves the OOD capabilities of the GMDS by refining the model’s predictions so that the resulting configuration remains physically valid. Additionally, ITPO substantially improves the stability of GMDS rollouts. Together, these two techniques enable the GMDS to generate accurate rollout trajectories even when used to design systems with dynamical behavior significantly different from that encountered in its training dataset. Compared with general-purpose differentiable MD frameworks [47–51], which enable targeted engineering of the underlying interactions but frequently incur high computational costs and suffer from exploding or high-variance gradients when differentiating through many timesteps [52–56], the proposed approach offers a complementary route in which temporally coarse-grained dynamics can reduce both computational cost and the depth of the differentiable computational graph. Thus, by requiring fewer sequential gradient operations and filtering fast dynamical modes, this formulation can improve the conditioning and stability of long-horizon gradient-based optimization. Ultimately, this work establishes a foundation for the use of fully differentiable GNN-based MD simulators in the inverse design of complex systems. By demonstrating that such models can guide the optimization of dynamical properties well beyond their training distributions, our results highlight the potential of learned simulators as efficient tools for targeted structural design and materials discovery. Future work will aim to extend this framework to a broader range of dynamical optimization problems and to increasingly complex molecular and materials systems. 
+
+# 5 Computational details 
+
+## 5.1 Autoregressive rollout and ITPO refinement 
+
+The generation of the coarse-grained compression trajectory is handled via an autoregressive loop that in-tegrates the GMDS and the ITPO. The process is bootstrapped by generating a transient sequence of h + 1 
+
+configurations using a custom differentiable MD engine. Implementation details are available in Section 5 of 11 the SI. Once the initial dynamical context is established, the GMDS predicts the baseline particle acceler-ations ˆann for each subsequent timestep. The ITPO technique is used to refine the simulator’s prediction. To prevent excessive memory consumption during training and optimization, the forward refinement pass is completely detached from the global computational graph. The ITPO loop utilizes the Adam optimizer to iteratively minimize the composite physical loss, Ltotal , yielding the refined particle accelerations a∗
+
+> nn
+
+, which are then used to compute the subsequent system configuration rt+1 . For details on ITPO implementation see Section 6 of the SI. 
+
+## 5.2 Detailed description of the optimization algorithm 
+
+5.2.1 Structural parameterization 
+
+The optimization seeks to minimize an objective function by updating a set of learnable structural param-eters. Depending on the chosen strategy, the structural modifications are parameterized as either node displacements ∆r or bond stiffness adjustments ∆k.For global node displacement, a learnable tensor of the same shape as the initial node positions is initialized. At each optimization epoch, the updated node coordinates are computed as ri = r0 
+
+> i
+
++ ∆ ri. To prevent global translation of the network during optimization, the center of mass of the displacement tensor is subtracted at every step. For bond stiffness tuning, enforcing physical bounds on the optimized stiffness values is important to prevent unrealistically high values of kij . First, a learnable adjustment tensor w corresponding to the network edges is initialized. Because the GMDS operates on bidirectional graphs, to guarantee symmetry 
+
+wij = wji the tensor is averaged with its transpose. A bounded stiffness multiplier mij is then constructed using a hyperbolic tangent activation: 
+
+mij = exp ( S · tanh( wij )) (10) where S is a scaling factor defined by the logarithmic upper and lower bounds of the allowed multiplier. e.g., between 10 −6 and 5.0. The updated bond stiffness is then calculated as 
+
+kij = k0 
+
+> ij
+
+· mij (11) ensuring that kij remains within the predefined physical limits. 
+
+5.2.2 Forward pass and loss formulation 
+
+During the forward pass, the input graph is passed to the GMDS to generate the rollout trajectory. We found that in most cases using 20-step long rollouts produces satisfactory results. Once the rollout trajectory is generated, the target dynamical property is evaluated and the composite loss function Ltotal is computed. This loss acts as the optimization objective and is defined as a sum of the target property term Ltarget and the optional geometric constraints term Lgc :
+
+Ltotal = Ltarget + Lgc (12) The target property term Ltarget penalizes the deviation of the engineered property from the target value. For the auxetic optimization this loss term is computed as the Mean Squared Error (MSE) between the current and the target Poisson’s ratio ν:
+
+Ltarget = ( ν − νtarget )2 (13) Poisson’s ratio ν is defined as a negative ratio of transverse strain to the axial strain: 
+
+ν = − dϵ y
+
+dϵ x
+
+(14) For a given GMDS rollout, transverse ϵy and axial ϵx strain are computed from the periodic box dimensions: 
+
+ϵη = ( L0 
+
+> η
+
+− Lη )/L η (15) 12 where η ∈ [x, y ] and Lη corresponds to the periodic box dimension. For the stress–strain curve engineering, a shape-aware target loss is employed that explicitly constrains the first- and second-order derivatives of the curve. Let S and S∗ be the predicted and target stress–strain curves, respectively. The target loss is formulated as a linear combination of positional Lpos , slope Lslope ,and curvature Lcurve penalties: 
+
+Ltarget = Lpos + αLslope + βLcurve (16) where α and β are empirical weighting coefficients. The slope term Lslope and the curvature term Lcurve are the MSE of the first-order and second-order derivatives, respectively, computed using the finite differences. A localized pocket is defined by a central target node c and a set of neighboring nodes Nc located within a specified radius. To evaluate the local Poisson’s ratio νlocal , the initial node positions r0 and the final node positions at the end of the rollout trajectory rt are used. The relative distances along the x and y axes between the central node and its neighbors are computed for both states: 
+
+∆xi = |xi − xc|, ∆yi = |yi − yc| (17) where i ∈ N c. The macroscopic pocket strains ϵlocal  
+
+> x
+
+and ϵlocal  
+
+> y
+
+are then calculated by comparing the average final distances to the average initial distances: 
+
+ϵlocal  
+
+> x
+
+= ⟨∆xti⟩⟨∆x0 
+
+> i
+
+⟩ − 1ϵlocal  
+
+> y
+
+= ⟨∆yti ⟩⟨∆y0 
+
+> i
+
+⟩ − 1 (18) Given a target local Poisson’s ratio νlocal target , the desired local y strain ϵlocal  
+
+> y, target
+
+is defined as 
+
+ϵlocal  
+
+> y, target
+
+= −νlocal target · ϵlocal  
+
+> x
+
+(19) The defect target loss term Ldefect is then computed as the MSE between the observed and the calculated target y strains: 
+
+Ldefect = λ  ϵlocal  
+
+> y
+
+− ϵlocal 
+
+> y, target
+
+2 (20) We found that expressing the local defect target loss in terms of local y strain stabilized the optimization significantly. 
+
+Structural constraints 
+
+To maintain the physical validity of the network structure, particularly during node displacement optimiza-tion, the geometric constraints loss Lgc is used, which consists of two separate terms Ldist and Langles . The distance penalty Ldist prevents nodes from overlapping by penalizing bond lengths dij that fall below a specified minimum threshold dmin using the ReLU function: 
+
+Ldist = X
+
+> E
+
+[ReLU (dmin − dij )] 2 (21) Similarly, the angle loss term Langle prevents intersecting bonds. It penalizes angles θijk that fall below a minimum threshold θmin using a Softplus function with β = 3 .0:
+
+Langle = X
+
+> V
+
+Softplus (θmin − θijk , β ) (22) 
+
+Optimization and backpropagation 
+
+The structural parameters are updated using the Adam optimizer [57] with the learning rate set to 0.05 and no weight decay. To ensure stability, gradient clipping is applied by capping the maximum L2 norm of the gradients at 1.0 before the optimizer step is executed. 13 5.3 Load fraction 
+
+The total load W is defined as: 
+
+W = X |wij | (23) where wij is the local virial stress contribution corresponding to the harmonic bond between particles i and 
+
+j:
+
+wij = rij · Fij = rxFx + ry Fy (24) The load fraction carried by an engineered pocket is thus defined as: 
+
+γ = Wpocket 
+
+Wtotal 
+
+(25) 
+
+# Acknowledgements 
+
+The authors acknowledge support from the Israel Science Foundation (ISF) under grant number 1181/24. 
+
+# References 
+
+(1) Cheng, M.; Fu, C.-L.; Okabe, R.; Chotrattanapituk, A.; Boonkird, A.; Hung, N. T.; Li, M. AI-driven materials design: a mini-review. 2025 , 1–18. (2) Sherman, Z. M.; Howard, M. P.; Lindquist, B. A.; Jadrich, R. B.; Truskett, T. M. Inverse methods for design of soft materials. The Journal of Chemical Physics 2020 , 152 , DOI: 10.1063/1.5145177 .(3) Lin, W.; Jin, L.; Jiang, Z.; Cai, M.; Lai, Z.; Yurchenko, D.; Yan, B.; Zhou, S.; Novoselov, K. S.; Liao, W. H.; Fang, S. Machine Learning-Based Inverse Design for Functional Materials: Methods, Challenges, and Engineering Applications. Advanced Functional Materials 2026 , DOI: 10.1002/adfm.75070 .(4) Zunger, A. Inverse design in search of materials with target functionalities. Nature Reviews Chemistry 
+
+2018 , 2, 0121. (5) Chen, L.; Zhang, W.; Nie, Z.; Li, S.; Pan, F. Generative models for inverse design of inorganic solid materials. Journal of Materials Informatics 2021 , DOI: 10.20517/jmi.2021.07 .(6) Lu, S.; Zhou, Q.; Chen, X.; Song, Z.; Wang, J. Inverse design with deep generative models: next step in materials discovery. National Science Review 2022 , 9, DOI: 10.1093/nsr/nwac111 .(7) Wines, D.; Xie, T.; Choudhary, K. Inverse Design of Next-Generation Superconductors Using Data-Driven Deep Generative Models. The Journal of Physical Chemistry Letters 2023 , 14 , 6630–6638. (8) Mendels, D.; De Pablo, J. J. Collective Variables for Free Energy Surface Tailoring: Understanding and Modifying Functionality in Systems Dominated by Rare Events. Journal of Physical Chemistry Letters 2022 , 13 , 2830–2837. (9) Mendels, D.; Byléhn, F.; Sirk, T. W.; de Pablo, J. J. Systematic modification of functionality in disordered elastic networks through free energy surface tailoring. Science Advances 2023 , 9, 1–9. (10) Nandy, A.; Duan, C.; Kulik, H. J. Audacity of huge: overcoming challenges of data scarcity and data quality for machine learning in computational materials discovery. Current Opinion in Chemical Engineering 2022 , 36 , 100778. (11) Dou, B.; Zhu, Z.; Merkurjev, E.; Ke, L.; Chen, L.; Jiang, J.; Zhu, Y.; Liu, J.; Zhang, B.; Wei, G.-W. Machine Learning Methods for Small Data Challenges in Molecular Science. Chemical Reviews 2023 ,
+
+123 , 8736–8780. (12) Hu, J.; Liu, D.; Fu, N.; Dong, R. Realistic material property prediction using domain adaptation based machine learning. Digital Discovery 2024 , 3, 300–312. (13) Quesada-Molina, J. P.; Mofatteh, H.; Akbarzadeh, A.; Mariani, S. Navigating beyond the training set: A deep learning framework for inverse design of architected composite materials. Engineering Applications of Artificial Intelligence 2025 , 150 , 110473. 14 (14) Tenorio, M.; Rahman, M. H.; Mannodi-Kanakkithodi, A.; Chapman, J. Out-of-distribution machine learning for materials discovery: Challenges and opportunities. Chemical Physics Reviews 2026 , 7,1–15. (15) Smit, B.; Garcia, S. The data-only illusion in materials discovery. Nature Materials 2026 , DOI: 10. 1038/s41563-026-02578-7 .(16) Wu, T.; Maruyama, T.; Wei, L.; Zhang, T.; Du, Y.; Iaccarino, G.; Leskovec, J. Compositional Gener-ative Inverse Design. 12th International Conference on Learning Representations, ICLR 2024 2024 ,1–30. (17) Li, Q.; Miklaucic, N.; Hu, J. Out-of-distribution materials property prediction using adversarial learn-ing based fine-tuning. The Journal of Physical Chemistry C 2024 , 129 , 6372–6385. (18) Mendels, D.; Piccini, G.; Parrinello, M. Collective Variables from Local Fluctuations. Journal of Phys-ical Chemistry Letters 2018 , 9, 2776–2781. (19) Mendels, D.; Piccini, G.; Brotzakis, Z. F.; Yang, Y. I.; Parrinello, M. Folding a small protein using harmonic linear discriminant analysis. The Journal of Chemical Physics 2018 , 149 , DOI: 10.1063/ 1.5053566 .(20) Piccini, G.; Mendels, D.; Parrinello, M. Metadynamics with Discriminants: A Tool for Understanding Chemistry. Journal of Chemical Theory and Computation 2018 , 14 , 5040–5044. (21) Rizzi, V.; Mendels, D.; Sicilia, E.; Parrinello, M. Blind Search for Complex Chemical Pathways Using Harmonic Linear Discriminant Analysis. Journal of Chemical Theory and Computation 2019 , 15 ,4507–4515. (22) Medaparambath, M.; Zhilkin, A.; Mendels, D. Collective Variable-Guided Engineering of the Free-Energy Surface of a Small Peptide. 2026 .(23) Zhilkin, A.; Medaparambath, M.; Mendels, D. Guiding Peptide Kinetics via Collective-Variable Tuning of Free-Energy Barriers. Journal of Chemical Theory and Computation 2026 , DOI: 10.1021/acs. jctc.6c00418 .(24) Zick, E.; Mendels, D. Gradient-Based Inverse Design of Free-Energy Landscapes with Diffusion Models, 2026. (25) Salman, S. N.; Shteingolts, S. A.; Levie, R.; Mendels, D. Evaluating the use of a machine learning simulator for structure–property prediction: A case study on disordered elastic networks. The Journal of Chemical Physics 2025 , 163 , DOI: 10.1063/5.0282871 .(26) Allen, K. R.; Lopez-Guevara, T.; Stachenfeld, K.; Sanchez-Gonzalez, A.; Battaglia, P.; Hamrick, J.; Pfaff, T. Physical Design using Differentiable Learned Simulators. 2022 .(27) Yang, C.; Gao, W.; Wu, D.; Wang, C. Learning to Simulate Unseen Physical Systems with Graph Neural Networks. 2022 .(28) Shteingolts, S. A.; Salman, S. N.; Mendels, D. Enabling Structure-Only Initialization and Out-of-Distribution Generalization in GNN-based Molecular Dynamics Simulators. 2026 .(29) Bahar, I.; Lezon, T. R.; Yang, L.-W.; Eyal, E. Global Dynamics of Proteins: Bridging Between Struc-ture and Function. Annual Review of Biophysics 2010 , 39 , 23–42. (30) Reid, D. R.; Pashine, N.; Wozniak, J. M.; Jaeger, H. M.; Liu, A. J.; Nagel, S. R.; de Pablo, J. J. Auxetic metamaterials from disordered networks. Proceedings of the National Academy of Sciences 
+
+2018 , 115 , E1384–E1390. (31) Reid, D. R.; Pashine, N.; Bowen, A. S.; Nagel, S. R.; de Pablo, J. J. Ideal isotropic auxetic networks from random networks. Soft Matter 2019 , 15 , 8084–8091. (32) Rens, R.; Lerner, E. Rigidity and auxeticity transitions in networks with strong bond-bending inter-actions. The European Physical Journal E 2019 , 42 , 114. (33) Shen, M.; Reyes-Martinez, M. A.; Powell, L. A.; Iadicola, M. A.; Sharma, A.; Byléhn, F.; Pashine, N.; Chan, E. P.; Soles, C. L.; Jaeger, H. M.; de Pablo, J. J. An autonomous design algorithm to experimentally realize three-dimensionally isotropic auxetic network structures without compromising density. npj Computational Materials 2024 , 10 , 113. 15 (34) Zu, M.; Desai, A.; Goodrich, C. P. Fully Independent Response in Disordered Solids. Physical Review Letters 2025 , 134 , 238201. (35) Battaglia, P. W. et al. Relational inductive biases, deep learning, and graph networks. 2018 .(36) Sanchez-Gonzalez, A.; Godwin, J.; Pfaff, T.; Ying, R.; Leskovec, J.; Battaglia, P. W. Learning to Simulate Complex Physics with Graph Networks. 37th International Conference on Machine Learning, ICML 2020 2020 , PartF16814 , 8428–8437. (37) Pfaff, T.; Fortunato, M.; Sanchez-Gonzalez, A.; Battaglia, P. W. Learning Mesh-Based Simulation With Graph Networks. ICLR 2021 - 9th International Conference on Learning Representations 2021 ,1–18. (38) Thompson, A. P.; Aktulga, H. M.; Berger, R.; Bolintineanu, D. S.; Brown, W. M.; Crozier, P. S.; in ’t Veld, P. J.; Kohlmeyer, A.; Moore, S. G.; Nguyen, T. D.; Shan, R.; Stevens, M. J.; Tranchida, J.; Trott, C.; Plimpton, S. J. LAMMPS - a flexible simulation tool for particle-based materials modeling at the atomic, meso, and continuum scales. Computer Physics Communications 2022 , 271 , 108171. (39) Paszke, A. et al. PyTorch: An imperative style, high-performance deep learning library. In Advances in Neural Information Processing Systems. NeurIPS 2019 , 8026–8037. (40) Ansel, J. et al. In Proceedings of the 29th ACM International Conference on Architectural Support for Programming Languages and Operating Systems, Volume 2 , ACM: New York, NY, USA, 2024; Vol. 2, pp 929–947. (41) Fey, M.; Lenssen, J. E. Fast Graph Representation Learning with PyTorch Geometric. 2019 , 1–9. (42) Fey, M.; Sunil, J.; Nitta, A.; Puri, R.; Shah, M.; Stojanovič, B.; Bendias, R.; Barghi, A.; Kocijan, V.; Zhang, Z.; He, X.; Lenssen, J. E.; Leskovec, J. PyG 2.0: Scalable Learning on Real World Graphs. 
+
+Proceedings of Temporal Graph Learning Workshop, SIGKDD International Conference on Knowledge Discovery and Data Mining 2025 (TGL Workshop, KDD 2025) 2025 , 1.(43) Goodrich, C. P.; Liu, A. J.; Nagel, S. R. The Principle of Independent Bond-Level Response: Tuning by Pruning to Exploit Disorder for Global Behavior. Physical Review Letters 2015 , 114 , 225501. (44) Hexner, D.; Liu, A. J.; Nagel, S. R. Role of local response in manipulating the elastic properties of disordered solids by bond removal. Soft Matter 2018 , 14 , 312–318. (45) Hexner, D.; Liu, A. J.; Nagel, S. R. Linking microscopic and macroscopic response in disordered solids. 
+
+Physical Review E 2018 , 97 , 063001. (46) Hexner, D.; Liu, A. J.; Nagel, S. R. Periodic training of creeping solids. Proceedings of the National Academy of Sciences 2020 , 117 , 31690–31695. (47) Schoenholz, S. S.; Cubuk, E. D. JAX, M.D. A framework for differentiable physics*. Journal of Sta-tistical Mechanics: Theory and Experiment 2021 , 2021 , 124016. (48) Doerr, S.; Majewski, M.; Pérez, A.; Krämer, A.; Clementi, C.; Noe, F.; Giorgino, T.; De Fabritiis, G. TorchMD: A Deep Learning Framework for Molecular Simulations. Journal of Chemical Theory and Computation 2021 , 17 , 2355–2363. (49) Plé, T.; Adjoua, O.; Lagardère, L.; Piquemal, J.-P. FeNNol: An efficient and flexible library for building force-field-enhanced neural network potentials. The Journal of Chemical Physics 2024 , 161 , DOI: 
+
+10.1063/5.0217688 .(50) Christiansen, H.; Maruyama, T.; Errica, F.; Zaverkin, V.; Takamoto, M.; Alesiani, F. Fast, modular, and differentiable framework for machine learning-enhanced molecular simulations. The Journal of Chemical Physics 2025 , 163 , DOI: 10.1063/5.0277356 .(51) Cohen, O.; Riebesell, J.; Goodall, R.; Kolluru, A.; Falletta, S.; Krause, J.; Colindres, J.; Ceder, G.; Gangan, A. S. TorchSim: an efficient atomistic simulation engine in PyTorch. AI for Science 2025 , 1,025003. (52) Ingraham, J.; Riesselman, A.; Sander, C.; Marks, D. Learning protein structure with a differentiable simulator. 7th International Conference on Learning Representations, ICLR 2019 2019 , 1–24. 16 (53) Thaler, S.; Zavadlav, J. Learning neural network potentials from experimental data via Differentiable Trajectory Reweighting. Nature Communications 2021 , 12 , 6884. (54) Metz, L.; Freeman, C. D.; Schoenholz, S. S.; Kachman, T. Gradients are Not All You Need. 2022 .(55) Šípka, M.; Dietschreit, J. C. B.; Grajciar, L.; Gómez-Bombarelli, R. Differentiable Simulations for Enhanced Sampling of Rare Events. Proceedings of Machine Learning Research 2023 , 202 , 31990– 32007. (56) Greener, J. G. Differentiable simulation to develop molecular dynamics force fields for disordered proteins. Chemical Science 2024 , 15 , 4897–4909. (57) Kingma, D. P.; Ba, J. Adam: A Method for Stochastic Optimization. 2017 .17 Supporting Information for "Inverse design with GNNs" 
+
+## Sergey A. Shteingolts 1, Salman N. Salman 1, Ron Levie 2, and Dan Mendels* 11The Wolfson Department of Chemical Engineering, Technion - Israel Institute of Technology, Haifa, 32000, Israel 
+
+> 2
+
+## Faculty of Mathematics, Technion – Israel Institute of Technology, Haifa 32000, Israel *Email: danmendels@technion.ac.il 
+
+# 1 Static Property Predictor    
+
+> Figure S1: Performance of a static structure-property model trained on data with ν≥0.1.1
+
+# 2 Disordered Elastic Networks and Data Generation 
+
+## 2.1 Elastic network generation 
+
+Disordered elastic networks (DENs) were constructed in a two-step process.[1] First, N soft disks of four different types and diameters were randomly placed in equal proportions within a periodic simulation box and relaxed to a local energy minimum using a standard jamming algorithm.[2] The contact force between two disks i and j, with respective radii Ri and Rj , within the contact distance d = Ri + Rj is given by 
+
+F = ( knδnij − mef f γnvn) − (kt∆st + mef f γtvt), (1) where δ is the overlap distance; nij is the unit vector along the line connecting the disk centers; kn and kt are the normal and tangential elastic constants, respectively; and γn and γt are the corresponding viscoelastic constants. Furthermore, mef f = MiMj 
+
+> Mi+Mj
+
+is the effective mass of disks i and j, whose individual masses are 
+
+Mi and Mj ; vn and vt are the normal and tangential components of their relative velocity; and ∆st is the tangential displacement vector between the disks. Here, kt, γn, and γt were set to zero, whereas kn was set to 1.0. The resulting force between the two disks therefore reduces to 
+
+F = δnij . (2) During energy minimization, the system was gradually cooled from Tstart = 5 × 10 −6 to Tend = 1 × 10 −6.Subsequently, a bead was placed at the center of each disk, and harmonic bonds were introduced between beads corresponding to disks in contact, rij ≤ d. Each harmonic bond was assigned an elastic energy of the form 
+
+E(rij ) = 12 kij (l − l0)2, (3) where kij is the harmonic bond stiffness, with units of energy/distance 2 (dimensionless with kB = 1 , σ = l0
+
+and ϵ = kij σ2); l0 is the bond rest length; and l is the distance between the two beads. For each bond, k
+
+was set to 1/l 0. The resulting network was then scanned for “dangling” beads, defined as beads having fewer than three connections to neighboring beads. These beads were removed, and the scanning and removal procedure was repeated iteratively until none remained. For one of the datasets, Lennard–Jones-type nonbonded interactions were additionally introduced into the elastic networks for both bonded and nonbonded beads. The interaction energy between any two beads 
+
+i and j, separated by a distance rij , was defined using the standard Lennard–Jones potential: 
+
+VLJ (rij ) = 4 ϵ
+
+" σrij 
+
+12 
+
+−
+
+ σrij 
+
+6#
+
+(4) for rij ≤ rc, and zero otherwise. Here, ϵ denotes the depth of the potential well, σ is the finite separation at which the interparticle potential vanishes, and rc is the cutoff distance beyond which the interaction is truncated. Following several parameter-testing iterations, the values producing the most interesting com-pression dynamics were ϵ = 0 .01 , σ = 1 .0, and rc = 1 .122 . The latter approximates 21/6σ, corresponding to the position of the potential minimum and thereby yielding an effectively repulsive interaction. 
+
+## 2.2 Uniaxial compression simulation 
+
+Compression simulations of the 2D DENs were carried out using the LAMMPS[3] molecular dynamics sim-ulator. The systems were simulated within the NPT ensemble with anisotropic pressure control (applied to the simulation box in the direction perpendicular to compression), with constant temperature T = 1 × 10 −10 
+
+, kB = 1 , damping parameter of 7.1 × 10 −3 and time step τ = 7 .13 × 10 −6 controlled by the Langevin ther-mostat.[4] The compression was simulated using the fix deform command of LAMMPS with a constant engineering strain rate sr = 1 × 10 −8 and the maximum strain of 5% along the compressed axis. Constant zero-pressure along the non-compressed axis was applied on the simulation box perpendicular to the direction of compression using the Parrinello-Rahman barostat.[5] 22.3 Dataset generation 
+
+2.3.1 Global node displacement optimization 
+
+Auxetic DENs were generated using a global node optimization strategy.[6] This strategy is based on stochas-tic gradient descent and seeks to minimize Poisson’s ratio, ν, by modifying the positions of individual nodes. At each optimization epoch n, each coordinate of node i, denoted by ri, is perturbed by 5 × 10 −4 along an axis η ∈ x, y . The bond lengths and stiffnesses are subsequently recalculated to maintain the system in its equilibrium configuration, and the gradient of the objective function is evaluated as 
+
+∂(ν + L1 + L2)
+
+∂r i,η 
+
+, (5) where ri,η denotes the coordinate of node i along axis η, and L1 and L2 are constraints on the internode distances and bond angles, respectively. These constraints are defined as 
+
+L1 = 0 .1 X
+
+> i,j
+
+H(rmin − rij )( rij − rmin )2, (6) 
+
+L2 = 0 .01 X
+
+> j
+
+H(θmin − θj )( θj − θmin )6, (7) where H is the Heaviside step function, while rij, min = 0 .3r0 
+
+> ij
+
+and θmin = 15 ◦ are empirically selected minimum values for the harmonic bond distances and bond angles, respectively. Both L1 and L2 restrict the accessible optimization space, thereby preventing the network beads from overlapping and limiting the formation of intersecting bonds. To avoid excessively large structural changes and improve the stability of the optimization, the absolute value of each gradient component was clipped at 0.01 . Finally, the node positions were updated using the N × 2 gradient matrix obtained in the preceding step: 
+
+rn+1  
+
+> i,η
+
+= rni,η − λ ∂(ν + L1 + L2)
+
+∂r i,η 
+
+, (8) where λ is the learning rate. This procedure was repeated until either (a) the desired target value of ν was reached or (b) the number of iterations exceeded a predefined maximum. 
+
+2.3.2 Harmonic bond stiffness tuning 
+
+Using the minimal differentiable PyTorch-based MD engine described in Section 5, we investigated two distinct optimization schemes, referred to as continuous and discrete optimization. In both schemes, the learnable parameters are adjustments to the individual bond stiffnesses kij . These adjustments are denoted by ∆kij , where the directed graph edge represents a harmonic bond between the two network beads i and j.In the continuous optimization scheme, each initial harmonic bond stiffness k0 
+
+> ij
+
+is adjusted continu-ously according to 
+
+k′ 
+
+> ij
+
+= k0 
+
+> ij
+
+(1 + C · tanh(∆ kij )) , (9) where C is a predefined constant that limits the maximum relative change in stiffness. Conversely, the discrete optimization scheme, inspired by a procedure reported elsewhere,[7] restricts the allowed changes in bond stiffness in a manner resembling discrete bond pruning. This is achieved using an edge mask gij :
+
+gij = σ(β∆ksym  
+
+> ij
+
+), (10) 
+
+k′ 
+
+> ij
+
+= k0 
+
+> ij
+
+gij , (11) where σ is the sigmoid function and β is a hyperparameter controlling its steepness. Due to the undirected nature of the graph, the before each update the symmetric stiffness adjustment ∆ksym  
+
+> ij
+
+is computed: 
+
+∆ksym  
+
+> ij
+
+= ∆kij + ∆ kji 
+
+2 (12) 3At each optimization epoch, a DEN with the updated stiffnesses k′ is compressed for a fixed number of MD steps. The Poisson’s ratio ν of the network is calculated directly from the changes in the periodic box dimensions between the initial ( t = 0 ) and final ( t) simulation steps: 
+
+ν = − (Lty − L0 
+
+> y
+
+)/L 0
+
+> y
+
+(Ltx − L0
+
+> x
+
+)/L 0
+
+> x
+
+. (13) The optimization objective is to minimize the mean squared error (MSE) between the measured Poisson’s ratio and its target value. The total loss function L is defined as 
+
+L = ( ν − νtarget )2 + λ 1
+
+M
+
+X
+
+> ij
+
+(1 − gij ), (14) where M is the total number of unique edges. The second term is a bond removal penalty term used exclusively in the discrete mode, and λ is its corresponding weight. For the continuous mode, λ is set to zero. Optimization was performed using stochastic gradient descent (SGD) with momentum. Before each optimizer step, the gradients with respect to the stiffness-adjustment parameters ∆kij were clipped to a maximum norm of 1.0. The procedure was continued for a predefined number of epochs or terminated early if the simulated network achieved the target Poisson’s ratio νtarget .
+
+# 3 GNN MD Simulator 
+
+## 3.1 Model architecture 
+
+The model adopts an Encoder–Processor–Decoder architecture.[8, 9] The encoder maps the input node and edge features of a graph G to latent representations. The temporal history of the node features xi is first separated into its spatial components ( x and y). Each component is processed using the same axis-shared MLP before the resulting representations are flattened and linearly projected onto a hidden space of dimension 128. The edge features ei are mapped directly to the 128-dimensional latent space using an independent MLP, denoted by εe.The processor consists of k message-passing (MP) layers with identical architectures but independent sets of learnable parameters. These layers are applied sequentially, with each layer operating on the output of the preceding layer and incorporating a residual connection. The node embeddings are updated according to 
+
+x(k) 
+
+> i
+
+= x(k−1)  
+
+> i
+
++ ψ(k)
+
+x(k−1)  
+
+> i
+
+, X 
+
+> j∈N (i)
+
+ϕ(k)(x(k−1)  
+
+> i
+
+, x(k−1)  
+
+> j
+
+, eij )
+
+ , (15) where ψ and ϕ are learnable MLPs employing layer normalization. Here, x(k−1)  
+
+> i
+
+denotes the embedding of node i in the (k − 1) th processor layer, and the summation is taken over all nodes j bonded to node i.The processor output is mapped by the decoder to a two-dimensional output ˆai ∈ RN ×2 representing the predicted node accelerations. The decoder is implemented using an additional MLP denoted by δx. All MLPs in the architecture, including εx, εe, ψ, ϕ, and δx, were implemented as feed-forward networks with hidden dimensions of 128 and ReLU activation functions. 
+
+## 3.2 Implementation and training details 
+
+The model was implemented using PyTorch Geometric 2.7.0[10, 11] and PyTorch 2.11.0.[12, 13] The datasets were generated from uniaxial compression trajectories of DENs spanning a range of Poisson’s ratios ν ∈
+
+[−0.6, 0.6] .The input data, comprising the node and edge features, and the output data were normalized online and independently during training to have zero mean and unit variance. Specifically, at each forward step, the data were normalized using statistics accumulated from all values observed by the model up to that point.[14, 15] To stabilize the later stages of training, the normalizer statistics were frozen after a predefined epoch, 4typically epoch 5. All learnable weights and biases were randomly initialized from a normal distribution with zero mean and a standard deviation of 1/√n, where n is the number of weights in the corresponding layer. We found that initialization using N (0 , 1/√n) generally produced better performance than initialization using the uniform distribution U(−1/√n, 1/√n).Optimization was performed using the Adam optimizer with zero weight decay. The learning rate was reduced after each epoch using an exponential scheduler with γ = 0 .995 . Gradient clipping with a maximum norm of 1.0 was applied together with gradient accumulation. The model was trained in a supervised manner by minimizing the Huber loss[16] between the predicted accelerations ˆa and the normalized ground-truth accelerations a:
+
+Lδ (a, ˆa) = 
+
+( 12 (a − ˆa)2 if |a − ˆa| ≤ δδ|a − ˆa| − 12 δ2 otherwise (16) where δ is the threshold separating the quadratic and linear regimes of the loss. Training was performed using a multi-step supervision (MST) strategy.[17] For each training sample during the forward pass the simulator model performs a short, continuous rollout. To maintain the training stability, the rollout length increases as a function of training epochs, starting at a single step and scaling up to 10 steps in later epochs. The autoregressive training loop is dynamically coupled with the barostat algorithm.[17] At each rollout step, the simulation box dimensions Lx and Ly are updated to maintain the target pressure in the transverse direction Pyy = 0 .0. Edge attributes and per-particle forces are iteratively recomputed based on the evolving box dimensions before being fed back into the model for the subsequent prediction step. 
+
+# 4 Simulator-coupled barostat 
+
+## 4.1 Implementation 
+
+At each timestep t, the periodic box algorithm computes the instantaneous transverse virial P Vy and kinetic 
+
+P Ky pressure from the predicted node positions and pairwise forces. The kinetic term is computed using the ideal gas approximation as follows: 
+
+P Ky = 12
+
+kB N T A , (17) The virial contribution is calculated by summing the pairwise force contributions from all active interaction edges: 
+
+P Vy = 12A
+
+X fij,y rij,y , (18) where A = LxLy is the box area and fij,y and rij,y are the y-components of the pairwise force and minimum-image separation vector, respectively. The factor of 1/2 corrects for the bidirectional representation of each physical interaction. For a harmonic bond, the pairwise force is 
+
+f harm  
+
+> ij
+
+= −kij (rij − r0 
+
+> ij
+
+), (19) where kij is the bond stiffness, rij = |rij | is the current bond length, and r0 
+
+> ij
+
+is its rest length. When nonbonded Lennard–Jones interactions are present, the force associated with an LJ interaction edge is 
+
+f LJ  
+
+> ij
+
+= 24 ϵrij 
+
+"
+
+2
+
+ σrij 
+
+12 
+
+−
+
+ σrij 
+
+6#
+
+, (20) and is zero for rij ≥ rc. Here, ϵ and σ are the Lennard–Jones parameters and rc is the interaction cutoff. The force used in the virial calculation is therefore computed according to the present interaction types. For networks without nonbonded interactions the virial contains only harmonic contributions. The difference between the internal pressure Py and the target pressure Pt generates a thermodynamic driving force Fd. We define a total force Ftotal and apply a frictional damping coefficient γ to prevent 5aggressive oscillations: 
+
+Fd = ( Py − Pt) · Lx (21) 
+
+Ftotal = Fd − γ · vty (22) where vty is the box velocity along the y axis. Box acceleration aty can then be computed using the piston mass Wy :
+
+aty = Ftotal 
+
+Wy
+
+(23) Finally, the box velocity is updated and the next-step Ly is calculated as follows: 
+
+vt+1  
+
+> y
+
+= vty + aty · ∆t (24) 
+
+Lt+1  
+
+> y
+
+= Lty + vt+1  
+
+> y
+
+∆t (25) 
+
+## 4.2 Empirical parameter tuning 
+
+Because the periodic box adjustment procedure operates on coarse-grained dynamics (a single GNN step corresponds to 200 MD timesteps), the physical constants typically used for piston mass Wy and damping coefficient γ in classical barostats are not directly applicable. Consequently, the specific values of both γ
+
+and Wy must be empirically tuned. To this end, we utilize the Optuna hyperparameter optimization framework. [18] The piston mass and damping coefficient are defined as functions of the number of particles N and the coarse-grained time stride 
+
+∆t:
+
+Wy = Ccoupling · N · (∆ t)2 (26) 
+
+γ = Cdamping · N · ∆t (27) where Ccoupling and Cdamping are the dimensionless scalar factors to be optimized. To find the optimal values for Ccoupling and Cdamping , we minimize a cumulative objective function. The objective function calculates the discrepancy between the predicted transverse box dimension Lpred  
+
+> y
+
+and the ground-truth dimension LGT  
+
+> y
+
+using a Huber loss. During the optimization procedure, we utilize ground-truth particle positions at each step to isolate the box adjustment from GNN prediction errors. In our testing, 200 optimization trials were enough to fully converge on optimal values. The search space for Ccoupling was defined as [1 .0, 15 .0] and for Cdamping as [0 .5, 10 .0] . The resulting best parameters were then fixed for all subsequent rollout experiments and MST training regimes. 
+
+# 5 Minimal differentiable MD simulator 
+
+We implemented a compact molecular dynamics (MD) engine natively in PyTorch. The simulator performs uniaxial compression along the x-axis while allowing the transverse box dimension Ly to fluctuate dynami-cally in response to the internal pressure. The simulation is differentiable with respect to continuous model parameters for a fixed interaction graph and realization of the stochastic noise. Compression along the x-direction is imposed deterministically at a constant engineering strain rate ˙ϵ.At simulation step n, corresponding to the physical time tn = n∆t, the longitudinal box dimension is defined as 
+
+Lx(tn) = Lx(0)(1 − ˙ϵt n). (28) Particle coordinates along the x-axis are affinely rescaled by the ratio of the new and previous box dimensions. In addition to this affine deformation, the particle positions are propagated using their half-step velocities, thereby allowing nonaffine motion along both spatial directions. The transverse box dimension is coupled to a dynamic barostat that seeks to maintain a target pressure 
+
+Ptarget . The instantaneous transverse pressure is evaluated as 
+
+Pyy = 1
+
+V
+
+
+
+> N
+
+X
+
+> i=1
+
+mv 2 
+
+> i,y
+
++ 12
+
+X
+
+> (i,j )∈E dir
+
+Fij,y rij,y 
+
+ , (29) 6where V = hL xLy is the effective simulation volume, with a fixed out-of-plane thickness h = 0 .2. The second sum is evaluated over the directed interaction edges Edir . The factor of 1/2 removes the double counting that arises when each physical interaction is represented by two oppositely directed edges. Here, m is the particle mass, vi,y is the transverse particle velocity, and Fij,y and rij,y are the y-components of the pairwise force and minimum-image separation vectors, respectively. The barostat variable vb,y represents the logarithmic strain rate of the transverse box rather than the ordinary velocity of its boundary. Its acceleration is defined as: 
+
+ab,y = (Pyy − Ptarget ) VWy
+
+, (30) where the piston inertia is defined as 
+
+Wy = (2 N − 3) kBTbτ 2 
+
+> b
+
+. (31) Here, α is an inertia prefactor, Tb is the barostat temperature, and τb is the barostat damping time. The piston degree of freedom is coupled to a three-variable Nosé–Hoover chain with mass parameter Qb =
+
+kBTbτ 2 
+
+> b
+
+. The barostat and thermostat-chain variables are integrated using five subcycles during each half-step. The accumulated barostat scaling is applied to the transverse particle velocities, and the box dimension is propagated according to 
+
+Ly (t + ∆ t) = Ly (t) exp 
+
+
+
+v 1/2 
+
+> b,y
+
+∆t
+
+
+
+, (32) where v 1/2 
+
+> b,y
+
+denotes the barostat rate obtained after the predictor half-step. The particle equations of motion are integrated using a stochastic velocity-Verlet-like scheme with a default timestep ∆t = 0 .01 .A complete integration step proceeds as follows: 1. The deterministic forces and virial pressure are evaluated using the current particle coordinates, box dimensions, and interaction graph. 2. The barostat velocity and its three Nosé–Hoover-chain variables are advanced through five predictor subcycles using the current pressure difference. The resulting metric scaling factor is accumulated over these subcycles. 3. A Gaussian random force is sampled, and the particle velocities are advanced by ∆t/ 2 using the deterministic forces, Langevin drag, stochastic force, and transverse metric scaling. 4. The new longitudinal box length is evaluated from the prescribed engineering-strain schedule, while the transverse box length is propagated exponentially using the half-step barostat rate. Particle coordinates in both directions are updated by combining affine box rescaling with displacement according to the half-step velocities. 5. The deterministic forces and transverse pressure are recalculated using the updated coordinates and box dimensions. 6. The barostat and Nosé–Hoover-chain variables are advanced through five corrector subcycles using the updated pressure. 7. Particle velocities are advanced through the final ∆t/ 2 using the updated deterministic forces and Langevin drag, together with the same random-force realization used in the predictor step. After each full integration step, the graph representation is refreshed. Bond stiffnesses are retained, whereas distance-dependent edge attributes and, when applicable, nonbonded interaction edges are updated. Every 100 MD steps, both the center-of-mass translational velocity and the net rigid-body rotational velocity are removed. 76 Inference-Time Physics-based Optimization 
+
+## 6.1 Physics constraints 
+
+The net force on each particle Fi is derived from the harmonic bond stiffness kij = 1 /l 0 
+
+> ij
+
+:
+
+Fi = X 
+
+> j∈N (i)
+
+−kij (lij − l0 
+
+> ij
+
+) rij 
+
+l , (33) where lij and l0 
+
+> ij
+
+are the current and rest bond lengths between the beads i and j, while rij is the bond vector. When nonbonded Lennard–Jones interactions are present, the total force is the sum of the harmonic and nonbonded contributions: 
+
+Fi = Fharm  
+
+> i
+
++ FLJ  
+
+> i
+
+(34) The Lennard–Jones contribution is given by 
+
+FLJ  
+
+> i
+
+= X
+
+> j∈N LJ (i)
+
+24 ϵrij 
+
+"
+
+2
+
+ σrij 
+
+12 
+
+−
+
+ σrij 
+
+6#
+
+(35) and is zero for rij ≥ rc. Here, rij = |rij |, ϵ and σ are the Lennard–Jones parameters, rc is the interaction cutoff, and NLJ (i) denotes the set of nonbonded neighbors of particle i within the cutoff rc.The force loss component penalizes any non-zero forces along the transverse axis y across the N particles and is defined as: 
+
+Lforce = 1
+
+N
+
+X(Fi,y )2 (36) The potential energy constraint LU is defined as a sum of individual harmonic bond energies E(rij ) (Equation 3): 
+
+LU = X E(rij ) (37) The pressure loss term is defined as the squared virial stress: 
+
+Lpressure = ( σyy )2 (38) where σyy is computed using the pairwise harmonic forces fij,y and edge vectors rij,y over area A:
+
+σyy = 12A
+
+X fij,y rij,y (39) 
+
+## 6.2 Empirical weights tuning 
+
+Maximizing ITPO performance requires carefully tuning the individual weights αi of the physics constraints: 
+
+Ltotal = Lanchor + X
+
+> i
+
+αiLphys  
+
+> i
+
+, (40) This presents a practical challenge. Because our objective is OOD generalization to unseen dynamics (typi-cally to ν < 0.1, while the training data is characterized by ν ≥ 0.1), ITPO weights cannot be found using these data. However, if the GMDS has already been trained using the MST strategy on data extending down to ν = 0 .1, it can sometimes perform too well . Because of this, the hyperparameter search converges on virtually zero physics weights αi ≈ 0, as the GMDS predictions are already plenty accurate. To ensure the physics constraints remain active, we utilize a staggered training and tuning pipeline: 1. First, a GMDS model is trained strictly on in-distribution data characterized by ν > 0.2 using the MST strategy. 2. Next, a search for ITPO physics constraint weights αi is performed using the intermediate finetuning data with ν ∈ [0 .1, 0.2] . Because the GMDS is not familiar with this dynamics, optimizer relies on the physics constraints to minimize the ITPO objective function, yielding non-zero constraint weights αi.83. Finally, the model used for the search is further trained on the intermediate data with ν ∈ [0 .1, 0.2] 
+
+using a MST strategy. To find individual physics constraint weights αi we employ the Optuna hyperparameter optimization framework.[18] The objective function is defined through the coefficient of determination ( R2) between the predicted and ground-truth Poisson’s ratios ν over a 50-step rollout. In total, up to 5 different parameters can be optimized: 1. Refinement iterations Niter : The number of gradient descent steps performed at each rollout timestep, sampled uniformly in the range [5 , 40] .2. Learning rate η for the Adam optimizer, sampled on a log-uniform scale between 10 −8 and 10 −3.3. The scalar coefficients for the force αforce , potential energy αenergy , and virial pressure αpressure terms. These are sampled log-uniformly between 10 −7 and 10 −1 to account for the varying orders of magnitude of the underlying physical quantities. In practice, we found it beneficial to leave the number of refinement iterations Niter constant, since it plays a similar role to the learning rate η. Depending on the dataset, Niter was set to 20 or 30, which presents a compromise between the refinement accuracy and the computational penalty incurred due to ITPO. Overall, 500 Optuna optimization trials were performed per dataset. 
+
+## 6.3 Gradient computation via the Implicit Function Theorem 
+
+A significant challenge for the proposed end-to-end differentiable inverse design framework is backpropagating the macroscopic property gradients through the unrolled inner ITPO loop. Directly tracking gradients through inner optimization steps at every rollout timestep is computationally intractable. To circumvent this, we utilize the Implicit Function Theorem (IFT) to analytically compute the approximate implicit gradients at the local minimum of the ITPO loss function. Assuming the ITPO reaches a stable minimum at a∗
+
+> nn
+
+, the gradient of the total loss with respect to the initial GNN prediction ˆann can be evaluated implicitly. Let H = ∇2 
+
+> a∗
+> nn
+
+Ltotal represent the Hessian matrix of the loss evaluated at the refined state. Applying IFT requires calculating the product of the inverse Hessian and the upstream gradient vector, v. We employ a matrix-free Hessian-vector product (HVP): HVP (v) = ∇a∗
+
+> nn
+
+  ∇a∗ 
+
+> nn
+
+Ltotal 
+
+ · v (41) To solve the linear system Hx = v for the inverse HVP, we utilize a conjugate gradient solver. Finally, the implicit gradient must account for the mixed partial derivative between the refined and initial accelerations. Given that the anchor loss is defined as a mean squared error: 
+
+Lanchor = 1
+
+N || a∗ 
+
+> nn
+
+− ˆann || 2 (42) where N is the total number of particles, the mixed derivative simplifies to a scaled identity operator. Consequently, the analytical gradient mapped back to the simulator model output is computed as: 
+
+∇ˆann L = 2
+
+N
+
+ H−1v (43) 
+
+# References 
+
+(1) Rocks, J. W.; Pashine, N.; Bischofberger, I.; Goodrich, C. P.; Liu, A. J.; Nagel, S. R. Designing allostery-inspired response in mechanical networks. Proceedings of the National Academy of Sciences 
+
+2017 , 114 , 2520–2525. (2) Liu, A. J.; Nagel, S. R. The jamming transition and the marginally jammed solid. Annual Review of Condensed Matter Physics 2010 , 1, 347–369. 9(3) Thompson, A. P.; Aktulga, H. M.; Berger, R.; Bolintineanu, D. S.; Brown, W. M.; Crozier, P. S.; in ’t Veld, P. J.; Kohlmeyer, A.; Moore, S. G.; Nguyen, T. D.; Shan, R.; Stevens, M. J.; Tranchida, J.; Trott, C.; Plimpton, S. J. LAMMPS - a flexible simulation tool for particle-based materials modeling at the atomic, meso, and continuum scales. Computer Physics Communications 2022 , 271 , 108171. (4) Schneider, T.; Stoll, E. Molecular-dynamics study of a three-dimensional one-component model for distortive phase transitions. Physical Review B 1978 , 17 , 1302–1322. (5) Parrinello, M.; Rahman, A. Polymorphic transitions in single crystals: A new molecular dynamics method. Journal of Applied Physics 1981 , 52 , 7182–7190. (6) Shen, M.; Reyes-Martinez, M. A.; Powell, L. A.; Iadicola, M. A.; Sharma, A.; Byléhn, F.; Pashine, N.; Chan, E. P.; Soles, C. L.; Jaeger, H. M.; de Pablo, J. J. An autonomous design algorithm to experimentally realize three-dimensionally isotropic auxetic network structures without compromising density. npj Computational Materials 2024 , 10 , 113. (7) Reid, D. R.; Pashine, N.; Wozniak, J. M.; Jaeger, H. M.; Liu, A. J.; Nagel, S. R.; de Pablo, J. J. Auxetic metamaterials from disordered networks. Proceedings of the National Academy of Sciences 
+
+2018 , 115 , E1384–E1390. (8) Hamrick, J. B.; Allen, K. R.; Bapst, V.; Zhu, T.; McKee, K. R.; Tenenbaum, J. B.; Battaglia, P. W. Relational inductive bias for physical construction in humans and machines. 2018 .(9) Pfaff, T.; Fortunato, M.; Sanchez-Gonzalez, A.; Battaglia, P. W. Learning Mesh-Based Simulation With Graph Networks. ICLR 2021 - 9th International Conference on Learning Representations 2021 ,1–18. (10) Fey, M.; Lenssen, J. E. Fast Graph Representation Learning with PyTorch Geometric. 2019 , 1–9. (11) Fey, M.; Sunil, J.; Nitta, A.; Puri, R.; Shah, M.; Stojanovič, B.; Bendias, R.; Barghi, A.; Kocijan, V.; Zhang, Z.; He, X.; Lenssen, J. E.; Leskovec, J. PyG 2.0: Scalable Learning on Real World Graphs. 
+
+Proceedings of Temporal Graph Learning Workshop, SIGKDD International Conference on Knowledge Discovery and Data Mining 2025 (TGL Workshop, KDD 2025) 2025 , 1.(12) Paszke, A. et al. PyTorch: An imperative style, high-performance deep learning library. In Advances in Neural Information Processing Systems. NeurIPS 2019 , 8026–8037. (13) Ansel, J. et al. In Proceedings of the 29th ACM International Conference on Architectural Support for Programming Languages and Operating Systems, Volume 2 , ACM: New York, NY, USA, 2024; Vol. 2, pp 929–947. (14) Sanchez-Gonzalez, A.; Godwin, J.; Pfaff, T.; Ying, R.; Leskovec, J.; Battaglia, P. W. Learning to Simulate Complex Physics with Graph Networks. 37th International Conference on Machine Learning, ICML 2020 2020 , PartF16814 , 8428–8437. (15) Kumar, K.; Vantassel, J. GNS: A generalizable Graph Neural Network-based simulator for particulate and fluid modeling. 2022 .(16) Huber, P. J. In Breakthroughs in Statistics: Methodology and Distribution , Kotz, S., Johnson, N. L., Eds.; Springer New York: 1992, pp 492–518. (17) Shteingolts, S. A.; Salman, S. N.; Mendels, D. Enabling Structure-Only Initialization and Out-of-Distribution Generalization in GNN-based Molecular Dynamics Simulators. 2026 .(18) Akiba, T.; Sano, S.; Yanase, T.; Ohta, T.; Koyama, M. In Proceedings of the 25th ACM SIGKDD International Conference on Knowledge Discovery & Data Mining , ACM: New York, NY, USA, 2019, pp 2623–2631. 10

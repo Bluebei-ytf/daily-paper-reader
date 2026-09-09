@@ -1,0 +1,636 @@
+Title: Tensor-based Approximation of Molecular Kinetics: Generator Learning, Reaction Coordinates and Incremental Updating
+
+URL Source: https://arxiv.org/pdf/2609.06446v1
+
+Published Time: Wed, 09 Sep 2026 01:33:53 GMT
+
+Number of Pages: 36
+
+Markdown Content:
+# Tensor-based Approximation of Molecular Kinetics: Generator Learning, Reaction Coordinates and Incremental Updating 
+
+## Minakshi Verma, †,‡ Peter Benner, ‡ and Feliks N¨ uske ∗,‡
+
+† Otto-von-Guericke Universit¨ at, Faculty of Mathematics, Magdeburg 39106, Germany 
+
+‡ Max-Planck-Institute for Dynamics of Complex Technical Systems, Magdeburg 39106, Germany 
+
+E-mail: nueske@mpi-magdeburg.mpg.de 
+
+Abstract 
+
+We present an approach to analyze long-timescale kinetics of molecular dynamics simulations - meta-stable states and transition timescales - by a tensor-based approx-imation of the infinitesimal generator. We start from the variational approximation of low-lying generator eigenvalues, and discretize the associated eigenvalue problem using a tensor-product basis. We derive analytical expressions for the resulting tensor operators in tensor train (TT) format, and provide efficient algorithms to solve the corresponding linear problems. We also treat the case of a state-dependent diffusion field, which is relevant when working in reaction coordinates. We show how the number of reaction coordinates can be gradually increased without having to solve the varia-tional problem from scratch. Using MD simulations of fast-folding proteins and TICA coordinates as reaction coordinates, we demonstrate the effectiveness of the proposed method at identifying long-timescale transitions and meta-stable states. 
+
+1arXiv:2609.06446v1 [physics.chem-ph] 6 Sep 2026 1 Introduction 
+
+Molecular Dynamics (MD) 1,2 provides high-resolution simulations of the dynamical be-haviour of large-scale molecular systems, with applications in biology, chemistry, materials science, and many other disciplines. While advances in hardware and software implementa-tion have allowed to study larger and larger systems, a wide range of post-processing methods has emerged to estimate metastable states, transition timescales and mechanisms, and many other dynamical observables. Markov State Models (MSMs) are a particularly successful post-processing method. Based on Ulam’s method, 3 MSMs were developed in the late 1990s 4,5 and have enabled detailed studies of the conformational states and transition dynamics of complex systems, see Refs 6–8 for examples. The MSM approach was generalized by the variational approach to conformational dynamics (VAC), 9,10 which enabled the use of general non-linear basis functions instead of set-discretizations, and provided a rigorously defined scalar objective function to assess model quality. A fully general extension to non-reversible systems was presented by Wu and No´ ein. 11 
+
+MSMs and the VAC are specific instances of approximation methods for the Koopman op-erator. Dating back to Koopman’s seminal work from the 1930s, 12 and building on works by Mezic and co-workers, 13 Koopman modeling has emerged as a powerful machine-learning based framework for complex dynamical systems. 14–17 Both the VAC and MSMs are spe-cial cases of the extended dynamic mode decomposition (EDMD) algorithm 18 for Koopman operator learning, albeit derived from different principles. 19 
+
+A widely-used strategy for VAC / MSM modeling is to pass raw molecular features through an initial linear dimensionality reduction, often using time-independent component analysis (TICA). 20,21 On the resulting space of TICA coordinates (TICs), non-linear VAC models can then be trained to high precision. 22 Non-linear models based on deep learning or kernel meth-ods 23–27 have been demonstrated to be highly accurate, and allow for ease of implementation and validation. 2Tensor-product models have been developed in parallel, 28–30 and can achieve similar preci-sion. Tensor techniques have gained significant momentum in computational mathematics, sciences and engineering, due to their ability to compress high-dimensional data sets by exploiting low-rank structures. The starting point here is the Canonical Polyadic Decompo-sition (CPD), also known as CANDECOMP/PARAFAC, which truncates the sum of rank-1 tensors needed to express a multidimensional array. Other formats that are more useful in practice are the (hierarchical) Tucker format, and in particular its instance Tensor-Train (TT) decomposition, which is known in computational physics as Matrix Product States (MPS) and will be the format used here. For more details, precise definitions, and algorithms to compute the various tensor decompositions, see, in particular, the monographs 31–33 and references therein. Tensor-based models are generally more intricate in terms of implementa-tion and model validation, but are in a sense more structured, as one can more directly assess the contribution of individual molecular degrees of freedom on the final non-linear model. One of the goals of this paper is to provide a principled approach to make this assessment in an efficient manner. Another line of research focuses on learning of the infinitesimal generator or Koopman gen-erator of the molecular dynamics, 34–37 which is the evolution operator for the underlying Kolmogorov equation. The generator provides access to the same dynamical properties as the Koopman operator, but does not strictly require time-series data for training. 38–40 In ad-dition, the generator is less of a black-box, as it is intimately related to the parameters of the dynamics, which can be exploited to design learning methods. 41 The generator also encodes dynamical properties of coarse-grained models on reaction coordinates. This connection has been explored in detail in Refs. 42–44 
+
+In this study, we combine generator learning with tensor-based models in the VAC frame-work. The main contributions of our work can be summarized as follows: 
+
+• we derive TT representations of the matrices required by the variational approach to conformational dynamics (VAC) for the reversible Koopman generator. This includes 3systems with state-dependent diffusion, which is the generic situation when operating on reaction coordinates. 
+
+• we develop optimized TT contraction procedures to efficiently set up a small-scale VAC matrix eigenvalue problem to compute transition rates and timescales. 
+
+• we develop an updating scheme which allows to iteratively screen an increasing number of reaction coordinates, such as an increasing number of TICs. 
+
+• we demonstrate that the tensor-based approach reproduces the dominant spectral quantities and metastable structures for model systems and MD simulations of fast-folding proteins. Section 2 introduces the required preliminaries on the variational approach and generator approximation. In Section 3, we introduce product basis functions and TT representations. Section 4 presents the key theoretical and algorithmic results of this study. In Section 5, we illustrate the performance of the method using a low-dimensional toy system and fast-folding protein simulations, including eigenvalue comparisons, rank behavior under truncation, and PCCA-based metastability analysis. Finally, Section 6 concludes the paper and discusses possible directions for future work. 
+
+# 2 Preliminaries 
+
+## 2.1 Molecular Dynamics and Koopman Generator 
+
+We model molecular dynamics as a stochastic process on Euclidean state space Rd governed by a reversible stochastic differential equation (SDE). A prototype dynamical model is the 
+
+Langevin dynamics 
+
+dxt = −∇ V (xt) d t + p2β−1 dwt, (1) 4driven by the negative gradient of the potential energy V , with constant and isotropic diffu-sion at inverse temperature β. The general form of a reversible SDE would be dxt = f (xt) d t + p2β−1σ(xt) d wt, (2) with drift field f, diffusion field σ, and invariant (Boltzmann) distribution dμ(x) = 1
+
+Zβ
+
+exp( −βV (x)) d x.
+
+We reserve the symbol Σ for its diffusion co-variance matrix :Σ( x) := ( σσ ⊤)( x).
+
+The statistics of the dynamics (2) are governed by the Koopman generator or infinitesimal generator (see e.g. 45 ): 
+
+Lψ(x) = f (x) · ∇ ψ(x) + 1
+
+β Σ( x) : ∇2ψ(x), (3) which is a linear second-order differential operator with coefficients determined by the SDE (2). For Langevin dynamics, the generator L reduces to 
+
+Lψ(x) = −∇ V (x) · ∇ ψ(x) + 1
+
+β ∆ψ(x).
+
+Long-time properties of the dynamics are encapsulated in the low-lying spectrum of the negative generator −L : meta-stable states and the rates of transition in between are encoded by solutions of the eigenvalue equation 
+
+−L φi = κiφi, (4) 5where 0 = κ0 < κ 1 ≤ κ2 . . . are the smallest eigenvalues, and φi the associated eigenfunctions. The eigenvalues κi can be interpreted as relaxation rates, whereas the eigenfunctions can be used to identify meta-stable states using spectral clustering methods, such as PCCA. 46 
+
+For later use, we note the following important integration-by-parts formula for reversible systems, which reflects the symmetry of the Koopman generator w.r.t. the inner product defined by μ:
+
+⟨ψ1, Lψ2⟩μ = − 1
+
+β
+
+Z
+
+> Rd
+
+∇ψ1(x) · Σ( x) · ∇ ψ2(x) d μ(x) = ⟨L ψ1, ψ 2⟩μ . (5) 
+
+## 2.2 Variational Approach 
+
+To compute the eigenvalues and eigenfunctions in (4) numerically, we need to approximate this equation by a matrix eigenvalue problem. A principled approach to doing so is the varia-tional approach to conformational dynamics (VAC) ,9,10,36,43 which is equivalent to generator extended dynamic mode decomposition (gEDMD) 34 for a reversible system. The procedure is summarized in Algorithm 1. 
+
+Algorithm 1 Variational Approximation of Generator Eigenpairs (gEDMD) 
+
+Require: Basis set Ψ( x) = ( ψ1(x), . . . , ψ N (x)) ⊤; training data x1, . . . , xm sampled accord-ing to the invariant measure μ
+
+Ensure: Approximate eigenvalues κi and eigenfunctions φi as solution of (4)  
+
+> 1:
+
+Set up data matrix Ψ X = [ ψi(xl)] i,l ∈ Rn×m and gradient tensor ∇ΨX =  ∂∂xj ψi(xl) 
+
+> i,j,l
+
+∈
+
+Rn×d×m. 
+
+> 2:
+
+Rank-r SVD of the data matrix: 1√m ΨX ≈ UΣV⊤. 
+
+> 3:
+
+Mean vector of reduced basis: ¯ z = 1 
+
+> m
+
+V⊤1m ∈ Rr. 
+
+> 4:
+
+Mean-free correction to whitening transform: diagonalize Id r − ¯z¯z⊤ = W diag( λ) W⊤
+
+and set Z = Wdiag( λ−1/2).  
+
+> 5:
+
+Compute generator stiffness matrix: Aij = 1
+
+> βm
+
+Pml=1 ∇ψi(xl) · Σ( xl) · ∇ ψj (xl).  
+
+> 6:
+
+Reduced generator matrix: M = Z⊤Σ−1U⊤AU Σ−1Z ∈ Rr×r. 
+
+> 7:
+
+Small-scale eigenvalue problem: Mw i = κiwi. 
+
+> 8:
+
+Evaluate eigenfunctions: φi(x) = Ψ( x)⊤UΣ−1Zw i.6This algorithm serves as the blueprint we aim to translate into a tensor-based setting in this manuscript. Most of its steps have been explained in detail in previous works. 19,34 We only make the following comments which are important for the following: 1. Step 2 serves to compute a reduced basis, called the whitening transformation , given as 
+
+η(x)⊤ := Ψ( x)⊤UΣ−1. (6) By the properties of the SVD, this reduced basis is an empirically orthonormal set of functions. Whitening is equivalent to applying principal component analysis (PCA) on the data matrix Ψ X.2. Steps 3-4 serve to remove the empirical mean from the reduced basis set, and re-orthonormalize afterwards. This eliminates the trivial solution κ0 = 0 from the reduced eigenvalue problem. 3. The calculation of the generator stiffness matrix A in line 5 is the empirical version of the integration-by-parts formula (5). Further recent results on generator approximation can be found in Refs. 37,38,47 
+
+## 2.3 Reaction Coordinates 
+
+In practice, the basis functions for the VAC are rarely defined as acting on Euclidean molec-ular coordinates, primarily because molecular systems are translationally and rotationally invariant. Instead, the basis functions are functions of a set of reaction coordinates z ∈ Rk,such as internal angles or pairwise distances: 
+
+z = ξ(x), Ψ( x) ≡ Ψ( ξ(x)) = Ψ( z).
+
+7This choice affects the calculation of the generator stiffness matrix A. Inspecting the integration-by-parts formula (5) again, we see that 
+
+Aij = 1
+
+β
+
+Z
+
+> Rd
+
+∇ψi(x) · Σ( x) · ∇ ψj (x) d μ(x)= 1
+
+Zβ β
+
+Z
+
+> Rd
+
+∇zψi(z) · ∇xξ(x)Σ( x)∇xξ⊤(x) · ∇ zψj (x)e−βV (x) dx
+
+= 1
+
+Zβ β
+
+Z
+
+> Rk
+
+∇zψi(z) · Σeff (z) · ∇ zψj (z)e−βF (z) dz,
+
+where F is the free energy on the reaction coordinate z. The term Σ eff (z) is independent of the basis functions, and can be treated as an effective diffusion field on the reaction coordinates. We see that even if the diffusion field on Euclidean state space is constant, as for the Langevin dynamics, we will obtain an effective position-dependent diffusion in reaction coordinate space, which must be treated efficiently in numerical computations. The empirical estimator for the generator stiffness matrix in line 5 must then be adjusted as follows: 
+
+Aij = 1
+
+βm 
+
+> m
+
+X
+
+> l=1
+
+∇zψi(zl) · Σloc (xl) · ∇ zψj (zl), Σloc (xl) = ∇xξ(xl)Σ( xl)∇xξ⊤(xl),
+
+where zl = ξ(xl) is just the data projected into the space of reaction coordinates. Interestingly, this way of approximating the generator in reaction coordinate space is equiv-alent to analyzing the coarse-grained generator implied by the Mori-Zwanzig formalism, so it is an effective way of assessing how suitable the reaction coordinates z are in terms of dynamical properties. We refer to Refs. 42,44,48 for a detailed discussion of this topic. 
+
+# 3 Product Bases and Tensor Representations 
+
+Constructing a sufficiently expressive basis set Ψ for high-dimensional systems is non-trivial. In this study, we consider tensor product basis sets, which have already been demonstrated to be useful in Refs. 29,30,35,49 In this section, we introduce the key concepts and notation, 8and explain how to implement the whitening transformation on a product basis. This will prepare us to derive a complete tensorized version of Algorithm 1 to solve the eigenvalue problem (4). We begin by describing the construction of the tensor-product basis set. 
+
+## 3.1 Product Basis: Construction and Notation 
+
+One-dimensional basis functions. For each coordinate direction xk (indicated by the super-script), where k = 1 , . . . , d enumerates the components of the state vector x, let Ψ(k)(x) =  ψ(k)1 (xk), . . . , ψ (k) 
+
+> n
+
+(xk)⊤ ∈ Rn,
+
+be a set of elementary basis functions depending only on the k-th coordinate. In this study, we will specifically use a version of random Fourier features (RFFs) 50 as elementary basis sets: 
+
+ψ(k) 
+
+> i
+
+(xk) = 1
+
+√2 cos( ωi,k xk + bi,k ).
+
+The frequencies ωi,k are randomly sampled from a fixed frequency distribution induced by a kernel function, such as a Gaussian RBF kernel, while the phase shifts bi,k are uniform random numbers in [0 , 2π]. We refer to 51 for a detailed explanation of this approach, and Refs. 52,53 for related work. 
+
+Multivariate product basis. From the elementary basis functions, a multi-variate basis set can be constructed by taking coordinate-wise products: Ψα(x) = 
+
+> d
+
+Y
+
+> k=1
+
+ψ(k) 
+
+> αk
+
+(xk), α = ( α1, . . . , α d). (7) Here, the vector α is a multi-index with each αk ∈ { 1, . . . , n }. Enumerating all product basis functions yields a vector-valued map Ψ( x) ∈ RN , where the total number of basis functions 9is N = nd. In line with previous terminology, the data tensor 
+
+ΨX ∈ RN ×m, (Ψ X)α,l = Ψ α(xl), (8) collects the evaluations of all product basis functions at all data points. We note that the partial derivative of a product basis function with respect to xk is 
+
+∂∂xk Ψα(x) = 
+
+ ddxk ψ(k) 
+
+> αk
+
+(xk)
+
+ Y 
+
+> j̸=k
+
+ψ(j) 
+
+> αj
+
+(xj ). (9) We will make use of this structure later to derive low-rank representations for expressions involving the generator. 
+
+## 3.2 Tensors and Data Representation 
+
+The array Ψ X of product basis evaluations in (8) can be seen as a tensor or multi-dimensional array: ΨX ∈ Rn×n×... ×n×m.
+
+The number of independent indices is called order of the tensor. We refer to each independent index as a mode or site , and the dimension of each mode is called mode size . Thus, Ψ X is a tensor of order d + 1, with the first d mode sizes equal to n, and the last one equal to the data size m.
+
+Tensors of Vectors The simplest type of tensors are rank-one tensors, which are outer products of vectors t(k) ∈ Rn:
+
+T = t(1) ⊗ · · · ⊗ t(d).
+
+Every tensor of fixed order can be written as a sum of a finite number of rank-one tensors (canonical decomposition). A more flexible and numerically stable representation, however, is provided by the tensor-train (TT) format. 54 A TT tensor of order d is parametrized by d
+
+10 three-dimensional arrays, called cores , which are written as abstract matrices: 55 
+
+T(k) =
+
+uwwwwv
+
+T(k)1,:,1 · · · T(k)1,:,r k
+
+... . . . ...
+
+T(k) 
+
+> rk−1,:,1
+
+· · · T(k)
+
+> rk−1,:,r k
+
+}~ .
+
+Each entry of these core matrices is already a vector of dimension n. The row- and column-dimensions rk of the core matrices are called TT-ranks and must satisfy that r0 = rd = 1. The full tensor is then obtained as a formal matrix product of the cores, with the scalar multiplication replaced by taking outer products between vector entries: 
+
+T = T(1) ⊗ T(2) ⊗ · · · ⊗ T(d).
+
+This is called matrix-product-state (MPS) formula. 56 Written out entry-wise, the MPS for-mula is equivalent to: 
+
+T(α1, . . . , α p) = 
+
+> r1
+
+X
+
+> l1=1
+
+· · · 
+
+> rp−1
+
+X
+
+> lp−1=1
+
+T(1) 1,α 1,l 1 T(2)  
+
+> l1,α 2,l 2
+
+· · · T(p)
+
+> lp−1,α p,1
+
+. (10) 
+
+Tensors of Matrices Importantly, tensor formats and operations can be applied to ma-trices just the same way as to vectors. This will enable the represention of the stiffness matrix A using tensor formats. The only difference for tensors of matrices is that the outer product of vectors is replaced by the Kronecker product of matrices. To better differentiate matrix-tensors from vectorial tensors of order d = 2 (matrices), we refer to them as tensor operators (as they correspond to linear operators on tensor spaces). A TT-operator is parametrized by d four-dimensional cores 
+
+S(k) =
+
+uwwwwv
+
+S(k)1,:,:,1 · · · S(k)1,:,:,r k
+
+... . . . ...
+
+S(k) 
+
+> rk−1,:,:,1
+
+· · · S(k)
+
+> rk−1,:,:,r k
+
+}~ ,
+
+11 where each entry is already a matrix of dimension n × n. The MPS formula remains exactly the same, only using the Kronecker product: 
+
+S = S(1) ⊗ S(2) ⊗ · · · ⊗ S(d).
+
+## 3.3 Whitening Transformation in TT Format: Global SVD 
+
+For a product basis (7), the whitening step in line 2 of Algorithm 1 can be replaced by a multi-step procedure that only operates on one elementary basis set at a time. The method is called global SVD 28 and is based on the higher-order SVD for general tensor trains. 54 
+
+A complete description of the method is provided as Algorithm SI-1 in the appendix. We emphasize the following points: 1. The global SVD produces a decomposition Ψ X ≈ UΣV⊤, where U ∈ Rn×n×... ×n×r is a TT approximation to the left singular vectors of the data tensor. The TT ranks of U can be fixed a priori or controlled adaptively using truncation thresholds. The remaining components Σ ∈ Rr×r and V ∈ Rm×r are matrices just as in a standard SVD. 2. The left-singular tensor U is an open-ended TT tensor, meaning that its final core U(d)
+
+has r columns: 
+
+U(d) =
+
+s
+
+U(d):,:,1 · · · U(d):,:,r 
+
+{
+
+.
+
+Each of these columns encodes a proper TT tensor Uj which represents a single reduced basis function, in complete analogy to Eq. (6), by a TT-structured transformation of the product basis: 29 
+
+ηj (x)⊤ := Ψ( x)⊤Uj σ−1 
+
+> j
+
+= Ψ( x)⊤
+
+h
+
+U(1) ⊗ . . . U(d−1) ⊗ U(d):,:,j 
+
+i
+
+σ−1 
+
+> j
+
+. (11) 3. A crucial observation is that all reduced basis functions share the first d − 1 cores. This 12 will be exploited in numerical operations on U later. 4. Lines (3-4) in the VAC Algorithm 1 (removal of the mean) can be realized without modification by acting on the right singular matrix V.
+
+# 4 Tensor-based VAC 
+
+In this section, we present our main technical and algorithmic results. The essential remain-ing step towards a tensorization of Algorithm 1 is the assembly of the reduced matrix M
+
+in lines (5-6). Up to a small-scale post-multiplication, this requires computation of tensor-operator-tensor products of the form ˜M = U⊤AU = 1
+
+βm 
+
+> m
+
+X
+
+> l=1
+
+U⊤∇Ψ( xl) · Σ( xl) · ∇ Ψ( xl)U. (12) Below, we discuss two approaches to evaluating these products using tensor operations. Details are provided in the SI appendix. Algorithm 2 summarizes the procedure. 
+
+Algorithm 2 Variational Approximation of Generator Eigenpairs (tensor gEDMD) 
+
+Require: Elementary basis sets Ψ (k); training data x1, . . . , xm; diffusion Σ( xl) for all data points. 
+
+Ensure: Approximate eigenvalues κi and eigenfunctions φi solution of (4)  
+
+> 1:
+
+Evaluate elementary basis sets Ψ (k)(xl) and derivatives ∂∂xk Ψ(k)(xl) at all data points.  
+
+> 2:
+
+Apply global SVD (Algorithm S1) to data tensor: 1√m ΨX ≈ UΣV⊤. 
+
+> 3:
+
+Mean vector of reduced basis: ¯ z = 1 
+
+> m
+
+V⊤1m ∈ Rr. 
+
+> 4:
+
+Mean-free correction to whitening transform: diagonalize Id r − ¯z¯z⊤ = W diag( λ) W⊤
+
+and set Z = Wdiag( λ−1/2).  
+
+> 5:
+
+Preliminary reduced matrix using either Algorithm S3 or S4: ˜Mij = U⊤ 
+
+> i
+
+AU j . 
+
+> 6:
+
+Final reduced generator matrix: M = Z⊤Σ−1 ˜MΣ−1Z ∈ Rr×r. 
+
+> 7:
+
+Small-scale eigenvalue problem: Mw i = κiwi. 
+
+> 8:
+
+Evaluate eigenfunctions: φi(x) = Ψ( x)⊤UΣ−1Zw i.13 4.1 Operator-Tensor Products 
+
+The first option we consider is to represent the operator A in TT format and, since U is also a TT tensor, evaluate (12) using established algorithms for operator-tensor-products in TT format. We show in SI Appendix 2 that A has an exact TT-operator representation with cores A(k), 1 ≤ k ≤ d, with ranks scaling as (2 k + 2) m (for constant diffusion, this TT-rank reduces to 2 m uniformly). The analytical expressions to form these cores are highly sparse and only require access to the elementary basis functions, their gradients, and the diffusion field Σ. In SI Appendix 3.1, we then explain how sparsity and the structure of U can be exploited to evaluate (12) with a minimal number of operations. 
+
+## 4.2 Gradient Contraction 
+
+As an alternative, we observe from the second expression in (12) that the main computational bottleneck is the computation of vectors 
+
+w(i) 
+
+> l
+
+= U⊤ ∂∂xi Ψ( xl) ∈ Rr,
+
+for every sample point xl and state dimension 1 ≤ i ≤ d. This evaluation boils down to a contraction of the tensor train U with a rank-one tensor ∂∂xi Ψ( xl). Because of the product rule (9), a streamlined evaluation of all vectors w(i) 
+
+> l
+
+can be designed efficiently. The details for this procedure are provided in SI appendix 3.2. In the numerical examples, we test both approaches presented here and compare their performance. 
+
+## 4.3 Updating the Reduced Matrix 
+
+Suppose we have already computed the global SVD with components U, Σ, V, as well as the reduced matrix ˜M in Eq. (12) for a product basis on d state variables x1, . . . , xd. We can add another state variable, say xd+1 , along with its elementary basis set Ψ (d+1) , to the full product basis, without re-running the entire computation from scratch. This can be 14 useful to test if the variable xd+1 is relevant to capture slow conformational changes. The required steps are summarized in Algorithm 3. It essentially takes one additional matrix SVD to update the global SVD (Algorithm S1), followed by an extension of the gradient contractions w(i) 
+
+> l
+
+to the enlarged basis, and a single reassembly of ˜M.Since the SVD update in line 1 leaves the existing cores U(1) , . . . , U(d) unchanged and intro-duces only the new core U(d+1) , the gradient contractions w(i) 
+
+> l
+
+= U⊤ ∂∂xi Ψ( xl) for 1 ≤ i ≤ d
+
+only need to be contracted against the new core U(d+1) . The projection w(d+1)  
+
+> l
+
+associated with the new dimension, by contrast, has no previous counterpart. Obtaining these vectors requires loading or re-computing the base carries ql in Algorithm S4, and contracting them against the new basis set derivatives ddxd+1 Ψ(d+1) . Once all d + 1 projections w(i) 
+
+> l
+
+are avail-able, ˜M is re-computed using the extended diffusion factors Σ( xl) ∈ R(d+1) ×(d+1) exactly as in Eq. (S7) (line 20 of Algorithm S4). 
+
+Algorithm 3 Update Reduced Matrix 
+
+Require: Elementary basis set Ψ (d+1) ; training data x1, . . . , xm; extended diffusion factors Σ( xl) ∈ R(d+1) ×(d+1) for all data points; existing cores U(1) , . . . , U(d) and existing projec-tions w(i) 
+
+> l
+
+, i = 1 , . . . , d , l = 1 , . . . , m , from the previous assembly of ˜M.
+
+Ensure: Updated reduced matrix ˜M for the product basis including Ψ (d+1) . 
+
+> 1:
+
+Perform one step of the global SVD Algorithm S1 to compute core U(d+1) and update Σ, V; let r′ denote the resulting (possibly updated) reduced rank.  
+
+> 2:
+
+for l = 1 , . . . , m do  
+
+> 3:
+
+Extend existing projections: w(i) 
+
+> l
+
+←  (w(i) 
+
+> l
+
+)⊤U(d+1) ⊤Ψ(d+1) (xd+1  
+
+> l
+
+), for i = 1 , . . . , d  
+
+> 4:
+
+Re-compute or load base carry ql. 
+
+> 5:
+
+Compute new projection: w(d+1)  
+
+> l
+
+←  q⊤ 
+
+> l
+
+U(d+1) ⊤ ddxd+1 Ψ(d+1) (xd+1  
+
+> l
+
+) ▷ differentiate at new site, as in line 9 of Alg. S4  
+
+> 6:
+
+end for  
+
+> 7:
+
+Collect the updated w(i) 
+
+> l
+
+, i = 1 , . . . , d + 1, l = 1 , . . . , m , into W ∈ R(m(d+1)) ×r′ 
+
+> 8:
+
+Reassemble ˜M ← − 12m W⊤(Σ W), with Σ( xl) ∈ R(d+1) ×(d+1) 
+
+15 4.4 TICA Projection 
+
+In the examples presented below, we will choose the state variables xk as TICA coordinates (TICs). 20,21 This is in line with previous studies, which have shown that TICs often coarsely capture the slow dynamics of molecular systems, but timescale estimates and PCCA de-compositions can be improved significantly by an additional VAC step. 24,27,30 As TICs are usually derived from non-linear features like distances or angles, it follows that the diffusion field Σ loc is state-dependent. The diffusion tensors can be pre-computed once from the MD simulation data before applying the tensor-based method. TICA coordinates also come with a natural ordering of the state variables, which is a chal-lenge for tensor-based methods when working on general coordinates. Moreover, application of the updating scheme provides an efficient test of how many TICs are required to capture the main conformational dynamics of the system at hand. 
+
+# 5 Results 
+
+## 5.1 Systems and Data Generation 
+
+We study three examples: a minimal three-dimensional model potential, as well as molecular dynamics simulation data of the fast-folding proteins Chignolin and NTL9. The toy model is Langevin dynamics in a three-dimensional energy landscape. The potential is derived from the two-dimensional lemon slice potential 
+
+VLS (x1, x2) = 10( r − 1) 2 + cos(4 φ),
+
+where r, φ are polar coordinates. This 2d-system is augmented by a simple harmonic poten-tial along the third state variable 
+
+Vh = 12α(x3)2,
+
+16 and the total potential is V = VLS + Vh. The third dimension does not add any dynamical content to this example, we only add the third dimension to turn this into an example where tensor-based methods are relevant, while we can still easily compute full matrix-based reference quantities to compare to. Simulations of the fast-folding mini-protein Chignolin have served as a benchmark in many studies on molecular kinetics in recent years. The simulation data we use consists of 20 independent 5 μs long simulations provided by the Theoretical and Computational Biophysics Group at Freie Universit¨ at Berlin, see Ref. 57 for the simulation setup. It is well-known that performing a TICA analysis on all 45 pairwise carbon-alpha distances provides a two-dimensional TICA space which resolves Chignolin’s three major metastable states: folded, unfolded, and misfolded. Simulations of the 39-residue protein NTL9 were provided by D.E. Shaw Research as de-scribed in Ref. 58 The simulation data consist of four independent simulations with a com-bined length of 1 .1 ms. We apply TICA on the set of all pairwise carbon-alpha distances. The protein’s major metastable states correspond to its folded, unfolded, an intermediate, and an off-pathway misfolded state. The two molecular simulation data sets were generated using thermostatted MD in position and momentum space. However, it is well-known that their projection along low-dimensional reaction coordinates can be described by a reversible diffusive dynamics on position space only, after a suitable re-scaling of time, see Refs 44,48 for a detailed discussion. Therefore, we apply reversible tensor gEDMD as described in Section 3. The resulting implied timescales need to be understood in re-scaled time units. 17 Figure 1: Comparison of free energy landscapes for the synthetic lemon slice potential and two protein systems. Left: The analytical two-dimensional lemon-slice potential used as a benchmark, shown as a contour plot in the coordinates ( x1, x2). Middle: Two-dimensional free-energy landscape of Chignolin projected onto the first two TICA coor-dinates (TICA x1, TICA x2). Right: Corresponding two-dimensional free-energy landscape of NTL9 in the first two TICA coordinates. In all panels, lower free-energy regions (blue) correspond to highly populated metastable states, while higher free-energy regions (red) in-dicate less frequently sampled conformations. 
+
+## 5.2 Computational Parameters 
+
+The main computational parameters of the tensor gEDMD method are the number of data points m, the choice of kernel function and its hyper-parameters, as well as the truncation parameter for the global SVD algorithm. We employ a Gaussian radial basis function kernel with a single hyper-parameter, its bandwidth σω. Table 1 shows the data sizes we used for each system, as well as the range of bandwidths and truncation parameters we tested. Table 1: Computational parameters tested for the tensor gEDMD method across the three benchmark systems. System Data size m Bandwidth σω TT rank SVD truncation threshold 3D Lemon Slice Potential 7000 4.0 400 10 −9
+
+Chignolin 6000 25 .0 no cap 10 −12 
+
+NTL9 6485 25 .0 no cap 10 −12 
+
+18 5.3 Model Potential 
+
+We first validate our method on the two-dimensional lemon slice potential, which serves as a controlled benchmark with a known metastable structure. The potential consists of four energetically favorable wells separated by barriers. Since the dynamics evolve in a low-dimensional state space, a matrix representation of the generator can be constructed explicitly for the product basis, which serves as reference model to compare to. Figure 2 summarizes the numerical results. In the upper-left panel, we compare the first three non-trivial generator eigenvalues obtained from the tensor-based and direct matrix-based formulations for increasing numbers of sampled data points. For each sample size, the computation is repeated on ten random subsamples extracted from a single long Langevin trajectory. The tensor-based eigenvalues are close to indistinguishable from those obtained using the matrix formulation across all sample sizes, with the observed differences remaining well within the statistical uncertainty indicated by the error bars. Furthermore, the dom-inant eigenvalues remain stable as the amount of available data increases, indicating that the tensor representation does not compromise the accuracy or convergence of the generator approximation. Based on the dominant eigenfunctions of the tensor-based generator approx-imation, a four-state PCCA decomposition is computed. As illustrated in the upper-right panel, the recovered partition accurately identifies the four metastable basins together with their separating transition regions. The lower-left panel compares the wall-clock time required to assemble the reduced generator ˜M using two different tensor-train evaluation strategies: the block-contraction scheme from Section 4.1, which forms ˜M via repeated tensor-train matrix-vector products, and the direct scheme based on gradient contractions from Section 4.2. Across the full range of sample sizes considered, the direct scheme outperforms the block-contraction scheme by roughly three to four orders of magnitude. Both schemes yield numerically identical reduced operators, but the cost of assembling ˜M is significantly different. The computational complexity of the tensor representation is further illustrated in the lower-19 right panel, which reports the maximum TT rank as a function of the truncation threshold employed during the global SVD. As expected, stricter truncation thresholds retain more singular vectors and therefore result in larger TT ranks. More importantly though, the dependence of the TT rank on the number of sampled data points is very weak, suggest-ing that the complexity of the tensor representation is primarily governed by the intrinsic low-rank structure of the problem rather than by the amount of available data. Overall, these results demonstrate that the tensor-based formulation accurately reproduces both the spectral properties and the metastable decomposition of the model system, and that the reduced generator can be assembled efficiently. 20 Figure 2: Numerical validation of the tensor-based generator approximation for the two-dimensional lemon slice benchmark. ( Upper left ) Comparison of the first three dominant generator eigenvalues obtained using the direct matrix formulation and the tensor-based formulation as functions of the number of sampled data points m. Results are averaged over ten random subsamples of a single long Langevin trajectory, with error bars representing one standard deviation. (Upper right ) Four-state PCCA decomposition computed from the dominant eigenspace of the tensor-based generator approximation, accurately recovering the metastable regions associated with the four potential wells. ( Lower left ) Wall-clock time required to assemble the reduced generator ˜M as a function of the number of sampled data points m, comparing the block-contraction scheme (Section 4.1) against the direct scheme (Section 4.2). ( Lower right ) Maximum tensor-train (TT) rank as a function of the global SVD truncation threshold for different sample sizes. 21 5.4 Chignolin MD Simulation Data 
+
+Next, we apply the tensor gEDMD framework on molecular dynamics simulation data of the mini-protein Chignolin, which has been used as a benchmark for numerous kinetic mod-eling approaches in recent years. As its main conformational states (folded, unfolded, and misfolded) can already be captured by just two TICA coordinates, the main point of this example is to show that tensor gEDMD reliably identifies these states and their transition timescales for a wider range of TICA dimensions and under variations of hyper-parameters. We also find that the bandwidth parameter for the random Fourier basis set needs to be adjusted as the number of TICA dimensions is increased. In Figure 3, we show the dependence of the two dominant non-trivial generator eigenvalues, 
+
+κ1 and κ2, on the global SVD truncation threshold for multiple TICA dimensions d = 3, 6, and 10, while keeping the bandwidth parameter fixed at σω = 25. We can identify a regime of threshold parameters ϵ ≤ 10 −10 for which both eigenvalue estimates converge, and the leading rate κ1 is approximately a factor 12 smaller than κ2, in line with previous results. We see that as a function of the TICA dimension, eigenvalue estimates stabilize if d ≥ 6, while the results are sub-optimal for smaller d. This observation is plausible as a larger bandwidth is required to accurately distinguish states embedded in higher-dimensional feature spaces. In Supplementary Figure S1, we show that a smaller bandwidth leads to accurate results in lower TICA dimension d. Figure 4 shows membership decompositions computed by the PCCA algorithm, visualized along the first two TICA coordinates. We confirm once again that for TICA dimension d = 3, the tensor-train and matrix-based formulations produce nearly identical decompositions. Tensor gEDMD results obtained for larger TICA dimensions are likewise in agreement with the expected PCCA decomposition, although the unfolded state appears somewhat blurred out by these models. 22 Figure 3: Sensitivity of the tensor-based generator approximation to the global SVD trunca-tion threshold and the retained TICA dimension for the Chignolin data set ( m = 6000, ten independent subsamples). ( Upper left ) Dependence of the dominant generator eigenvalue 
+
+κ1 on the global SVD truncation threshold for TICA dimensions d = 3, 6, and 10. ( Upper right ) Corresponding results for κ2. The annotated values indicate the mean eigenvalue estimates, while the error bars represent one standard deviation across subsamples. ( Lower left ) Dependence of κ1 on the number of retained TICA coordinates for a fixed truncation threshold of 10 −12 . ( Lower right ) Corresponding dependence of κ2. Large markers denote the sample mean, thick error bars indicate one standard deviation, thin error bars represent the standard error, and the transparent markers correspond to the individual subsample estimates. 23 Figure 4: PCCA soft membership decomposition of the Chignolin data projected onto the first two TICA coordinates. The top panels compare the tensor train and matrix-based formulations for d = 3 TICA coordinates. The lower panels show tensor train PCCA de-compositions for d = 6 and d = 10 TICA coordinates. Pure colors indicate configurations assigned predominantly to a single metastable state, while mixed colors indicate transition regions. 
+
+Incremental update versus re-computation from scratch. We also illustrate the ef-fect of the incremental updating method provided in Algorithm 3 for the Chignolin example. First, in the left panel of Figure 5, we confirm that both of the leading non-trivial gen-erator eigenvalues, κ1 and κ2, are re-produced correctly if computed sequentially for each dimension by applying the updating algorithm to the previous result. The computational advantage incurred by the incremental update is illustrated in the right panel of Figure 5, 24 which compares the wall-clock runtime of the updating method versus re-computing the tensor gEDMD model from scratch. For each TICA dimension, the same data set, kernel parameters, and SVD truncation settings are used as in the eigenvalue comparison. The run-time advantage is not significant for small d ≤ 6, but becomes much more pronounced for larger TICA dimension d ≥ 8. 
+
+Figure 5: Comparison of the incremental tensor-train update with full recomputation for the Chignolin data set. ( Left ) The two dominant non-trivial generator eigenvalues, κ1 and 
+
+κ2, computed using the full tensor construction and the incremental update as functions of the retained TICA dimension. Results are averaged over ten independent subsamples, with error bars representing one standard deviation. The two approaches produce nearly identical eigenvalue estimates across all considered dimensions. ( Right ) Wall-clock runtime of the full re-computation and the incremental update for the same experimental settings. The incremental update consistently outperforms full re-computation, and the run-time ad-vantage becomes more pronounced as the TICA dimension increases due to the reuse of the previously computed tensor-train representation. 
+
+## 5.5 NTL9 MD Simulation Data 
+
+As a third example, we validate the tensor gEDMD framework on simulation data of the NTL9 protein. NTL9 is a more complex system which exhibits multiple relevant conforma-tional states which cannot all be resolved by a simple two-dimensional TICA projection. Figure 6 illustrates the dependence of the first four non-trivial generator eigenvalues, κ1, . . . , κ 4,on the number of retained TICA coordinates (we also show estimates obtained by the in-cremental updating strategy, which are virtually the same). The first two eigenmodes are 25 stably recovered for all TICA dimensions d ≥ 3, with rates around κ1 ≈ 0.05 and κ2 ≈ 0.5, respectively. However, we observe that after adding a fourth TICA dimension, an additional mode κ3 of about the same magnitude as κ2 is discovered, and the remaining spectrum shifts downward accordingly. The leading three modes then remain stable through TICA dimen-sion d = 8. In Figure 7, we show the PCCA state assignments obtained from tensor gEDMD models at different TICA dimensions, projected onto the first three TICA coordinates, x1,
+
+x2, and x3. Comparison of these results shows that all models share three conformational states (green, red and orange in Fig. 7) corresponding to the folded, unfolded and misfolded state of the protein. However, gEDMD models at d = 3 identify the next slowest transition as aligned with the third TICA coordinate. Upon addition of the fourth TICA coordinate, a transition to a different state is identified which is in fact aligned with the fourth TICA coordinate. Comparison of the molecular geometry shows that this new state is indeed the intermediate state identified previously. 27 These observations show that linear TICA is not sufficient to correctly recover all higher modes in the correct order, while the non-linear tensor gEDMD model can identify the correct order of state transitions. 26 Figure 6: Dependence of the first four dominant generator eigenvalues on the retained TICA dimension for the NTL9 data set ( m = 6485, σω = 25, global SVD truncation threshold 10 −12 ). Results are averaged over ten independent subsamples, with error bars representing one standard deviation. Solid lines with circular markers correspond to a complete recom-putation of the tensor-based generator, while dashed lines with square markers denote the incremental tensor-train update. Across all considered TICA dimensions, the incremental update reproduces the eigenvalues obtained from full recomputation with virtually identical accuracy, indicating that extending the tensor representation incrementally preserves the dominant spectral information of the generator. 27 Figure 7: Aligned PCCA state assignments for the NTL9 data projected onto the first three TICA coordinates, x1, x2, and x3. The top panels compare the matrix-based and tensor-train formulations for d = 3, with state labels aligned so that matching colors correspond to comparable metastable regions. The lower panels show tensor-train PCCA decompositions for d = 6 and d = 8. Colors indicate the assigned metastable states, while residual points indicate configurations that are not assigned confidently to any metastable state. 
+
+# 6 Conclusions and Outlook 
+
+In this work, we have developed tensor gEDMD, a variational approximation method to compute metastable states and transition timescales of reversible molecular dynamics simu-lations employing a product basis. We have derived analytical expressions of the generator stiffness matrix in tensor train format, incorporating state-dependent diffusion fields which often occur when working in reduced coordinates. We have developed efficient algorithms 28 to solve the resulting variational problem using tensor operations, only requiring access to elementary basis functions and their gradients, as well as to the diffusion field, which can be computed as a pre-processing step. We have also described how the tensor gEDMD model can be updated efficiently in order to incorporate additional descriptors. The numerical results show that tensor gEDMD recovers metastable states and transition timescales for examples including a model potential and two fast-folding protein simulations. The results are stable across different data sizes and truncation parameters. For the Chig-nolin example, we have observed that the Gaussian kernel bandwidth needs to be chosen carefully depending on the number of input TICA coordinates. For NTL9, we have seen that the non-linear tensor gEDMD model correctly identifies the protein’s major metastable states for sufficiently large TICA dimension, improving on the use of the standard linear TICA model. Several directions remain for future work. First, we will seek to apply the method for larger-scale systems than fast-folding proteins, which exhibit a more complex hierarchy of multiple meta-stable states and transition pathways. Moreover, application to systems driven by underdamped Langevin dynamics can also be studied, building on results from. 40 Finally, we will study ways of adaptively tuning key parameters, such as the kernel bandwidth and SVD cutoff, to improve the efficiency and accuracy of the method further. 
+
+# 7 Declarations 
+
+The authors have no conflicts of interest to disclose. 
+
+Data Availability Data and codes to reproduce the results presented in this study are available from the Github repository https://github.com/fnueske/tensor_gedmd and the data repository 10.5281/zenodo.22080161 .29 Use of Artificial Intelligence We used ChatGPT (OpenAI) for language and grammar editing, to improve clarity of the manuscript, and to clarify conceptual questions and aid our understanding of topics encountered during the study. Claude (Anthropic) was used to assist with the organization and structuring of code. 
+
+Funding and Acknowledgemts M. Verma is funded by Deutsche Forschungsgemein-schaft (DFG, German Research Foundation) - 314838170, GRK 2297 MathCoRe. In addi-tion, we are grateful to D.E. Shaw research for providing access to the folding simulations of NTL9. 
+
+# References 
+
+(1) Frenkel, D.; Smit, B. Understanding molecular simulation: from algorithms to applica-tions , third edition ed.; ELSEVIER ACADEMIC PRESS: S.l., 2023. (2) Tuckerman, M. E. Statistical mechanics: theory and molecular simulation , 2nd ed.; Oxford graduate texts; Oxford university press: Oxford, 2023. (3) Ulam, S. M. A collection of mathematical problems ; Interscience, 1960. (4) Dellnitz, M.; Junge, O. On the approximation of complicated dynamical behavior. 
+
+SIAM J. Numer. Anal. 1999 , 36 , 491–515. (5) Sch¨ utte, C.; Fischer, A.; Huisinga, W.; Deuflhard, P. A direct approach to conforma-tional dynamics based on hybrid Monte Carlo. J. Comput. Phys. 1999 , 151 , 146–168. (6) No´ e, F.; Sch¨ utte, C.; Vanden-Eijnden, E.; Reich, L.; Weikl, T. R. Constructing the equilibrium ensemble of folding pathways from short off-equilibrium simulations. Pro-ceedings of the National Academy of Sciences 2009 , 106 , 19011–19016. 30 (7) Plattner, N.; Doerr, S.; Fabritiis, G. D.; No´ e, F. Complete protein–protein associa-tion kinetics in atomic detail revealed by molecular dynamics simulations and Markov modelling. Nature Chemistry 2017 , 9, 1005–1011. (8) Knoverek, C. R.; Mallimadugula, U. L.; Singh, S.; Rennella, E.; Frederick, T. E.; Yuwen, T.; Raavicharla, S.; Kay, L. E.; Bowman, G. R. Opening of a cryptic pocket in beta-lactamase increases penicillinase activity. Proceedings of the National Academy of Sciences 2021 , 118 , e2106473118. (9) No´ e, F.; N¨ uske, F. A variational approach to modeling slow processes in stochastic dynamical systems. Multiscale Modeling and Simulation 2013 , 11 , 635–655. (10) N¨ uske, F.; Keller, B. G.; P´ erez-Hern´ andez, G.; Mey, A. S. J. S.; No´ e, F. Variational approach to molecular kinetics. Journal of Chemical Theory and Computation 2014 ,
+
+10 , 1739–1752. (11) Wu, H.; No´ e, F. Variational approach for learning Markov processes from time series data. Journal of Nonlinear Science 2020 , 30 , 23–66. (12) Koopman, B. O. Hamiltonian systems and transformation in Hilbert space. Proc. Natl. Acad. Sci. U S A 1931 , 17 , 315. (13) Mezi´ c, I. Spectral Properties of Dynamical Systems, Model Reduction and Decompo-sitions. Nonlinear Dynamics 2005 , 41 , 309–325. (14) Budiˇ si´ c, M.; Mohr, R.; Mezi´ c, I. Applied Koopmanism. Chaos: An Interdisciplinary Journal of Nonlinear Science 2012 , 22 .(15) Mauroy, A., Mezi´ c, I., Susuki, Y., Eds. The Koopman Operator in Systems and Control ;Springer International Publishing, 2020; Vol. 484. (16) Brunton, S. L.; Budiˇ si´ c, M.; Kaiser, E.; Kutz, J. N. Modern Koopman Theory for Dynamical Systems. SIAM Review 2022 , 64 , 229–340. 31 (17) Colbrook, M. J. In Numerical Analysis Meets Machine Learning ; Mishra, S., Townsend, A., Eds.; Handbook of Numerical Analysis; Elsevier, 2024; Vol. 25; pp 127–230. (18) Williams, M. O.; Kevrekidis, I. G.; Rowley, C. W. A Data–Driven Approximation of the Koopman Operator: Extending Dynamic Mode Decomposition. Journal of Nonlinear Science 2015 , 25 , 1307–1346. (19) Klus, S.; N¨ uske, F.; Koltai, P.; Wu, H.; Kevrekidis, I.; Sch¨ utte, C.; No´ e, F. Data-Driven Model Reduction and Transfer Operator Approximation. Journal of Nonlinear Science 
+
+2018 , 28 , 985–1010. (20) Molgedey, L.; Schuster, H. G. Separation of a mixture of independent signals using time delayed correlations. Physical Review Letters 1994 , 72 , 3634–3637. (21) P´ erez-Hern´ andez, G.; Paul, F.; Giorgino, T.; De Fabritiis, G.; No´ e, F. Identification of slow molecular order parameters for Markov model construction. The Journal of Chemical Physics 2013 , 139 , 015102. (22) Bowman, G. R., Pande, V. S., No´ e, F., Eds. An Introduction to Markov State Models and Their Application to Long Timescale Molecular Simulation ; Springer Netherlands, 2014; Vol. 797. (23) Schwantes, C. R.; Pande, V. S. Modeling Molecular Kinetics with tICA and the Kernel Trick. Journal of Chemical Theory and Computation 2015 , 11 , 600–608. (24) Mardt, A.; Pasquali, L.; Wu, H.; No´ e, F. VAMPnets for deep learning of molecular kinetics. Nature Communications 2018 , 9, 5. (25) Klus, S.; Bittracher, A.; Schuster, I.; Sch¨ utte, C. A kernel-based approach to molecular conformation analysis. The Journal of Chemical Physics 2018 , 149 .32 (26) Chen, W.; Sidky, H.; Ferguson, A. L. Nonlinear discovery of slow molecular modes using state-free reversible VAMPnets. The Journal of Chemical Physics 2019 , 150 .(27) Sprink, H.; Zhu, Y.; Mey, A. S. J. S.; N¨ uske, F. Accurate and robust analysis of molecular kinetics with random features. The Journal of Chemical Physics 2026 , 164 ,114115. (28) Klus, S.; Gelß, P.; Peitz, S.; Sch¨ utte, C. Tensor-based dynamic mode decomposition. 
+
+Nonlinearity 2018 , 31 , 3359–3380. (29) N¨ uske, F.; Gelß, P.; Klus, S.; Clementi, C. Tensor-based computation of metastable and coherent sets. Physica D: Nonlinear Phenomena 2021 , 427 .(30) Cao, S.; N¨ uske, F.; Liu, B.; Soley, M. B.; Huang, X. AMUSET-TICA: A Tensor-Based Approach for Identifying Slow Collective Variables in Biomolecular Dynamics. Journal of Chemical Theory and Computation 2025 , 21 , 4855–4866. (31) Ballard, G.; Kolda, T. G. Tensor Decompositions for Data Science ; Cambridge Univer-sity Press, 2025. (32) Khoromskij, B. N. Tensor Numerical Methods in Scientific Computing ; De Gruyter: Berlin, Boston, 2018. (33) Khoromskaia, V.; Khoromskij, B. N. Tensor Numerical Methods in Quantum Chem-istry ; De Gruyter: Berlin, Boston, 2018. (34) Klus, S.; N¨ uske, F.; Peitz, S.; Niemann, J. H.; Clementi, C.; Sch¨ utte, C. Data-driven approximation of the Koopman generator: Model reduction, system identification, and control. Physica D: Nonlinear Phenomena 2020 , 406 .(35) L¨ ucke, M.; N¨ uske, F. tgEDMD: Approximation of the Kolmogorov Operator in Tensor Train Format. Journal of Nonlinear Science 2022 , 32 .33 (36) Zhang, W.; Li, T.; Sch¨ utte, C. Solving eigenvalue PDEs of metastable diffusion pro-cesses using artificial neural networks. Journal of Computational Physics 2022 , 465 ,111377. (37) Devergne, T.; Halconruy, H.; Kostic, V.; Lounici, K.; Pontil, M. Learning the Infinites-imal Generator of Stochastic Diffusion Processes. Advances in Neural Information Pro-cessing Systems 37. Vancouver, BC, Canada, 2024; pp 137806–137846. (38) Devergne, T.; Kostic, V.; Pontil, M.; Parrinello, M. Slow dynamical modes from static averages. The Journal of Chemical Physics 2025 , 162 , 124108. (39) Moqvist, S.; Chen, W.; Schreiner, M.; N¨ uske, F.; Olsson, S. Thermodynamic Interpo-lation: A Generative Approach to Molecular Thermodynamics and Kinetics. Journal of Chemical Theory and Computation 2025 , 21 , 2535–2545. (40) Nateghi, V.; Neureither, L.; Moqvist, S.; Hartmann, C.; Olsson, S.; N¨ uske, F. Consistent projection of Langevin dynamics: Preserving thermodynamics and kinetics in coarse-grained models. Physical Review E 2026 , 113 , 055308. (41) Donati, L.; Heida, M.; Keller, B. G.; Weber, M. Estimation of the infinitesimal gener-ator by square-root approximation. Journal of Physics: Condensed Matter 2018 , 30 ,425201. (42) Zhang, W.; Hartmann, C.; Sch¨ utte, C. Effective dynamics along given reaction coordi-nates, and reaction rate theory. Faraday discussions 2016 , 195 , 365–394. (43) Zhang, W.; Sch¨ utte, C. Reliable Approximation of Long Relaxation Timescales in Molecular Dynamics. Entropy 2017 , 19 , 367. (44) Nateghi, V.; N¨ uske, F. Kinetically Consistent Coarse Graining Using Kernel-Based Ex-tended Dynamic Mode Decomposition. Journal of Chemical Theory and Computation 
+
+2025 , 21 , 7236–7248. 34 (45) Pavliotis, G. A. Stochastic Processes and Applications: Diffusion Processes, the Fokker-Planck and Langevin Equations ; Texts in Applied Mathematics 60; Springer: New York, NY, 2014. (46) Deuflhard, P.; Weber, M. Robust Perron cluster analysis in conformation dynamics. 
+
+Linear Algebra Appl 2005 , 398 , 161–184. (47) Kostic, V. R.; Lounici, K.; Halconruy, H.; Devergne, T.; Novelli, P.; Pontil, M. Laplace Transform Based Low-Complexity Learning of Continuous Markov Semigroups. 2024; 
+
+https://arxiv.org/abs/2410.14477 .(48) N¨ uske, F.; Koltai, P.; Boninsegna, L.; Clementi, C. Spectral properties of effective dynamics from conditional expectations. Entropy 2021 , 23 , 1–25. (49) Strand, N. E.; Yang, S.; Khoo, Y.; Dinner, A. R. Adaptive Tensor Train Metadynam-ics for High-Dimensional Free Energy Exploration. Journal of Chemical Theory and Computation 2026 , 22 , 5420–5434. (50) Rahimi, A.; Recht, B. Random features for large-scale kernel machines. Advances in Neural Information Processing Systems 2007 , 20 .(51) N¨ uske, F.; Klus, S. Efficient approximation of molecular kinetics using random Fourier features. The Journal of Chemical Physics 2023 , 159 , 074105. (52) Meanti, G.; Chatalic, A.; Kostic, V.; Novelli, P.; Pontil, M.; Rosasco, L. Estimating Koopman operators with sketching to provably learn large scale dynamical systems. Advances in Neural Information Processing Systems. 2023; pp 77242–77276. (53) Aristoff, D.; Johnson, M.; Simpson, G.; Webber, R. J. The fast committor machine: Interpretable prediction with kernels. The Journal of Chemical Physics 2024 , 161 ,084113. 35 (54) Oseledets, I. V. Tensor-Train Decomposition. SIAM Journal on Scientific Computing 
+
+2011 , 33 , 2295–2317. (55) Kazeev, V. A.; Khoromskij, B. N. Low-Rank Explicit QTT Representation of the Laplace Operator and Its Inverse. SIAM Journal on Matrix Analysis and Applications 
+
+2012 , 33 , 742–758. (56) ¨Ostlund, S.; Rommer, S. Thermodynamic Limit of Density Matrix Renormalization. 
+
+Physical Review Letters 1995 , 75 , 3537–3540. (57) Charron, N. E. et al. Navigating protein landscapes with a machine-learned transferable coarse-grained model. Nature Chemistry 2025 , 17 , 1284–1292. (58) Lindorff-Larsen, K.; Piana, S.; Dror, R. O.; Shaw, D. E. How Fast-Folding Proteins Fold. Science 2011 , 334 , 517–520. 36

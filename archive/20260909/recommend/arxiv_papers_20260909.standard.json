@@ -1,0 +1,818 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-09-09T21:56:02.414461+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 12,
+    "deep_cap": 7,
+    "deep_selected": 7,
+    "quick_candidates": 15,
+    "quick_skim_target": 12,
+    "quick_selected": 12
+  },
+  "deep_dive": [
+    {
+      "id": "2609.08101v1",
+      "source": "arxiv",
+      "title": "PocketVE: Stable and Property-Guided Structure-Based Drug Design with Variance-Exploding Diffusion",
+      "abstract": "Protein-conditioned 3D molecule generation is a central challenge in structure-based drug design, requiring a balance between pocket compatibility, molecular properties, and physical geometry. We propose \\textbf{PocketVE}, a protein-pocket-conditioned variance-exploding (VE) diffusion framework that couples stable coordinate denoising with inference-time property guidance. Specifically, PocketVE combines an EDM-style training and sampling setup for 3D denoising, classifier-free guidance for multi-property steering without external property classifiers, and adaptive protein perturbation as a training-time pocket regularizer. Evaluated on CrossDocked2020 under the GenBench3D protocol, PocketVE improves Valid$_{3\\text{D}}$ from 58.6 to 80.6 and reduces strain energy from 457.4 to 127.9 relative to its TAGMol architectural baseline, while retaining competitive docking and molecular-property scores under moderate guidance. A guidance-scale study shows that moderate guidance gives a favorable balance between target-related objectives and geometric quality, whereas stronger guidance can degrade geometry and distributional fidelity. Pocket-permutation and PoseCheck diagnostics further support pocket-specific spatial compatibility with reduced steric conflicts. Overall, the results suggest that geometric stability and inference-time property guidance should be considered as coupled design objectives.",
+      "authors": [
+        "Peining Zhang",
+        "Jinbo Bi"
+      ],
+      "primary_category": "q-bio.BM",
+      "categories": [
+        "q-bio.BM",
+        "cs.LG"
+      ],
+      "published": "2026-09-08T01:19:17+00:00",
+      "link": "https://arxiv.org/pdf/2609.08101v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Directly tackles structure-based drug design via pocket-conditioned 3D diffusion with property guidance",
+      "llm_evidence_cn": "直接面向基于结构的药物设计，实现口袋条件三维扩散和性质引导",
+      "llm_evidence": "直接面向基于结构的药物设计，实现口袋条件三维扩散和性质引导",
+      "canonical_evidence": "直接面向基于结构的药物设计，实现口袋条件三维扩散和性质引导",
+      "llm_tldr_en": "PocketVE is a pocket-conditioned variance-exploding diffusion framework for structure-based drug design, combining stable denoising with classifier-free property guidance and improving Valid3D on CrossDocked2020.",
+      "llm_tldr_cn": "为了解决结构基药物设计中3D配体生成须兼顾口袋匹配、目标理化性质与几何合理性的难题，本文提出PocketVE：一个蛋白口袋条件下的方差爆炸扩散框架。它将EDM式训练与推理时的无分类器引导结合，在无需外部属性分类器的前提下实现多性质控制，并通过训练期自适应蛋白扰动提升口袋正则化。在CrossDocked2020的GenBench3D协议评估中，PocketVE显著提升Valid3D等指标，为稳定、性质可控的基于结构药物设计提供了可行方案。",
+      "llm_tldr": "为了解决结构基药物设计中3D配体生成须兼顾口袋匹配、目标理化性质与几何合理性的难题，本文提出PocketVE：一个蛋白口袋条件下的方差爆炸扩散框架。它将EDM式训练与推理时的无分类器引导结合，在无需外部属性分类器的前提下实现多性质控制，并通过训练期自适应蛋白扰动提升口袋正则化。在CrossDocked2020的GenBench3D协议评估中，PocketVE显著提升Valid3D等指标，为稳定、性质可控的基于结构药物设计提供了可行方案。",
+      "llm_tags": [
+        "query:smc"
+      ],
+      "matched_query_tag": "query:smc",
+      "matched_query_text": "AI methods for 3D molecular and conformer generation, structure based molecular design, and reaction condition prediction and optimization.",
+      "matched_requirement_id": "req-17",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2609.08333v1",
+      "source": "arxiv",
+      "title": "Fixed-Dimensional Latent Flow for Generating Variable-Size 3D Molecules",
+      "abstract": "In molecular discovery, molecule size is coupled to composition, structure, and other target properties. Yet most 3D generators require molecule size to be specified before generation. Here, we introduce Equivariant-Free Transformer-Autoencoded Latent Flow Matching, a two-stage generative framework that relies entirely on a single fixed-dimensional molecule-level latent representation to generate variable-size molecules. The second-stage flow matching model samples this latent vector, and an autoregressive Transformer decoder then determines molecule size while generating atom types, coordinates, and chemically informative states. Canonical atom ordering and rigid-pose alignment enable standard Transformers without equivariant layers, while joint decoding of molecular geometry and an enriched chemical state enables reliable, deterministic, chemistry-guided graph recovery without requiring a learned dense pairwise bond decoder. The same fixed-dimensional latent supports unconditional and property-conditioned flow matching, while optional property supervision adds an internal ranking readout, with no separate predictor or reference calculations. On PCQM4Mv2, EF-TALFM achieves the highest fraction of molecules that are unique, training-set novel, pass sanitization and PoseBusters sanity checks, 89.4\\%, compared with 75.6\\% for UAE-3D and 69.8\\% for FlowMol. EF-TALFM also achieves higher measured computational throughput for training and sampling. Across ten target HOMO--LUMO gaps, internal ranking doubles the density functional theory (DFT)-verified hit rate within $0.1\\,\\mathrm{eV}$, while preserving 97\\% novelty among unique verified hits. These results demonstrate that fixed-dimensional molecule-level generation followed by symmetry-resolved autoregressive realization provides a practical architecture for open-ended and property-directed 3D molecular design.",
+      "authors": [
+        "Weichi Yao",
+        "Cameron Gruich",
+        "Bryan R. Goldsmith",
+        "Yixin Wang"
+      ],
+      "primary_category": "physics.chem-ph",
+      "categories": [
+        "physics.chem-ph",
+        "cs.LG",
+        "q-bio.QM"
+      ],
+      "published": "2026-09-08T07:03:51+00:00",
+      "link": "https://arxiv.org/pdf/2609.08333v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Directly targets variable-size 3D molecular generation via latent flow matching and autoregressive decoding",
+      "llm_evidence_cn": "直接针对可变尺寸3D分子生成，提出潜流匹配与自回归解码方法",
+      "llm_evidence": "直接针对可变尺寸3D分子生成，提出潜流匹配与自回归解码方法",
+      "canonical_evidence": "直接针对可变尺寸3D分子生成，提出潜流匹配与自回归解码方法",
+      "llm_tldr_en": "Proposes a two-stage generative framework using a fixed-dimensional molecule-level latent representation sampled by flow matching and decoded with an autoregressive Transformer to generate variable-size 3D molecules, avoiding the need to specify molecule size beforehand.",
+      "llm_tldr_cn": "现有三维分子生成器大多需要事先指定分子尺寸，而大小与结构、性质耦合。本文提出等变无关的Transformer自编码结合潜流匹配的两阶段框架，在固定维度的分子级潜变量上进行生成，再由自回归Transformer解码出原子类型、坐标与化学状态并确定分子尺寸。该方法用规范原子排序和刚体对齐避免等变层依赖，实现了可变尺寸三维分子生成，推进了无预设尺寸的分子发现。",
+      "llm_tldr": "现有三维分子生成器大多需要事先指定分子尺寸，而大小与结构、性质耦合。本文提出等变无关的Transformer自编码结合潜流匹配的两阶段框架，在固定维度的分子级潜变量上进行生成，再由自回归Transformer解码出原子类型、坐标与化学状态并确定分子尺寸。该方法用规范原子排序和刚体对齐避免等变层依赖，实现了可变尺寸三维分子生成，推进了无预设尺寸的分子发现。",
+      "llm_tags": [
+        "query:smc"
+      ],
+      "matched_query_tag": "query:smc",
+      "matched_query_text": "3D molecular generation",
+      "matched_requirement_id": "req-12",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2609.03220v1",
+      "source": "arxiv",
+      "title": "Discretization-Aware Fine-Tuning for Quantum Machine Learning with Chemical Foundation Models",
+      "abstract": "A key challenge in practical quantum machine learning (QML), particularly for discriminative tasks such as classification, is the limited capacity of near-term quantum devices to encode high-dimensional classical data into small quantum registers. In optimized basis-encoded (bit-bit) settings, this constraint leads to cross-class collisions, where samples with different labels are mapped to the same discrete bit-string and thus become indistinguishable to any downstream model. In this work, we investigate how data representation affects QML performance under such severe information bottlenecks. We introduce discretization-aware fine-tuning (DAFT), a method that adapts a pre-trained chemical foundation model to produce representations that remain informative after quantization. DAFT reduces collision probability through a differentiable soft collision loss. We evaluate both quantum and classical models under a controlled setting in which they receive identical discretized bit-string inputs, isolating the effect of representation from model architecture. On the blood-brain barrier penetration (BBBP) molecular property prediction benchmark using ChemBERTa-77M, DAFT reduces collision counts by several orders of magnitude and improves quantum classification accuracy by more than 12 percentage points compared to a frozen backbone. Importantly, without DAFT, classical models outperform QML under the same input constraints. With DAFT, however, this comparison reverses at higher qubit counts. At 10 qubits, the quantum model surpasses a matched classical baseline trained on identical bit-strings (0.883 vs. 0.855, $p = 0.026$). These results show that, in information-constrained regimes, achieving a quantum advantage critically depends on aligning continuous representations with discrete quantum encodings.",
+      "authors": [
+        "Shunji Matsuura",
+        "Sonika Johri"
+      ],
+      "primary_category": "quant-ph",
+      "categories": [
+        "quant-ph"
+      ],
+      "published": "2026-09-02T23:36:29+00:00",
+      "link": "https://arxiv.org/pdf/2609.03220v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "adapting pre-trained chemical foundation model with discretization-aware fine-tuning for quantum machine learning",
+      "llm_evidence_cn": "通过离散化感知微调将预训练化学基础模型适配到量子机器学习，属于化学基础模型微调/迁移",
+      "llm_evidence": "通过离散化感知微调将预训练化学基础模型适配到量子机器学习，属于化学基础模型微调/迁移",
+      "canonical_evidence": "通过离散化感知微调将预训练化学基础模型适配到量子机器学习，属于化学基础模型微调/迁移",
+      "llm_tldr_en": "This work proposes discretization-aware fine-tuning (DAFT) for quantum machine learning with chemical foundation models. DAFT lets a pre-trained chemical foundation model produce representations that remain distinguishable after coarse basis-encoded discretization, reducing cross-class collisions and improving discriminative QML under tight qubit budgets.",
+      "llm_tldr_cn": "近端量子设备编码化学数据时，比特宽度有限，离散基编码容易让不同类别的样本映射到同一比特串，造成类别碰撞。作者提出离散化感知微调（DAFT），在微调预训练化学基础模型时把后续离散化编码误差纳入训练目标，使输出的表征在给定量子寄存器上仍可分。在量子分类等判别任务中，DAFT缓解了跨类碰撞并提升准确率。该研究把预训练化学基础模型与量子机器学习衔接起来，拓展了化学基础模型的迁移应用边界。",
+      "llm_tldr": "近端量子设备编码化学数据时，比特宽度有限，离散基编码容易让不同类别的样本映射到同一比特串，造成类别碰撞。作者提出离散化感知微调（DAFT），在微调预训练化学基础模型时把后续离散化编码误差纳入训练目标，使输出的表征在给定量子寄存器上仍可分。在量子分类等判别任务中，DAFT缓解了跨类碰撞并提升准确率。该研究把预训练化学基础模型与量子机器学习衔接起来，拓展了化学基础模型的迁移应用边界。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "chemical foundation model pre-training and transfer learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2609.05694v1",
+      "source": "arxiv",
+      "title": "GraphNOSE: A Graph Transformer in Olfaction",
+      "abstract": "Predicting olfactory qualities from molecular structure is an open problem in chemoinformatics. Although linear models can link molecular features to odor descriptors, they often fail when extrapolating to novel chemical scaffolds, extreme molecular weights, or complex odor mixtures. To address this, we introduce GraphNOSE, an open-source graph transformer framework that predicts multi-label odor descriptors from simplified molecular-input line-entry system (SMILES) strings for single molecules and binary mixtures. By integrating positional and structural encodings within a transformer-based graph architecture, GraphNOSE achieves strong performance with six times fewer parameters than standard graph neural network (GNN) baseline while consistently outperforming linear models, molecular language model embeddings, molecular fingerprints, and baseline GNNs by an average area under the ROC curve (AUROC) margin of 4.52% (p < 0.01). GraphNOSE achieves an AUROC of 84% on out-of-distribution compounds (OODs). This exceeds the current state-of-the-art GNN for OOD in olfaction (Open-POM: 81%, p < 0.001), and identifies conditions under which linear models empirically fail. Finally, we apply XAI (explainable AI) methods to identify which substructures and molecular features drive odor predictions, yielding insights consistent with chemical intuition and grounded in the model's learned representations. Together, these results establish GraphNOSE as a scalable and interpretable architecture for olfactory prediction that generalizes to structurally distinct compounds underrepresented in current perceptual databases.",
+      "authors": [
+        "Mrityunjay Sharma",
+        "Sarabeshwar Balaji",
+        "Valentina Parma",
+        "Ritesh Kumar"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-09-04T20:02:48+00:00",
+      "link": "https://arxiv.org/pdf/2609.05694v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "graph transformer predicting multi-label odor descriptors from SMILES, a molecular property prediction task",
+      "llm_evidence_cn": "基于SMILES的图Transformer预测分子气味描述符，属于分子性质预测任务",
+      "llm_evidence": "基于SMILES的图Transformer预测分子气味描述符，属于分子性质预测任务",
+      "canonical_evidence": "基于SMILES的图Transformer预测分子气味描述符，属于分子性质预测任务",
+      "llm_tldr_en": "GraphNOSE, an open-source graph transformer, predicts multi-label odor descriptors from SMILES for single molecules and mixtures. It combines positional and structural encodings, outperforms linear models, and uses six times fewer parameters than standard GNN baselines.",
+      "llm_tldr_cn": "从分子结构预测嗅觉品质是化学信息学中的开放问题，线性模型在新骨架、极端分子量和复杂混合物上容易失效。该文提出开源图Transformer框架GraphNOSE，通过在SMILES分子图上整合位置与结构编码，预测单分子及二元混合物的多标签气味描述符。模型仅用标准GNN六分之一参数即稳定超越线性模型，并改善了对新分子脚手架的外推。GraphNOSE为嗅觉等感知属性预测提供了高效、可扩展的分子性质建模工具。",
+      "llm_tldr": "从分子结构预测嗅觉品质是化学信息学中的开放问题，线性模型在新骨架、极端分子量和复杂混合物上容易失效。该文提出开源图Transformer框架GraphNOSE，通过在SMILES分子图上整合位置与结构编码，预测单分子及二元混合物的多标签气味描述符。模型仅用标准GNN六分之一参数即稳定超越线性模型，并改善了对新分子脚手架的外推。GraphNOSE为嗅觉等感知属性预测提供了高效、可扩展的分子性质建模工具。",
+      "llm_tags": [
+        "query:smc"
+      ],
+      "matched_query_tag": "query:smc",
+      "matched_query_text": "molecular property prediction",
+      "matched_requirement_id": "req-15",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2609.05709v1",
+      "source": "arxiv",
+      "title": "cuSOAP: a GPU-accelerated Generator of Smooth Overlap of Atomic Positions Descriptor",
+      "abstract": "The Smooth Overlap of Atomic Positions (SOAP) descriptor is one of the most widely adopted representations of atomic environments in molecular machine learning, but the cost of evaluating it and its derivatives remains a principal bottleneck of SOAP-based interatomic potentials, particularly at the large radial and angular basis sizes demanded by complex, multi-species condensed-phase environments. We present cuSOAP, a GPU-accelerated generator of atom-wise SOAP vectors and their analytic derivatives. Built on PyTorch, cuSOAP evaluates closed-form expressions or quadratures for the projection coefficients and their Cartesian gradients for Gaussian-type-orbital and polynomial radial bases, through fused CUDA and Triton kernels that eliminate the multi-gigabyte intermediates of a naive tensor formulation. The package is a drop-in replacement for the CPU-based reference DScribe, reproducing its constructor signature, feature ordering, and output to within ${\\sim}10^{-6}$, and accepts structures directly as Atomistic Simulation Environment (ASE) Atoms objects. On an NVIDIA Grace--Blackwell (GB200) node, a single Blackwell GPU generates the full descriptor-plus-Jacobian workload for a 1000-molecule water cluster up to two orders of magnitude faster than DScribe, i.e., from $13\\times$ to $227\\times$ across the entire $(n_{\\max}, l_{\\max})$ hyperparameter map, with the speedup growing with the angular band limit $l_{\\max}$. Descriptor-only generation scales as $t \\propto n^{1.34}$, close to linear, up to a million-atom water cluster, which is processed in 19.5s on one GPU and, through a shared-memory multiprocessing driver, in 5.7s on the four GPUs of the node, demonstrating $\\sim$90% parallel efficiency with no sign of saturation as devices are added. These results bring on-the-fly SOAP evaluation for large-scale condensed-phase simulation within reach.",
+      "authors": [
+        "Hongyu Yan",
+        "Yuqing Xia",
+        "Yong Wei",
+        "Minghan Chen",
+        "Hanning Chen"
+      ],
+      "primary_category": "physics.chem-ph",
+      "categories": [
+        "physics.chem-ph"
+      ],
+      "published": "2026-09-04T20:32:09+00:00",
+      "link": "https://arxiv.org/pdf/2609.05709v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "GPU-accelerated SOAP descriptor generator enabling faster ML-based interatomic potentials for quantum chemistry/MD",
+      "llm_evidence_cn": "GPU加速SOAP描述符生成器，加速面向量子化学和分子动力学的机器学习原子间势",
+      "llm_evidence": "GPU加速SOAP描述符生成器，加速面向量子化学和分子动力学的机器学习原子间势",
+      "canonical_evidence": "GPU加速SOAP描述符生成器，加速面向量子化学和分子动力学的机器学习原子间势",
+      "llm_tldr_en": "Presents a PyTorch-based GPU-accelerated generator computing atom-wise SOAP vectors and analytic derivatives through fused CUDA and Triton kernels for Gaussian-type-orbital and polynomial radial bases, removing a major evaluation bottleneck in SOAP-based interatomic potentials.",
+      "llm_tldr_cn": "SOAP是分子机器学习中广泛使用的原子环境表示，但其及其导数计算成本高昂，成为SOAP型原子间势扩展的关键瓶颈，尤其在大基组多组分体系。本文基于PyTorch构建cuSOAP，通过融合CUDA和Triton核计算GTO和多项式径向基下的投影系数及解析笛卡尔梯度，实现原子级SOAP向量的GPU加速生成。这大幅降低描述符评估开销，为大规模SOAP势训练与应用提供底层加速支持。",
+      "llm_tldr": "SOAP是分子机器学习中广泛使用的原子环境表示，但其及其导数计算成本高昂，成为SOAP型原子间势扩展的关键瓶颈，尤其在大基组多组分体系。本文基于PyTorch构建cuSOAP，通过融合CUDA和Triton核计算GTO和多项式径向基下的投影系数及解析笛卡尔梯度，实现原子级SOAP向量的GPU加速生成。这大幅降低描述符评估开销，为大规模SOAP势训练与应用提供底层加速支持。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2609.06655v1",
+      "source": "arxiv",
+      "title": "Out-of-Distribution Inverse Design of Elastic Networks with Differentiable Graph Neural Network Molecular Dynamics",
+      "abstract": "Machine-learning-based inverse design can accelerate the discovery of materials with targeted properties, but conventional structure--property models often require large training datasets and generalize poorly beyond their training distribution. Here, we present a differentiable inverse design framework based on a graph neural network molecular dynamics simulator. By combining a short dynamical initialization with physics-based refinement during simulation, the framework enables optimization well beyond the conditions represented in the training data. Using disordered elastic networks, we show that a simulator trained only on non-auxetic systems with Poisson's ratios between 0.1 and 0.4 can design strongly auxetic networks with values as low as -0.3. The framework also produces stress--strain responses outside the range observed during training, creates localized mechanical defects absent from the training data, and generalizes across system size, enabling optimization of networks tested up to 5000 nodes despite being trained only on networks with fewer than 200 nodes.",
+      "authors": [
+        "Sergey A. Shteingolts",
+        "Salman N. Salman",
+        "Ron Levie",
+        "Dan Mendels"
+      ],
+      "primary_category": "physics.chem-ph",
+      "categories": [
+        "physics.chem-ph"
+      ],
+      "published": "2026-09-06T15:09:05+00:00",
+      "link": "https://arxiv.org/pdf/2609.06655v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Differentiable graph neural network molecular dynamics for out-of-distribution inverse design and property optimization",
+      "llm_evidence_cn": "用可微图神经网络分子动力学进行分布外逆向设计与性质优化",
+      "llm_evidence": "用可微图神经网络分子动力学进行分布外逆向设计与性质优化",
+      "canonical_evidence": "用可微图神经网络分子动力学进行分布外逆向设计与性质优化",
+      "llm_tldr_en": "This work presents a differentiable inverse design framework based on a graph-neural-network MD simulator, enabling property optimization beyond training distribution via short dynamical initialization and physics-based refinement.",
+      "llm_tldr_cn": "传统结构-性质模型常需大规模训练数据且难以跨越训练分布进行设计，限制了材料逆向设计的应用范围。该工作提出基于图神经网络分子动力学模拟器的可微逆向设计框架，结合短时动力学初始化与模拟中的物理约束细化，使优化不再局限于训练数据条件的内部。仅用非拉胀体系训练的模拟器即可成功设计出具有强拉胀行为的弹性网络，证明方法具备真正的分布外设计能力。该路径为材料与分子性质定向优化提供了新的范式。",
+      "llm_tldr": "传统结构-性质模型常需大规模训练数据且难以跨越训练分布进行设计，限制了材料逆向设计的应用范围。该工作提出基于图神经网络分子动力学模拟器的可微逆向设计框架，结合短时动力学初始化与模拟中的物理约束细化，使优化不再局限于训练数据条件的内部。仅用非拉胀体系训练的模拟器即可成功设计出具有强拉胀行为的弹性网络，证明方法具备真正的分布外设计能力。该路径为材料与分子性质定向优化提供了新的范式。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "molecular generation and optimization with machine learning",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2609.06703v1",
+      "source": "arxiv",
+      "title": "DianShi-RxnDB: A Large-Scale, Fine-Grained Organic Reaction Data Platform Built via a Fully Automated Pipeline for Researchers and AI Agents",
+      "abstract": "High-quality structured organic reaction data are essential for developing artificial intelligence for chemistry (AI4Chem), yet much of this knowledge remains dispersed across patent text, images, and reaction schemes. We present DianShi-RxnDB, a large-scale, fine-grained organic reaction data platform built via a fully automated extraction and normalization pipeline integrating patent text, images, and reaction schemes. Its corpus covers organic synthesis patents from the USPTO and EPO published between 1976 and 2025, yielding approximately 24 million reaction instances, of which approximately 14.8 million (61.7%) pass automated qualification checks. Each instance represents a specific single-step experiment recording participants, roles, quantities, temperatures, reaction times, yields, experimental procedures, and provenance links to source patents. In a manual evaluation of 1,300 sampled qualified instances, the micro-averaged field-level accuracy was 92.95%. A matched comparison with Pistachio further indicated advantages in deduplicated record counts, representation granularity, and field-level exact agreement. The platform provides a Web research workbench for searching, filtering, comparing, and source-verifying records, and a Model Context Protocol (MCP) service offering AI agents composable structured retrieval tools. DianShi-RxnDB is available at https://dianshi.opendatalab.org.cn/ .",
+      "authors": [
+        "Yubin Wang",
+        "Xingjian Wei",
+        "Jiang Wu",
+        "Yinfan Wang",
+        "Boyu Zhu",
+        "Lin Zhang",
+        "Jianing Yu",
+        "Huazheng Zeng",
+        "Ruiyi Ding",
+        "Junyuan Gao",
+        "Jiaxing Sun",
+        "Lingli Ge",
+        "Haote Yang",
+        "Jingchao Wang",
+        "Aijia Guo",
+        "Qian Jiang",
+        "Yurui Zhao",
+        "Wenjian Zhang",
+        "Chen Zhu",
+        "Lijun Wu",
+        "Xiaolei Yang",
+        "Haodong Chen",
+        "Junjie Yuan",
+        "Zichao Ye",
+        "Shaowei Hou",
+        "Jing Ye",
+        "Jia Yu",
+        "Shan Wang",
+        "Lijun Wu",
+        "Jiantao Qiu",
+        "Chao Xu",
+        "Yuqiang Li",
+        "Guangyu Wang",
+        "Bowen Zhou",
+        "Dahua Lin",
+        "Conghui He"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-09-06T16:20:43+00:00",
+      "link": "https://arxiv.org/pdf/2609.06703v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "large-scale organic reaction database from patents to support reaction prediction and AI agents",
+      "llm_evidence_cn": "大规模有机反应数据平台，为化学反应预测、逆合成规划及AI智能体提供数据基础",
+      "llm_evidence": "大规模有机反应数据平台，为化学反应预测、逆合成规划及AI智能体提供数据基础",
+      "canonical_evidence": "大规模有机反应数据平台，为化学反应预测、逆合成规划及AI智能体提供数据基础",
+      "llm_tldr_en": "DianShi-RxnDB automatically extracts and normalizes about 24 million fine-grained organic reaction instances from USPTO and EPO patents (1976-2025), 14.8 million passing quality checks, providing a large structured resource for reaction prediction, retrosynthesis, and AI agent research.",
+      "llm_tldr_cn": "反应预测等AI4Chem任务依赖高质量结构化反应数据，但数据散落在专利文本、图片和反应式中。该文开发全自动抽取与标准化管线DianShi-RxnDB，整合USPTO/EPO 1976–2025年专利，得到约2400万条反应实例，约1480万条通过自动质检。每一条实例均结构化保存底物、试剂、条件等细粒度信息，可服务反应预测、逆合成和AI智能体研究。该平台在规模与粒度上填补了有机反应公开数据基础设施的关键空白。",
+      "llm_tldr": "反应预测等AI4Chem任务依赖高质量结构化反应数据，但数据散落在专利文本、图片和反应式中。该文开发全自动抽取与标准化管线DianShi-RxnDB，整合USPTO/EPO 1976–2025年专利，得到约2400万条反应实例，约1480万条通过自动质检。每一条实例均结构化保存底物、试剂、条件等细粒度信息，可服务反应预测、逆合成和AI智能体研究。该平台在规模与粒度上填补了有机反应公开数据基础设施的关键空白。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "chemical reaction prediction using artificial intelligence",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2609.07531v1",
+      "source": "arxiv",
+      "title": "Simulation-Supervised Foundation Models for Retention Time Prediction in High-Performance Liquid Chromatography beyond Experimental Data Coverage",
+      "abstract": "Accurate prediction of high-performance liquid chromatography (HPLC) retention times (RTs) across diverse molecules and chromatographic methods remains challenging because experimental training data cover only a limited region of chemical and method spaces. Here, we develop FUSE-RT (Foundation model Unifying Simulation and Experimental supervision for Retention Time), a multitask foundation model that integrates RT data from 179 chromatographic methods and adapts to unseen molecules and methods using limited target-domain data. To extend transferability beyond experimental coverage, we introduce simulation-to-real (Sim2Real) transfer learning, in which molecular representations learned from large-scale computational data are transferred to experimental RT prediction. Specifically, we use PolyOmics, comprising 39 properties for approximately 21,400 molecules generated by molecular dynamics and density-functional theory calculations, as auxiliary supervision. We evaluate generalization under molecular, method, and joint molecular--method distribution shifts. Simulation-derived supervision substantially improves transfer beyond the experimental molecular domain, particularly under pronounced coverage gaps and few-shot adaptation. Moreover, RT-prediction error decreases systematically with increasing simulation-data size, following a significant power-law relationship. These results establish Sim2Real transfer as a scalable strategy for extending RT prediction beyond the finite coverage of experimental chromatographic data.",
+      "authors": [
+        "Stephen Wu",
+        "Yufeng Han",
+        "Yasuhiro Mito",
+        "Yoshiyuki Watabe",
+        "Yoshihiro Hayashi",
+        "Hikaru Takaya",
+        "Takuya Kubo",
+        "Ryo Yoshida"
+      ],
+      "primary_category": "physics.chem-ph",
+      "categories": [
+        "physics.chem-ph",
+        "stat.AP"
+      ],
+      "published": "2026-09-07T14:09:39+00:00",
+      "link": "https://arxiv.org/pdf/2609.07531v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Multitask chemical foundation model with simulation-to-real transfer learning for retention-time prediction across many chromatographic methods",
+      "llm_evidence_cn": "多任务化学基础模型结合模拟到真实迁移学习，跨多种色谱方法进行保留时间预测",
+      "llm_evidence": "多任务化学基础模型结合模拟到真实迁移学习，跨多种色谱方法进行保留时间预测",
+      "canonical_evidence": "多任务化学基础模型结合模拟到真实迁移学习，跨多种色谱方法进行保留时间预测",
+      "llm_tldr_en": "Develops a multitask chemical foundation model integrating retention-time data from 179 chromatographic methods and introducing Sim2Real transfer learning, enabling adaptation to unseen molecules and methods with limited target-domain data and expanding transferability beyond experimental data coverage.",
+      "llm_tldr_cn": "实验数据只覆盖有限的化学与色谱方法空间，导致HPLC保留时间预测泛化受限。本文提出FUSE-RT多任务基础模型，整合179种色谱方法的保留时间数据，并引入Sim2Real模拟到真实迁移学习，以利用模拟监督信号扩展表示覆盖。模型在有限目标域数据下即可适应未见分子与未见方法，显著增强了实验数据覆盖范围之外的迁移预测能力。",
+      "llm_tldr": "实验数据只覆盖有限的化学与色谱方法空间，导致HPLC保留时间预测泛化受限。本文提出FUSE-RT多任务基础模型，整合179种色谱方法的保留时间数据，并引入Sim2Real模拟到真实迁移学习，以利用模拟监督信号扩展表示覆盖。模型在有限目标域数据下即可适应未见分子与未见方法，显著增强了实验数据覆盖范围之外的迁移预测能力。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "chemical foundation model pre-training and transfer learning",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2609.01209v1",
+      "source": "arxiv",
+      "title": "Autonomous discovery of new structure-plausibility laws for explainable and rapid crystal diagnosis and screening",
+      "abstract": "Crystal generators and tool-using agents propose structures faster than density functional theory (DFT) energy and phonon calculations or experiments can assess them. Deciding which candidates merit expensive assessment is therefore the bottleneck, yet most screens test little beyond atomic overlap and give no chemical reason for failure. Here, our agents generate, test and actively refute two million candidate laws, leaving eight Plausibility Rules for Inorganic Structures (PRIS). These laws encode five mechanisms: short-range repulsion, ionic contact and packing, electrostatic balance, bond-valence conservation and crystallographic site complexity. Experimental structures satisfy our law sets at 82--99%, but satisfy Pauling's rules 2--5 together at only 6.5%. The strictest set detects 87.9% of damaged crystal structures, whereas distance cutoffs detect only 1.6--3.2%. PRIS plausibility is linearly correlated with synthesizability, so the PRIS-derived synthesis score (PSS) explainably screens 83.7% of hard-to-synthesize structures while retaining 80.7% of experimental structures. In a property-conditioned inverse-design run, PRIS and PSS can reduce the DFT validation queue by up to 67.3% and keep 99.2% of the candidates whose DFT-validated bulk moduli reach the design target. Beyond screening, PRIS explains why GNoME remains enriched in rare low-symmetry structures and reveals how wrong-element assignments in falsified crystal reports hide behind plausible coordinates. PRIS moves screening from a pass-or-fail verdict to a chemical reason for failure, showing that autonomous agents can discover, by active refutation, physicochemical laws that guide calculations and experiments.",
+      "authors": [
+        "Zhilong Song",
+        "Lixue Cheng"
+      ],
+      "primary_category": "cond-mat.mtrl-sci",
+      "categories": [
+        "cond-mat.mtrl-sci",
+        "cs.AI"
+      ],
+      "published": "2026-09-01T13:14:52+00:00",
+      "link": "https://arxiv.org/pdf/2609.01209v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "AI-agent driven crystal structure plausibility rule discovery and screening; exemplifies AI agents for chemistry although not retrosynthesis/synthesis planning.",
+      "llm_evidence_cn": "智能体驱动的晶体结构合理性规则发现与筛选，属于化学领域的AI智能体应用，但不涉及逆合成/合成规划。",
+      "llm_evidence": "智能体驱动的晶体结构合理性规则发现与筛选，属于化学领域的AI智能体应用，但不涉及逆合成/合成规划。",
+      "canonical_evidence": "智能体驱动的晶体结构合理性规则发现与筛选，属于化学领域的AI智能体应用，但不涉及逆合成/合成规划。",
+      "llm_tldr_en": "Autonomous agents generate, test and refute two million candidate laws, distilling eight PRIS plausibility rules for rapid, explainable crystal diagnosis and screening.",
+      "llm_tldr_cn": "针对晶体候选结构过多而DFT与实验评估昂贵、常规筛选缺少化学依据的问题，论文提出智能体驱动的自主规律发现流程，构建并检验约两百万条候选规律，最终归纳出八条无机结构合理性规则（PRIS）。规则涵盖短程排斥、离子接触与堆积、电荷平衡、键价守恒及晶体学位点复杂度等机制。实验结构对规则集的满足率达82%至99%，支持快速、可解释的晶体诊断。该方法为材料化学中AI智能体辅助筛选提供了可验证的新范式。",
+      "llm_tldr": "针对晶体候选结构过多而DFT与实验评估昂贵、常规筛选缺少化学依据的问题，论文提出智能体驱动的自主规律发现流程，构建并检验约两百万条候选规律，最终归纳出八条无机结构合理性规则（PRIS）。规则涵盖短程排斥、离子接触与堆积、电荷平衡、键价守恒及晶体学位点复杂度等机制。实验结构对规则集的满足率达82%至99%，支持快速、可解释的晶体诊断。该方法为材料化学中AI智能体辅助筛选提供了可验证的新范式。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "What are the latest advances in retrosynthesis, synthesis planning, and AI agents for chemistry, and how are these systems evaluated?",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2609.04465v1",
+      "source": "arxiv",
+      "title": "The physical foundation beneath protein generative modeling",
+      "abstract": "Physical equations in protein modeling appear to have been replaced by generative models trained directly on structure data. By learning a mapping from noise to data, sampling de novo protein structures has become much more efficient. However, such models can also learn non-physical features and break down with out-of-distribution settings which are typical in protein design campaigns. In this review, we highlight where the physics persists in protein generative modeling pipelines and the issues that linger when physically relevant components of a macromolecular system are left unmodeled. We present a perspective that respecting the underlying physics of macromolecular systems, increasingly through learned representations that are physically grounded and updating generative models with experimental data, is foundational to generative modeling for functional protein design.",
+      "authors": [
+        "Tianyu Lu",
+        "Po-Ssu Huang"
+      ],
+      "primary_category": "q-bio.BM",
+      "categories": [
+        "q-bio.BM"
+      ],
+      "published": "2026-09-03T20:48:35+00:00",
+      "link": "https://arxiv.org/pdf/2609.04465v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Review on the physical grounding of protein generative modeling, informing molecular generation and optimization with machine learning",
+      "llm_evidence_cn": "综述蛋白质生成建模中的物理基础，为机器学习驱动的分子生成与优化提供方向性指导",
+      "llm_evidence": "综述蛋白质生成建模中的物理基础，为机器学习驱动的分子生成与优化提供方向性指导",
+      "canonical_evidence": "综述蛋白质生成建模中的物理基础，为机器学习驱动的分子生成与优化提供方向性指导",
+      "llm_tldr_en": "Reviews the role and absence of physics in protein generative modeling pipelines, advocating physically grounded learned representations for reliable de novo structure generation.",
+      "llm_tldr_cn": "基于结构数据训练的生成模型让蛋白质从头设计更加高效，但也可能习得非物理特征并在分布外设置中失效。本文以综述与视角方式分析蛋白质生成流程中物理知识的保留位置，以及忽视大分子体系物理组分所带来的问题。作者强调尊重底层物理，并通过物理约束的学习表征来体现这些原理。该文为分子生成模型的物理融合与稳健设计提供了原则性参考。",
+      "llm_tldr": "基于结构数据训练的生成模型让蛋白质从头设计更加高效，但也可能习得非物理特征并在分布外设置中失效。本文以综述与视角方式分析蛋白质生成流程中物理知识的保留位置，以及忽视大分子体系物理组分所带来的问题。作者强调尊重底层物理，并通过物理约束的学习表征来体现这些原理。该文为分子生成模型的物理融合与稳健设计提供了原则性参考。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "molecular generation and optimization with machine learning",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2609.07972v1",
+      "source": "arxiv",
+      "title": "Quantum Wavefunction Augmentation via Variational Autoencoders",
+      "abstract": "Sample-based quantum diagonalization (SQD) has emerged as a promising route for quantum-centric supercomputing, relying on classical diagonalization of the molecular Hamiltonian within a hardware-sampled determinant subspace. However, its accuracy degrades in strongly correlated regimes where the relevant determinant space exceeds what finite-shot sampling can capture. In this work, we introduce Quantum Wavefunction Augmentation via Variational Autoencoders (Q-WAVE), a hybrid method that combines determinants sampled via SqDRIFT Krylov circuits and configuration interaction singles and doubles (CISD) determinants with generative machine learning. Using a custom $β$-annealed variational autoencoder (VAE) model, Q-WAVE iteratively expands this basis toward the variational ground state. The VAE learns the wavefunction's primary support structure from the combined hardware and CISD seed in a continuous latent space, generating new dominant determinants beyond any fixed excitation hierarchy. The resulting compact wavefunction exceeds what can be extracted from raw hardware samples alone. We demonstrate sub-millihartree accuracy compared to full configuration interaction for $\\text{H}_2\\text{O}$ and $\\text{N}_2$ dissociation. Finally, we establish Q-WAVE's scalability on a 52-qubit ethylene system (achieving sub-millihartree accuracy versus CCSD(T)) and a highly correlated 60-qubit $\\text{Cr}_2$ stress test that attains chemical accuracy upon a final perturbative correction.",
+      "authors": [
+        "Sonaldeep Halder",
+        "Chayan Patra",
+        "Rahul Maitra"
+      ],
+      "primary_category": "quant-ph",
+      "categories": [
+        "quant-ph"
+      ],
+      "published": "2026-09-07T20:49:34+00:00",
+      "link": "https://arxiv.org/pdf/2609.07972v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Generative VAE augments quantum wavefunction basis, accelerating sample-based quantum diagonalization",
+      "llm_evidence_cn": "生成式VAE增广量子波函数基组，加速基于采样的量子对角化",
+      "llm_evidence": "生成式VAE增广量子波函数基组，加速基于采样的量子对角化",
+      "canonical_evidence": "生成式VAE增广量子波函数基组，加速基于采样的量子对角化",
+      "llm_tldr_en": "Q-WAVE uses a beta-annealed VAE to combine SQD and CISD determinants, iteratively expanding the basis toward the exact ground state to improve sample-based quantum diagonalization in strongly correlated regimes.",
+      "llm_tldr_cn": "针对基于采样的量子对角化（SQD）在强关联体系中因有效行列式空间超出有限采样能力而精度下降的问题，本文提出Q-WAVE混合方法。它结合SqDRIFT Krylov电路采样的行列式与CISD行列式，借助β退火变分自编码器迭代扩展基组向精确基态逼近。结果为强关联分子在量子中心超算上的电子结构计算提供了基于生成式机器学习的基组增广加速策略。",
+      "llm_tldr": "针对基于采样的量子对角化（SQD）在强关联体系中因有效行列式空间超出有限采样能力而精度下降的问题，本文提出Q-WAVE混合方法。它结合SqDRIFT Krylov电路采样的行列式与CISD行列式，借助β退火变分自编码器迭代扩展基组向精确基态逼近。结果为强关联分子在量子中心超算上的电子结构计算提供了基于生成式机器学习的基组增广加速策略。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2609.01353v1",
+      "source": "arxiv",
+      "title": "SymFold: Synergizing Evolutionary and Structural Priors for Accurate Protein Inverse Folding",
+      "abstract": "Protein inverse folding aims to recover amino acid sequences for a given 3D protein structure, underpinning broad applications such as enzyme engineering and drug discovery.Current methods often follow a serial pipeline, in which a structure encoder predicts a coarse sequence, which is then refined by protein language models (PLMs). However, because PLMs only perform post-hoc sequence edits, the refinement is bounded by the quality of upstream predictions.Thanks to recent multimodal protein language models (MPLMs), we could directly encode structure to generate sequences with pretrained structural knowledge, but we observe that they are not effective for inverse folding. Therefore, we introduce a symmetric dual-path architecture that both leverages PLMs for pretrained sequence evolution knowledge and MPLMs for pretrained structural knowledge to iteratively guide protein sequence generation.Through extensive experiments across standard protein inverse folding benchmarks, our method achieves state-of-the-art performance, surpassing prior approaches, and ablation studies validate the rationale of our symmetric design, revealing a promising direction for the community.",
+      "authors": [
+        "Handong Wang",
+        "Jiaxin Qi",
+        "Baisheng Lai",
+        "Jianqiang Huang"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-09-01T14:57:24+00:00",
+      "link": "https://arxiv.org/pdf/2609.01353v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Deep learning protein inverse folding generates amino-acid sequences from 3D structures; overlaps with molecular generation and optimization for enzyme engineering and drug discovery.",
+      "llm_evidence_cn": "基于深度学习的蛋白质逆折叠从3D结构生成氨基酸序列，属于分子生成和优化在酶工程与药物发现中的应用。",
+      "llm_evidence": "基于深度学习的蛋白质逆折叠从3D结构生成氨基酸序列，属于分子生成和优化在酶工程与药物发现中的应用。",
+      "canonical_evidence": "基于深度学习的蛋白质逆折叠从3D结构生成氨基酸序列，属于分子生成和优化在酶工程与药物发现中的应用。",
+      "llm_tldr_en": "SymFold synergizes evolutionary and structural priors in a dual-path architecture to recover protein sequences from 3D structures more accurately than serial structure-encoder-plus-PLM pipelines.",
+      "llm_tldr_cn": "蛋白质逆折叠常用的流水线是先由结构编码器得到粗糙序列，再用蛋白语言模型事后精修，结果受上游编码质量限制。本文观察到把结构信息直接交给多模态蛋白语言模型也难以胜任该任务，因此提出SymFold对称双路径架构，协同利用进化先验与结构先验，避免串行级联误差。该方法能够在给定三维结构时更准确地恢复氨基酸序列。这一改进对酶工程、药物设计等结构驱动的蛋白设计任务具有直接推动作用。",
+      "llm_tldr": "蛋白质逆折叠常用的流水线是先由结构编码器得到粗糙序列，再用蛋白语言模型事后精修，结果受上游编码质量限制。本文观察到把结构信息直接交给多模态蛋白语言模型也难以胜任该任务，因此提出SymFold对称双路径架构，协同利用进化先验与结构先验，避免串行级联误差。该方法能够在给定三维结构时更准确地恢复氨基酸序列。这一改进对酶工程、药物设计等结构驱动的蛋白设计任务具有直接推动作用。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "molecular generation and optimization with machine learning",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2609.05643v1",
+      "source": "arxiv",
+      "title": "The convergent laboratory: when AI reasoning, autonomous experiments, high performance and quantum computing reshape chemistry",
+      "abstract": "This Comment emerges from TPC26 (https://tpc26.org), a conference convening leaders from academia, national laboratories, and industry who are reshaping materials science discovery. The meeting explored how AI, autonomous agents, self-driving labs, higher performance and quantum computing converge to amplify their individual impact on materials science discovery. The perspectives here reflect the firsthand experiences of researchers at these frontiers and capture the essence of this global endeavor. As AI-driven reasoning, autonomous agentic frameworks, self-driving laboratories, and fault-tolerant quantum processors mature simultaneously, we offer this Comment as a reference at what we believe is a tipping point of transformative advances and productive disruption in the chemical sciences.",
+      "authors": [
+        "Eliu Huerta",
+        "Xiaoyun Wang",
+        "Geetika Gupta",
+        "Edward H. Sargent",
+        "Cameron J. Owen",
+        "Victor Fung",
+        "Abhishek Mitra",
+        "Austin Cheng",
+        "Emma Bouchard",
+        "Shams Mehdi"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cond-mat.mtrl-sci"
+      ],
+      "published": "2026-09-04T18:25:07+00:00",
+      "link": "https://arxiv.org/pdf/2609.05643v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "perspective on converging AI reasoning, autonomous agents, self-driving labs, high-performance and quantum computing in chemistry",
+      "llm_evidence_cn": "评论AI推理、自主智能体、自驱动实验室与量子计算在化学中的融合趋势",
+      "llm_evidence": "评论AI推理、自主智能体、自驱动实验室与量子计算在化学中的融合趋势",
+      "canonical_evidence": "评论AI推理、自主智能体、自驱动实验室与量子计算在化学中的融合趋势",
+      "llm_tldr_en": "This Comment from the TPC26 meeting examines how AI reasoning, autonomous agents, self-driving laboratories, high-performance and quantum computing converge to reshape chemistry and materials discovery, offering a panoramic reference for future research directions.",
+      "llm_tldr_cn": "该文是基于TPC26会议的评述性观点，讨论人工智能推理、自主智能体、自驱动实验室、高性能计算与量子计算在化学与材料发现中如何汇聚。作者结合产学界一线经验指出，新兴技术正从相互独立走向协同放大并重塑材料科学发现。文章为化学家理解下一代自主科研平台的定位与路径提供全景式参考，但并未提供系统性文献综述或实证方法。",
+      "llm_tldr": "该文是基于TPC26会议的评述性观点，讨论人工智能推理、自主智能体、自驱动实验室、高性能计算与量子计算在化学与材料发现中如何汇聚。作者结合产学界一线经验指出，新兴技术正从相互独立走向协同放大并重塑材料科学发现。文章为化学家理解下一代自主科研平台的定位与路径提供全景式参考，但并未提供系统性文献综述或实证方法。",
+      "llm_tags": [
+        "query:aichem-map:composite"
+      ],
+      "matched_query_tag": "query:aichem-map:composite",
+      "matched_query_text": "Papers central to AI4Chem领域全景、通用方法与研究方向探索, especially work that connects or combines: chemical foundation model pre-training and transfer learning; molecular generation and optimization with machine learning; chemical reaction prediction using artificial intelligence; retrosynthesis and synthetic route planning with AI; large language models for chemistry applications; machine learning acceleration for quantum chemistry and molecular dynamics; What are the latest advances in retrosynthesis, synthesis planning, and AI agents for chemistry, and how are these systems evaluated?; What are the latest survey papers on AI for chemistry covering multiple subfields?; What benchmark datasets and evaluation metrics are commonly used for molecular property prediction and generation?; How is deep learning applied to reaction mechanism inference and catalysis design?.",
+      "matched_requirement_id": "req-composite-aichem-map",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2609.08399v1",
+      "source": "arxiv",
+      "title": "MLIP Detective: Active Failure Mode Discovery Beyond Benchmark Scores for Machine-Learning Interatomic Potentials",
+      "abstract": "Universal machine-learning interatomic potentials (u-MLIPs) aim to generalize across diverse configurations. Benchmarks enable reproducible evaluation but may not expose failures outside their predefined scope. Here, we show that physics-informed search can complement benchmark-based evaluation by uncovering hidden failure modes. We introduce MLIP Detective, an agentic framework for active failure mode discovery. Starting from benchmark evidence, MLIP Detective generates falsifiable, physics-informed failure hypotheses, screens them with inexpensive simulations, and escalates only the most suspicious cases to human experts together with proposed verification protocols. Without issue-specific prompting, MLIP Detective identified and characterized a systematic anomaly in MACE-MPA-0: the model predicted some relaxed adsorbate-surface systems involving O- or F-containing adsorbates to be higher in energy than their corresponding separated fragments. Using cross-model comparisons, MLIP Detective further inferred a likely training-data origin for the anomaly, consistent with recent reports.",
+      "authors": [
+        "Ryuhei Okuno",
+        "Nontawat Charoenphakdee",
+        "Kaoru Hisama",
+        "Yuta Tsuboi"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cond-mat.mtrl-sci",
+        "physics.chem-ph"
+      ],
+      "published": "2026-09-08T08:07:33+00:00",
+      "link": "https://arxiv.org/pdf/2609.08399v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Active failure-mode discovery for machine-learning interatomic potentials; relevant to ML-accelerated molecular dynamics evaluation",
+      "llm_evidence_cn": "面向机器学习原子间势的主动失效发现，属于ML加速分子动力学评估范畴",
+      "llm_evidence": "面向机器学习原子间势的主动失效发现，属于ML加速分子动力学评估范畴",
+      "canonical_evidence": "面向机器学习原子间势的主动失效发现，属于ML加速分子动力学评估范畴",
+      "llm_tldr_en": "MLIP Detective is an agentic physics-informed framework that actively discovers hidden failure modes of universal machine-learning interatomic potentials beyond benchmark scores.",
+      "llm_tldr_cn": "通用机器学习原子间势基准无法充分暴露场景外失效模式，为此论文提出MLIP Detective，一种用于主动发现失效模式的智能体框架。它从基准证据出发生成可证伪的物理失效假设，用廉价模拟筛选，并将最可疑案例连同验证协议提交给人类专家；无需针对具体问题提示即可找到隐藏的失效模式。该工作为机器学习原子间势的稳健评估提供了基准分数之外的补充工具。",
+      "llm_tldr": "通用机器学习原子间势基准无法充分暴露场景外失效模式，为此论文提出MLIP Detective，一种用于主动发现失效模式的智能体框架。它从基准证据出发生成可证伪的物理失效假设，用廉价模拟筛选，并将最可疑案例连同验证协议提交给人类专家；无需针对具体问题提示即可找到隐藏的失效模式。该工作为机器学习原子间势的稳健评估提供了基准分数之外的补充工具。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2609.05714v1",
+      "source": "arxiv",
+      "title": "FPBench: Application-Oriented Error Decomposition for Foundation Potentials",
+      "abstract": "Foundation potentials (FPs) have emerged as a new basis for atomistic modeling. While their evaluation using average energy and force errors often indicates near-DFT accuracy, their performance in practical computational studies remains inconsistent. Here, we present FPBench, an application-oriented benchmark that evaluates FPs on representative computational tasks. Multiple state-of-the-art FPs are assessed on three fundamental tasks: force prediction for atomistic simulations, energy ranking for substitutional and vacancy orderings, and ion/vacancy migration. Benchmarking these FPs shows that average force and energy errors often fail to predict task performance, revealing substantial differences in practical reliability. FPBench introduces application-oriented error decomposition through metrics that resolve performance according to the physically consequential quantities and configurations governing computational tasks, including the fractions of highly accurate and large-force-error atoms, far-from-equilibrium atoms, relative phase-stability and convex-hull agreement, and along-path errors in ion migration. These error-decomposition metrics identify where FP errors arise within specific computational tasks, providing targeted guidance for model development. FPBench provides an open benchmark, evaluation code, and a public leaderboard for rigorous FP assessment and development.",
+      "authors": [
+        "Kiyan Amirian",
+        "Ramanuja Srinivasan Saravanan",
+        "Felix Adams",
+        "Charles E Schwarz",
+        "Yifei Mo"
+      ],
+      "primary_category": "cond-mat.mtrl-sci",
+      "categories": [
+        "cond-mat.mtrl-sci"
+      ],
+      "published": "2026-09-04T20:44:32+00:00",
+      "link": "https://arxiv.org/pdf/2609.05714v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Presents FPBench, an application-oriented benchmark for foundation potentials on force prediction, energy ranking, and ion/vacancy migration, revealing practical reliability limits.",
+      "llm_evidence_cn": "提出FPBench，在力预测、能量排序与离子/空位迁移任务上对基础势进行面向应用的误差分解评测，揭示实际可靠性差异。",
+      "llm_evidence": "提出FPBench，在力预测、能量排序与离子/空位迁移任务上对基础势进行面向应用的误差分解评测，揭示实际可靠性差异。",
+      "canonical_evidence": "提出FPBench，在力预测、能量排序与离子/空位迁移任务上对基础势进行面向应用的误差分解评测，揭示实际可靠性差异。",
+      "llm_tldr_en": "FPBench is an application-oriented benchmark evaluating foundation potentials on force prediction for atomistic simulations, energy ranking, and ion/vacancy migration; it shows average force/energy errors often do not predict practical task performance.",
+      "llm_tldr_cn": "尽管基础势（FP）的平均能量和力误差常显示其接近DFT精度，但实际计算任务表现不一。为此论文提出FPBench，在原子模拟力预测、替代/空位序的能量排序以及离子/空位迁移三类代表性任务上评估多种先进基础势。结果显示平均力与能量误差往往无法可靠预测任务性能，暴露实用可靠性差异。FPBench为机器学习力场和基础势的选型与误差分析提供了面向应用的评测基准。",
+      "llm_tldr": "尽管基础势（FP）的平均能量和力误差常显示其接近DFT精度，但实际计算任务表现不一。为此论文提出FPBench，在原子模拟力预测、替代/空位序的能量排序以及离子/空位迁移三类代表性任务上评估多种先进基础势。结果显示平均力与能量误差往往无法可靠预测任务性能，暴露实用可靠性差异。FPBench为机器学习力场和基础势的选型与误差分析提供了面向应用的评测基准。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2609.06446v1",
+      "source": "arxiv",
+      "title": "Tensor-based Approximation of Molecular Kinetics: Generator Learning, Reaction Coordinates and Incremental Updating",
+      "abstract": "We present an approach to analyze long-timescale kinetics of molecular dynamics simulations - meta-stable states and transition timescales - by a tensor-based approximation of the infinitesimal generator. We start from the variational approximation of low-lying generator eigenvalues, and discretize the associated eigenvalue problem using a tensor-product basis. We derive analytical expressions for the resulting tensor operators in tensor train (TT) format, and provide efficient algorithms to solve the corresponding linear problems. We also treat the case of a state-dependent diffusion field, which is relevant when working in reaction coordinates. We show how the number of reaction coordinates can be gradually increased without having to solve the variational problem from scratch. Using MD simulations of fast-folding proteins and TICA coordinates as reaction coordinates, we demonstrate the effectiveness of the proposed method at identifying long-timescale transitions and meta-stable states.",
+      "authors": [
+        "Minakshi Verma",
+        "Peter Benner",
+        "Feliks Nüske"
+      ],
+      "primary_category": "physics.chem-ph",
+      "categories": [
+        "physics.chem-ph"
+      ],
+      "published": "2026-09-06T07:42:47+00:00",
+      "link": "https://arxiv.org/pdf/2609.06446v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Tensor-train approximation of the molecular kinetics generator extracts metastable states and transition timescales from MD data; numerical method relevant to machine-learning/analysis pipelines for molecular dynamics.",
+      "llm_evidence_cn": "用张量列近似分子动力学生成元并从中提取亚稳态和转变时间尺度，是与分子动力学分析与加速相关的高效数值方法。",
+      "llm_evidence": "用张量列近似分子动力学生成元并从中提取亚稳态和转变时间尺度，是与分子动力学分析与加速相关的高效数值方法。",
+      "canonical_evidence": "用张量列近似分子动力学生成元并从中提取亚稳态和转变时间尺度，是与分子动力学分析与加速相关的高效数值方法。",
+      "llm_tldr_en": "Variational eigenproblem for the molecular kinetics generator is discretized in tensor-train format, enabling efficient extraction of metastable states and transition timescales with incremental reaction coordinates.",
+      "llm_tldr_cn": "分子动力学长时程模拟中的亚稳态与转变时间尺度提取常受高维特征值问题制约。本文提出基于张量积基和Tucker/张量列格式的生成元近似方法，将离散后的特征值问题表示为张量列算子，并推导解析张量算子与高效求解算法。方法还能处理状态依赖扩散场，并允许逐步增加反应坐标数量。该工作为从MD轨迹解析长时间动力学信息提供了低秩张量化数值路线，对理解分子反应坐标和转变过程具有方法论价值。",
+      "llm_tldr": "分子动力学长时程模拟中的亚稳态与转变时间尺度提取常受高维特征值问题制约。本文提出基于张量积基和Tucker/张量列格式的生成元近似方法，将离散后的特征值问题表示为张量列算子，并推导解析张量算子与高效求解算法。方法还能处理状态依赖扩散场，并允许逐步增加反应坐标数量。该工作为从MD轨迹解析长时间动力学信息提供了低秩张量化数值路线，对理解分子反应坐标和转变过程具有方法论价值。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2609.08474v1",
+      "source": "arxiv",
+      "title": "Predicting directional flexibility in proteins",
+      "abstract": "Predicting protein dynamics is a long-standing problem in computational structural biology. Often, protein function critically depends on local directed motions, such as hinge movements, catalytic loop rearrangements and domain reorientations, which can be characterized by directional flexibility and correlated structural motions of the protein backbone. While Molecular Dynamics (MD) simulations provide an established but often prohibitively expensive approach, recent deep generative models aim to reduce this cost by directly predicting conformational ensembles, emulating MD. However, due to their large size and the need to generate several states until the derived dynamical properties converge, these models remain expensive. In this work, we propose BackFlip-2: a fast SE(3)-equivariant graph neural network trained to directly predict dynamical descriptors, such as directional backbone flexibility and pairwise dynamic correlations, from an equilibrium structure. In a series of experiments, we show that our model matches the accuracy of substantially larger ensemble generation models while being orders of magnitude faster, and demonstrate that the proposed equivariant architecture is especially well-suited for capturing anisotropic motions in proteins. BackFlip-2 model weights, training and inference code are available at https://github.com/graeter-group/backflip.",
+      "authors": [
+        "Vsevolod Viliuga",
+        "Leif Seute",
+        "Matteo Tadiello",
+        "Nicolas Wolf",
+        "Frauke Gräter",
+        "Arne Elofsson"
+      ],
+      "primary_category": "q-bio.BM",
+      "categories": [
+        "q-bio.BM"
+      ],
+      "published": "2026-09-08T09:18:46+00:00",
+      "link": "https://arxiv.org/pdf/2609.08474v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Fast SE(3) generative model predicts protein dynamics as an MD surrogate",
+      "llm_evidence_cn": "快速SE(3)生成模型作为MD替代来预测蛋白质动态",
+      "llm_evidence": "快速SE(3)生成模型作为MD替代来预测蛋白质动态",
+      "canonical_evidence": "快速SE(3)生成模型作为MD替代来预测蛋白质动态",
+      "llm_tldr_en": "BackFlip-2 is a fast SE(3)-based deep generative model that predicts directional flexibility and correlated backbone motions, reducing the cost of MD-based protein dynamics estimation.",
+      "llm_tldr_cn": "针对功能关键残基的方向性运动等蛋白质动态难以廉价获得的问题，本文提出BackFlip-2，一种快速的SE(3)深度生成模型，用于直接预测铰链运动、催化环重排等方向性柔性与主链相关运动。相比昂贵且需多构象采样的深度生成模型，该方法以更小的模型直接得到收敛的动态属性，为分子动力学模拟的替代预测提供了高效方案，可用于蛋白质功能位点动态研究。",
+      "llm_tldr": "针对功能关键残基的方向性运动等蛋白质动态难以廉价获得的问题，本文提出BackFlip-2，一种快速的SE(3)深度生成模型，用于直接预测铰链运动、催化环重排等方向性柔性与主链相关运动。相比昂贵且需多构象采样的深度生成模型，该方法以更小的模型直接得到收敛的动态属性，为分子动力学模拟的替代预测提供了高效方案，可用于蛋白质功能位点动态研究。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2609.05877v1",
+      "source": "arxiv",
+      "title": "A budget-dependent crossover between coverage- and response-based training-set selection for machine-learned interatomic potentials",
+      "abstract": "Selecting compact training sets for machine-learned interatomic potentials requires deciding whether to preserve structural diversity or target configurations on which models disagree. The better choice can depend on how much data is retained, making a comparison at one training-set size insufficient. Here we link selection criteria to prediction accuracy through a budget-resolved comparison of retrained MACE models on GAP-20 Carbon and pooled revised MD17. Structural coverage is compared with a response-guided selector that targets disagreement between a coverage-trained model and a full-data reference. This retrospective response witness tests the value of model disagreement for compressing an already labelled pool. At 5\\%, coverage gives smaller absolute deviations from the full-data error than random sampling across four force endpoints in both datasets. The witness has larger deviations than coverage at 1\\% and 5\\%, but the ordering reverses at 20\\%. At 20\\%, witness-selected models also lower direct held-out force errors by 0.46--5.89\\% relative to coverage, with all eight paired training-seed intervals favouring the witness. Six errors fall below the full-data reference. Mean force-error reductions are 0.164--0.167~meV~$\\textÅ^{-1}$, with larger gains for tail and masked endpoints. Complementary analyses show that learned similarity preserves the coverage ranking, while selecting by frozen-model error gives higher error than embedding coverage. These findings establish retained-data budget as a deciding variable in atomistic training-set selection and provide a direct test of when response-guided compression improves on structural coverage.",
+      "authors": [
+        "Jia Bi",
+        "Alin-Marin Elena"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-09-05T04:49:32+00:00",
+      "link": "https://arxiv.org/pdf/2609.05877v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Budget-dependent comparison of training-set selection strategies for machine-learned interatomic potentials relevant to ML-accelerated MD",
+      "llm_evidence_cn": "在数据预算维度比较机器学习原子间势的训练集选择策略，与加速分子动力学模拟中的势构建相关",
+      "llm_evidence": "在数据预算维度比较机器学习原子间势的训练集选择策略，与加速分子动力学模拟中的势构建相关",
+      "canonical_evidence": "在数据预算维度比较机器学习原子间势的训练集选择策略，与加速分子动力学模拟中的势构建相关",
+      "llm_tldr_en": "Investigates whether coverage-based or response-guided training-set selection works better for ML interatomic potentials by retraining MACE models on GAP-20 Carbon and pooled revised MD17 across budgets, revealing a budget-dependent crossover between the two criteria.",
+      "llm_tldr_cn": "为机器学习原子间势挑选紧凑训练集时，需要在保留结构多样性与关注模型分歧的构型之间权衡，而更优选择可能随数据预算变化。本文将选择准则与预测精度联系，在GAP-20 Carbon和合并版修订MD17上按数据预算重训MACE模型，对比覆盖率驱动选择器和响应分歧引导选择器。结果显示存在预算依赖的交叉现象，不同预算下各有胜负，说明单点数比较不足以判定策略优劣，需按预算做选择。",
+      "llm_tldr": "为机器学习原子间势挑选紧凑训练集时，需要在保留结构多样性与关注模型分歧的构型之间权衡，而更优选择可能随数据预算变化。本文将选择准则与预测精度联系，在GAP-20 Carbon和合并版修订MD17上按数据预算重训MACE模型，对比覆盖率驱动选择器和响应分歧引导选择器。结果显示存在预算依赖的交叉现象，不同预算下各有胜负，说明单点数比较不足以判定策略优劣，需按预算做选择。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2609.06779v1",
+      "source": "arxiv",
+      "title": "DrugReason: Dynamic Multi-View Reasoning over Knowledge Graph and Language Evidence for Drug Repurposing",
+      "abstract": "Drug repurposing aims to identify new therapeutic uses for existing compounds and, compared with de novo drug discovery, offers a faster and more cost-effective path to clinical translation. However, the space of candidate drug-disease pairs is enormous and their underlying relationships often depend on complex multi-hop biological mechanisms, making it difficult to reliably predict which pairs represent true therapeutic relationships. Existing approaches tackle this from two directions: knowledge graph-based methods organize curated biomedical evidence into structured relational networks for grounded multi-hop reasoning, while LLM-based methods leverage pretrained knowledge to generate flexible mechanistic rationales. Yet neither is sufficient alone - KGs are confined to observed graph structure while LLMs lack factual grounding and risk hallucination. To address this gap, we propose DrugReason, a multi-view reasoning framework that integrates grounded KG reasoning with LLM-generated mechanistic inference for drug repurposing. DrugReason adaptively routes diverse reasoning paths to specialized experts conditioned on the query context, while a cross-expert distillation objective enables knowledge sharing without sacrificing expert specialization. Experiments on PharmaDB, DDInter, and DrugBank show that DrugReason improves average performance over strong single-view reasoning baselines and achieves competitive or superior results compared with graph-based alternatives, while providing interpretable routing-based predictions.",
+      "authors": [
+        "Zijie Liu",
+        "Hongxuan Li",
+        "Zhen Tan",
+        "Jinhao Duan",
+        "Baixiang Huang",
+        "Zunpeng Liu",
+        "Kai Shu",
+        "Tianlong Chen"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-09-06T18:54:26+00:00",
+      "link": "https://arxiv.org/pdf/2609.06779v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "LLM-based reasoning over KG and language evidence for drug repurposing applications",
+      "llm_evidence_cn": "基于语言模型结合知识图谱与文本证据的药物重定位推理应用",
+      "llm_evidence": "基于语言模型结合知识图谱与文本证据的药物重定位推理应用",
+      "canonical_evidence": "基于语言模型结合知识图谱与文本证据的药物重定位推理应用",
+      "llm_tldr_en": "DrugReason combines knowledge-graph structure and LLM-generated language evidence in a dynamic multi-view reasoning framework for reliable drug repurposing prediction.",
+      "llm_tldr_cn": "针对药物重定位需要同时考虑大规模候选药物-疾病对和多跳生物机制关系的问题，本文提出DrugReason框架，将知识图谱中的结构化关系与预训练语言模型生成的机制性文本证据进行动态多视角融合推理。该方法综合两种证据以更可靠地预测药物-疾病的真实治疗关联，为老药新用提供了系统化的智能推理与证据整合方案，属于大语言模型在药物化学交叉中的应用。",
+      "llm_tldr": "针对药物重定位需要同时考虑大规模候选药物-疾病对和多跳生物机制关系的问题，本文提出DrugReason框架，将知识图谱中的结构化关系与预训练语言模型生成的机制性文本证据进行动态多视角融合推理。该方法综合两种证据以更可靠地预测药物-疾病的真实治疗关联，为老药新用提供了系统化的智能推理与证据整合方案，属于大语言模型在药物化学交叉中的应用。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "large language models for chemistry applications",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
