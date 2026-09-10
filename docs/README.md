@@ -41,17 +41,17 @@
 <section class="dpr-home-dashboard-card dpr-home-report-card">
   <div class="dpr-home-dashboard-header">
     <div>
-      <span class="dpr-home-dashboard-kicker">2026-09-09</span>
+      <span class="dpr-home-dashboard-kicker">2026-09-10</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">共 19 篇</strong>
+    <strong class="dpr-home-dashboard-count">共 8 篇</strong>
   </div>
   <dl class="dpr-home-dashboard-stats">
     <div class="dpr-home-dashboard-stat"><dt>累计更新</dt><dd>1 次</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>7</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>12</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>6</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>2</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-09-09 22:13:07 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-09-10 21:30:24 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -62,9 +62,9 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>今日完成19篇文献扫描，其中7篇精读、12篇速读，重点聚焦AI驱动的药物分子设计与计算化学方法。</p>
-<p>最值得关注的是两篇精读高分工作：基于方差爆炸扩散模型的“PocketVE”实现稳定且性质可控的结构基药物设计，以及用固定维潜流生成可变尺寸3D分子的新框架。</p>
-<p>普通读者可优先跟进扩散模型在靶点口袋药物设计中的最新应用，同时留意机器学习势函数和液相保留时间预测的主动失效模式分析进展。</p>
+<p>今天日报筛选8篇文献，精读6篇、速读2篇，重点落在分子生成评估与自进化科研智能体。</p>
+<p>最值得看的是两篇9分工作：一篇系统评估de novo药物设计中的分子生成模型，另一篇ADMET-EvO用自进化科学智能体支撑异质任务持续研究。</p>
+<p>普通读者可先读这两篇的摘要与图表，再按兴趣跟进高能分子体系晶体结构预测的机器学习力场基准和少样本PROTAC降解预测。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -73,12 +73,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">精读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">7 篇</strong>
+    <strong class="dpr-home-dashboard-count">6 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="PocketVE: Stable and Property-Guided Structure-Based Drug Design with Variance-Exploding Diffusion">PocketVE: Stable and Property-Guided Structure-Based Drug Design with Variance-Exploding Diffusion</span></li><li><span class="dpr-home-dashboard-paper-title" title="Fixed-Dimensional Latent Flow for Generating Variable-Size 3D Molecules">Fixed-Dimensional Latent Flow for Generating Variable-Size 3D Molecules</span></li><li><span class="dpr-home-dashboard-paper-title" title="Discretization-Aware Fine-Tuning for Quantum Machine Learning with Chemical Foundation Models">Discretization-Aware Fine-Tuning for Quantum Machine Learning with Chemical Foundation Models</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="A Systematic Evaluation of Molecule Generation Models for De Novo Drug Design: From Benchmarks to Practical Insights">A Systematic Evaluation of Molecule Generation Models for De Novo Drug Design: From Benchmarks to Practical Insights</span></li><li><span class="dpr-home-dashboard-paper-title" title="ADMET-EvO: a self-evolving scientific agent for sustained research across heterogeneous tasks">ADMET-EvO: a self-evolving scientific agent for sustained research across heterogeneous tasks</span></li><li><span class="dpr-home-dashboard-paper-title" title="The convergent laboratory: when AI reasoning, autonomous experiments, high performance and quantum computing reshape chemistry">The convergent laboratory: when AI reasoning, autonomous experiments, high performance and quantum computing reshape chemistry</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>4</strong></span><span class="dpr-home-dashboard-tag">smc <strong>3</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>3</strong></span><span class="dpr-home-dashboard-tag">smc <strong>3</strong></span></div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-skim-card">
   <div class="dpr-home-dashboard-header">
@@ -86,12 +86,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">速读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">12 篇</strong>
+    <strong class="dpr-home-dashboard-count">2 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Simulation-Supervised Foundation Models for Retention Time Prediction in High-Performance Liquid Chromatography beyond Experimental Data Coverage">Simulation-Supervised Foundation Models for Retention Time Prediction in High-Performance Liquid Chromatography beyond Experimental Data Coverage</span></li><li><span class="dpr-home-dashboard-paper-title" title="Quantum Wavefunction Augmentation via Variational Autoencoders">Quantum Wavefunction Augmentation via Variational Autoencoders</span></li><li><span class="dpr-home-dashboard-paper-title" title="MLIP Detective: Active Failure Mode Discovery Beyond Benchmark Scores for Machine-Learning Interatomic Potentials">MLIP Detective: Active Failure Mode Discovery Beyond Benchmark Scores for Machine-Learning Interatomic Potentials</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Benchmarking Universal Machine Learning Force Fields for Crystal Structure Prediction of High-Energy Molecular Systems">Benchmarking Universal Machine Learning Force Fields for Crystal Structure Prediction of High-Energy Molecular Systems</span></li><li><span class="dpr-home-dashboard-paper-title" title="ProMeta: Few-shot PROTAC-targeted degradation prediction across E3 ligases">ProMeta: Few-shot PROTAC-targeted degradation prediction across E3 ligases</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>12</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>1</strong></span><span class="dpr-home-dashboard-tag">smc <strong>1</strong></span></div>
 </section>
 </div>
 

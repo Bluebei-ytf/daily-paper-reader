@@ -1,0 +1,251 @@
+Title: Benchmarking Universal Machine Learning Force Fields for Crystal Structure Prediction of High-Energy Molecular Systems
+
+URL Source: https://arxiv.org/pdf/2609.07477v1
+
+Published Time: Wed, 09 Sep 2026 02:14:18 GMT
+
+Number of Pages: 10
+
+Markdown Content:
+# Benchmarking Universal Machine Learning Force Fields for Crystal Structure Prediction of High-Energy Molecular Systems 
+
+Musiha Mahfuza Mukta, 1 Osman Goni Ridwan, 1 Romain Perriot, 2, ∗ and Qiang Zhu 1, 3, † 
+
+> 1
+
+Department of Mechanical Engineering and Engineering Science, University of North Carolina at Charlotte, Charlotte, NC 28223, USA 
+
+> 2
+
+Theoretical Division, Los Alamos National Laboratory, Los Alamos, NM 87545, USA. 
+
+> 3
+
+North Carolina Battery Complexity, Autonomous Vehicle and Electrification (BATT CAVE) Research Center, Charlotte, NC 28223, USA 
+
+(Dated: September 9, 2026) 
+
+Abstract. Recent developments of universal machine learning interatomic potentials (UMLIPs) offer a fast route for screening molecular crystals based on geometry relaxation and energy ranking, but their reliability across chemically diverse energetic materials remains elusive. In particular, it is unclear whether or not these UMLIPs are over-sensitive to break the desired molecular connectivity for relaxing the periodic crystals. Herein we tested the hypothesis that classical force-field pre-relaxation can provide a more suitable starting geometry for subsequent UMLIP relaxation on a large database of high energy molecular crystals. Three models (MACE, MACE-OFF and UMA) in conjunction with the General Amber Force Field (GAFF) were applied to test this hypothesis. Among them, direct MACE-OFF and UMA showed very high relaxation success and preserved the reference geometries most closely, but they still exhibit failures for some rare cases. Using GAFF pre-relaxation can systematically reduce the number of failed relaxations with lower computational costs. Our comparative failure and robustness analyses revealed distinct trade-offs among the evaluated models. Among them, MACE-OFF achieves a better compromise between potential energy surface smoothness, structural fidelity, and stress convergence, serving as a good choice to provide a reliable foundation for automated structural optimization. 
+
+I. INTRODUCTION 
+
+Organic molecular crystals are important in many fields, including pharmaceuticals, energetic materials, organic elec-tronics, and porous materials. [1–9] Their properties depend strongly on how the molecules are arranged in the crystal. Even small changes in molecular packing, hydrogen bond-ing, or van der Waals interactions can lead to different crystal packings with different stability, density, and physical proper-ties (see, for instance, Refs. 10–12 in the case of energetic ma-terials). Therefore, High-throughput analysis of organic crys-tals is valuable for understanding known materials and identi-fying promising new crystal forms. [13–15] Crystal structure prediction (CSP) provides a practical way to explore possible molecular packings before experimental synthesis and characterization.[16–19] A typical CSP work-flow generates a large number of trial structures, relaxes each structure to a nearby local minimum, and selects those lowest-energy structures for further consideration. [20] Recently, we developed the High-Throughput Organic Crystal Structure Prediction HTOCSP [21] framework, which combines molecu-lar analysis, force-field assignment, symmetric crystal genera-tion, structure relaxation, and energy ranking in a single open-source workflow. Among these steps, geometry relaxation is one of the most important. In a traditional CSP, a large num-ber of generated structures are usually relaxed with classical force fields because they are computationally inexpensive and can preserve the assigned molecular connectivity through ex-plicit bond, angle, torsion, and nonbonded terms. [22] How-ever, the accuracy of classical force fields can vary across dif-  
+
+> ∗rperriot@lanl.gov
+> †qzhu8@charlotte.edu
+
+ferent molecules or types of molecules, which may lead to errors in the relaxed geometries and final energy ranking. Different from the classical force field, universal machine-learning interatomic potentials (UMLIP) [23] offer a promis-ing way to improve this stage of the CSP workflow. [24–29] Models such as MACE, MACE-OFF, and UMA can predict energies, forces, and stresses at much lower cost than density functional theory (DFT) [30]. They can be used to perform full relaxation of both atomic positions and lattice parame-ters. These models may represent better choices than classical force fields by providing a more accurate description of the final crystal geometry and energy. However, pure UMLIP relaxation on raw structures may be problematic when the starting configuration is far from equi-librium. [31] In practice, many trial structures may contain short intermolecular contacts, strained molecular geometries, poor hydrogen positions, or large initial forces. Under these conditions, UMLIPs may encounter configurations not seen during training, resulting in potential unintended bond break-ing, proton transfer, or formation of new bonds when used in relaxation. [32] Numerical convergence with respect to energy or forces alone is therefore not enough to confirm a chemically valid relaxation. On the other hand, the classical force fields may not excel in accurate energy prediction, but are often reliable in preserv-ing the desired molecular connectivity, since they are based on explicit chemical bonding terms. It is therefore more precti-cal to avoid the exploration of unrelated potential energy sur-faces caused by UMLIP’s limitation by pre-relaxing the struc-ture to configurations that maintain the targeted connectiv-ity with classical force fields. Such pre-relaxation strategies have been recently explored for materials generation tasks with target chemical environments within the framework of AI-generative models. [33, 34] Similarly, it can be valuable to test if classical force fields can be used to address the limita-arXiv:2609.07477v1 [cond-mat.mtrl-sci] 7 Sep 2026 2tions of pure UMLIP relaxations. In this work, we benchmark full structural relaxation of more than 14k high-energy molecular crystal structures us-ing three UMLIPs (MACE [35], MACE-OFF [36], and UMA [37]); both directly and in combination with the gen-eral Amber force field (GAFF) [38] pre-relaxation. This study evaluates whether current UMLIPs can robustly relax a large and chemically diverse set of high energy molecular crystals, whether classical force field preconditioning improves relia-bility, and the intrinsic limitations of UMLIPs applied to high-throughput organic crystal screening.  
+
+> II. COMPUTATIONAL METHODOLOGY
+
+Below, we outline the key components of our compu-tational methodology. These include preparation of the molecular-crystal dataset, construction of database, imple-mentation of the relaxation workflow within the HTOCSP en-vironment, and evaluation of convergence and performance metrics.  
+
+> A. High energy molecular crystal dataset
+
+The crystal structures examined in this work were ob-tained from the high-explosive molecular database compiled by Davis et al.[39] The original database was constructed by mining the Cambridge Structural Database (CSD) [40] for ex-perimentally reported single-component, solvent-free C-H-N-O compounds containing energetic functional groups, e.g. N-O bonds, azide groups, and azo groups. Structures that could not be represented using SMILES strings, polymeric com-pounds, free radicals, and structures measured under elevated pressure were excluded from the original study. The published database contains approximately 21,000 experimentally syn-thesized molecules and associated molecular and energetic-material descriptors. In this work, all available crystal-structure files were exam-ined individually. Records with blank, corrupted, or unread-able crystallographic information files (CIF) were removed because they could not be converted to valid periodic struc-tures. Duplicate crystal entries were removed to prevent the same structure from being evaluated more than once. After this filtering, 14,085 unique and readable molecular crystal structures were used for all six relaxation workflows. The original CIF files were first converted into a readable molecular crystal database. For each entry, the CSD reference code (refcode) and corresponding molecular SMILES were used to construct a PyXtal molecular crystal object [41] from the CIF file. If the initial structure could not be read directly, hydrogen atoms were added during a second loading attempt. The resulting structural information, molecular iden-tity, and CSD refcode were then stored using the PyXtal 
+
+database interface that follows the ASE database format. [42]  
+
+> B. Interatomic Potentials and Force Fields
+
+1. Classical force field for pre-relaxation . We employed GAFF for rapid molecular pre-relaxation before the UMLIP calculations. GAFF is a widely used classical force field that provides reasonable accuracy for a broad range of organic molecules. In the HTOCSP , param-eters are assigned via AmberTools [43] for GAFF, and structures are minimized with CHARMM [44]. Here, molecule-specific atomic partial charges were deter-mined using AM1-BCC method. [45] 2. Machine-learning interatomic potentials . We con-sidered MACE, MACE-OFF, and UMA for full crys-tal relaxation, including both atomic coordinates and lattice parameters. MACE is an equivariant message-passing neural network potential that achieves near-DFT accuracy at significantly reduced computational cost, whereas MACE-OFF is a variant of MACE opti-mized for organic systems, and UMA is a universal po-tential trained across a wide range of molecular and ma-terials systems excluding the energetic molecules. For the two stage workflows, each UMLIP was applied after GAFF pre-relaxation to obtain the final structure, en-ergy, forces, and stress. The MACE calculation used the small MACE-MP model with the dispersion option enabled. MACE-OFF used the medium model. UMA used the local uma-s-1p1 checkpoint with the organic-molecular-crystal task.  
+
+> C. Relaxation workflows
+
+Each structure was processed through six workflows. All calculations were performed using a Python workflow imple-mented within the HTOCSP environment. In the three pure UMLIP workflows, the reference structure was relaxed with MACE, MACE-OFF, or UMA. In the two-stage workflows, the crystal was first pre-relaxed with GAFF. In the GAFF stage, only the molecular atomic positions were relaxed, and the unit cell was held fixed. The GAFF-relaxed structure was then passed to MACE, MACE-OFF, or UMA. In the final UM-LIP stage, both atomic coordinates and the unit cell were op-timized. Crystal symmetry was maintained with the ASE’s FixSymmetry constraint [42]. The cell and positions were op-timized with the ASE UnitCellFilter and the fast inertial re-laxation engine (FIRE) [46]. A maximum of 5000 FIRE op-timization steps were allowed and the production calculations used a target maximum force of 0.01 eV /Å. The UnitCellFil-ter cell factor was set to 10.0. Listing 1 provides a simplified example of using the direct MACE relaxation.                     
+
+> from ase.constraints import FixSymmetry from ase.filters import UnitCellFilter from ase.io import write from ase.optimize.fire import FIRE from mace.calculators import mace_mp from pyxtal.db import database refcode ="ABAGIV"
+
+3                    
+
+> db_file ="HEM.db" structure =database(db_file).get_pyxtal(refcode) atoms =structure.to_ase(resort=False) atoms.calc =mace_mp(model="small", dispersion=True ,device="cpu") atoms.set_constraint(FixSymmetry(atoms)) relax_object =UnitCellFilter(atoms, cell_factor =10.0) optimizer =FIRE(relax_object, a=0.01, logfile=f"{refcode}_relax.log") converged =optimizer.run(fmax=0.03, steps=5000) write(f"{refcode}_relaxed.cif", atoms)
+> Listing 1. Simplified example of the direct MACE relaxation workflow.
+
+A workflow was counted as successfully relaxed when i) final UMLIP optimization reached the force criterion, and ii) the relaxed atomic coordinates could be mapped back to the reference molecular PyXtal representation without an in-valid change in molecular connectivity. A calculation was recorded as failed when the optimizer did not finish within the allowed limit, or a valid crystal representation could not be reconstructed, or the molecular bonding pattern changed beyond the connectivity criteria via the bond length threshold values.   
+
+> III. RESULTS AND DISCUSSIONS A. Overall relaxation statistics
+
+All six workflows successfully relaxed most of the struc-tures. As shown in Table I, direct MACE produced 13,749 relaxed structures and 336 failures, giving the lowest success rate of 97.61%. GAFF pre-relaxation improved the MACE result to 13,802 relaxed structures and reduced the failures to 283. This corresponds to a success rate of 97.99%. MACE-OFF and UMA were more robust than MACE. Direct MACE-OFF failed for only eight structures, and GAFF+MACE-OFF reduced this number to three. Direct UMA failed for nine structures, while GAFF+UMA failed for six. The success rates for these four workflows were all greater than 99.9%. Thus, the largest practical improvement from GAFF pre-relaxation was observed for MACE. The gain for MACE-OFF and UMA was smaller because the direct calculations already had very high completion rates.                    
+
+> Table I. Summary of MLIP relaxations applied to 14,085 structures.
+> Method Success Failure Success Rate
+> MACE 13,749 336 97.61% GAFF+MACE 13,802 283 97.99% MACE-OFF 14,077 899.94% GAFF+MACE-OFF 14,082 399.98% UMA 14,076 999.94% GAFF+UMA 14,079 699.96%
+
+After the use of GAFF-relaxed structures, the later UMLIP refinement becomes much faster and requires only about half of the pure UMLIP relaxation time. The GAFF stage was much less expensive because only the atomic positions were optimized, while the unit-cell parameters were kept fixed. Us-ing a residual force-convergence threshold of 0.05 eV/Å, the GAFF step required a median of only ∼50 s. The resulting preconditioned structures were then fully relaxed with the cor-responding UMLIP, including optimization of both the atomic positions and lattice parameters. Despite the additional GAFF step, the full GAFF+UMLIP workflow remained faster than pure UMLIP relaxation. As shown in Table II, GAFF+MACE required 69.5% of the pure MACE time, GAFF+MACE-OFF required 69.7% of the pure MACE-OFF time, and GAFF+UMA required 84.1% of the pure UMA time. Thus, GAFF pre-relaxation reduced the median total wall time by approximately 15–30% for all three models. These results indicate that a short, fixed cell GAFF relaxation can remove severe local strain and unfavor-able atomic contacts before the more expensive full UMLIP optimization. GAFF therefore acts as a low-cost structural preconditioner, while the UMLIP remains responsible for the final relaxation of both the molecular geometry and crystal lattice.            
+
+> Table II. The median computational cost (in CPU seconds) of pure and GAFF-preconditioned UMLIP relaxations. Ratio is computed as the median full GAFF+UMLIP time divided by the median pure UMLIP time.
+> Method Pure UMLIP GAFF + UMLIP Ratio
+> MACE 2398.9 52.0 + 1468.2 69.5% MACE-OFF 3056.7 49.4 + 1942.5 69.7% UMA 3143.2 45.0 + 2431.9 84.1%
+
+All calculations were run on CPU nodes of the HPC clus-ter using Slurm. Multiple structures were relaxed in parallel within each job, with one CPU thread assigned to each relax-ation worker. The reported computational costs are therefore per-structure wall-clock times.  
+
+> B. Failure analysis
+
+Across all workflows, we identified 645 method-specific failures involving 382 unique CSD refcodes. Each fail-ure showed bond-level evidence of a molecular-connectivity change. Among all failures, there exist 336 direct MACE and 283 GAFF+MACE cases due to inconsistent connectivity. MACE-OFF and UMA had only a small number of failures. This result is consistent with the chemical domains of the models: MACE is a general materials model, MACE-OFF is designed for neutral organic systems, and UMA contains training data from multiple chemical domains but excluding energetic crystals. Nevertheless, no model was fully pro-tected from bond rearrangement in this chemically demanding dataset. 1. MACE : MACE exhibits two types of connectivity failures. First, direct MACE relaxation of trini-tromethanides often results in an unphysically long 4 
+
+> Figure 1. Representative MACE relaxation failure in trinitromethanides WIKCIE. (a) Initial structure. (b) After MACE relaxation (leading to separation of the third NO 2group from molecular backbone). (c) Comparison of GAFF pre-relaxation. (d) Comparison of GAFF+MACE-OFF relaxation.
+> Figure 2. Representative MACE relaxation failure in ABULIT due to intramolecular proton transfer. (a) Initial structure. (b) After MACE relaxation (leading to intramolecular proton transfer from O-H from N-H). (c) GAFF pre-relaxation (leading to better H positions to avoid strong N-H). (d) After GAFF+MACE relaxation with the rescue.
+
+bond between the central carbon and the third NO 2
+
+group. Fig. 1 illustrates a representative example us-ing WIKCIE. In the initial experimental structure, the C-NO 2 bond distance is 1.545 Å; however, MACE re-laxation leads to a significant elongation to 1.879 Å. In contrast, GAFF is a physically motivated non-reactive force field, and it correctly yields 1.555 Å, which is close to the experimental value. This failure likely stems from a lack of trinitromethanide configurations in the MACE training dataset, causing the model to yield nonphysical geometries. Across the entire dataset, we identified 108 trinitromethanides for which MACE con-sistently fails. In these cases, GAFF relaxation cannot rescue MACE, necessitating the use of alternative UM-LIPs. In addition, another common MACE relaxation failure is the intramolecular proton transfer. Fig. 2 shows that the hydrogen from the H atom from the phenolic hy-droxyl group becomes attached to N site in the adjacent oxime group. This is likely because MACE may have a tendency to strongly favor the N H bond over O Hbond. In this case, adding a GAFF pre-relaxation can slightly realign the initial H position to avoid connec-tivity. Overall, GAFF pre-relaxation rescued 82 MACE failures, including many cases where improved H align-ment helped preserve X–H connectivity. 2. MACE-OFF : Direct MACE-OFF relaxation is much more robust than MACE, and it only yields 8 failed re-laxations in the full benchmark. However, it may still have some tendency to generate artifacts for some spe-cific configurations. In FANTIX (see Fig. 3), the marked methyl carbon C ∗
+
+initially has a rather uneven distribution of 3H+1C en-vironment, with H C* C angles of 104.5 ◦, 112.6 ◦,and 117.1 ◦, as compared to the ideal 109.4 ◦. MACE-OFF relaxation elongates one C * H bond to 1.47 Å and shortens the nearby C * · · · C distance from 2.31 to 1.63 Å, producing an unintended C * C bond and changing the coordination to 2H+2C. GAFF pre-relaxation gives more regular angles of 112.2 ◦, 111.0 ◦, and 113.3 ◦, pre-serves the C * H bonds, and increases the non-bonded C* · · · C distance to 2.44 Å. This configuration under further MACE-OFF relaxation can successfully pre-serve the desired connectivity. It suggests that MACE-OFF may not be capable of handling slightly distorted methyl environment and a nearby non-bonded carbon, whereas GAFF pre-relaxation provides a more suitable starting geometry that allows MACE-OFF to preserve the intended connectivity. In the case of XIXQOL in Fig. 4, there exist hydrogen atoms lying in a sensitive intermolecular N H · · · O en-vironment. The initial structure contains a short co-valent N H bond of 0.879 Å and a nearby contact of O · · · H 2.006 Å. During MACE-OFF relaxation, the N H bond elongates to 1.433 Å, while the O · · · H dis-tance decreases only slightly to 1.908 Å. Therefore, the 5
+
+> Figure 3. Example of a MACE-OFF relaxation failure rescued by GAFF pre-relaxation for FANTIX. (a) Initial structure. (b) After MACE-OFF relaxation, where the highlighted region shows a connectivity change. (c) After GAFF pre-relaxation. (d) The full GAFF+MACE-OFF workflow.
+> Figure 4. Example of a persistent connectivity failure in MACE-OFF relaxation for XIXQOL. (a) Initial structure. (b) MACE-OFF relaxation, where the molecule undergoes a connectivity change. (c) After GAFF pre-relaxation. (d) An alternative UMLIP relaxation with GAFF+UMA.
+
+hydrogen is displaced from nitrogen without forming a clear covalent O H bond, leaving a weakly bound local configuration. A likely reason is that MACE-OFF does not describe the balance between the covalent N H in-teraction and the neighboring intermolecular hydrogen bond accurately for this particular chemical environ-ment. In this case, although GAFF pre-relaxation pre-serves the molecular connectivity through its explicit bonded terms, giving N H=1.013 Å and maintaining the nearby O · · · H contact at 1.905 Å, a further MACE-OFF relaxation still ends up with the nonphysical O · · · H · · · N configuration. This indicates that the problem is not caused only by an unfavorable initial geometry, but is mainly associated with the MACE-OFF descrip-tion of this local N H · · · O environment. For a com-parison, relaxation of the same GAFF-preconditioned structure with UMA retained the N H bond at 1.031 Å and the intermolecular O · · · H contact at 1.997 Å. This example shows that the the UMLIP artifact caused by bond length cannot be corrected by GAFF even if it provides a better initial geometry. 3. UMA : Similar to MACE-OFF, UMA is highly robust across the full benchmark, with only nine failures from direct relaxation. Note that UMA was trained on the large and diverse OMC25 dataset, potentially energetic molecules were intentionally excluded during dataset construction based on several chemical criteria, in-cluding the presence of multiple O–N, N–N, or O–O bonds. Moreover, relaxation frames exhibiting changes in molecular connectivity were removed. [47] These fil-tering choices improve data quality for stable molecu-lar crystals but may reduce the representation of ener-getic chemical environments and bond-rearrangement regions of the potential-energy surface. This distribu-tion difference may contribute to the few observed re-laxations failures, particularly proton transfer and bond elongation in sensitive local environments, as described in the following. In Fig. 5, the OYASEO crystal contains the short O H · · · N environment, which creates competing proton-binding sites, making the relaxation particularly sensi-tive to small force errors. The proton initially belongs to the hydroxyl group, with an O H bond length of 0.988 Å and a nearby N · · · H hydrogen-bond contact of 1.627 Å. During direct UMA relaxation, the original O Hbond is lost and the proton moves to nitrogen, form-ing a new N H bond of 1.048 Å. GAFF pre-relaxation instead moves the proton farther from nitrogen and pre-serves the hydroxyl bond at 0.973 Å. Starting from this improved local geometry, the subsequent UMA relax-ation retains the O H connectivity, although a short N · · · H hydrogen-bond contact remains. This example shows that GAFF preconditioning can correct an unfa-vorable proton environment and prevent UMA-driven proton transfer. On the other hand, Fig. 6 illustrates a failure that can not be rescued by GAFF pre-relaxation. In the BUVJOR crystal, a direct UMA relaxation notably increases the 6
+
+> Figure 5. Example of an UMA relaxation failure rescued by GAFF pre-relaxation for OYASEO. (a) Initial structure. (b) After UMA relaxation, where the highlighted region shows O–H bond breaking and new N–H bond formation. (c) GAFF pre-relaxation. (d) GAFF+UMA workflow.
+> Figure 6. Example of N–O bond elongation during UMA relaxation for BUVJOR. (a) Initial structure. (b) After UMA relaxation. (c) Structure after GAFF pre-relaxation. (d) Use an alternative UMLIP relaxation GAFF+MACE-OFF to rescue the persistent UMA failure.
+
+relevant N O bond increased from 1.314 to 1.682 Å, which is significantly longer than a single N O bond of 1.3 Å. Likewise, the pre-relaxation of the GAFF re-duced the length of the bond to 1.458 Å, and the subse-quent relaxation of the UMA again elongated the N–O bond to 1.682 Å. This suggests that the UMA potential may strongly misalign this type of N O single bond during its training. As a reference, MACE-OFF can cor-rectly preserve the N–O bond at 1.425 Å and produced a chemically reasonable final structure. This again ex-emplifies that the some UMLIP artifact related to bond length cannot be corrected by GAFF even it provides a better initial geometry.  
+
+> C. UMLIP robustness
+
+In addition to evaluating relaxation success rates, it is im-portant to assess how robustly each UMLIP describes the un-derlying potential energy surfaces (PES). Ideally, an experi-mentally identified configuration should correspond to a dis-tinct PES minimum that remains smooth under small struc-tural perturbations. During relaxation, configurations should smoothly converge to the nearest local minimum along a monotonic, energy-descending path. Although different UM-LIP architectures may represent these minima with slight structural variations, a reliable model should consistently yield a well-defined unit cell characterized by low energy and minimal residual stress. Fig. 7 schematically illustrates two potential relaxation out-comes. Classical force field (e.g., GAFF) optimization often serves as an intermediate pre-processing step to guide high-energy starting structures closer to the PES basin; however, it can also introduce minor perturbations to the unit cell parame-ters. When UMLIP relaxation is subsequently applied to these GAFF-optimized geometries, a robust UMLIP will recover the target equilibrium geometry with high fidelity, exhibit-ing minimal deviation in lattice constants and atomic coordi-nates (see Fig. 7a). Conversely, an overtrained or non-robust UMLIP may generate spurious local minima and nonphysical energy barriers surrounding the true PES basin. In this sce-nario, the GAFF-perturbed structure can become trapped in an incorrect local state during subsequent UMLIP optimiza-tion (see Fig. 7b). Therefore, evaluating UMLIP quality re-quires a systematic comparison of structural consistency, en-ergy landscape smoothness, and residual stress convergence across models. Fig. 8a compares the root-mean-square distance (RMSD) distributions of MACE-relaxed geometries relative to their initial unrelaxed structures. The strong overlap between the pure MACE and GAFF+MACE distributions indicates that MACE is robust in guiding GAFF-relaxed geometries into the true PES basin governed by a single minimum. However, the corresponding residual stress tensor distribution for MACE in Fig. 8d displays a bimodal profile, featuring a primary peak near 0 .02GPa and a secondary peak around 0 .16 GPa. The presence of this second peak implies that a notable portion of structures fails to relax to vanishing residual stress. This in-complete stress minimization likely indicates that the MACE 7
+
+(a) Robust UMLIP vs GAFF Energy Coordinates (b) Unrobust UMLIP vs GAFF Energy Coordinates 
+
+Figure 7. Comparison of relaxation pathways starting from an initial high-energy configuration (black circle) across PES described by UMLIP (blue lines) and GAFF (red lines). Dashed arrows approximates gradient descent optimization paths. (a) A robust UMLIP model provides a smooth, well-behaved PES where both the initial state and GAFF-perturbed geometry (red circle) reliably converge to the true global target minimum (blue circle). (b) An unrobust UMLIP model exhibits multiple local minima, causing GAFF-relaxed structures to get trapped in spurious local states during subsequent UMLIP optimization. 0.05 0.10 0.15 0.20 
+
+RMSD (Å)    
+
+> 01000 2000
+> Frequency
+> (a) RMSD Distribution
+> MACE GAFF+MACE
+> 0.05 0.10 0.15 0.20
+
+RMSD (Å)    
+
+> 01000 2000 (b) RMSD Distribution
+> MACEOFF GAFF+MACEOFF
+> 0.05 0.10 0.15 0.20
+
+RMSD (Å)    
+
+> 01000 2000 (c) RMSD Distribution
+> UMA GAFF+UMA
+> 0.05 0.10 0.15 0.20
+
+Residual Stress (GPa)    
+
+> 020 40 60
+> Probability Density
+> (d) Residual Stress Distribution
+> MACE GAFF+MACE
+> 0.05 0.10 0.15 0.20
+
+Residual Stress (GPa)    
+
+> 020 40 60 (e) Residual Stress Distribution
+> MACEOFF GAFF+MACEOFF
+> 0.05 0.10 0.15 0.20
+
+Residual Stress (GPa) 
+
+> 020 40 60 (f) Residual Stress Distribution
+> UMA GAFF+UMA
+
+Figure 8. Comparison of structural RMSD and residual stress after pure and GAFF-preconditioned UMLIP relaxation. Panels (a–c) compare the RMSD distributions obtained with MACE, MACE-OFF, and UMA with those from their corresponding GAFF+UMLIP workflows. Panels (d–f) show the distributions of the maximum absolute residual stress-tensor component. Pure UMLIP relaxation generally produces structures closer to the reference geometry, whereas GAFF pre-relaxation substantially reduces the high-stress population. 
+
+training objective did not place sufficient weight on stress ten-sors, creating ambiguity in the local stress mapping around the PES minimum. For MACE-OFF, Fig. 8b reveals a distinct separation be-tween the pure MACE-OFF and GAFF+MACE-OFF RMSD distributions. This divergence suggests that MACE-OFF may generate spurious local energy minima that prevent pre-relaxed geometries from reaching the same target basin. Nev-ertheless, the corresponding residual stress tensor plot in Fig. 8e shows a lower population in the high-stress peak ( ∼
+
+0.16 GPa), indicating that stress tensor training was more ef-fectively conditioned in MACE-OFF than in standard MACE. 81.35 0.89 0.43 0.03                            
+
+> MACE ×10 5
+> 1.81
+> 1.35
+> 0.89
+> 0.43
+> 0.03
+> GAFF+MACE
+> ×10 5
+> (a) Energy Distribution(kJ/mol)
+> 1.35 0.89 0.43 0.03
+> MACEOFF ×10 5
+> 1.81
+> 1.35
+> 0.89
+> 0.43
+> 0.03
+> GAFF+MACEOFF
+> ×10 5
+> (b) Energy Distribution(kJ/mol)
+> 1.35 0.89 0.43 0.03
+> UMA ×10 5
+> 1.81
+> 1.35
+> 0.89
+> 0.43
+> 0.03
+> GAFF+UMA
+> ×10 5
+> (c) Energy Distribution(kJ/mol)
+> 4000 8000 12000
+> Structure Count
+> 200
+> 100
+> 0100 200
+> E (kJ/mol)
+> BADQAC -183.4 PEVYEU +102.8
+> (d) E=EGAFF+MACE EMACE
+> 4000 8000 12000
+> Structure Count
+> 6
+> 4
+> 2
+> 0246
+> E (kJ/mol)
+> ATUSEP -5.6 DETYUW +1.9
+> (e) E=EGAFF+MACEOFF EMACEOFF
+> 4000 8000 12000
+> Structure Count
+> 200
+> 100
+> 0100 200
+> E (kJ/mol)
+> IRODID -159.6 DETYUW +175.7
+> (f) E=EGAFF+UMA EUMA
+
+Figure 9. Comparison of final energies from pure and GAFF-preconditioned UMLIP relaxations. Panels (a–c) compare the paired final energies of the same structures evaluated with each UMLIP and its GAFF+UMLIP workflow. Panels (d–f) show the energy differences of 
+
+∆E = EGAFF+UMLIP − EUMLIP sorted by structure. Negative values indicate lower energies for GAFF+UMLIP. 
+
+Compared to MACE and MACE-OFF, the UMA model exhibits the most pronounced discrepancies between pure and GAFF-assisted relaxations in RMSD distributions (see Fig. 8c), while its residual stress tensor distributions are simi-lar to MACE-OFF (see 8f). This suggests that both workflows can reach mechanically relaxed structures, but not necessarily the same structural basin. In other words, UMA appears more sensitive to the GAFF-induced perturbation of the starting ge-ometry: after pre-relaxation, the structure may converge to a different nearby minimum instead of returning to the mini-mum reached by pure UMA relaxation. This behavior is quali-tatively consistent with the non-robust PES scenario explained in Fig. 7b, where small changes in the starting configuration can redirect the optimization toward alternative local minima. To further confirm our analysis, we plot the comparison be-tween pure and GAFF-preconditioned UMLIP relaxed ener-gies in Fig. 9. At first glance, the upper panels of Fig. 9 dis-play a near-perfect one-to-one linear mapping between direct and GAFF-preconditioned relaxation energies across all three UMLIPs. This strong visual correlation is expected, given the broad energy range spanned by the over 14 , 000 structure in-stances. To remove energy-scale artifacts and inspect subtle discrep-ancies, Figs. 9(d–f) plot the signed paired energy differences, 
+
+∆E = EGAFF+UMLIP − EUMLIP , sorted by magnitude. For the majority of structures, ∆E ≈ 0 kJ/mol, indicating that both relaxation pathways converge to identical PES local minima. However, a notable divergence occurs in the tail distributions. MACE (Fig. 9d) has substantial negative values (reach-ing −183 .4 kJ/mol for BADQAC) indicating that GAFF pre-conditioning assists the system in escaping shallow basins to access deeper minima. Conversely, large positive values (+102 .8 kJ/mol for PEVYOU) show instances where GAFF pre-relaxation diverts the trajectory away from the lower-energy minimum found via pure MACE relaxation. Simi-larly, UMA (Fig. 9f) displays similarly severe deviations in both directions, spanning from −159 .6 kJ/mol IRODID) to 
+
++175 .7 kJ/mol (DETYUW). In sharp contrast, MACE-OFF (see Fig. 9e) exhibits much better stability and energy con-sistency. Its energy differences are tightly bounded within a narrow range from −5.6 kJ/mol (ATUSEP) to +1.9 kJ/mol (DETYUW), with the vast majority of structures falling well within the chemically negligible |∆E| ≤ 1.0 kJ/mol threshold. In our recent work [25], UMA was shown to yield favorable energy agreement for near-equilibrium configurations. How-ever, in practical organic CSP, search algorithms routinely generate a vast number of unrelaxed, high-energy trial struc-tures that must be reliably driven toward their nearest phys-ical PES minima. In such practical scenarios, a more robust model with a smooth and spurious-free energy landscape such as MACE-OFF represents a more reliable choice for structural optimization. 9
+
+IV. CONCLUSIONS 
+
+In this work, we benchmarked pure UMLIP and GAFF-preconditioned UMLIP relaxation workflows for over 14k high-energy molecular crystals using MACE, MACE-OFF, and UMA. All three models demonstrated high relaxation completion rates. Pre-relaxing structures with GAFF force field systematically improved optimization success by pro-viding physically reasonable atomic alignments prior to UM-LIP simulation. Furthermore, GAFF pre-conditioning signif-icantly reduced the computational cost of subsequent UMLIP relaxations, offering a practical strategy for large-scale crystal structure workflows where UMLIP evaluation costs are pro-hibitive. Our comparative failure and robustness analyzes revealed distinct trade-offs among the evaluated models. Among them, MACE is a lightweight model that efficiently captures the gen-eral PES topography, but it is more likely to yield nonphysi-cal configurations and inaccurate energy/geometry description due to lack of training data to represent molecular geometries. However, UMA, while highly accurate for near-equilibrium energy evaluations, exhibits the largest discrepancies in both RMSD and residual stress distributions under relaxation. This behavior suggests that UMA may be susceptible to overfitting on near-equilibrium training states, generating artificial local minima and barriers when relaxing severely perturbed or high-energy structures. Despite its advantage in terms of general-ization and accuracy, apply UMA for energetic crystal screen-ing may become risky. In contrast, MACE-OFF achieves a better compromise between PES smoothness, structural fi-delity, and stress convergence, serving as a superior choice to provide a reliable foundation for automated structural opti-mization for high throughput organic crystal screening. 
+
+Author contributions 
+
+Q.Z. and R.P. proposed this idea and supervised this research. M.M.M. performed the majority of materials simulations, and O.G.R constructed the online database. All coauthors de-signed the research, analyzed the calculations and wrote this manuscript. 
+
+Conflicts of interest 
+
+There are no conflicts to declare. 
+
+Data availability 
+
+The data and scripts used in this study, are available in http s://github.com/mmukta/MLIP_Becnhmark/. All relaxed structures and associated results are stored in https://mmi.ch arlotte.edu/hem. 
+
+# Acknowledgments 
+
+This project is primarily supported by the funding from the Laboratory Directed Research and Development pro-gram of Los Alamos National Laboratory under project no. 20260424ER. Los Alamos National Laboratory is operated by Triad National Security, LLC, for the National Nuclear Secu-rity Administration of U.S. Department of Energy (contract no. 89233218CNA000001). Q.Z. and M.M.M. also acknowl-edges the NSF (DMR-2410178) for the financial supports and the computing resources from ACCESS (TG-MAT230046). 
+
+# References 
+
+[1] S. Fratini, S. Ciuchi, D. Mayou, G. T. De Laissardière, and A. Troisi, A map of high-mobility molecular semiconductors, Nat. Mater. 16 , 998 (2017). [2] P. Friederich, A. Fediai, S. Kaiser, M. Konrad, N. Jung, and W. Wenzel, Toward design of novel materials for organic elec-tronics, Adv. Mater. 31 , 1808256 (2019). [3] A. Saeki and K. Kranthiraja, A high throughput molecular screening for organic electronics via machine learning: present status and perspective, Jpn. J. Appl. Phys. 59 , SD0801 (2019). [4] T. Nematiaram, D. Padula, and A. Troisi, Bright frenkel exci-tons in molecular crystals: A survey, Chem. Mater. 33 , 3368 (2021). [5] A. Stuke, C. Kunkel, D. Golze, M. Todorovi´ c, J. T. Margraf, K. Reuter, P. Rinke, and H. Oberhofer, Atomic structures and orbital energies of 61,489 crystal-forming organic molecules, Sci. Data 7, 1 (2020). [6] C. Kunkel, C. Schober, J. T. Margraf, K. Reuter, and H. Ober-hofer, Finding the right bricks for molecular legos: A data min-ing approach to organic semiconductor design, Chem. Mater. 
+
+31 , 969 (2019). [7] R.-B. Lin, Y. He, P. Li, H. Wang, W. Zhou, and B. Chen, Mul-tifunctional porous hydrogen-bonded organic framework mate-rials, Chem. Soc. Rev. 48 , 1362 (2019). [8] C. Wang, H. Dong, L. Jiang, and W. Hu, Organic semiconductor crystals, Chem. Soc. Rev. 47 , 422 (2018). [9] S. L. Morissette, Ö. Almarsson, M. L. Peterson, J. F. Reme-nar, M. J. Read, A. V. Lemmo, S. Ellis, M. J. Cima, and C. R. Gardner, High-throughput crystallization: polymorphs, salts, co-crystals and solvates of pharmaceutical solids, Adv. Drug Deliv. Rev. 56 , 275 (2004). [10] M. Herrmann, W. Engel, and N. Eisenreich, Thermal expan-sion, transitions, sensitivities and burning rates of HMX, Pro-pellants, Explosives, Pyrotechnics 17 , 190 (1992). [11] D. C. Sorescu and B. M. Rice, Theoretical Predictions of Ener-getic Molecular Crystals at Ambient and Hydrostatic Compres-sion Conditions Using Dispersion Corrections to Conventional Density Functionals (DFT-D), The Journal of Physical Chem-istry C 114 , 6734 (2010). [12] R. Perriot and M. J. Cawkwell, Thermal conductivity tensor of γ
+
+and ε-hexanitrohexaazaisowurtzitane as a function of pressure and temperature, AIP Advances 12 , 085203 (2022). [13] A. R. Oganov, C. J. Pickard, Q. Zhu, and R. J. Needs, Structure prediction drives materials discovery, Nat. Rev. Mater. 4, 331 (2019). [14] S. L. Price, Predicting crystal structures of organic compounds, Chem. Soc. Rev. 43 , 2098 (2014). [15] Q. Zhu and S. Hattori, Organic crystal structure prediction and its application to materials design, J. Mater. Res. 38 , 19 (2023). [16] J. P. Lommerse, W. S. Motherwell, H. L. Ammon, J. D. Dunitz, A. Gavezzotti, D. W. Hofmann, F. J. Leusen, W. T. Mooij, S. L. Price, B. Schweizer, et al., A test of crystal structure prediction of small organic molecules, Acta Cryst. B 56 , 697 (2000). 10 
+
+[17] J. Yang, S. De, J. E. Campbell, S. Li, M. Ceriotti, and G. M. Day, Large-scale computational screening of molecular or-ganic semiconductors using crystal structure prediction, Chem. Mater. 30 , 4361 (2018). [18] Q. Zhu, A. R. Oganov, C. W. Glass, and H. T. Stokes, Constrained evolutionary algorithm for structure prediction of molecular crystals: methodology and applications, Acta Cryst. B 68 , 215 (2012). [19] Q. Zhu, A. R. Oganov, and A. O. Lyakhov, Evolutionary meta-dynamics: a novel method to predict crystal structures, Crys-tEngComm 14 , 3596 (2012). [20] A. R. Oganov, Modern methods of crystal structure prediction (John Wiley & Sons, 2011). [21] Q. Zhu and S. Hattori, Automated high-throughput organic crystal structure prediction via population-based sampling, Dig-ital Discovery 4, 120 (2025). [22] S. Kim, A. M. Orendt, M. B. Ferraro, and J. C. Facelli, Crystal structure prediction of flexible molecules using parallel genetic algorithms with a standard force field, J. Comput. Chem. 30 ,1973 (2009). [23] D. Wines and K. Choudhary, Chips-ff: Evaluating universal ma-chine learning force fields for material properties, ACS Mater. Lett. 7, 2105 (2025). [24] A. R. Oganov, Crystal structure prediction: reflections on present status and challenges, Faraday Discuss. 211 , 643 (2018). [25] M. M. Mukta, R. Perriot, S. Hattori, W. Zhou, and Q. Zhu, Structure prediction of porous organic crystals, RSC Adv. 16 ,10.1039/d5ra09332e (2026). [26] C. Zhao, Z. Ma, D. Fan, S. Hu, L. Wang, F. Hua, W. Jia, E. Shao, G. Tan, J. Jiang, et al., Integrating machine learning interatomic potentials with batched optimization for crystal structure pre-diction, Digital Discovery 5, 1913 (2026). [27] C.-N. Li, H.-P. Liang, B.-Q. Zhao, S.-H. Wei, and X. Zhang, Machine learning assisted crystal structure prediction made simple, J. Mater. Inf. 4, N (2024). [28] K. T. Butler, D. W. Davies, H. Cartwright, O. Isayev, and A. Walsh, Machine learning for molecular and materials sci-ence, Nature 559 , 547 (2018). [29] V. L. Deringer, M. A. Caro, and G. Csányi, Machine learning interatomic potentials as emerging tools for materials science, Adv. Mater. 31 , 1902765 (2019). [30] A. D. Becke, Density-functional thermochemistry. iii. the role of exact exchange, J. Chem. Phys. 98 , 5648 (1993). [31] Y. Chiang, T. Kreiman, E. Weaver, I. Amin, M. Kuner, C. Zhang, A. Kaplan, D. Chrzan, S. M. Blau, A. S. Krishnapriyan, et al., Mlip arena: advancing fairness and transparency in machine learning interatomic potentials through an open and accessible benchmark platform, in AI for Accelerated Materials Design-ICLR 2025 (2025). [32] I. K. Park, S. Pourasad, J. Mun, A. C. Rajan, T. H. Park, A. Ro-hit, M. Zafari, T.-L. Pham, E. Jung, B. Koo, et al., Machine learning interatomic potentials for energy materials: Architec-tures, training strategies, and applications, Adv. Energy Mater. , e71046 (2026). [33] O. G. Ridwan, S. Pitié, M. S. Raj, D. Dai, G. Frapper, H. Xue, and Q. Zhu, Ai-assisted rapid crystal structure gener-ation towards a target local environment, npj Comput. Mater. 10.1038/s41524-025-01931-9 (2026). [34] O. G. Ridwan, G. Frapper, H. Xue, and Q. Zhu, Crystal gen-eration using the fully differentiable pipeline and latent space optimization, Mach. Learn.: Sci. Technol. 7, 035026 (2026). [35] I. Batatia, D. P. Kovacs, G. Simm, C. Ortner, and G. Csányi, Mace: Higher order equivariant message passing neural net-works for fast and accurate force fields, Advances in neural in-formation processing systems 35 , 11423 (2022). [36] D. P. Kovács, J. H. Moore, N. J. Browning, I. Batatia, J. T. Horton, Y. Pu, V. Kapil, W. C. Witt, I.-B. Magdau, D. J. Cole, et al., Mace-off: Short-range transferable machine learn-ing force fields for organic molecules, J. Am. Chem. Soc. 147 ,17598 (2025). [37] B. Wood, M. Dzamba, X. Fu, M. Gao, M. Shuaibi, L. Barroso-Luque, K. Abdelmaqsoud, V. Gharakhanyan, J. Kitchin, D. Levine, et al., Uma: A family of universal models for atoms, Advances in Neural Information Processing Systems 38 ,129391 (2026). [38] J. Wang, R. M. Wolf, J. W. Caldwell, P. A. Kollman, and D. A. Case, Development and testing of a general amber force field, J. Comput. Chem. 25 , 1157 (2004). [39] J. V. Davis, F. W. Marrs, M. J. Cawkwell, and V. W. Manner, Machine learning models for high explosive crystal density and performance, Chem. Mater. 36 , 11109 (2024). [40] R. Taylor and P. A. Wood, A million crystal structures: The whole is greater than the sum of its parts, Chem. Rev. 119 , 9427 (2019). [41] S. Fredericks, K. Parrish, D. Sayre, and Q. Zhu, Pyxtal: Apython library for crystal structure generation and symmetry analysis, Comput. Phys. Commun. 261 , 107810 (2021). [42] A. H. Larsen, J. J. Mortensen, J. Blomqvist, I. E. Castelli, R. Christensen, M. Dułak, J. Friis, M. N. Groves, B. Ham-mer, C. Hargus, et al., The atomic simulation environment—a python library for working with atoms, J. Phys.: Condens. Mat-ter 29 , 273002 (2017). [43] D. A. Case, H. M. Aktulga, K. Belfon, I. Ben-Shalom, S. R. Brozell, D. S. Cerutti, T. E. Cheatham III, V. W. D. Cruzeiro, T. A. Darden, R. E. Duke, et al., Amber 2021 (University of California, San Francisco, 2021). [44] B. R. Brooks, R. E. Bruccoleri, B. D. Olafson, D. J. States, S. Swaminathan, and M. Karplus, Charmm: a program for macromolecular energy, minimization, and dynamics calcula-tions, J. Comput. Chem. 4, 187 (1983). [45] A. Jakalian, B. L. Bush, D. B. Jack, and C. I. Bayly, Fast, efficient generation of high-quality atomic charges. am1-bcc model: I. method, J. Comput. Chem. 21 , 132 (2000). [46] E. Bitzek, P. Koskinen, F. Gähler, M. Moseler, and P. Gumbsch, Structural relaxation made simple, Phys. Rev. Lett. 97 , 170201 (2006). [47] V. Gharakhanyan, L. Barroso-Luque, Y. Yang, M. Shuaibi, K. Michel, D. S. Levine, M. Dzamba, X. Fu, M. Gao, X. Liu, et al., Open molecular crystals 2025 (omc25) dataset and mod-els, Sci. Data 10.1038/s41597-026-06628-2 (2026).
