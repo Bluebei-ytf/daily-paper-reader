@@ -41,17 +41,17 @@
 <section class="dpr-home-dashboard-card dpr-home-report-card">
   <div class="dpr-home-dashboard-header">
     <div>
-      <span class="dpr-home-dashboard-kicker">2026-09-10</span>
+      <span class="dpr-home-dashboard-kicker">2026-09-11</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">共 8 篇</strong>
+    <strong class="dpr-home-dashboard-count">共 4 篇</strong>
   </div>
   <dl class="dpr-home-dashboard-stats">
     <div class="dpr-home-dashboard-stat"><dt>累计更新</dt><dd>1 次</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>6</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>2</dd></div>
     <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>2</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-09-10 21:30:24 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-09-11 22:12:53 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -62,9 +62,10 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>今天日报筛选8篇文献，精读6篇、速读2篇，重点落在分子生成评估与自进化科研智能体。</p>
-<p>最值得看的是两篇9分工作：一篇系统评估de novo药物设计中的分子生成模型，另一篇ADMET-EvO用自进化科学智能体支撑异质任务持续研究。</p>
-<p>普通读者可先读这两篇的摘要与图表，再按兴趣跟进高能分子体系晶体结构预测的机器学习力场基准和少样本PROTAC降解预测。</p>
+<p>今日共生成 4 篇推荐（精读 2 篇，速读 2 篇）</p>
+<p>精读：《Autonomous Chemical Mechanistic Discovery through Agentic Reasoning and Validation》（9.0/10）, 《Dynamic language model representations for multi-objective reaction optimisation》（8.0/10）</p>
+<p>速读：《Low-rank approximation of Moment Tensor Potential enables reducing training set size without loss of accuracy》（6.0/10）, 《Coherent Floquet quantum reservoirs for molecular property prediction》（6.0/10）</p>
+<p>这些结果覆盖了当下较热的方向，建议先看精读区论文的关键问题与方法。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -73,12 +74,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">精读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">6 篇</strong>
+    <strong class="dpr-home-dashboard-count">2 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="A Systematic Evaluation of Molecule Generation Models for De Novo Drug Design: From Benchmarks to Practical Insights">A Systematic Evaluation of Molecule Generation Models for De Novo Drug Design: From Benchmarks to Practical Insights</span></li><li><span class="dpr-home-dashboard-paper-title" title="ADMET-EvO: a self-evolving scientific agent for sustained research across heterogeneous tasks">ADMET-EvO: a self-evolving scientific agent for sustained research across heterogeneous tasks</span></li><li><span class="dpr-home-dashboard-paper-title" title="The convergent laboratory: when AI reasoning, autonomous experiments, high performance and quantum computing reshape chemistry">The convergent laboratory: when AI reasoning, autonomous experiments, high performance and quantum computing reshape chemistry</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Autonomous Chemical Mechanistic Discovery through Agentic Reasoning and Validation">Autonomous Chemical Mechanistic Discovery through Agentic Reasoning and Validation</span></li><li><span class="dpr-home-dashboard-paper-title" title="Dynamic language model representations for multi-objective reaction optimisation">Dynamic language model representations for multi-objective reaction optimisation</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>3</strong></span><span class="dpr-home-dashboard-tag">smc <strong>3</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>1</strong></span><span class="dpr-home-dashboard-tag">smc <strong>1</strong></span></div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-skim-card">
   <div class="dpr-home-dashboard-header">
@@ -89,7 +90,7 @@
     <strong class="dpr-home-dashboard-count">2 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Benchmarking Universal Machine Learning Force Fields for Crystal Structure Prediction of High-Energy Molecular Systems">Benchmarking Universal Machine Learning Force Fields for Crystal Structure Prediction of High-Energy Molecular Systems</span></li><li><span class="dpr-home-dashboard-paper-title" title="ProMeta: Few-shot PROTAC-targeted degradation prediction across E3 ligases">ProMeta: Few-shot PROTAC-targeted degradation prediction across E3 ligases</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Low-rank approximation of Moment Tensor Potential enables reducing training set size without loss of accuracy">Low-rank approximation of Moment Tensor Potential enables reducing training set size without loss of accuracy</span></li><li><span class="dpr-home-dashboard-paper-title" title="Coherent Floquet quantum reservoirs for molecular property prediction">Coherent Floquet quantum reservoirs for molecular property prediction</span></li></ul>
   </div>
   <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>1</strong></span><span class="dpr-home-dashboard-tag">smc <strong>1</strong></span></div>
 </section>

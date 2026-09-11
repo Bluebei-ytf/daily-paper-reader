@@ -1,0 +1,622 @@
+Title: Low-rank approximation of Moment Tensor Potential enables reducing training set size without loss of accuracy
+
+URL Source: https://arxiv.org/pdf/2609.07372v1
+
+Published Time: Wed, 09 Sep 2026 02:21:24 GMT
+
+Number of Pages: 9
+
+Markdown Content:
+Low-rank approximation of Moment Tensor Potential enables reducing training set size without loss of accuracy 
+
+# Low-rank approximation of Moment Tensor Potential enables reducing training set size without loss of accuracy 
+
+Anna Bondarenko, 1 Nikita Rybin, 2, 3, 4 Maxim Rakhuba, 1 and Ivan S. Novikov 1, a) 
+
+> 1)
+
+HSE University, Faculty of Computer Science, Pokrovsky boulevard 11, Moscow, 109028, Russian Federation 
+
+> 2)
+
+Moscow Engineering Physics Institute, Kashirskoe Highway 31, Moscow, 115409, Russian Federation 
+
+> 3)
+
+Skolkovo Institute of Science and Technology, Skolkovo Innovation Center, Bolshoy boulevard 30, Moscow, 143026, Russian Federation 
+
+> 4)
+
+Digital Materials LLC, Kutuzovskaya 4A, Odintsovo, 143001, Russian Federation 
+
+(Dated: September 9, 2026) 
+
+In this study, we implement a low-rank approximation of Moment Tensor Potential (MTP) based on the tensor train (TT) decomposition. The implemented tensor-factorized MTP (TFMTP) and the original MTP model are actively trained via a MaxVol-based algorithm during molecular dynamics simulations of a four-component molten salt mixture, LiF-NaF-KF (FLiNaK), and geometry optimizations of a five-component equiatomic MoNbTaWV random alloy. We demonstrate that under a 1.5-fold compression, TFMTP requires two times fewer configurations for fitting than the original MTP model, while maintaining an indistinguishable level of accuracy. These actively trained MTP and TFMTP models are further used to evaluate the density and viscosity of FLiNaK at temperatures ranging from 600 to 1200 K, as well as the elastic constants and bulk modulus of the MoNbTaWV alloy at zero temperature. For both atomic systems, the differences in physical properties predicted by MTP and TFMTP are negligible. 
+
+I. INTRODUCTION 
+
+Machine-learning interatomic potentials (MLIPs) 1–8 have become a widely used tool in computational materials science 9. These models use atomic positions, atomic types, and, optionally, lattice vectors of atomic structures as input parameters and predict energies of atomic configurations with high accuracy. As any machine-learning model, MLIPs have trainable parameters to be found during the optimization (or fitting) of MLIPs on the data typically calculated with density functional theory (DFT) calculations. MLIPs trained on DFT data enable predicting physical properties of materials for a reasonable time as they overcome the length and time-scale limitations of expensive DFT calculations. In spite of impressive success in the application of MLIPs in computational materials science, they have drawbacks and one of them is the increase in the number of parameters as the number of atom types in the system grows or as the con-figuration space under investigation expands. The increasing number of parameters, in turn, leads to an increase in the size of the training set required to train MLIPs without overfitting which may be critical as DFT calculations used to generate training sets are computationally expensive. Therefore, it is necessary to develop methods for reducing MLIPs dimension-ality without loss of accuracy. One of the widely used methods to decrease the number of machine-learning model parameters is low-rank matrix or tensor approximation. This technique was successfully ap-plied to reduce the complexity of neural networks and large language models 10–19 , e.g., TT-Rec 13 reduced the size of a deep-learning recommendation model by a factor of 2.6, cor-responding to a 61.5% reduction, while increasing valida-tion accuracy from 80.45% to 80.975%, whereas COMCAT 17 
+
+> a) Electronic mail: isnovikov@hse.ru
+
+reduced the number of parameters of DeiT-Base by 61.1% while improving its ImageNet top-1 accuracy from 81.80% to 82.26%. In Ref. 20 , two MLIPs, namely, Moment Tensor Potential (MTP) and Atomic Cluster Expansion (ACE), were compressed using low-rank matrix and tensor approximations, and it was demonstrated that the compressed models preserve the accuracy of the original (non-compressed) models when trained on the training set. However, in the mentioned paper, the question of the amount of data needed to train the original and compressed models was not investigated. In this work, we apply an active learning algorithm pro-posed in Ref. 21 to MTP and tensor-factorized MTP (TFMTP) introduced in Ref. 20 and investigate a number of configura-tions needed to fit MTP and TFMTP as well as the quality of the fitted models. To that end, we explicitly implement the TFMTP model in the program code and, as opposed to Ref. 20 ,where we fitted original and different compressed models on the same data set, here the training sets are automatically con-structed for each type of MLIP. We note that the TFMTP model was not explicitly implemented in Ref. 20 and the gra-dients of the loss function with respect to the radial parame-ters of TFMTP were calculated via the gradients of the loss function with respect to the radial parameters of the original MTP. Due to this reason, we were not able to apply the active learning algorithm to TFMTP in Ref. 20 , and we do so in this study. We then compare physical properties of atomic systems predicted with the actively trained models. As benchmarked systems, we consider the four-component molten salt mixture LiF-NaF-KF (FLiNaK) and the five-component equiatomic MoNbTaWV random alloy. We calculate the density and vis-cosity of FLiNaK at T = 600 − 1200 K and the elastic con-stants and the bulk modulus of MoNbTaWV at T = 0 K. In our tests, we demonstrate that TFMTP, which has approxi-mately 1.5 times fewer parameters than MTP, requires approx-imately two times fewer configurations for its fitting; however, its mentioned properties are close to the MTP ones. arXiv:2609.07372v1 [physics.chem-ph] 7 Sep 2026 Low-rank approximation of Moment Tensor Potential enables reducing training set size without loss of accuracy 2
+
+II. METHODOLOGY A. Moment tensor potential 
+
+Here we describe Moment Tensor Potential (MTP) pro-posed in Ref. 4 for single-component materials and then gener-alized to the case of multi-component materials in Ref. 22 . Let 
+
+x = {(l1, l2, l3); (ri, zi), i = 1, . . . , N} be a configuration with 
+
+N atoms in a supercell, each atom being encoded by its posi-tion ri, atomic type zi. We denote the number of atomic types in a configuration by NT . To approximate an infinite system, three lattice vectors l1, l2, l3 are also introduced for each con-figuration. Denote the energy of an atomic configuration x
+
+predicted with MTP by EMTP . This energy is the sum of con-tributions V MTP (ni) of atomic neighborhoods ni for N atoms in a configuration: 
+
+EMTP =
+
+> N
+
+# ∑
+
+> i=1
+
+V MTP (ni), (1) i.e., MTP is a local potential. Each neighborhood is a tuple 
+
+ni = ( {ri1, zi, z1}, . . . , {ri j , zi, z j}, . . . , {riN nbh , zi, zNnbh }),
+
+where ri j = r j − ri are relative atomic positions, zi, z j are the types of central and neighboring atoms, and Nnbh is the number of atoms in the neighborhood ni determined by a cut-off radius Rcut , i.e., we include in the neighborhood each j-th atom with |ri j | ≤ Rcut . Each function V MTP (ni) is a series of MTP basis functions Bα :
+
+V MTP (ni) = ∑
+
+> α
+
+ξα Bα (ni), (2) where ξ = {ξα } are the linear parameters to be found. To construct the MTP basis functions we introduce the so-called moment tensor descriptors: 
+
+Mμ,ν (ni) = 
+
+> Nnbh
+
+# ∑
+
+> j=1
+
+fμ (|ri j |, zi, z j)r⊗ν 
+
+> i j
+
+, (3) where “ ⊗” is the outer product of vectors and, therefore, r⊗ν
+
+> i j
+
+is the tensor of the ν-th order, which is the angular part de-scribing many-body interactions, and fμ (|ri j |, zi, z j) is the ra-dial part describing only two-body interactions. The radial part has the following form: 
+
+fμ (|ri j |, zi, z j) = 
+
+> Nβ
+
+# ∑ 
+
+> β=1
+
+c(β )  
+
+> μ,zi,zj
+
+T (β )(|ri j |)( Rcut − | ri j |)2, (4) where μ is the number of the radial function fμ , c = {c(β )  
+
+> μ,zi,zj
+
+}
+
+are the radial parameters to be found, Nβ is the number of Chebyshev polynomials T (β )(|ri j |).We define the MTP basis function Bα as a contraction of one or more moment tensor descriptors (3), yielding a scalar, e.g.: 
+
+B0 (ni) = M1,0 (ni) ,
+
+B1 (ni) = M1,1 (ni) · M1,1 (ni) ,
+
+B2 (ni) = ( M2,3 (ni) M2,2 (ni)) · M0,1 (ni) ,. . . 
+
+However, the number of contractions yielding a scalar is in-finite and, therefore, the number of MTP basis functions is infinite in general case. In order to restrict this number, we introduce the so-called level of the moment tensor descriptor: lev Mμ,ν = 2 + 4μ + ν, (5) and the level of the MTP basis function: lev Bα = lev 
+
+> P
+
+# ∏
+
+> p=1
+
+Mμp,νp
+
+| {z }
+
+> scalar
+
+=
+
+> P
+
+# ∑
+
+> p=1
+
+(2 + 4μp + νp). (6) A set of MTP basis functions and, thus, a particular functional form of MTP depends on the maximum level, lev max , which we also call the level of MTP. In the set of MTP basis func-tions, we include only those with lev Bα ≤ lev max . The level of MTP determines the number of linear parameters ξ and the number of radial functions Nf (and, therefore, the number of the radial parameters c) as the moment tensor descriptors de-pend on the number of the radial function μ. For example, if we take lev max = 8 then we have nine basis functions Bα and 
+
+Nf = 2 radial functions (see Ref. 23 ). 
+
+B. Tensor factorization of MTP 
+
+A drawback of the functional of MTP is the tensor of the radial parameters c(β )  
+
+> μ,zi,zj
+
+as it has N2 
+
+> T
+
+Nf Nb parameters and scales quadratically with the number of atomic types NT in a system. In Ref. 20 , some MLIPs, including MTP, were com-pressed with low-rank matrix and tensor factorizations and it was demonstrated that it is possible to achieve up to 50% compression without any loss of MTP accuracy. Among dif-ferent compressed forms of MTP, tensor factorization of MTP (TFMTP) was introduced in Ref. 20 . TFMTP is based on ten-sor train (TT) decomposition (see, e.g., Ref. 24 ) of MTP radial parameters. In TFMTP, we express the tensor of the radial pa-rameters as a contraction of four third-order core tensors G(k),
+
+k = 1, . . . , 4: 
+
+c(β )   
+
+> zi,zj,μ
+
+=
+
+> r1
+
+# ∑
+
+> α1=1
+> r2
+
+# ∑
+
+> α2=1
+> r3
+
+# ∑
+
+> α3=1
+
+G(1)   
+
+> 1,zi,α1
+
+G(2)     
+
+> α1,zj,α2
+
+G(3)   
+
+> α2,μ,α3
+
+G(4)   
+
+> α3,β,1
+
+.
+
+The total number of the radial parameters in the TT format is NT r1 + r1NT r2 + r2Nf r3 + r3Nb, i.e., if r1 = r2 = r3 = r then we have (NT + Nf )r2 + ( NT + Nb)r radial parameters instead of N2 
+
+> T
+
+Nf Nb in the original MTP. We emphasize that the only difference between MTP and TFMTP is the representation of the tensor of the radial parameters, and all the other steps for constructing MTP and TFMTP are similar. We denote the parameters of MTP and TFMTP to be found by θ = {ξ, c} and the energy of an atomic system predicted with these potentials by EMTP = EMTP (θ) and ETFMTP =
+
+ETFMTP (θ), respectively. Low-rank approximation of Moment Tensor Potential enables reducing training set size without loss of accuracy 3 
+
+> C. Fitting
+
+Let K be a number of configurations in a training set. To find optimal parameters ¯ θ of MTP and TFMTP, we minimize the following loss function: Loss (θ) = 
+
+> K
+
+# ∑
+
+> k=1
+
+h
+
+we
+
+ EMLIP  
+
+> k
+
+(θ) − EDFT 
+
+> k
+
+2 +
+
+wf
+
+> N
+
+# ∑
+
+> i=13
+
+# ∑
+
+> l=1
+
+  f MLIP  
+
+> i,l,k
+
+(θ) − f DFT 
+
+> i,l,k
+
+2 +
+
+ws6
+
+# ∑
+
+> a=1
+
+ σ MLIP  
+
+> a,k
+
+(θ) − σ DFT 
+
+> a,k
+
+2i
+
+→ min ,
+
+(7) where EDFT  
+
+> k
+
+, f DFT  
+
+> i,l,k
+
+, and σ DFT  
+
+> a,k
+
+are the DFT energies, forces, and stresses to which we fit MLIP (MTP or TFMTP) energies 
+
+EMLIP  
+
+> k
+
+(θ), forces f MLIP  
+
+> i,l,k
+
+(θ), and stresses σ MLIP  
+
+> a,k
+
+(θ), thus op-timizing MLIP parameters θ. The factors we, wf, and ws in (7) are non-negative weights which express the importance of energies, forces, and stresses with respect to each other. We find the optimal parameters ¯ θ numerically, using the BFGS al-gorithm. Before each fitting of MLIP, we start with a random initial guess.  
+
+> D. Active learning
+
+An algorithm for automated construction of a training set for MTP, namely, the active learning (AL) algorithm, was originally formulated for a single-component MTP in Ref. 21 
+
+and then generalized to the case of many components in Ref. 22 . Since the difference between MTP and TFMTP is only in the representation of the radial parameters, the algo-rithm proposed in Ref. 22 can be also applied to TFMTP and, therefore, we describe it in general form, using the MLIP ab-breviation. Assume we have an initial training set including K config-urations and we found the vector of m optimal MLIP parame-ters ¯θ after solving (7). We then construct a matrix 
+
+B =
+
+  
+
+> ∂EMLIP 1
+> ∂ θ 1
+
+( ¯θ) . . . ∂ EMLIP 1 
+
+> ∂ θ m
+
+( ¯θ)
+
+... ...  
+
+> ∂EMLIP
+> K
+> ∂ θ 1
+
+( ¯θ) . . . ∂ EMLIP  
+
+> K
+> ∂ θ m
+
+( ¯θ)
+
+ .
+
+Next, we find a submatrix A of size m × m from the matrix 
+
+B with the maximum absolute value of the determinant (max-imum volume) |det (A)|, i.e., we select a set of the m most linearly independent rows. To find a submatrix A of maxi-mum volume, we apply the MaxVol algorithm 25 . This ap-proach guarantees that the selected rows of A correspond to geometrically different configurations, which makes it possi-ble to cover a part of the configuration space of interest. After training the initial MLIP and constructing the matrix 
+
+A, we start any atomistic simulation and compute the extrapo-lation grade for each configuration x∗ created during this sim-ulation 
+
+γ(x∗) = max   
+
+> 1≤j≤m
+
+|c j|, (8) where the vector c = ( c1, . . . , cm) for the configuration x∗ is 
+
+c =
+
+ ∂ EMTP 
+
+∂ θ 1
+
+( ¯θ, x∗), . . . , ∂ EMTP 
+
+∂ θ m
+
+( ¯θ, x∗)
+
+
+
+A−1. (9) The extrapolation grade γ quantifies the increase in |det (A)|
+
+when a candidate configuration x∗ is added to the training set. During a simulation, we create a pool of preselected candidate configurations (or, the preselected set) that may be added to the training set. To that end, we define the lower bound, γlow , and the upper bound, γup , of permissible extrapo-lation. If γlow ≤ γ(x∗) ≤ γup then we add the configuration x∗
+
+to the preselected set and continue an atomistic simulation, as the errors in predicting energies, forces, and stresses by MLIP are still acceptable due to permissible extrapolation. If 
+
+γ(x∗) > γup then the extrapolation is too risky and, therefore, we terminate an atomistic simulation, add this configuration to the preselected set, and apply the MaxVol algorithm to up-date the matrix A by selecting the most diverse configurations from the preselected set. In other words, we select the new configurations to be added to the training set. These selected configurations are then evaluated via density functional the-ory (DFT) calculations, added to the training set, and used to re-fit MLIP. We then restart the entire procedure – a simula-tion with extrapolation control, selection, DFT calculations, re-training – and repeat it iteratively until no configurations are preselected during atomistic simulation. An important hyperparameter of the formulated AL algo-rithm is the size m × m of the matrix A where m is the number of parameters in MLIP. As shown in Figure 8 of Ref. 26 , the number of configurations selected by the aforementioned AL algorithm for fitting of MTP grows with the number of model parameters. However, in the mentioned study, the parameter growth stemmed from raising the potential level, i.e., adopt-ing a more complex functional form, which concurrently en-hanced the accuracy of the potential. In this study, we inves-tigate the number of configurations required to train MTP and TFMTP of the same level and demonstrate that the TFMTP model requires less data than MTP but is nearly as accurate as the original MTP model.   
+
+> III. RESULTS AND DISCUSSION A. Computational details
+
+We tested the amount of data needed to actively train MTP and TFTMP using two systems: the four-component eutec-tic molten salt LiF-NaF-KF (46.5-11.5-42 mol%) mixture and the five-component equiatomic MoNbTaWV medium-entropy alloy. Active learning was carried out during two widely-used atomistic simulations: molecular dynamics (MD) for LiF-NaF-KF (FLiNaK) and geometry optimization for Low-rank approximation of Moment Tensor Potential enables reducing training set size without loss of accuracy 4MoNbTaWV structures. Selected configurations were cal-culated within the DFT framework (with Perdew-Burke-Ernzerhof exchange-correlation functional 27 ) using the Quan-tum Espresso package 28 . We followed recommendations of the standard solid-state pseudopotential project 29 and used pseudopotentials from GBRV 30 and Pslibrary 31 for mod-eling FLiNaK. MoNbTaWV was modeled using projector-augmented-wave 32 pseudopotentials from PseudoDojo li-brary 33 . In the case of FLiNaK we also applied DFT-D3 cor-rection with zero-damping function 34 , which is vital for ob-taining density of molten FLiNaK in reasonable agreement with experimental data 35 . Other details of the DFT calcula-tions are given in Table I. Table I: Computational details on the generation of the training sets.                        
+
+> System Level Cutoff, k-mesh Cell cize, of theory Ry size #atoms FLiNaK PBE+D3 70 2×2×256 MoNbTaWV PBE 50 4×4×454
+
+We investigated the FLiNaK system in two stages. At the first stage, we used the MatterSim model (see Ref. 36 ) instead of DFT to calculate energies, forces, and stresses of the se-lected configurations to test our assumption that TFMTP re-quires less data than MTP. To that end, we took MTP and TFMTP of the 14-th level (i.e„ Nf = 4 and 52 linear param-eters) with Nβ = 8 Chebyshev polynomials and Rcut = 5 Å. The ranks for TFMTP were (r1, r2, r3) = ( 4, 8, 4) and, thus, MTP of 14-th level has 568 parameters, while TFMTP of the same level has 360 parameters, i.e. approximately 1.5 times less. For constructing an initial training set, we conducted 1 ps of MD simulations with a time step of 1 fs in the NVT en-semble at T = 600 K with a supercell including 56 atoms and a size of 9.63 Å. We utilized the MatterSim model and sam-pled a trajectory including 1000 configurations. We then took each 50-th configuration from the trajectory and formed the initial training set. Next, after fitting of MTP and TFMTP on this initial dataset, we selected additional configurations from the mentioned trajectory with the MaxVol algorithm, added them to the initial training set, obtained training sets for both of the models, and re-trained these models. Finally, starting from the obtained training sets, we actively trained ensembles of five MTP and TFMTP during MD simulations of 100 ps in the NVT ensemble at T = 600 K and compared the number of selected configurations. We also compare average values and standard deviations of the loss function (7) as well as en-ergy, force, and stress root-mean-square errors calculated on the training sets selected with MTPs. At the second stage, we used MTP and TFMTP with the same hyperparameters in-stead of the level – here we took the 16-th level and, therefore, TFMTP and MTP have 400 and 608 parameters, respectively. At this stage, we created the training sets with DFT calcula-tions using parameters provided in Table I. An initial MD tra-jectory including 1000 configurations was generated during 1 ps of MD simulations in the NVT ensemble at T = 1200 K and, as at the first stage, each 50-th configuration from this trajectory was added in the initial training set. After that, additional configurations were selected from the MD trajec-tory with the MaxVol algorithm using both MTP and TFMTP and added in the training sets for fitting of these models. Fi-nally, starting from the created datasets, we actively trained MTP and TFMTP during MD simulations of 150 ps in the NPT ensemble at T = 1200 K and obtained the resulting train-ing sets for MTP and TFMTP. As opposed to the first stage, here we actively trained only one model of each type due to the computational expense of DFT calculations in comparison with MatterSim. However, we additionally passively trained four more models of the same types on the obtained training sets. We then compared the number of configurations in the training sets obtained with actively trained models and aver-age values of the loss function (7) on the training set created with MTP, average density, and average viscosity of FLiNaK at T = 600 − 1200 K predicted with the ensembles of MLIPs. To compute the density, we conducted MD simulations of 120 ps in the NPT ensemble for a supercell of 1512 atoms with each of the fitted potentials, and then averaged the density over the ensemble of MLIPs. To calculate viscosity, we utilized the Green-Kubo (GK) approach 37 in which viscosity is calculated through the integral of the auto-correlation function of the off-diagonal elements of the pressure tensor: 
+
+η = VkBT
+
+> ∞Z
+> 0
+
+< Pαβ (t)Pαβ (0) > dt , (10) where η is the viscosity, kB is the Boltzmann constant, and 
+
+Pαβ are the off-diagonal elements of the pressure tensor. Here, we ran 10 trajectories for each of five MLIPs in the ensemble starting from different velocities. To sample the configura-tions for the viscosity calculation, we first equilibrated a con-figuration of 3584 atoms for 200 ps in the NVT ensemble and then ran 1.5 ns of simulations in the NVE ensemble with a 50 ps auto-correlation time to ensure the convergence of viscos-ity. The resulting viscosity was averaged over 50 trajectories for each type of the model. For the equiatomic MoNbTaWV crystal, we tested active learning of TFMTP and MTP during geometry optimization (relaxation) of this random alloy. In this test, we utilized MTP of the 20-th level (i.e., Nf = 5 and 288 linear parameters) with Nβ = 8 Chebyshev polynomials, and NT = 5 and, thus, MTP has 1293 parameters. For TFMTP we took (r1, r2, r3) = (5, 10 , 5) and it has 858 parameters, approximately 1.5 times less than in MTP, as in the test with the FLiNaK system. To create an initial training set, we utilized an almost equiatomic bcc supercell with the size of 9.585 Å including 54 atoms, namely, 11 atoms of Mo, Nb, Ta, and W, and 10 atoms of V. We generated 10 configurations with random arrangements of Mo, Nb, Ta, W, and V atoms at the supercell nodes and pre-relaxed them with DFT using the 2 × 2 × 2 k-mesh. Next, we perturbed the atomic coordinates 10 times for each prerelaxed configuration by applying small random displacements drawn from a Gaussian distribution with a standard deviation of 0.05 Low-rank approximation of Moment Tensor Potential enables reducing training set size without loss of accuracy 5Å and calculated an initial training set including 110 configu-rations with DFT using the parameters from Table I. Finally, we actively trained MTP and TFMTP during the geometry optimization of these 110 structures starting from the created initial training set. We compared the sizes of the training sets created during the active learning of MTP and TFMTP, as well as the values of the loss function (7) and the energy, force, and stress errors calculated on the MTP training set, elastic con-stants, and bulk moduli calculated with the fitted models. In the case of fitting on the MatterSim-labeled data, we took the standard for MTP weights: we = 1 eV −2, wf = 0.01 (eV/Å) −2, and ws = 0.001 eV −2 in the loss function (7). In the case of fitting on DFT data, we took the weights we = 0.1eV −2, wf = 0.001 (eV/Å) −2, and ws = 0.0001 eV −2 for the FLiNaK system, and we = 0.1 eV −2, wf = 0.001 (eV/Å) −2,and ws = 0.001 eV −2 for the MoNbTaWV crystal. Further-more, to fit MLIPs for both of the investigated systems, we subtracted the minimum energy of configurations in the ini-tial training sets and fitted to the subtracted energies due to an unresolved problem with the scaling of TFMTP (see the Dis-cussion section). The number of BFGS iterations was limited to 10000, and the thresholds for active learning were γlow = 2and γup = 10.   
+
+> B. Results for FLiNaK
+> 1. Training set size and accuracy on MatterSim data
+
+To understand the prospects of active learning of the com-pressed potentials, namely, TFMTP, for reducing the number of configurations in a training set, we actively trained ensem-bles of five MTPs and TFMTPs during MD simulations of the FLiNaK system in the NVT ensemble at T = 600 K and used the foundation MatterSim model to calculate training sets. The results are given in Table II. TFMTPs have 1.5 times fewer parameters than MTPs, but selected more than 1.5 times fewer configurations than MTPs which confirms our main as-sumption: since the number of parameters in MLIP is a hy-perparameter of the MaxVol algorithm used to automatically create a training set, the number of selected configurations re-duces as this hyperparameter decreases. We also note that the standard deviations from the average numbers of the selected configurations are quite small. Table II: Number of parameters and average number of configurations in the training sets for the ensembles of the 14-th level MTP and TFMTP actively trained on the data calculated with MatterSim. The number of selected configurations is given with 2-σ confidence interval. The ensemble of TFMTPs has 1.5 times less parameters and requires more than 1.5 times fewer configurations for its fitting than the ensemble of MTPs.          
+
+> Model # parameters # selected configurations TFMTP 360 927 ±20 MTP 568 1608 ±36
+
+We then examined the accuracy of the fitted models. To that end, we took five training sets automatically created with ac-tive learning of five MTPs and then estimated the average val-ues of the loss function (7) and the average root-mean-square errors (RMSEs) for energies, forces, and stresses. Namely, for each of the five TFMTPs we calculated the above values on the training sets created with the five MTPs and then cal-culated the average values and their standard deviations. We did the same computations with MTPs. The results are given in Table III. We observe that the values of the loss functions and RMSEs are close to each other. Thus, Tables II and III indicate that the TT-based factorization eliminates parametric redundancy without any significant loss in the potential’s in-trinsic accuracy. Therefore, a reasonable compression of the MTP model corresponding to the reduction of about 50 % of the radial parameters or smaller (see Ref. 20 ) leads to a reduced training set without a loss of the model’s accuracy. From this test, we conclude that TFMTP is indeed a prospective model in terms of reducing the training set without a loss of accuracy, and we further compare MTP and TFMTP actively trained on DFT calculations. Table III: Average values of the loss function and root-mean-square errors for energies, forces, and stresses predicted with the ensembles of the 14-th level MTPs and TFMTPs on the training sets created using active learning of MTPs and MatterSim. The results are given with 2-σ
+
+confidence interval.                          
+
+> Model loss energy error force error stress error meV/atom meV/Å eV TFMTP 2.01 ±0.15 0 .63 ±0.04 26 .8±0.8 0 .232 ±0.008 MTP 1.78 ±0.14 0 .58 ±0.06 25 .2±0.9 0 .227 ±0.008
+> 2. Training set size and accuracy on DFT data
+
+At the next stage of our investigation, we actively trained MTP and TFMTP during MD simulations of the FLiNaK sys-tem in the NPT ensemble at T = 1200 K and used DFT calcu-lations (the Quantum Espresso package) for the construction of training sets. Here we actively trained only one potential of each type due to a high computational cost of DFT and because the previous test demonstrated a small standard devi-ation in the results. The number of parameters and configura-tions for MTP and TFMTP are shown in Table IV. Similarly to Table IV, TFMTP has approximately 1.5 times fewer param-eters, but requires more than two times smaller configurations for its fitting than MTP. Next, we compared the value of the loss function and fitting errors for MTP and similar values estimated with TFMTP on the training set generated with active learning of MTP (see Table V). As in the previous case, the errors obtained with TFMTP and MTP are almost indistinguishable and, therefore, TFMTP was effectively trained on the DFT data, without loss of MTP accuracy. Low-rank approximation of Moment Tensor Potential enables reducing training set size without loss of accuracy 6Table IV: Numbers of parameters and configurations in the training sets for the ensembles of the 16-th level MTP and TFMTP actively trained on the data calculated with DFT. The numbers of selected configurations are given with 2-σ
+
+confidence interval. TFMTP has 1.5 times less parameters and its training set size is more than two times fewer than MTP.      
+
+> Model # parameters # selected configurations TFMTP 400 844 MTP 608 1735
+
+Table V: Values of the loss function and root-mean-square errors for energies, forces, and stresses predicted with the actively trained MTP and TFMTP of the 16-th level on the training set created using active learning of MTP and DFT. The results obtained with TFMTP and MTP are reasonable and close to each other.             
+
+> Model loss energy error force error stress error meV/atom meV/Å eV TFMTP 0.321 1.04 32.5 0.324 MTP 0.292 0.97 31.0 0.306
+> 3. Values of the loss function, density, and viscosity for ensembles of MLIPs
+
+For further study, we fitted four more MTPs and TFMTPs on the training sets of 1735 and 844 configurations, respec-tively, and compared values of the loss function, density, and viscosity calculated with the ensembles of models. The aver-age values of the loss function calculated on the training set obtained with the active learning of MTP for the ensembles of MTPs and TFMTPs are 0 .299 ± 0.006 and 0 .328 ± 0.005, and the results are similar to the ones demonstrated above: TFMTP and MTP demonstrate practically identical accuracy. We then compared density and viscosity of FLiNaK computed with these models at T = 600 − 1200 K. We also provide the experimental data. The dependence of the FLiNaK density on temperature, ob-tained with MTP, TFMTP, and experiment 38 is demonstrated in Fig. 1. We see identical densities predicted with MTP and TFMTP, their standard deviations are negligible, and the de-viation between calculated and experimental densities is less than 5 % across the entire temperature range, which implies good agreement between MTP/TFMTP and the experiment. Viscosity calculated with TFMTP and MTP at different temperatures is shown in Fig. 2. We also provide the experi-mental results 39–41 . As for the previous quantities and proper-ties, viscosities predicted with MTP and TFMTP are indistin-guishable. Moreover, they are in qualitative agreement with the viscosities obtained experimentally. 
+
+Figure 1: Dependence of the FLiNaK density on temperature obtained with the ensembles of MTP, TFMTP, and experiment (see Ref. 38 ). Density calculated with MLIPs is shown within 2-σ confidence interval. 
+
+Figure 2: Dependence of the FLiNaK viscosity on temperature obtained with the ensembles of MTP, TFMTP, and experiments (see Ref. 39–41 ). Viscosity calculated with MLIPs is shown within 2-σ confidence interval.  
+
+> C. Results for MoNbTaWV
+
+In this test, we actively trained MTP and TFMTP during the relaxation of 110 MoNbTaWV structures including 54 atoms with 10 random arrangements of Mo, Nb, Ta, W, and V. Here, we consider only one model of each type, because for FLi-NaK, the deviation in the results from the average is negli-gible for the ensemble of the models. The resulting training set sizes and the number of parameters for the actively trained MTP and TFMTP models are shown in Table VI, and the val-ues of the loss function and energy, force, and stress errors estimated on the MTP’s training set are given in Table VII. The outcomes closely mirror those observed for the FLiNaK system. Specifically, TFMTP uses 1.5 times fewer parameters than MTP, demands a training set roughly half the size, and yet Low-rank approximation of Moment Tensor Potential enables reducing training set size without loss of accuracy 7achieves accuracy that is nearly indistinguishable from that of MTP. Table VI: Number of parameters and training set sizes for the 20-th level MTP and TFMTP actively trained during the relaxation of MoNbTaWV structures. TFMTP has 1.5 times less parameters and requires approximately two times fewer configurations for its fitting than MTP.      
+
+> Model # parameters # selected configurations TFMTP 858 696 MTP 1293 1541
+
+Table VII: Values of the loss function and energy, force, and stress root-mean-square errors predicted with the actively trained MTP and TFMTP of the 20-th level on the MTP’s training set created. The demonstrated values of the loss function and errors obtained with TFMTP and MTP are in excellent correspondence.            
+
+> Model loss energy error force error stress error meV/atom meV/Å eV TFMTP 0.183 0.192 25.9 0.245 MTP 0.190 0.203 26.5 0.238
+
+Next, we compared the elastic constants and bulk moduli obtained with MTP, TFMTP, and DFT by averaging over con-figurations including 54 atoms with 10 random arrangements from the training set. The mentioned mechanical properties are shown in Table VIII. From these data, we conclude that the elastic constants and bulk moduli calculated using MTP and TFMTP are in an excellent agreement with each other and with DFT. Table VIII: Elastic constants and bulk moduli of MoNbTaWV calculated with TFMTP, MTP, and DFT. All physical quantities are the averages of 10 randomly arranged and relaxed 54-atom systems. The results are given within 1-σ confidence interval.                                  
+
+> Model C11 , GPa C12 , GPa C44 , GPa Bulk modulus, GPa TFMTP 338.2 ±1.4 160.4 ±1.3 48.0 ±1.1 219.7 ±1.0 MTP 332.4 ±1.2 158.2 ±1.4 48.9 ±1.0 216.2 ±1.2 DFT 334.3 ±5.1 159.8 ±2.7 56.6 ±4.5 217.9 ±1.3
+
+Finally, we calculated the elastic constants and bulk mod-uli of equiatomic MoNbTaWV. To that end, we generated 50 randomly arranged structures of 2000 atoms, relaxed them with TFMTP and MTP, computed elastic constants and bulk moduli for each of these structures, and averaged these values over 50 configurations. We compared the mechanical prop-erties obtained with MTP, TFMTP, and the tabGAP model (see Table II in Ref. 42 ). From Table IX, we observe an ex-cellent agreement between the MTP and TFMTP models and a rather good agreement between these models and tabGAP. Despite a noticeable variance in the C 12 elastic constants cal-culated with our models and tabGAP, the overall agreement remains reasonable. This deviation can be related to dif-ferences in the underlying DFT datasets and target proper-ties. While the tabGAP potential was designed as a broad-purpose model on a wide compositional space, liquids, and defect configurations with a total accuracy of approximately 3 meV/atom 42 — our MTP/TFMTP models were explicitly fitted for high-precision elastic property predictions. We cre-ated training sets for our models during the relaxation of 10 different MoNbTaWV structures and, therefore, energy fitting errors of MTP/TFMTP were about 0.2 meV/atom. Although a direct quantitative comparison of the stress-fitting perfor-mance is limited due to the absence of explicit DFT elastic constants and stress errors in Ref. 42 , the overall agreement of the elastic constants and bulk moduli underscores the physical reliability of all the MLIPs discussed here. Table IX: Elastic constants and bulk moduli of equatomic MoNbTaWV calculated with TFMTP, MTP, and tabGAP. All physical quantities are the averages of 50 randomly arranged and relaxed 2000-atom systems. The results are given within 1-σ confidence interval.                                    
+
+> Model C11 , GPa C12 , GPa C44 , GPa Bulk modulus, GPa TFMTP 335.7 ±0.3 160.1 ±0.2 48.4 ±0.1 218.6 ±0.2 MTP 331.1 ±0.5 158.0 ±0.3 49.5 ±0.1 215.7 ±0.3 tabGAP 42 382.2 ±0.6 124.5 ±0.3 47.5 ±0.3 210.4 ±0.3
+> D. Discussion
+
+The aim of this work was to verify whether the compressed TFMTP model requires less DFT data for its fitting than the original MTP model while maintaining the same accu-racy. For the four-component FLiNaK system and the five-component MoNbTaWV random alloy, we demonstrated that TFMTP which has 1.5 times fewer parameters, requires two times smaller configurations for its fitting, and preserves the accuracy of MTP. A drawback of the current implementation of the iterations of the active learning algorithm is the problem with TFMTP scaling: we have to choose an interval for the initial guess for proper TFMTP fitting, as for some intervals, the BFGS algorithm gets stuck at the line search step. Due to this reason, we chose smaller weights in the loss function (see the Computational Details section) than the classical we = 1eV −2, wf = 0.01 (eV / Å) −2, and ws = 0.001 eV −2 that are typically chosen for MTP fitting and subtracted the minimum energy of configurations in the initial training sets to reduce the value of the initial loss function. Such a technique enables fitting TFMTP starting from an initial guess from the interval (0.1, 0.8) with a uniform distribution at each iteration of the active learning algorithm. In our further studies, we plan to implement an automated algorithm for TFMTP scaling, but this is beyond the scope of this work. Low-rank approximation of Moment Tensor Potential enables reducing training set size without loss of accuracy 8
+
+IV. CONCLUSIONS 
+
+In this study, we demonstrated that the low-rank approxi-mation of the Moment Tensor Potential (MTP), namely, the tensor-factorized MTP (TFMTP), requires fewer configura-tions for fitting than the original MTP while preserving its accuracy. To that end, we explicitly implemented the func-tional form of TFMTP in the program code. Next, we ac-tively trained both MTP and TFMTP using the MaxVol-based algorithm proposed in Ref. 21 during atomistic simula-tions of two benchmark systems: a four-component molten salt mixture, LiF-NaF-KF (FLiNaK), and a five-component equiatomic MoNbTaWV random alloy. We then compared the training set sizes required to fit the models, assessed the accuracy of the trained models on the training sets created with active learning of MTP, and evaluated the density and viscosity of the FLiNaK system at T = 600 − 1200 K, along-side the elastic properties of the MoNbTaWV crystal at zero temperature. For the FLiNaK system, we initiated our investigation by fitting the potentials to configurations labeled using the Mat-terSim model 36 . We found that an ensemble of actively trained, 1.5-fold compressed TFMTPs of the 14th level re-quired over 1.5 times fewer configurations for training than the original MTP, while maintaining closely matching values of the loss function and energy, force, and stress errors. Af-ter that, we fitted the ensembles of MTPs and 1.5-fold com-pressed TFMTPs of the 16th level on density functional theory (DFT) data. We demonstrated that the values of the loo func-tion, density, and viscosity obtained with MTPs and TFMTPs were in excellent agreement with each other, and that the ac-tively trained TFMTP yielded more than a two-fold reduction in the number of configurations compared to MTP. Further-more, the calculated temperature dependencies of density and viscosity are in perfect agreement with the most recent ex-perimental works 38,41 and in reasonable agreement with the previously obtained literature results. In the case of the MoNbTaWV crystal, we fitted the 20th-level MTP and TFMTP only on the DFT data, and chose elas-tic constants and bulk moduli as the target properties. We ob-tained results consistent with the FLiNaK system: TFMTP has 1.5 times fewer parameters and requires an approximately two times smaller training set size, while its values of the loss function, energy, force, stress errors, elastic constants, and bulk modulus remain indistinguishable from the MTP predic-tions. Additionally, we calculated the elastic constants and bulk modulus using direct DFT simulations and observed a good correspondence with those obtained via the fitted poten-tials. Finally, we compared these elastic properties computed with MTP/TFMTP against tabGAP data 42 , demonstrating a good agreement between our models and tabGAP. In future work, we plan to develop a method for the opti-mization of TFMTP with automated scaling. This algorithm will enable us fitting TFMTP without the need to carefully choose an initial guess or to scale the loss function. 
+
+ACKNOWLEDGMENTS 
+
+The work was supported by the grant for research centers in the field of AI provided by the Ministry of Economic De-velopment of the Russian Federation in accordance with the agreement 000000C313925P4E0002 and the agreement with HSE University No 139-15-2025-009. This research was sup-ported in part by computational resources of HPC facilities at the HSE University 43 .The authors acknowledge Dmitry Korogod for fruitful dis-cussions regarding this study. 
+
+AUTHOR DECLARATIONS Conflict of interest 
+
+The authors have no conflicts to disclose. 
+
+Author Contributions 
+
+Anna Bondarenko : Data curation (supporting); Formal analysis (supporting); Software (lead). Nikita Rybin : For-mal analysis (supporting); Methodology (supporting); Visu-alization (equal); Writing - review & editing (supporting). 
+
+Maxim Rakhuba : Conceptualization (equal); Formal anal-ysis (supporting); Methodology (equal); Supervision (sup-porting); Writing - review & editing (supporting). Ivan S. Novikov : Data curation (lead); Visualization (equal); Con-ceptualization (equal); Formal analysis (lead); Methodology (equal); Software (supporting); Supervision (lead); Writing -original draft (lead); Writing - review & editing (lead). 
+
+DATA AVAILABILITY STATEMENT 
+
+Data will be made available on request. 
+
+REFERENCES         
+
+> 1J. Behler and M. Parrinello, “Generalized neural-network representation of high-dimensional potential-energy surfaces,” Physical review letters 98 ,146401 (2007).
+> 2A. P. Bartók, M. C. Payne, R. Kondor, and G. Csányi, “Gaussian approx-imation potentials: The accuracy of quantum mechanics, without the elec-trons,” Physical review letters 104 , 136403 (2010).
+> 3A. Thompson, L. Swiler, C. Trott, S. Foiles, and G. Tucker, “Spectral neighbor analysis method for automated generation of quantum-accurate interatomic potentials,” J. Comput. Phys. 285 , 316 – 330 (2015).
+> 4A. V. Shapeev, “Moment tensor potentials: A class of systematically im-provable interatomic potentials,” Multiscale Modeling & Simulation 14 ,1153–1173 (2016).
+> 5H. Wang, L. Zhang, J. Han, and E. Weinan, “Deepmd-kit: A deep learn-ing package for many-body potential energy representation and molecular dynamics,” Computer Physics Communications 228 , 178–184 (2018).
+> 6S. Batzner, A. Musaelian, L. Sun, M. Geiger, J. P. Mailoa, M. Kornbluth, N. Molinari, T. E. Smidt, and B. Kozinsky, “E (3)-equivariant graph neu-ral networks for data-efficient and accurate interatomic potentials,” Nature communications 13 , 2453 (2022).
+
+Low-rank approximation of Moment Tensor Potential enables reducing training set size without loss of accuracy 9
+
+> 7
+
+G. P. Pun, R. Batra, R. Ramprasad, and Y. Mishin, “Physically informed artificial neural networks for atomistic modeling of materials,” Nature com-munications 10 , 2339 (2019). 
+
+> 8
+
+R. Drautz, “Atomic cluster expansion for accurate and transferable inter-atomic potentials,” Physical Review B 99 , 014104 (2019). 
+
+> 9
+
+R. Jacobs, D. Morgan, S. Attarian, J. Meng, C. Shen, Z. Wu, C. Y. Xie, J. H. Yang, N. Artrith, B. Blaiszik, et al. , “A practical guide to machine learning interatomic potentials–status and future,” Current Opinion in Solid State and Materials Science 35 , 101214 (2025). 
+
+> 10
+
+V. Lebedev, Y. Ganin, M. Rakhuba, I. Oseledets, and V. Lempit-sky, “Speeding-up convolutional neural networks using fine-tuned cp-decomposition,” ICLR (2015). 
+
+> 11
+
+A. Novikov, D. Podoprikhin, A. Osokin, and D. P. Vetrov, “Tensorizing neural networks,” Advances in neural information processing systems 28 
+
+(2015). 
+
+> 12
+
+L. Deng, G. Li, S. Han, L. Shi, and Y. Xie, “Model compression and hard-ware acceleration for neural networks: A comprehensive survey,” Proceed-ings of the IEEE 108 , 485–532 (2020). 
+
+> 13
+
+C. Yin, B. Acun, C.-J. Wu, and X. Liu, “Tt-rec: Tensor train compres-sion for deep learning recommendation models,” Proceedings of Machine Learning and Systems 3, 448–462 (2021). 
+
+> 14
+
+Y.-C. Hsu, T. Hua, S. Chang, Q. Lou, Y. Shen, and H. Jin, “Language model compression with weighted low-rank factorization,” ICLR (2022). 
+
+> 15
+
+E. J. Hu, Y. Shen, P. Wallis, Z. Allen-Zhu, Y. Li, S. Wang, L. Wang, W. Chen, et al. , “Lora: Low-rank adaptation of large language models.” Iclr 1, 3 (2022). 
+
+> 16
+
+Z. Li, H. Li, and L. Meng, “Model compression for deep neural networks: A survey,” Computers 12 , 60 (2023). 
+
+> 17
+
+J. Xiao, M. Yin, Y. Gong, X. Zang, J. Ren, and B. Yuan, “COMCAT: Towards efficient compression and customization of attention-based vision models,” in Proceedings of the 40th International Conference on Machine Learning (PMLR, 2023) pp. 38125–38136. 
+
+> 18
+
+X. Wang, Y. Zheng, Z. Wan, and M. Zhang, “Svd-llm: Truncation-aware singular value decomposition for large language model compres-sion,” ICLR (2025). 
+
+> 19
+
+Z. Mo, L.-K. Huang, and S. J. Pan, “Parameter and memory efficient pre-training via low-rank riemannian optimization,” in The Thirteenth Interna-tional Conference on Learning Representations (2025). 
+
+> 20
+
+I. Vorotnikov, F. Romashov, N. Rybin, M. Rakhuba, and I. S. Novikov, “Low-rank matrix and tensor approximations for compression of machine-learning interatomic potentials,” The Journal of Chemical Physics 163 
+
+(2025). 
+
+> 21
+
+E. V. Podryabinkin and A. V. Shapeev, “Active learning of linearly parametrized interatomic potentials,” Computational Materials Science 
+
+140 , 171–180 (2017). 
+
+> 22
+
+K. Gubaev, E. V. Podryabinkin, and A. V. Shapeev, “Machine learning of molecular properties: Locality and active learning,” The Journal of chemi-cal physics 148 , 241727 (2018). 
+
+> 23
+
+I. S. Novikov, K. Gubaev, E. V. Podryabinkin, and A. V. Shapeev, “The mlip package: moment tensor potentials with mpi and active learning,” Ma-chine Learning: Science and Technology 2, 025002 (2020). 
+
+> 24
+
+I. V. Oseledets, “Tensor-train decomposition,” SIAM Journal on Scientific Computing 33 , 2295–2317 (2011). 
+
+> 25
+
+S. A. Goreinov, I. V. Oseledets, D. V. Savostyanov, E. E. Tyrtyshnikov, and N. L. Zamarashkin, “How to find a good submatrix,” in Matrix Methods: Theory, Algorithms And Applications: Dedicated to the Memory of Gene Golub (World Scientific, 2010) pp. 247–256. 
+
+> 26
+
+I. S. Novikov, Y. V. Suleimanov, and A. V. Shapeev, “Automated calcu-lation of thermal rate coefficients using ring polymer molecular dynamics and machine-learning interatomic potentials with active learning,” Physical Chemistry Chemical Physics 20 , 29503–29512 (2018). 
+
+> 27
+
+J. P. Perdew, K. Burke, and M. Ernzerhof, “Generalized gradient approxi-mation made simple,” Phys. Rev. Lett. 77 , 3865–3868 (1996). 
+
+> 28
+
+P. Giannozzi, S. Baroni, N. Bonini, M. Calandra, R. Car, C. Cavazzoni, D. Ceresoli, G. L. Chiarotti, M. Cococcioni, I. Dabo, et al. , “Quantum espresso: a modular and open-source software project for quantum sim-ulations of materials,” Journal of physics: Condensed matter 21 , 395502 (2009). 
+
+> 29
+
+G. Prandini, A. Marrazzo, I. E. Castelli, N. Mounet, and N. Marzari, “Pre-cision and efficiency in solid-state pseudopotential calculations,” npj Comp. Mater. 4, 72 (2018), http://materialscloud.org/sssp. 
+
+> 30
+
+K. F. Garrity, J. W. Bennett, K. M. Rabe, and D. Vanderbilt, “Pseudopo-tentials for high-throughput dft calculations,” Computational Materials Sci-ence 81 , 446–452 (2014). 
+
+> 31
+
+A. Dal Corso, “Pseudopotentials periodic table: From h to pu,” Computa-tional Materials Science 95 , 337–350 (2014). 
+
+> 32
+
+P. E. Blöchl, “Projector augmented-wave method,” Physical review B 50 ,17953 (1994). 
+
+> 33
+
+M. J. Van Setten, M. Giantomassi, E. Bousquet, M. J. Verstraete, D. R. Hamann, X. Gonze, and G.-M. Rignanese, “The pseudodojo: Training and grading a 85 element optimized norm-conserving pseudopotential table,” Computer Physics Communications 226 , 39–54 (2018). 
+
+> 34
+
+S. Grimme, J. Antony, S. Ehrlich, and H. Krieg, “A consistent and accurate ab initio parametrization of density functional dispersion correction (dft-d) for the 94 elements h-pu,” The Journal of chemical physics 132 (2010). 
+
+> 35
+
+N. Rybin, D. Maksimov, Y. Zaikov, and A. Shapeev, “Thermophysical properties of molten flinak: A moment tensor potential approach,” Journal of Molecular Liquids 410 , 125402 (2024). 
+
+> 36
+
+H. Yang, C. Hu, Y. Zhou, X. Liu, Y. Shi, J. Li, G. Li, Z. Chen, S. Chen, C. Zeni, et al. , “Mattersim: A deep learning atomistic model across elements, temperatures and pressures,” arXiv preprint arXiv:2405.04967 (2024). 
+
+> 37
+
+M. S. Green, “Markoff random processes and the statistical mechanics of time-dependent phenomena. ii. irreversible processes in fluids,” The Journal of chemical physics 22 , 398–413 (1954). 
+
+> 38
+
+R. R. Romatoski and L.-W. Hu, “Fluoride salt coolant properties for nuclear reactor applications: A review,” Annals of Nuclear Energy 109 , 635–647 (2017). 
+
+> 39
+
+B. Vriesema, Aspects of molten fluorides as heat transfer agents for power generation (Delft University of Technology, Department of Mechanical En-gineering, 1979). 
+
+> 40
+
+J. Ambrosek, M. Anderson, K. Sridharan, and T. Allen, “Current status of knowledge of the fluoride salt (flinak) heat transfer,” Nuclear technology 
+
+165 , 166–173 (2009). 
+
+> 41
+
+A. Rudenko, A. Kataev, and O. Tkacheva, “Dynamic viscosity of the naf-kf-ndf3 molten system,” Materials 15 , 4884 (2022). 
+
+> 42
+
+J. Byggmästar, K. Nordlund, and F. Djurabekova, “Modeling refractory high-entropy alloys with efficient machine-learned interatomic potentials: Defects and segregation,” Physical Review B 104 , 104101 (2021). 
+
+> 43
+
+P. Kostenetskiy, R. Chulkevich, and V. Kozyrev, “HPC resources of the higher school of economics,” in Journal of Physics: Conference Series ,Vol. 1740 (IOP Publishing, 2021) p. 012050.

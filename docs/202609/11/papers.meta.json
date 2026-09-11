@@ -1,0 +1,69 @@
+{
+  "label": "2026-09-11",
+  "date": "2026-09-11",
+  "generated_at": "2026-09-11T22:12:57",
+  "count": 4,
+  "papers": [
+    {
+      "paper_id": "202609/11/2609.11147v1-autonomous-chemical-mechanistic-discovery-through-agentic-reasoning-and-validation",
+      "section": "deep",
+      "title_en": "Autonomous Chemical Mechanistic Discovery through Agentic Reasoning and Validation",
+      "authors": "Dong Li, Sixuan Mi, Zihao Ye, Huan Xiong, Tao XU, Tong Zhu, Aijia Zhang, Junqi Gao, Kaiyan Zhang, Shijie Wang, Bowen Zhou, Yuqiang Li, Biqing Qi",
+      "date": "2026-09-10",
+      "pdf": "https://arxiv.org/pdf/2609.11147v1",
+      "score": "9.0",
+      "evidence": "面向反应机理推理与验证的自主智能体系统",
+      "tldr": "反应机理解析对化学研究至关重要，但现有计算流程仍高度依赖专家干预，难以自动化扩展。ARCHE 将通用推理模型、化学专用计算模型与结构化工具库结合，形成可自主提出并优先排序机理假设、调度计算流程、依据计算证据闭环修正结论的智能体系统。它在不对称催化过渡态与机理重构、未发表α-碘代硼酸酯C–I裂解自由基路径验证、镍催化迁移交叉偶联选择性描述符识别三类任务中完成验证。该工作推动自主机理发现，为机器辅助化学研究提供可复用基础。",
+      "tags": "query:aichem-map",
+      "abstract_en": "Unraveling reaction mechanisms is central to modern chemistry, yet automating these investigations remains challenging because computational workflows still rely heavily on expert intervention. Here we introduce ARCHE, an autonomous agentic system that integrates a general-purpose reasoning model, a domain-specialized computational chemistry model, and a structured tool registry to transform mechanistic inquiry into a scalable, self-validating process. ARCHE interprets scientific questions, generates and prioritizes mechanistic hypotheses, orchestrates computational workflows, and iteratively refines conclusions based on computed evidence within a closed loop. We validate its capabilities across three increasingly demanding scenarios: reconstructing stereocontrolling transition states and validating the corresponding reaction mechanism in a previously reported asymmetric catalytic reaction; proposing and validating a plausible radical pathway through iterative hypothesis refinement for a recently discovered but unpublished $α$-iodoboronate C-I cleavage reaction; and identifying a chemically interpretable descriptor that governs selectivity in nickel-catalysed migratory cross-coupling reactions. By coupling agentic reasoning with rigorous computational validation, ARCHE advances autonomous mechanistic discovery and establishes a foundation for broader machine-assisted chemical research. The code for ARCHE is publicly available at https://github.com/JetAstra/Arche-Harness.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202609/11/2609.11790v1-dynamic-language-model-representations-for-multi-objective-reaction-optimisation",
+      "section": "deep",
+      "title_en": "Dynamic language model representations for multi-objective reaction optimisation",
+      "authors": "Joshua W. Sin, David Ming Segura, Bojana Ranković, Siu Lun Chau, Marius D. R. Lutz, Andrea Anelli, Ryan P. Burwood, Kurt Püntener, Maximilian J. Notheis, Raphael Bigler, Philippe Schwaller",
+      "date": "2026-09-10",
+      "pdf": "https://arxiv.org/pdf/2609.11790v1",
+      "score": "8.0",
+      "evidence": "语言模型反应表示用于多目标反应优化",
+      "tldr": "多目标化学反应优化依赖反应组分表示，但现有特征化要么缺乏化学信息，要么难以跨不同组分迁移。该工作用微调语言模型编码反应条件文本，并与高斯过程代理联合训练，在多目标贝叶斯优化中动态学习任务自适应表示。在镍/钯催化交叉偶联中，该方法比描述符库或独热编码用更少实验达到收敛。前瞻应用于钯催化氰化和三目标不对称氢化，两轮高通量实验仅探索不足3%设计空间，即获克级94%和84%分离收率，后者ee达99.6%，展示了文本表示在多目标催化优化中的潜力。",
+      "tags": "query:smc",
+      "abstract_en": "Optimising chemical reactions across multiple objectives, such as yield, selectivity, and safety, is central to chemical synthesis, and model-driven approaches depend critically on how reaction components are represented. Established featurisations are either chemically uninformative, as with one-hot encodings, or, as with molecular descriptors, do not readily extend across chemically distinct components. For structurally and functionally diverse components, it is therefore unclear what a shared representation should contain. Constructing such a representation is itself a challenging research undertaking that must be revisited for each new reaction system. Here we bypass this step by learning the reaction representation dynamically from text. Textual descriptions of reaction conditions are encoded by a fine-tuned language model trained jointly with Gaussian process surrogates, yielding task-adaptive representations within a multi-objective Bayesian optimisation loop. Across nickel- and palladium-catalysed cross-couplings in both sequential and parallel experimentation regimes, this approach reaches optimisation convergence in fewer experiments than descriptor libraries or one-hot encoding. Applied prospectively to a palladium-catalysed cyanation spanning mixed ligand denticity and heterogeneous additives, and to a three-objective asymmetric hydrogenation across chiral iridium and ruthenium catalyst families, two rounds of high-throughput experimentation (192 reactions, under 3% of each design space) delivered conditions translating directly to gram scale in 94% and 84% isolated yield, the latter at 99.6% enantiomeric excess.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202609/11/2609.07372v1-low-rank-approximation-of-moment-tensor-potential-enables-reducing-training-set-size-without-loss-of-accuracy",
+      "section": "quick",
+      "title_en": "Low-rank approximation of Moment Tensor Potential enables reducing training set size without loss of accuracy",
+      "authors": "Anna Bondarenko, Nikita Rybin, Maxim Rakhuba, Ivan S. Novikov",
+      "date": "2026-09-07",
+      "pdf": "https://arxiv.org/pdf/2609.07372v1",
+      "score": "6.0",
+      "evidence": "低秩机器学习势加速原子模拟",
+      "tldr": "矩张量势（MTP）精度高，但训练集构建成本高，限制其在复杂多组分体系中的应用。本文基于张量列分解实现低秩近似的TFMTP，并用MaxVol主动学习在FLiNaK熔盐和MoNbTaWV合金模拟中训练。1.5倍压缩下，TFMTP所需构型数减半，精度与原MTP几乎无差别。密度、黏度和弹性常数等物性预测差异可忽略，表明该方法能显著降低训练成本。",
+      "tags": "query:aichem-map",
+      "abstract_en": "In this study, we implement a low-rank approximation of Moment Tensor Potential (MTP) based on the tensor train (TT) decomposition. The implemented tensor-factorized MTP (TFMTP) and the original MTP model are actively trained via a MaxVol-based algorithm during molecular dynamics simulations of a four-component molten salt mixture, LiF-NaF-KF (FLiNaK), and geometry optimizations of a five-component equiatomic MoNbTaWV random alloy. We demonstrate that under a 1.5-fold compression, TFMTP requires two times fewer configurations for fitting than the original MTP model, while maintaining an indistinguishable level of accuracy. These actively trained MTP and TFMTP models are further used to evaluate the density and viscosity of FLiNaK at temperatures ranging from 600 to 1200 K, as well as the elastic constants and bulk modulus of the MoNbTaWV alloy at zero temperature. For both atomic systems, the differences in physical properties predicted by MTP and TFMTP are negligible.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202609/11/2609.11071v1-coherent-floquet-quantum-reservoirs-for-molecular-property-prediction",
+      "section": "quick",
+      "title_en": "Coherent Floquet quantum reservoirs for molecular property prediction",
+      "authors": "Luofei Wang, Da Zhang, Congren Wang, Yiming Li, Yuxiao Yang, Xuan Zhang, Xuefeng Cui, Zhang-Qi Yin",
+      "date": "2026-09-10",
+      "pdf": "https://arxiv.org/pdf/2609.11071v1",
+      "score": "6.0",
+      "evidence": "量子储备池预测分子性质",
+      "tldr": "面向分子性质预测，本文构建基于离散时间晶体的相干 Floquet 量子储备池，以量子动力学编码分子图事件与表面跳跃帧，受控重置调节历史输入。序列末测量得到固定维特征，训练经典解码器完成抑制剂活性、血脑屏障渗透性分类与电子带隙预测，储备池参数固定。匹配输入长度与输出宽度时，DTC-QRC 在长前缀图分类和乙烯带隙预测上优于回声状态网络，退相干降低性能。Quafu 超导云实验显示配对观测量在噪声下仍保留任务信息，为分子筛选与时间分辨预测提供框架。",
+      "tags": "query:smc",
+      "abstract_en": "Quantum reservoir computing (QRC) uses quantum dynamics to represent input histories for prediction through a trained classical readout. Discrete time crystals (DTCs) exhibit robust subharmonic responses under periodic driving, and previous work has used their dynamics to construct DTC-QRC. Here we construct a DTC-based reservoir architecture to predict molecular properties from structural and dynamical observations. Coherent Floquet evolution processes local molecular graph events and surface-hopping frames, while controlled reset regulates the contribution of earlier inputs. Measurements at the end of each input sequence yield a feature vector of fixed dimension. Trained classical decoders use this vector for inhibitor-activity and blood--brain-barrier permeability classification and electronic-gap forecasting, while the reservoir parameters remain fixed during training. With matched input lengths and output widths, DTC-QRC outperforms echo-state networks on long-prefix graph classification and the studied ethene gap forecasting tasks. Dephasing lowers performance in both applications, consistent with a role for coherent propagation. Experiments on the Quafu superconducting quantum cloud platform show that pair observables retain task information under device noise. The architecture provides a common framework for molecular screening and time-resolved property prediction using quantum reservoir computing.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
