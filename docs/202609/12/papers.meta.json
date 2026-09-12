@@ -1,0 +1,54 @@
+{
+  "label": "2026-09-12",
+  "date": "2026-09-12",
+  "generated_at": "2026-09-12T21:13:09",
+  "count": 3,
+  "papers": [
+    {
+      "paper_id": "202609/12/2609.04696v1-voltage-embedded-equivariant-machine-learning-potential-for-open-system-simulations",
+      "section": "quick",
+      "title_en": "Voltage-embedded equivariant machine learning potential for open system simulations",
+      "authors": "Yiming Guan, Rongzhi Gao, ChiYung Yam, GuanHua Chen, Ziyang Hu",
+      "date": "2026-09-04",
+      "pdf": "https://arxiv.org/pdf/2609.04696v1",
+      "score": "7.0",
+      "evidence": "面向开放体系电化学模拟的嵌入电压偏置的等变机器学习势",
+      "tldr": "电化学界面在工况非平衡条件下的模拟对能源技术至关重要，但受限于从头算方法的高成本，现有机器学习势多面向闭系统与均匀电场，难以用于开放量子输运。为此，作者提出一种嵌入电压偏置的E(3)等变图神经网络势。该方法将能量与力分解为零偏置项和偏置相关项，并用不同向量编码区分电极与散射区原子。仅用有限离散偏置数据训练，模型即具备高精度与稳健外推能力；在锂/水界面中成功再现电场诱导水分子动态重取向及不同电极的不对称电化学行为。",
+      "tags": "query:aichem-map",
+      "abstract_en": "Modeling electrochemical interfaces under operational non-equilibrium conditions is vital for energy technologies but remains bottlenecked by the expensive cost of ab initio methods. Current machine learning potentials, largely designed for closed systems under homogeneous electric fields, are limited in open quantum transport applications. To overcome this, we present an E(3)-equivariant graph neural network that embeds voltage bias for open-system simulations. Our approach decouples the system energy and forces into zero-bias and bias-dependent contributions, assigning distinct vector encodings to electrode and scattering-region atoms to capture non-equilibrium conditions. Trained on limited discrete bias data, the model achieves high predictive accuracy and robust extrapolation transferability. When applied to a lithium/water interface, our model successfully captures the field-induced dynamic reorientation of water molecules and reproduces asymmetric electrochemical behavior at different electrodes.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202609/12/2609.06761v1-lats-levy-adaptive-tree-sampling-for-feedback-driven-diverse-target-discovery",
+      "section": "quick",
+      "title_en": "LATS: Levy Adaptive Tree Sampling for Feedback-Driven Diverse Target Discovery",
+      "authors": "Binglin Ji, Anindya Sarkar, Hengchang Lu, Lecheng Kong, Yixin Chen, Yevgeniy Vorobeychik",
+      "date": "2026-09-06",
+      "pdf": "https://arxiv.org/pdf/2609.06761v1",
+      "score": "6.0",
+      "evidence": "反馈驱动的目标导向生成采样",
+      "tldr": "科学发现需在扩散模型生成中寻找低似然但高目标效用的稀有区域，现有采样器或偏向高密度、或探索低效，难以在有限预算内兼顾覆盖与利用。为此提出 Levy Adaptive Tree Search（LATS），以重尾 Levy 探索结合树搜索价值回传，在线反馈中逐步定位偏好模式。在材料科学等基准上，LATS 显著提升目标发现效率，并保持样本保真与结构多样性。该框架为反馈驱动、多样化的目标发现提供了新采样范式。",
+      "tags": "query:smc",
+      "abstract_en": "While diffusion models excel at capturing complex data distributions, scientific discovery often requires steering generation toward specific, uncharacterized regions that maximize a target objective. These high-utility modes frequently reside in low-likelihood tail regions and are only revealed sequentially through interactive feedback. Existing diffusion samplers fail in this regime: they inherit the pre-trained model's bias toward high-density regions, leaving rare yet promising phenomena underexplored. Conversely, exploration-heavy samplers ensure broad coverage but fail to efficiently exploit high-utility modes when constrained by a strict sampling budget. To resolve this dilemma, we introduce Levy Adaptive Tree Search (LATS), a principled sampling framework for online feedback-driven search. LATS leverages heavy-tailed exploration coupled with tree-based value backpropagation to progressively uncover preferred modes. By maintaining broad distributional coverage, LATS successfully discovers low-likelihood, high-utility regions while preserving sample fidelity and structural diversity. Experiments across diverse benchmarks, including materials science, demonstrate that LATS significantly outperforms baselines in target discovery efficiency.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202609/12/2609.09799v1-uflowcsp-crystal-structure-prediction-using-mean-flow-generative-models",
+      "section": "quick",
+      "title_en": "uFlowCSP: Crystal Structure Prediction using Mean flow generative models",
+      "authors": "Sourin Dey, Dipannoy Das Gupta, Lai Wei, Sadman Sadeed Omee, Jianjun Hu",
+      "date": "2026-09-09",
+      "pdf": "https://arxiv.org/pdf/2609.09799v1",
+      "score": "6.0",
+      "evidence": "基于MeanFlow生成模型的高效三维晶体结构预测",
+      "tldr": "晶体结构预测是材料发现的核心，但扩散与流匹配生成模型推理需数十至数千次串行网络评估，速度慢。uFlowCSP 基于 MeanFlow 学习平均概率流速度，结合化学与对称感知 Transformer，1 到 5 步生成完整结构。MP-20 上单步达 78.38%，与 CrystalFlow 持平且评估少 100 倍；五步达 83.64%，超过 CrystalFlow 和 DiffCSP。它提升每次网络评估的精度与速度，而非仅追求峰值精度。",
+      "tags": "query:smc",
+      "abstract_en": "Crystal structure prediction (CSP) is fundamental to computational materials discovery. Generative models including CDVAE, DiffCSP, FlowMM, and CrystalFlow learn stable-crystal distributions directly, but diffusion and flow-matching inference requires tens to thousands of sequential network evaluations per candidate.   We introduce uFlowCSP, a MeanFlow-based CSP model that learns the average, rather than instantaneous, probability-flow velocity. It generates a complete structure in one to five evaluations, delivering 5x-58x faster inference with equal or better performance. A chemistry- and symmetry-aware Transformer uses canonical atom ordering, global composition, and per-token chemistry embeddings. A coarse crystal-system token is used only during training; it provides additive gains, particularly improving space-group agreement despite being absent at inference, which remains formula-only.   On MP-20 with 20 candidates per target, one step matches CrystalFlow (78.38% vs. 78.34%) with 100x fewer evaluations and about 10x lower wall-clock time. Five steps reach 83.64%, exceeding CrystalFlow (78.34% at 2,000 evaluations) and DiffCSP (77.93% at about 20,000), while using 20x fewer evaluations. uFlowCSP generates 10,000 structures in 0.39-1.31 minutes, versus 6.5 for CrystalFlow and 76.1 for DiffCSP. Under CSPBench's energy-ranked top-five structure-and-space-group criterion, five-step uFlowCSP reaches 72%/72%/65% structure, space-group, and consensus match rates. CrystalFlow reaches 78%/73%/68% at 100 steps but falls to 49%/32%/31% at five. Thus, uFlowCSP improves accuracy per network evaluation, not merely peak accuracy.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
