@@ -1,0 +1,54 @@
+{
+  "label": "2026-09-13",
+  "date": "2026-09-13",
+  "generated_at": "2026-09-13T21:51:03",
+  "count": 3,
+  "papers": [
+    {
+      "paper_id": "202609/13/2609.05807v1-molparser-mobile-ultrafast-ocsr-system-for-large-scale-chemical-literature-mining",
+      "section": "quick",
+      "title_en": "MolParser-Mobile: Ultrafast OCSR System for Large-Scale Chemical Literature Mining",
+      "authors": "Xi Fang, Haocheng Lu, Han Lyu, Chengxiang Luo, Linfeng Zhang, Guolin Ke",
+      "date": "2026-09-05",
+      "pdf": "https://arxiv.org/pdf/2609.05807v1",
+      "score": "6.0",
+      "evidence": "化学结构识别支撑文献挖掘与反应抽取",
+      "tldr": "光学化学结构识别（OCSR）是化学文献挖掘的关键技术，但现有深度模型推理吞吐低，难以支撑网页级大规模部署。本文提出 MolParser-Mobile，一个经 AutoML 优化的轻量端到端 OCSR 框架。该模型仅 9.98M 参数，在单张 RTX 4090D 上达到每秒 1520 个分子的吞吐。它保持有竞争力的识别精度，并在部分基准上更优，为大规模化学文献挖掘提供高效方案。",
+      "tags": "query:aichem-map",
+      "abstract_en": "Optical Chemical Structure Recognition (OCSR) is a fundamental component of chemical literature mining, enabling molecular database construction, reaction extraction, and AI-driven scientific discovery. Despite substantial progress in recognition accuracy with recent deep learning-based methods, inference throughput remains a critical bottleneck that limits web-scale deployment. To address this challenge, we propose MolParser-Mobile, an AutoML-optimized lightweight end-to-end OCSR framework. MolParser-Mobile contains only 9.98M parameters, while reaching a throughput of 1,520 molecules per second on a single NVIDIA RTX 4090D GPU. Despite its compact design, it maintains competitive and, on several benchmarks, superior recognition accuracy.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202609/13/2609.09251v1-the-energetics-of-force-errors-in-machine-learned-molecular-dynamics",
+      "section": "quick",
+      "title_en": "The energetics of force errors in machine-learned molecular dynamics",
+      "authors": "Peng Kang, Da Wan, Shulin Bai, Vincent Michaud-Rioux, Zhen Li, Yu Liu, Lei Zheng, Li-Dong Zhao",
+      "date": "2026-09-08",
+      "pdf": "https://arxiv.org/pdf/2609.09251v1",
+      "score": "6.0",
+      "evidence": "机器学习分子动力学中力误差的能量学分析",
+      "tldr": "机器学习分子动力学中，力误差的能量效应取决于原子运动方向，而非仅由力残差大小决定。为此提出方向性残余功系数，结合方向曲率失配与残余响应空间分布。在474原子锂电解液界面，对24个预设终点，预先固定的预测与测量偏差小于预测功的4.6%。固定结构仅改初速度方向即可反转力-功排序：同一0.25 fs下，力残差高11.6%的方向反而少36.1%的功。该框架将力容差与参考能量转移关联，为势函数评估和自适应参考分配提供依据。",
+      "tags": "query:aichem-map",
+      "abstract_en": "The energetic effect of a force error depends on atomic motion. We establish a directional residual-work coefficient combining directional curvature mismatch with the spatial distribution of the residual response. For conservative potentials force-matched at an anchor, it determines the leading signed work at the first crossing of a small force-error budget. At a 474-atom lithium-electrolyte interface, predictions fixed before future reference evaluations differ from measurements by less than 4.6% of predicted work across 24 prescribed endpoints. Changing only the initial velocity direction at fixed structure and initial total kinetic energy reverses the force-work ranking. At the same admitted time of 0.25 fs, one direction gives an 11.6% larger maximum force residual but 36.1% less work. The reversal recurs at a second structure. The framework connects force tolerances to reference-energy transfer, providing a physical basis for potential assessment and adaptive reference allocation.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202609/13/2609.09473v1-mode-coverage-in-normalizing-flow-boltzmann-generators-via-log-ratio-variation",
+      "section": "quick",
+      "title_en": "Mode Coverage in Normalizing Flow Boltzmann Generators via Log-Ratio Variation",
+      "authors": "Qi Feng, Rongjie Lai, Di Qi, Xuda Ye",
+      "date": "2026-09-08",
+      "pdf": "https://arxiv.org/pdf/2609.09473v1",
+      "score": "6.0",
+      "evidence": "归一化流玻尔兹曼生成器用于分子采样",
+      "tldr": "归一化流玻尔兹曼生成器虽有可解前推密度，但用前向KL训练依赖可能偏置或缺模式的目标样本，导致漏掉目标质量而重要性权重仍显示高ESS。本文提出对数比变差X_ω，即加权测度下目标与前推对数密度比的平均绝对成对差，并构造KLXX损失，在KL中额外加入目标加权项与淬火/退火混合搜索项。理论给出Fisher-Rao梯度流与固定代理误差界，用于自适应分阶段生成器并逐阶段重加权。实验表明KLXX提升模式覆盖和阶段诊断，恢复的可观测量接近独立参考。",
+      "tags": "query:aichem-map",
+      "abstract_en": "Normalizing flow Boltzmann generators retain a tractable pushforward density, but training with forward KL depends on target samples that may be biased or omit modes. As a result, a flow can miss target mass while its observed importance weights give a high effective sample size. We introduce the log-ratio variation $\\X_ω$, the mean absolute pairwise difference of the target-to-pushforward log-density ratio under a weighting measure $ω$, and use it to define KLXX, a new loss function. Two log-ratio variations are added to the forward KL (denoted by the two X's): one weighted by the target to improve accuracy, the other by a mixture of quench and temper samples with pushforward samples to search candidate modes. We derive the Fisher--Rao gradient flow of KLXX, where both variations contribute nonpositive dissipation, and a fixed-surrogate error bound for KLXX. We use KLXX in an adaptive-staging Boltzmann generator, with importance reweighting at every stage. We bound the sampling error of its inference scheme when the stage weights are essentially bounded, and prove it asymptotically unbiased in the sample size. In the numerical tests, KLXX improves mode coverage over forward KL. It also improves the generator's per-stage diagnostics against the loss that built the schedule. The observables the generator recovers are close to independent references. The log-ratio variations thus supply information that the forward KL loss usually omits.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

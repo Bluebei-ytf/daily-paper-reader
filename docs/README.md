@@ -41,7 +41,7 @@
 <section class="dpr-home-dashboard-card dpr-home-report-card">
   <div class="dpr-home-dashboard-header">
     <div>
-      <span class="dpr-home-dashboard-kicker">2026-09-12</span>
+      <span class="dpr-home-dashboard-kicker">2026-09-13</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
     <strong class="dpr-home-dashboard-count">共 3 篇</strong>
@@ -51,7 +51,7 @@
     <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>0</dd></div>
     <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>3</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-09-12 21:13:07 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-09-13 21:51:01 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -62,7 +62,7 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>今日速读3篇：开放系统模拟的电压嵌入等变机器学习势、反馈驱动目标发现的LATS、以及基于Mean flow的晶体结构预测uFlowCSP。最值得关注的是等变机器学习势在开放体系中的应用与uFlowCSP用Mean flow加速晶体结构预测这两条方向。普通读者可优先从这两篇入手，了解AI如何同时推进材料模拟与结构发现。</p>
+<p>2026-09-13 日报：精读挂零，速读 3 篇均分 6.0，集中在化学文献挖掘与分子模拟方法。最值得看的是 MolParser-Mobile 的超快 OCSR 系统（面向大规模化学文献挖掘）和机器学习分子动力学中力误差的能量学分析。普通读者可先读这两篇摘要，关注分子结构识别效率与模拟可靠性如何互相补位。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -87,9 +87,9 @@
     <strong class="dpr-home-dashboard-count">3 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Voltage-embedded equivariant machine learning potential for open system simulations">Voltage-embedded equivariant machine learning potential for open system simulations</span></li><li><span class="dpr-home-dashboard-paper-title" title="LATS: Levy Adaptive Tree Sampling for Feedback-Driven Diverse Target Discovery">LATS: Levy Adaptive Tree Sampling for Feedback-Driven Diverse Target Discovery</span></li><li><span class="dpr-home-dashboard-paper-title" title="uFlowCSP: Crystal Structure Prediction using Mean flow generative models">uFlowCSP: Crystal Structure Prediction using Mean flow generative models</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="MolParser-Mobile: Ultrafast OCSR System for Large-Scale Chemical Literature Mining">MolParser-Mobile: Ultrafast OCSR System for Large-Scale Chemical Literature Mining</span></li><li><span class="dpr-home-dashboard-paper-title" title="The energetics of force errors in machine-learned molecular dynamics">The energetics of force errors in machine-learned molecular dynamics</span></li><li><span class="dpr-home-dashboard-paper-title" title="Mode Coverage in Normalizing Flow Boltzmann Generators via Log-Ratio Variation">Mode Coverage in Normalizing Flow Boltzmann Generators via Log-Ratio Variation</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">smc <strong>2</strong></span><span class="dpr-home-dashboard-tag">aichem-map <strong>1</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>3</strong></span></div>
 </section>
 </div>
 

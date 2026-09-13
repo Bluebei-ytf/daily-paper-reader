@@ -1,0 +1,224 @@
+Title: MolParser-Mobile: Ultrafast OCSR System for Large-Scale Chemical Literature Mining
+
+URL Source: https://arxiv.org/pdf/2609.05807v1
+
+Published Time: Wed, 09 Sep 2026 00:21:52 GMT
+
+Number of Pages: 8
+
+Markdown Content:
+# MolParser-Mobile: Ultrafast OCSR System for Large-Scale Chemical Literature Mining 
+
+Xi Fang Haocheng Lu Han Lyu Chengxiang Luo Linfeng Zhang Guolin Ke 
+
+DP Technology 
+
+{fangxi, luhaocheng, lvhan, luochengxiang, zhanglf, kegl}@dp.tech 
+
+ocsr.dp.tech 
+
+github.com/dptech-corp/MolParser 
+
+huggingface.co/UniParser/MolParser-Mobile 
+
+## Abstract 
+
+Optical Chemical Structure Recognition (OCSR) is a fundamental component of chemical literature mining, enabling molecular database construction, reaction extraction, and AI-driven scientific discovery. Despite substantial progress in recognition accuracy with recent deep learning-based methods, inference throughput remains a critical bottleneck that limits web-scale deployment. To address this challenge, we propose MolParser-Mobile , an AutoML-optimized lightweight end-to-end OCSR framework. MolParser-Mobile contains only 9.98M parameters ,while reaching a throughput of 1,520 molecules per second on a single NVIDIA RTX 4090D GPU. Despite its compact design, it maintains competitive and, on several benchmarks, superior recognition accuracy. 
+
+Model Params Throughput UniParserBench BioVista 
+
+Gemma4-31B 31B OOM 0.073 0.118 Qwen3.5-397B 397B OOM 0.272 0.347 MolParser 216M 39.8 0.800 0.703 
+
+MolParser-Mobile 9.98M ↓95.4% 1,520 ↑38 × 0.823 ↑0.023 0.801 ↑0.098 
+
+Throughput is measured on a single NVIDIA RTX 4090D 24GB GPU. 
+
+## 1 Introduction 
+
+Recent advances in AI scientists, drug discovery, reaction prediction, molecular foundation mod-els, knowledge graph construction, and patent mining have created an unprecedented demand for structured molecular data extracted from scientific literature. As one of the fundamental technologies for converting molecular structure images into machine-readable representations, Optical Chemical Structure Recognition (OCSR) has become a critical component of large-scale chemical knowledge mining [1, 2]. With the rapid growth of open-access publications and patents, modern applications routinely require parsing millions or even billions of molecular images. Recent advances in OCSR, exemplified by atom-bond–based systems [3, 4] and end-to-end ap-proaches [1, 5, 6], have substantially advanced the accuracy of molecular image recognition. Despite these advances, existing methods remain fundamentally constrained by inference efficiency. Most prior studies have focused on enhancing model expressiveness and recognition accuracy, leaving the scalability challenge largely unresolved. Traditional OCSR systems typically require seconds per molecule, while even highly optimized end-to-end approaches such as MolParser achieve throughput only at the scale of tens of molecules per second. As a result, OCSR has become a major compu-tational bottleneck in large-scale chemical knowledge extraction. For example, recognizing one billion molecular images at one molecule per second would consume more than 11,000 GPU-days, 1arXiv:2609.05807v1 [cs.CV] 5 Sep 2026 highlighting the urgent need for substantially more efficient OCSR solutions capable of supporting web-scale molecular data mining. For practical chemical literature mining, inference throughput has become as important as recognition accuracy. A deployable OCSR system must simultaneously achieve high throughput, lightweight deployment, competitive recognition performance, and robustness across diverse real-world document layouts. However, satisfying these requirements cannot be achieved by merely compressing existing architectures. Efficient OCSR requires a holistic redesign of the recognition pipeline, including accurate and efficient molecule localization, large-scale real-world training data, and architecture optimization tailored specifically for high-throughput inference. To address these challenges, we redesign the entire OCSR pipeline and propose MolParser-Mobile, an ultrafast OCSR framework for large-scale chemical literature mining. Our framework consists of three complementary components. First, we develop MolDetv2 , a significantly improved molecule detector together with MolDet-Bench , a dedicated benchmark for molecule localization in scientific documents. Second, we construct MolGallery , a 10-million-sample real-world molecular image dataset automatically extracted from large-scale chemical literature using a multi-model consistency-based pseudo-labeling strategy. Finally, leveraging these resources, we introduce MolParser-Mobile ,an AutoML-optimized lightweight encoder-decoder model trained on over 18 million molecular images. MolParser-Mobile contains only 9.98M parameters, representing a 95.4% reduction in model size compared with MolParser 1.0, while achieving 1,520 molecules per second on a single NVIDIA RTX 4090D GPU–over 38 × faster than the original model. Despite its compact architecture, MolParser-Mobile achieves competitive and, on several benchmarks, superior recognition accuracy. At this throughput, one billion molecular images can be parsed within approximately one day using only eight consumer-grade GPUs, enabling practical web-scale molecular extraction for modern chemical literature mining. 
+
+## 2 Molecule Detection 
+
+Accurately localizing molecular structures in real-world chemical documents is a prerequisite for downstream optical chemical structure recognition (OCSR). This task is particularly challenging for documents containing dense text, multi-panel figures, tables, and reaction schemes [2, 6, 7]. The original MolDet [6] provides an open-source suite of detectors based on YOLO11 [8]. However, in practical deployment, these models remain susceptible to false detections on non-chemical graph-ical elements, while their compact variants exhibit noticeable accuracy degradation, limiting their applicability to high-throughput document processing. To address these limitations, we introduce MolDetv2 *, comprising two compact detectors for com-plementary operating regimes. Both models adopt the 2.6-million-parameter YOLO11n architecture: • MolDetv2-General-n operates at a resolution of 640 ×640 and targets molecular depictions across a wide range of input scales, including isolated structures, reaction schemes, tables, handwritten structures, and complete document pages. Its training set contains more than 100,000 human-annotated and synthetically generated images. The training data additionally include challenging negative examples, such as chemical formulae and ball-and-stick renderings, to reduce false detections. • MolDetv2-Doc-n operates at a resolution of 960 × 960 and is specialized for complete document pages containing small molecular depictions. It is trained on more than 60,000 human-annotated PDF pages collected from patents, scientific papers, and books, together with 10,000 synthetic PDF pages. Tight, edge-aligned box annotations improve localization around the visible structure extent, while document-specific negative examples reduce false detections on equations, ball-and-stick renderings, and graphical symbols. To evaluate the two operating regimes, we introduce MolDet-Bench †, which consists of the following complementary tasks:   
+
+> *Model weights are available at https://huggingface.co/UniParser/MolDetv2
+> †The benchmark is available at https://huggingface.co/datasets/UniParser/MolDet-Bench
+
+20 4 8 12               
+
+> Latency (ms)
+> 96 97 98 99
+> mAP 50  (%)
+> MolDet-Bench-General 799 images a
+> better
+> nl
+> MolDetv2-General-n 98.72% · 1.5 ms
+> 04812
+> Latency (ms)
+> 98.5 99.0 99.5
+> mAP 50  (%)
+> MolDet-Bench-Doc 447 pages b
+> better
+> nlnl
+> MolDetv2-Doc-n 99.36% · 3.1 ms MolDetv2-General-n 99.08% · 1.5 ms
+> Uni-Parser-LD 99.35% · 10.1 ms
+> 04812
+> Latency (ms)
+> 90 92 94 96 98
+> mAP 50  (%)
+> BioVista 500 papers c
+> better
+> nlnl
+> MolDetv2-Doc-n 97.48% · 3.1 ms MolDetv2-General-n 96.09% · 2.5 ms
+> Uni-Parser-LD 98.06% · 10.1 ms BioMiner 92.90 (latency n.r.) MolMiner 89.90 (latency n.r.)
+> Legacy General Legacy Doc MolDetv2-General-n MolDetv2-Doc-n Uni-Parser-LD
+
+Figure 1: Accuracy–latency trade-off of molecular structure detectors. (a) MolDet-Bench-General evaluates molecular localization over diverse image types and scales, whereas (b) MolDet-Bench-Doc and (c) BioVista evaluate document-page inputs. MolDetv2 provides favorable Pareto operating points, achieving high mAP 50 with low inference latency. Legacy MolDet variants are connected according to model scale ( n → s → m → l), while MolDetv2 and Uni-Parser-LD are shown separately. Horizontal error bars indicate latency variation, and dashed lines in (c) denote methods for which latency is unavailable. Table 1: Representative results on MolDet-Bench. We report latency-matched and strongest repre-sentative baselines; complete accuracy–latency comparisons are provided in Fig. 1. The best accuracy and lowest latency in each benchmark are shown in bold. Latency is measured in milliseconds on an NVIDIA T4 using TensorRT 10. 
+
+Model mAP 50 ↑ mAP 50:95 ↑ Latency (ms) ↓
+
+MolDet-Bench-General 
+
+MolDetv2-General-n 0.9872 0.8776 1.5 ± 0.0
+
+MolDet-General-m 0.9702 0.8269 4.7 ± 0.1
+
+MolDet-General-l 0.9675 0.8349 6.2 ± 0.1
+
+MolDet-General-n 0.9574 0.8052 1.5 ± 0.0
+
+MolDet-Bench-Doc 
+
+MolDetv2-Doc-n 0.9936 0.9544 3.1 ± 0.0
+
+Uni-Parser-LD 0.9935 0.9679 10 .1 ± 0.2
+
+MolDet-Doc-s 0.9927 0.9531 5.5 ± 0.1
+
+MolDet-Doc-n 0.9913 0.9555 3.1 ± 0.0
+
+1. MolDet-Bench-General evaluates multi-scale molecular localization on 799 images covering isolated and multiple structures, reaction schemes, tables, handwritten structures, and complete PDF pages. Its annotations employ adaptively expanded bounding boxes to reduce truncation when the detected regions are passed to downstream recognition models. 2. MolDet-Bench-Doc evaluates document-level localization on 447 structure-bearing PDF pages containing 2,178 molecular instances. Unlike MolDet-Bench-General, this benchmark uses tight, edge-aligned bounding boxes. For additional external evaluation, we report results on BioVista [2], which contains 11,212 molecular instances collected from 500 scientific papers. As shown in Table 1, both MolDetv2 variants provide strong accuracy–latency trade-offs in their target operating regimes. On MolDet-Bench-General, MolDetv2-General-n achieves an mAP 50 of 0.9872 and an mAP 50:95 of 0.8776 at a latency of only 1.5 ms . Compared with MolDet-General-n at the same latency, it improves mAP 50 and mAP 50:95 by 3.0 and 7.2 percentage points, respectively. 3Figure 2: MolGallery construction pipeline. Molecular images extracted from real-world chemical documents are recognized by three OCSR models, with samples retained when all three models produce identical E-SMILES predictions. On MolDet-Bench-Doc, MolDetv2-Doc-n obtains the highest mAP 50 of 0.9936, together with an 
+
+mAP 50:95 of 0.9544 and a latency of 3.1 ms . It achieves accuracy comparable to the larger document-specific MolDet variants while reducing latency by approximately 44% relative to MolDet-Doc-s. Uni-Parser-LD attains a higher mAP 50:95 of 0.9679 but requires 10 .1 ms , making MolDetv2-Doc-n approximately 3.3× faster. These results demonstrate that MolDetv2 offers favorable operating points for high-throughput molecular document processing. 
+
+## 3 MolGallery Dataset 
+
+Lightweight OCSR models require large-scale and diverse training data to preserve recognition accuracy under aggressive model compression. To this end, we introduce MolGallery ‡, a 10-million-scale real-world molecular image dataset designed for training efficient OCSR systems. Unlike existing synthetic datasets, MolGallery is constructed entirely from authentic chemical documents, including patents, scientific publications, books, and online resources. The dataset contains approximately 10 million molecular structure images (193 GB in total), capturing diverse document layouts, rendering styles, scanning artifacts, and real-world noise patterns encountered in large-scale literature mining. All samples are paired with E-SMILES annotations following the notation standard of MolParser. Collecting manual annotations at this scale is prohibitively expensive. Therefore, we develop an automated consensus-based pseudo-labeling pipeline to construct MolGallery. Specifically, molecular images are first extracted from large-scale chemical documents using our efficient MolDetv2 detector. The extracted candidates are then recognized by three OCSR models, including two MolParser-1.0 [6] variants and MolScribe [4].We retain only samples where all three models produce identical E-SMILES predictions, using model agreement as a strong confidence criterion. This multi-model consensus strategy effectively removes ambiguous and low-quality samples while enabling scalable dataset construction. Although pseudo-labeling may introduce a small number of residual errors, MolGallery is primarily designed for large-scale pretraining of lightweight OCSR models. Subsequent fine-tuning on high-quality human-annotated datasets further improves recogni-tion accuracy. 
+
+## 4 MolParser-Mobile 
+
+Large-scale chemical literature mining needs both accurate OCSR and high throughput. Scaling model size is not the right path for this setting. We introduce MolParser-Mobile , a 9.98M-parameter end-to-end framework that maps a molecular diagram directly to E-SMILES. The model does not reconstruct an atom–bond graph. It does not rely on extra post-processing modules. The pipeline has  
+
+> ‡The dataset is available at https://huggingface.co/datasets/UniParser/MolGallery
+
+4four stages: large-scale pre-training, supervised fine-tuning, on-policy distillation from MolParser 1.5, and a small DPO calibration set. 
+
+4.1 From Molecular Diagrams to E-SMILES 
+
+OCSR converts a 2D chemical drawing into a machine-readable representation. While an end-to-end OCSR system can be formulated as an image-to-text generation problem, similar to image captioning, its output is fundamentally different from free-form natural language. The target is a **formal language governed by strict syntactic and chemical constraints**, where a single incorrect token can alter the molecular graph or invalidate the entire prediction. We use E-SMILES [6] as the target representation: 
+
+y = ysmi ; ; <sep> ; ; yext . (1) Here, ysmi is an RDKit-compatible SMILES string that serializes the molecular graph in depth-first order, while yext is an optional XML-like extension for representing information that cannot be captured by standard SMILES. Specifically, it associates Markush groups, abbreviations, dummy atoms, and uncertain ring substitutions with atom or ring indices, e.g., <a> i:R1</a> .
+
+4.2 Architecture 
+
+MolParser [6] treats as decoder-only generation. A vision encoder emits tokens V = ( v1, . . . , v N ) ∈
+
+RN ×d. These tokens are prepended to the caption, 
+
+H(0) = [ V ; Y ], H(ℓ) = CausalSelfAttn  H(ℓ−1) . (2) Vision and language then share one causal stream of length N +T .Prefix fusion mismatches the three properties above. A causal mask is the wrong bias for a 2D graph. Visual patches should see each other in both directions. The encoder already provides that mixing. As T grows, the N visual tokens recede in the context. Softmax over N +T dilutes spatial evidence when the decoder later emits <sep> and index tags. Every new token also attends to N +t keys. The layer cost is O(( N +T )2). E-SMILES is often long, so this overhead is large. MolParser-Mobile therefore drops the prefix. We keep a bidirectional visual memory. The language decoder queries it with cross-attention. We search compact encoder–decoder configurations with AutoML, including width, decoder depth, and training hyperparameters. The resulting model has 9.98M parameters. 
+
+Vision encoder. OCSR inputs are predominantly line drawings rather than natural images, allowing us to use a compact vision encoder. We adopt a ResNet-V2–ViT hybrid backbone pretrained on ImageNet-21K with the AugReg recipe [9]. The convolutional backbone extracts features at a spatial stride of 16, which are then projected into 8 × 8 patches and processed by a 12-layer ViT-Tiny transformer, yielding 196 visual tokens for the autoregressive decoder. 
+
+Cross-attention decoder. The decoder is a compact BART [10] decoder. It models the formal language over y only. At step t, causal self-attention reads y<t . Cross-attention then looks up the image, 
+
+αt,i = softmax i
+
+ (htWQ) ( viWK )⊤
+
+√dh
+
+
+
+, ct =
+
+> N
+
+X
+
+> i=1
+
+αt,i (viWV ). (3) Here ht is the decoder state. The context ct is fused by a residual FFN. Visual keys and values are computed once and reused. The design follows three principles. Self-attention is dedicated to modeling SMILES syntax, while cross-attention is dedicated to retrieving spatial information from the input image. The two interac-tions are kept separate rather than being mixed within a joint attention operation. Throughout the generation of (1), the decoder queries the same visual memory V . The cross-attention weights αt, · can dynamically focus on relevant image regions as generation proceeds, enabling the model to track atoms during the depth-first traversal, revisit ring regions at closure, and associate group labels with atom or ring indices after <sep> .5The softmax in (3) is always normalized over the N visual patches, independent of the output sequence length T . Thus, the attention computation per layer has complexity O(T 2 + N T ), compared with 
+
+O(( N + T )2) for joint self-attention over visual and textual tokens. This distinction becomes particularly important for Markush E-SMILES, where T can be substantially larger than N .
+
+4.3 Pre-training 
+
+We first train on a large image–E-SMILES corpus. The corpus has two sources. MolParser-7M-Pretrain contributes 7.72M pairs, mainly diverse synthetic drawings [6]. MolGallery contributes 10.3M pairs from real documents. These images are pseudo-labeled by cross-validation over multiple OCSR models [4, 6]. The joint set exceeds 18M pairs. This mix matters for in-the-wild OCSR. Synthetic data covers topology and rendering variation. MolGallery covers document noise, crop artifacts, drawing styles, and a higher rate of chiral and Markush cases. The encoder learns robust visual features. The decoder learns E-SMILES syntax at scale. 
+
+4.4 Supervised Fine-tuning 
+
+Pseudo-labels are noisy. We therefore fine-tune on MolParser-SFT , which contains 91.2k human-annotated samples. To limit catastrophic forgetting, we add a replay buffer of 200k representative pairs from the pre-training corpus. SFT raises precision on real literature crops. Replay keeps coverage of rare topologies seen only in the 18M-scale corpus. The supervision remains teacher forcing on E-SMILES. 
+
+4.5 On-Policy Distillation 
+
+A 9.98M student still lags a larger expert on hard chiral and Markush cases. Uni-Parser introduces MolParser 1.5 for this regime [1]. MolParser 1.5 is trained on the expanded real-world corpus and is a stronger E-SMILES expert. We distill it into MolParser-Mobile with on-policy distillation (OPD). The student samples trajectories ˆy ∼ pθ (· | I) under its current policy. The teacher pϕ (MolParser 1.5) provides token-level supervision on these on-policy strings. Unlike SFT, the training distribution matches the student’s own decoding errors. The compact model can imitate the expert on long Markush captions and rare stereo patterns. 
+
+4.6 Direct Preference Optimization 
+
+Pre-training labels, especially MolGallery pseudo-labels, still contain systematic errors. Typical failure modes include malformed Markush extensions, inconsistent index tags, and hard chirality. We collect 500 preference cases for targeted calibration. Each case is a triple (I, y +, y −), where y+ is the corrected E-SMILES and y− is a plausible but wrong output. We optimize Direct Preference Optimization (DPO) [11] against a frozen reference policy πref ,
+
+LDPO = − log σ
+
+
+
+β
+
+
+
+log πθ (y+ | I)
+
+πref (y+ | I) − log πθ (y− | I)
+
+πref (y− | I)
+
+ 
+
+. (4) It aligns output format on complex Markush cases and repairs residual chiral errors after OPD. 
+
+4.7 Efficiency and Recognition Performance 
+
+We measure throughput with the native PyTorch backend. GPU runs use FP16. CPU runs use FP32. No torch.compile is applied. As shown in Table 2, MolParser-Mobile reaches 1,520 samples/s on an NVIDIA RTX 4090D (24 GB). It reaches 78.11 samples/s on an Intel Xeon Platinum 8336C with 14 vCPUs. The same 9.98M model therefore supports both GPU-scale mining and CPU-only deployment. We further evaluate MolParser-Mobile on BioVista [2] and Uni-Parser Bench [1]. As summarized in Table 3, MolParser-Mobile consistently outperforms MolParser 1.0 on most criteria, particularly 6Table 2: Inference throughput of MolParser-Mobile. Throughput is measured in samples per second using the native PyTorch backend (no compile, FP16 in GPU and FP32 in CPU).          
+
+> Platform Hardware Throughput (samples/s) ↑Backend GPU NVIDIA RTX 4090D 24GB 1520 PyTorch CPU Intel Xeon Platinum 8336C, 14 vCPU, 2.30GHz 78.11 PyTorch
+
+Table 3: Recognition performance comparison on BioVista and Uni-Parser Bench. All metrics are reported as absolute accuracy. The best result for each evaluation metric within each benchmark is shown in bold.                                         
+
+> Model Overall ↑Chiral ↑Markush ↑Full ↑
+> Uni-Parser Bench
+> MolParser-Mobile 0.823 0.732 0.746 0.933 MolParser 1.0 [6] 0.800 0.676 0.664 0.953
+> MolScribe [4] 0.417 0.274 0.168 0.617
+> BioVista
+> MolParser-Mobile 0.801 0.653 0.805 0.797
+> MolParser 1.0 [6] 0.703 0.352 0.733 0.669 MolMiner [7] 0.507 0.497 0.185 0.774 MolScribe [4] 0.455 0.481 0.156 0.703 MolNexTR [12] 0.401 0.419 0.045 0.695 DECIMER [5] 0.298 0.326 0.000 0.545
+
+chirality and Markush recognition, with only a minor gap in full-structure accuracy. Meanwhile, it achieves a 38 × GPU throughput improvement (1,520 vs. 39.8 samples/s). These results demonstrate that MolParser-Mobile achieves a favorable balance between recognition accuracy and inference efficiency. The observed performance is consistent with our design choices: cross-attention is intended to facilitate spatial information retrieval, while the large-scale corpus, supervised fine-tuning, on-policy distillation, and preference optimization are designed to improve coverage and robustness under the lightweight setting. With only 9.98M parameters, MolParser-Mobile is well suited for large-scale chemical literature mining and resource-constrained deployment. 
+
+## 5 Future Works 
+
+Future work will further advance the chemical expressiveness and image-grounding capability of MolParser toward fully end-to-end optical chemical structure recognition (OCSR) in large-scale, heterogeneous scientific and patent corpora. 
+
+Representation Expansion. On the representation side, we plan to extend E-SMILES to better capture complex ring-connectivity patterns, including ring closures in fused, spiro, bridged, and macrocyclic systems. We further aim to support repeated substructures and substructure multiplicity, which are commonly used in compact chemical diagrams and Markush-style representations. In addition, we will extend E-SMILES to encode query-like or uncertain bonding patterns, such as optional or ambiguous connectivity expressed through dashed or partial bond conventions in medicinal chemistry and patent literature. 
+
+Structure-Image Grounding. Beyond symbolic representation, we will explore fine-grained structure-image alignment within the end-to-end OCSR framework by grounding predicted atoms and bonds to their corresponding spatial locations in the input chemical diagram. Unlike conven-tional atom-bond supervised approaches, this direction does not rely on explicit structural grounding annotations. Instead, it seeks to unify visual interpretability with the scalability, efficiency, and generalization capability of end-to-end molecular recognition models. 
+
+Scaling and Robust Pretraining. We will further scale MolParser using substantially larger and more diverse pretraining corpora, covering broader chemical space, depiction styles, document sources, and real-world noise distributions. This expansion is expected to improve robustness across heterogeneous scientific literature, including low-quality scans and complex patent figures. 7Chemistry-aware Optimization. To improve chemically valid generation, particularly for stereo-chemically complex molecules, we plan to introduce chirality-aware reinforcement learning objectives that explicitly reward stereochemical correctness and penalize invalid molecular configurations. This will strengthen the model’s ability to preserve chemically consistent 3D-aware constraints within 2D recognition outputs. 
+
+Adaptive Resolution. In addition, we will investigate adaptive image resolution strategies that dy-namically allocate higher visual resolution to large or structurally dense molecules while maintaining the efficiency advantages of the end-to-end parsing pipeline. Overall, these directions aim to make MolParser more robust, chemically expressive, and scalable for large-scale extraction of machine-readable molecular structures from diverse scientific and patent literature. 
+
+## References 
+
+[1] X. Fang, H. Tao, S. Yang, C. Huang, S. Zhong, H. Lu, H. Lyu, J. Wang, X. Li, L. Zhang et al. , “Uni-parser technical report,” arXiv preprint arXiv:2512.15098 , 2025. [2] J. Yan, J. Zhu, Y. Yang, Q. Liu, K. Zhang, Z. Zhang, X. Liu, B. Zhang, K. Gao, J. Xiao et al. , “Biominer: A multi-modal system for automated mining of protein-ligand bioactivity data from literature,” bioRxiv ,2025. [3] L. Morin, M. Danelljan, M. I. Agea, A. Nassar, V. Weber, I. Meijer, P. Staar, and F. Yu, “Molgrapher: Graph-based visual recognition of chemical structures,” in 2023 IEEE/CVF International Conference on Computer Vision (ICCV) . IEEE, 2023, pp. 19 495–19 504. [4] Y. Qian, J. Guo, Z. Tu, Z. Li, C. W. Coley, and R. Barzilay, “Molscribe: robust molecular structure recognition with image-to-graph generation,” Journal of chemical information and modeling , vol. 63, no. 7, pp. 1925–1934, 2023. [5] K. Rajan, H. O. Brinkhaus, M. I. Agea, A. Zielesny, and C. Steinbeck, “Decimer. ai: an open platform for automated optical chemical structure identification, segmentation and recognition in scientific publications,” 
+
+Nature communications , vol. 14, no. 1, p. 5045, 2023. [6] X. Fang, J. Wang, X. Cai, S. Chen, S. Yang, H. Tao, N. Wang, L. Yao, L. Zhang, and G. Ke, “Molparser: End-to-end visual recognition of molecule structures in the wild,” arXiv preprint arXiv:2411.11098 , 2024. [7] Y. Xu, J. Xiao, C.-H. Chou, J. Zhang, J. Zhu, Q. Hu, H. Li, N. Han, B. Liu, S. Zhang et al. , “Molminer: you only look once for chemical structure recognition,” Journal of Chemical Information and Modeling ,vol. 62, no. 22, p. 5321, 2022. [8] G. Jocher and J. Qiu, “Ultralytics,” https://github.com/ultralytics/ultralytics. [9] A. Steiner, A. Kolesnikov, X. Zhai, R. Wightman, J. Uszkoreit, and L. Beyer, “How to train your vit? data, augmentation, and regularization in vision transformers,” arXiv preprint arXiv:2106.10270 , 2021. [10] M. Lewis, Y. Liu, N. Goyal, M. Ghazvininejad, A. Mohamed, O. Levy, V. Stoyanov, and L. Zettlemoyer, “Bart: Denoising sequence-to-sequence pre-training for natural language generation, translation, and comprehension,” in Proceedings of the 58th annual meeting of the association for computational linguistics ,2020, pp. 7871–7880. [11] R. Rafailov, A. Sharma, E. Mitchell, C. D. Manning, S. Ermon, and C. Finn, “Direct preference optimiza-tion: Your language model is secretly a reward model,” Advances in neural information processing systems ,vol. 36, pp. 53 728–53 741, 2023. [12] Y. Chen, C. T. Leung, Y. Huang, J. Sun, H. Chen, and H. Gao, “Molnextr: a generalized deep learning model for molecular image recognition,” Journal of Cheminformatics , vol. 16, no. 1, p. 141, 2024. 
+
+8
