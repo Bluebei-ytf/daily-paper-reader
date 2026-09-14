@@ -1,0 +1,180 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-09-14T22:15:46.803862+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 0,
+    "deep_cap": 7,
+    "deep_selected": 0,
+    "quick_candidates": 4,
+    "quick_skim_target": 12,
+    "quick_selected": 4
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2609.12223v1",
+      "source": "arxiv",
+      "title": "Predicting Collision Cross Sections with GRACE: Geometric Residual Adduct Conditioning via Early-fusion",
+      "abstract": "Collision cross section (CCS), derived from ion mobility mass spectrometry, is a common descriptor for molecular annotation. Prediction is challenging for machine learning models because it reflects the size, shape, and ionization state of a gas-phase molecular ion. Most predictors either ignore explicit 3D structure or treat adduct identity as a late categorical feature, which limits their ability to capture adduct-dependent geometric effects. We present GRACE (Geometric Residual Adduct Conditioning via Early-fusion), a 3D CCS predictor that adapts a pretrained molecular geometry encoder using geometric residual adduct conditioning via early fusion. GRACE combines two inductive biases: a residual objective relative to an adduct-aware physical descriptor baseline and adduct conditioning within the encoder via a learned adduct token and low-rank attention adapters. We evaluate the model on a curated set of over 9,000 experimental molecule-adduct CCS records with random, scaffold, and adduct-sensitive splits designed to separate interpolation, scaffold generalization, and adduct-driven generalization. GRACE achieves the best mean percentage difference among the evaluated learned models on all three splits: 1.67% on the random split, 2.11% on the scaffold split, and 2.36% on the adduct-sensitive split. Diagnostic analyses suggest that residual learning stabilizes training by removing the dominant mass-CCS trend, while early fusion improves adduct-sensitive prediction relative to late fusion. Across four independent external test sets, GRACE shows consistently lower error than the other evaluated models. On a held-out set, GRACE also attains the lowest mean percent difference when compared with four previously reported physics-based workflows. These results support residual learning and encoder-level adduct conditioning as practical inductive biases for fast, accurate CCS prediction.",
+      "authors": [
+        "Parthasarathy Suryanarayanan",
+        "Susanta Das",
+        "Shreyans Sethi",
+        "Kenneth M. Merz,",
+        "Joseph A. Morrone"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI",
+        "q-bio.BM"
+      ],
+      "published": "2026-09-10T21:31:11+00:00",
+      "link": "https://arxiv.org/pdf/2609.12223v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "3D molecular property prediction with a pretrained geometry encoder and transfer",
+      "llm_evidence_cn": "利用预训练几何编码器进行3D分子性质预测",
+      "llm_evidence": "利用预训练几何编码器进行3D分子性质预测",
+      "canonical_evidence": "利用预训练几何编码器进行3D分子性质预测",
+      "llm_tldr_en": "GRACE predicts collision cross sections by adapting a pretrained molecular geometry encoder with geometric residual adduct conditioning via early fusion, capturing adduct-dependent 3D effects.",
+      "llm_tldr_cn": "碰撞截面（CCS）反映气相离子的尺寸、形状与电离状态，现有预测器多忽略显式3D结构或将加合物视为后期类别特征。本文提出GRACE，通过早期融合的几何残差加合物条件化，微调预训练分子几何编码器进行CCS预测。该方法结合相对残差目标与加合物几何信息两种归纳偏置，更好刻画加合物依赖的几何效应。工作展示了3D分子表征迁移在分子性质预测中的价值。",
+      "llm_tldr": "碰撞截面（CCS）反映气相离子的尺寸、形状与电离状态，现有预测器多忽略显式3D结构或将加合物视为后期类别特征。本文提出GRACE，通过早期融合的几何残差加合物条件化，微调预训练分子几何编码器进行CCS预测。该方法结合相对残差目标与加合物几何信息两种归纳偏置，更好刻画加合物依赖的几何效应。工作展示了3D分子表征迁移在分子性质预测中的价值。",
+      "llm_tags": [
+        "query:smc"
+      ],
+      "matched_query_tag": "query:smc",
+      "matched_query_text": "molecular property prediction",
+      "matched_requirement_id": "req-15",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2609.07655v1",
+      "source": "arxiv",
+      "title": "Online Surrogate Repair: Decoupling High-Fidelity Feedback from Search Length in Closed-Loop Discovery",
+      "abstract": "Closed-loop AI scientists can generate candidate designs at low marginal computational cost, whereas reliable feedback may require wet-lab synthesis, characterization, or high-fidelity computation. Addressing this imbalance through custom laboratory automation remains infrastructure-intensive and costly, while replacing new experiments with a fixed surrogate leaves persistent model errors that can be amplified by optimization. We propose \\emph{online surrogate repair} (OSR), a closed-loop algorithm that uses sparse high-fidelity evaluations to update the surrogate throughout a longer agent search conducted primarily with inexpensive surrogate feedback. An acquisition rule selects which designs from the agent's accumulated proposals receive high-fidelity evaluation, and the resulting labels update the surrogate used in subsequent episodes. Across controlled synthetic environments, we demonstrate that improving global surrogate fit does not necessarily reduce maximum regret, whereas Q90-UCB and expected improvement (EI) substantially reduce regret by directing evaluations toward regions that determine the optimizer's decisions. On MADE, controls receiving high-fidelity feedback after every episode require $6.36$--$7.23\\times$ more oracle queries to match Online EI under two LLM orchestrators and $10.27\\times$ more under the non-LLM Chemeleon+MLIP workflow. Online surrogate repair introduces a novel third feedback regime between fixed-surrogate operation and high-fidelity feedback after every episode, separating the frequency of high-fidelity evaluation from the duration of the agent's search.",
+      "authors": [
+        "Xiaotang Feng",
+        "Philip Torr",
+        "Bruno Andreis"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cond-mat.mtrl-sci",
+        "cs.AI"
+      ],
+      "published": "2026-09-07T15:42:45+00:00",
+      "link": "https://arxiv.org/pdf/2609.07655v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "closed-loop discovery using surrogate models and sparse high-fidelity feedback for design optimization",
+      "llm_evidence_cn": "闭环发现中利用代理模型与稀疏高保真反馈进行设计优化",
+      "llm_evidence": "闭环发现中利用代理模型与稀疏高保真反馈进行设计优化",
+      "canonical_evidence": "闭环发现中利用代理模型与稀疏高保真反馈进行设计优化",
+      "llm_tldr_en": "Proposes online surrogate repair, a closed-loop algorithm that uses sparse high-fidelity evaluations to repair a surrogate during long agent searches, improving design discovery under expensive feedback.",
+      "llm_tldr_cn": "闭环AI科学家能以低成本生成大量候选设计，但可靠反馈往往依赖湿实验或高保真计算，二者严重失衡。论文提出在线代理修复（OSR）算法，在主要依赖廉价代理反馈的长时间智能体搜索中，用稀疏高保真评估持续更新并修复代理模型，并通过采集规则选择待评估设计。该方法缓解了固定代理误差被优化放大的问题，在无需昂贵实验自动化的条件下提升闭环发现效率。其意义在于为分子与材料的设计优化提供可扩展的闭环框架。",
+      "llm_tldr": "闭环AI科学家能以低成本生成大量候选设计，但可靠反馈往往依赖湿实验或高保真计算，二者严重失衡。论文提出在线代理修复（OSR）算法，在主要依赖廉价代理反馈的长时间智能体搜索中，用稀疏高保真评估持续更新并修复代理模型，并通过采集规则选择待评估设计。该方法缓解了固定代理误差被优化放大的问题，在无需昂贵实验自动化的条件下提升闭环发现效率。其意义在于为分子与材料的设计优化提供可扩展的闭环框架。",
+      "llm_tags": [
+        "query:smc"
+      ],
+      "matched_query_tag": "query:smc",
+      "matched_query_text": "AI methods for molecular optimization, multi objective optimization, lead optimization, and property guided molecular design.",
+      "matched_requirement_id": "req-18",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2609.12616v1",
+      "source": "arxiv",
+      "title": "Fast and Accurate Excitation Energies from Density Matrix Renormalization Group Calculations Improved by Machine Learning",
+      "abstract": "An estimation of optoelectronic properties is a crucial necessity and an ongoing challenge in modern functional material science. This involves accurate accessing of ground and excited states in systems with complex electronic structure that are often too computationally expensive for accurate many-body methods. Building on our previous work on ground states [J. Phys. Chem. Lett. 2025, 16, 3295-3301], we present an efficient and cost-effective approach for evaluating electronic excitations in functional materials, combining the density matrix renormalization group method as a complete active space solver with machine learning techniques. We demonstrate its performance on π-electron-correlated systems, namely polycyclic aromatic compounds. The transferability and effectiveness of the derived machine learning model are demonstrated on a number of challenging examples with up to 34 π-electrons.",
+      "authors": [
+        "Pavlo Golub",
+        "Libor Veis"
+      ],
+      "primary_category": "physics.chem-ph",
+      "categories": [
+        "physics.chem-ph"
+      ],
+      "published": "2026-09-11T09:14:07+00:00",
+      "link": "https://arxiv.org/pdf/2609.12616v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "ML combined with DMRG for fast excitation energy calculation",
+      "llm_evidence_cn": "机器学习结合DMRG快速计算激发能",
+      "llm_evidence": "机器学习结合DMRG快速计算激发能",
+      "canonical_evidence": "机器学习结合DMRG快速计算激发能",
+      "llm_tldr_en": "Combines the DMRG complete active space solver with machine learning to estimate electronic excitation energies in correlated materials, offering a fast and accurate alternative to costly many-body methods.",
+      "llm_tldr_cn": "针对复杂电子结构体系激发态计算成本高昂的难题，本文将密度矩阵重整化群作为完整活性空间求解器与机器学习相结合，提出一种高效低成本的电子激发能评估方法。在π电子关联体系上的测试表明该方法能够兼顾精度与计算效率。该工作拓展了机器学习加速量子化学计算的适用范围，为功能材料的激发态性质预测提供了新途径。",
+      "llm_tldr": "针对复杂电子结构体系激发态计算成本高昂的难题，本文将密度矩阵重整化群作为完整活性空间求解器与机器学习相结合，提出一种高效低成本的电子激发能评估方法。在π电子关联体系上的测试表明该方法能够兼顾精度与计算效率。该工作拓展了机器学习加速量子化学计算的适用范围，为功能材料的激发态性质预测提供了新途径。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2609.13139v1",
+      "source": "arxiv",
+      "title": "RS-CIDER: A non-local machine learning model for approximating screened hybrid functionals",
+      "abstract": "Screened hybrid functionals such as HSE06 improve the description of band gaps, charge localization, and redox energetics relative to semilocal approximations, but their explicit Hartree-Fock exchange term is computationally costly for large, periodic systems, especially in plane-wave basis set calculations. Here we present RS-CIDER, a machine-learned non-local exchange functional that approximates the short-range Hartree-Fock exchange term in HSE06 by explicitly fitting both ground-state energies and single-particle energy levels. RS-CIDER combines scale-invariant semilocal and non-local density descriptors and can be evaluated self-consistently without explicitly applying the short-range Hartree-Fock exchange operator. RS-CIDER shows close agreement with HSE06 for molecular reaction energies and solid-state band gaps. Further tests across distinct materials show agreement between RS-CIDER and HSE06 for local magnetism, Cu-O phase competition, polaron localization, and neutral-defect energetics. For an Fe olivine, chemistry-specific fine-tuning recovers the HSE06 Li intercalation voltage. A timing benchmark shows that RS-CIDER reduces the measured per-SCF-step wall time by more than an order of magnitude relative to HSE06. Together, these molecular and solid-state results establish RS-CIDER as an efficient self-consistent machine-learned surrogate for HSE06.",
+      "authors": [
+        "Zhuotao Jin",
+        "Mohamed S. Abdallah",
+        "Boris Kozinsky",
+        "Kyle Bystrom"
+      ],
+      "primary_category": "cond-mat.mtrl-sci",
+      "categories": [
+        "cond-mat.mtrl-sci",
+        "physics.chem-ph"
+      ],
+      "published": "2026-09-11T17:57:35+00:00",
+      "link": "https://arxiv.org/pdf/2609.13139v1",
+      "tags": [
+        "keyword:aichem-map",
+        "keyword:smc",
+        "query:aichem-map",
+        "query:smc"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "machine-learned functional accelerates hybrid DFT quantum chemistry",
+      "llm_evidence_cn": "机器学习泛函加速杂化密度泛函量子化学计算",
+      "llm_evidence": "机器学习泛函加速杂化密度泛函量子化学计算",
+      "canonical_evidence": "机器学习泛函加速杂化密度泛函量子化学计算",
+      "llm_tldr_en": "Screened hybrid functionals are accurate but costly due to explicit HF exchange; RS-CIDER is a machine-learned non-local functional fitted to ground-state energies and single-particle levels, approximating HSE06 self-consistently without the exchange operator.",
+      "llm_tldr_cn": "屏蔽杂化泛函如HSE06可改善带隙与电荷局域化描述，但显式Hartree-Fock交换项对大规模周期体系代价高昂。本文提出RS-CIDER，一种机器学习非局域交换泛函，通过同时拟合基态能量与单粒子能级来近似HSE06的短程HF交换，并可直接自洽求解。结果表明该方法无需显式施加交换算符即可逼近HSE06精度。该工作为机器学习加速杂化泛函密度泛函计算提供了实用方案。",
+      "llm_tldr": "屏蔽杂化泛函如HSE06可改善带隙与电荷局域化描述，但显式Hartree-Fock交换项对大规模周期体系代价高昂。本文提出RS-CIDER，一种机器学习非局域交换泛函，通过同时拟合基态能量与单粒子能级来近似HSE06的短程HF交换，并可直接自洽求解。结果表明该方法无需显式施加交换算符即可逼近HSE06精度。该工作为机器学习加速杂化泛函密度泛函计算提供了实用方案。",
+      "llm_tags": [
+        "query:aichem-map"
+      ],
+      "matched_query_tag": "query:aichem-map",
+      "matched_query_text": "machine learning acceleration for quantum chemistry and molecular dynamics",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

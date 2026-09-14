@@ -41,17 +41,17 @@
 <section class="dpr-home-dashboard-card dpr-home-report-card">
   <div class="dpr-home-dashboard-header">
     <div>
-      <span class="dpr-home-dashboard-kicker">2026-09-13</span>
+      <span class="dpr-home-dashboard-kicker">2026-09-14</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">共 3 篇</strong>
+    <strong class="dpr-home-dashboard-count">共 4 篇</strong>
   </div>
   <dl class="dpr-home-dashboard-stats">
     <div class="dpr-home-dashboard-stat"><dt>累计更新</dt><dd>1 次</dd></div>
     <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>0</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>3</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>4</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-09-13 21:51:01 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-09-14 22:18:50 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -62,7 +62,9 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>2026-09-13 日报：精读挂零，速读 3 篇均分 6.0，集中在化学文献挖掘与分子模拟方法。最值得看的是 MolParser-Mobile 的超快 OCSR 系统（面向大规模化学文献挖掘）和机器学习分子动力学中力误差的能量学分析。普通读者可先读这两篇摘要，关注分子结构识别效率与模拟可靠性如何互相补位。</p>
+<p>今日共处理 4 篇文献、全部为速读无精读，其中两篇 7.0 分工作领跑。</p>
+<p>最值得看：用机器学习预测碰撞截面（GRACE，7.0）与用机器学习提升 DMRG 激发能计算精度与速度（7.0），共同点是让模型学物理而非纯拟合。</p>
+<p>建议普通读者先读这两篇的摘要与方法部分，留意其物理约束如何设计，再按需翻看 6.0 分的在线代理修复一文。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -84,12 +86,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">速读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">3 篇</strong>
+    <strong class="dpr-home-dashboard-count">4 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="MolParser-Mobile: Ultrafast OCSR System for Large-Scale Chemical Literature Mining">MolParser-Mobile: Ultrafast OCSR System for Large-Scale Chemical Literature Mining</span></li><li><span class="dpr-home-dashboard-paper-title" title="The energetics of force errors in machine-learned molecular dynamics">The energetics of force errors in machine-learned molecular dynamics</span></li><li><span class="dpr-home-dashboard-paper-title" title="Mode Coverage in Normalizing Flow Boltzmann Generators via Log-Ratio Variation">Mode Coverage in Normalizing Flow Boltzmann Generators via Log-Ratio Variation</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Predicting Collision Cross Sections with GRACE: Geometric Residual Adduct Conditioning via Early-fusion">Predicting Collision Cross Sections with GRACE: Geometric Residual Adduct Conditioning via Early-fusion</span></li><li><span class="dpr-home-dashboard-paper-title" title="Fast and Accurate Excitation Energies from Density Matrix Renormalization Group Calculations Improved by Machine Learning">Fast and Accurate Excitation Energies from Density Matrix Renormalization Group Calculations Improved by Machine Learning</span></li><li><span class="dpr-home-dashboard-paper-title" title="Online Surrogate Repair: Decoupling High-Fidelity Feedback from Search Length in Closed-Loop Discovery">Online Surrogate Repair: Decoupling High-Fidelity Feedback from Search Length in Closed-Loop Discovery</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>3</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>2</strong></span><span class="dpr-home-dashboard-tag">smc <strong>2</strong></span></div>
 </section>
 </div>
 
