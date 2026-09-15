@@ -1,0 +1,838 @@
+Adaptive AI for Pulse-Level Quantum Control
+Sanjeev Shapkota,1 Yayu Mo,1 and Sanjaya Lohani1, ∗
+1Department of Electrical and Computer Engineering,
+Southern Methodist University, Dallas, TX 75205, USA
+The Control Variational Quantum Eigensolver (ctrl-VQE) directly optimizes microwave pulses to
+enable faster and lower-error quantum-state preparation, but its continuous control landscape re-
+quires efficient search strategies. We demonstrate that a reinforcement-learning agent based on a
+deep Q learning network can autonomously discover high-performance pulse sequences using only
+system parameters and a reward function. The approach is fully general for superconducting qubit
+platforms, requires no ansatz, and operates at nanosecond resolution compatible with hardware con-
+straints. As a proof of concept, we apply the method to ground-state preparation of the Hydrogen
+molecule on a simulated superconducting device. The agent consistently identifies optimized control
+sequences that achieve high fidelity and outperform random-search baselines. These results highlight
+adaptive learning as a promising hardware-ready framework for pulse-level quantum control.
+I.
+INTRODUCTION
+As quantum processors scale in complexity, exhibit-
+ing dense spectral features, nonlinear interactions, and
+time-varying hardware imperfections, the task of gen-
+erating high-fidelity control pulses becomes increasingly
+challenging for conventional model-based and manually
+calibrated approaches [1, 2].
+This motivates the inte-
+gration of adaptive intelligence into the pulse-calibration
+workflow, where learning algorithms can leverage exper-
+imental feedback to iteratively optimize control policies
+and maintain performance under evolving operating con-
+ditions [3, 4]. Such adaptability is foundational to the
+broader promise of quantum computing, where advan-
+tages in molecular simulation, materials discovery, and
+complex optimization depend on the ability to reliably
+prepare and manipulate quantum states with precision
+at the lowest level of control.
+This need is crucial for
+early quantum applications targeting chemically relevant
+quantities such as ground-state energies.
+Variational
+methods such as VQE have shown promise on small sys-
+tems [5], yet their gate-based implementations accumu-
+late error on noisy, shallow-depth hardware [6]. Pulse-
+level variants like ctrl-VQE mitigate this by shaping the
+microwave drive directly, reducing overhead and aligning
+the optimization more closely with the device’s native
+physics [7].
+In this setting, adaptive learning, partic-
+ularly reinforcement learning (RL), offers a compelling
+path forward: learning agents can incorporate feedback,
+construct pulse sequences dynamically, and maintain per-
+formance as hardware conditions evolve [8, 9]. We use
+the Hydrogen molecule as an illustrative example, pro-
+viding a simple, well-characterized benchmark for evalu-
+ating pulse-level adaptive control.
+Pulse design has traditionally relied on two major
+families of classical control methods, Gradient Ascent
+Pulse Engineering (GRAPE) and Chopped Random Ba-
+sis (CRAB). GRAPE iteratively refines an initial pulse
+∗slohani@smu.edu
+using gradient information [1], while CRAB simplifies the
+search by optimizing over a restricted set of basis func-
+tions [2, 10]. Although both approaches are widely used
+and effective [11, 12], they depend on accurate system
+models to guide optimization and can become trapped
+in suboptimal solutions when the control landscape is
+poorly characterized. These limitations naturally moti-
+vate model free adaptive intelligent alternatives, leading
+to reinforcement-learning approaches in which an agent
+explores pulse sequences directly on the control landscape
+rather than explicitly relying on the Hamiltonian model,
+and learns effective strategies from rewards. Addition-
+ally, prior work has demonstrated that RL can serve
+as an effective model-free tool for optimal-control meth-
+ods [3, 4, 8, 13–20]. Similarly, In parallel, pulse-level VQE
+methods such as ctrl-VQE and the Pulse-based Ansatz
+for VQE (PANSATZ) have shown that bypassing gate de-
+composition enables more hardware-native optimization,
+though these approaches typically rely on gradient-based
+updates and, in the case of PANSATZ, restrict the search
+to a predefined, hardware-aware pulse set.
+Motivated
+by these limitations, we integrate reinforcement learning
+with ctrl-VQE to autonomously design pulse sequences
+that remain compatible across superconducting quantum
+devices, enabling a more flexible and fully learned ap-
+proach to pulse-level variational optimization.
+Furthermore, we integrate deep Q learning network
+(DQN) with RL framework into pulse-level VQE to ad-
+dress the important aspects of ctrl-VQE, which is to
+identify an effective sequence of pulses within an enor-
+mous and highly nonconvex control landscape. Exhaus-
+tive brute-force search is infeasible, and gradient-based
+methods require accurate models, making DQN a natural
+alternative. In our approach a DQN agent explores pulse
+sequences, receives rewards based on cost reduction, and
+gradually learns optimized sequence of pulses that out-
+perform random search while remaining fully model-free.
+Note that the agent autonomously constructs pulses, en-
+abling the same learning framework to be applied across
+different quantum systems updating only the Hamilto-
+nian of interests.
+The remainder of the paper is organized as follows.
+arXiv:2609.08727v1  [quant-ph]  8 Sep 2026
+
+
+2
+The next section presents the methodological framework,
+including the mathematical background, the computa-
+tional model, and the deep Q learning network archi-
+tecture used to implement reinforcement-learning-based
+pulse optimization. We then report our results, demon-
+strating the proof-of-principle integration of RL with
+ctrl-VQE through an illustrative example involving the
+Hydrogen molecule.
+FIG. 1. Overview of the method. A reinforcement-learning-
+agent learns to generate a sequence of control pulses for quan-
+tum device.
+(a) The complete workflow.
+The policy net-
+work reads the current state and picks a one nanosecond drive
+pulse, shown as the red action arrow. This pulse is applied
+to the two coupled transmon qubits.
+The qubits are then
+measured, and from these measurements the agent receives
+the new state and a reward based on how much the energy
+dropped. The optimizer uses this reward, together with a tar-
+get network and a replay memory, to update the policy net-
+work. Both networks have the same shape: an input layer,
+two hidden layers of 64 units, and 9 action outputs. (b) One
+step. From the nine possible actions, the agent picks one, and
+that action sets the drive pulse for that nanosecond. (c) One
+episode is many such steps joined together to build the full
+pulse sequence. (d) Illustrative sketch: Within each step the
+state evolves under the Hamiltonian, computed with a first-
+order Trotter split, and the qubits are measured to give the
+agent its next observation. (e) Illustrative sketch: The reward
+pushes the energy down from the Hartree-Fock value toward
+the ground state. (f) The fidelity rises over training as the
+agent settles on an optimized policy.
+II.
+METHODS
+A.
+Variational quantum eigensolver
+VQE is a hybrid algorithm, a quantum processor pre-
+pares a trial state and a classical optimizer tunes its
+parameters [21]. It builds on the variational principle,
+which says the energy of any trial state can never be
+lower than the true ground-state energy,
+E(ϑ) = ⟨ψ(ϑ)|Hmol|ψ(ϑ)⟩≥Eground.
+(1)
+Here Hmol is the qubit Hamiltonian of the molecule and
+Eground is its lowest eigenvalue. The trial state ψ(ϑ) is
+prepared on the quantum processor and depends on the
+parameters ϑ. So by lowering E(ϑ) as much as possible
+over the parameters ϑ, we get closer and closer to the
+true ground-state energy from above [22].
+B.
+ctrl-VQE: pulse-level control
+The hardware itself is described by the device Hamil-
+tonian [7]
+HD =
+X
+q
+ωqa†
+qaq −
+X
+q
+δ
+2a†
+qa†
+qaqaq +
+X
+⟨pq⟩
+gpq a†
+paq.
+(2)
+The first term is the natural oscillation energy of each
+qubit at frequency ωq. The second term is the anhar-
+monicity δ, which makes the energy gaps between lev-
+els unequal so that the drive can address the transition
+from |0⟩to |1⟩without leaking into higher levels [23, 24].
+The third term is the coupling gpq between neighboring
+qubits, which is always on and creates the entanglement
+needed to reach the molecular ground state.
+The mi-
+crowave drives signals we control form the control Hamil-
+tonian [7, 25]
+HC =
+X
+q
+Ωq(t)
+ eiνqtaq + e−iνqta†
+q
+
+,
+(3)
+In ctrl-VQE we do not use quantum gates. Instead we
+directly tune the microwave pulses Ωq(t) applied to each
+qubit q [7], where Ωq(t) is the pulse amplitude the agent
+chooses at every step and νq is the drive frequency for
+qubit q. The carrier e±iνqt delivers the amplitude to the
+qubit, and the operators aq and a†
+q rotate the qubit state.
+We begin with the Hartree-Fock state |01⟩and let the
+pulses act for a total time T. To simplify the dynam-
+ics, we work in a rotating frame that co-rotates with the
+device, so that only the effect of the pulses needs to be
+tracked. In this rotating frame, the state changes like
+this,
+|ψ(T)⟩= e−iHDT T exp
+ 
+−i
+Z T
+0
+˜HC(t) dt
+!
+|01⟩,
+(4)
+where
+˜HC(t) = eiHDtHC(t) e−iHDt is the control of
+Eq. (3) as seen in the rotating frame. The e−iHDT in
+front brings the state back to the non-rotating frame at
+the final time T, just before the energy is measured. The
+symbol T means we apply the small pulse pieces in the
+right time order, earliest first, because the agent picks
+a new pulse every 1 ns and the order they act in mat-
+ters. What we want to make as small as possible is the
+molecular energy,
+E = ⟨ψ(T)|Hmol|ψ(T)⟩,
+(5)
+which is the average energy of the current state and
+tells us how close the pulse has driven the system to the
+ground state. We limit the pulse amplitudes to a ”bang-
+bang” form, where each amplitude can only take one of a
+few discrete values. For many optimal-control problems,
+the fastest solution is exactly “bang-bang,” with the am-
+plitude pushed to its highest or lowest value [26, 27]. It
+also turns the problem into a discrete search, which fits
+reinforcement learning well.
+
+
+3
+C.
+Deep Q learning network
+Q-learning estimates the value of taking an action a in
+a state s [28]. This value is the Q-function Q(s, a), the
+total reward the agent expects to collect by taking action
+a in state s and then making the best choices for the rest
+of the episode. The agent selects actions with the highest
+Q-value, and the optimal Q-function obeys the Bellman
+equation [29],
+Q∗(s, a) = E
+h
+r + γ max
+a′ Q∗(s′, a′)
+i
+,
+(6)
+which says the value of an action is the reward r we get
+now plus the best value we can expect later, scaled by
+a discount factor γ that weights future rewards. Basic
+Q-learning stores one value for every state-action pair in
+a lookup table, but our state space is far too large for
+that. We therefore approximate the Q-function with a
+deep learning network.
+We employ a DQN [30] framework in which the opti-
+mal action-value function Q∗(s, a) is approximated by a
+neural network Q(s, a; θ) parameterized by θ. Two in-
+stances of this network are maintained during training:
+an online Q-network Q(s, a; θ) and a target Q-network
+Q(s, a; θi−1). Both networks share the same architecture
+but serve distinct roles. The online network is updated
+at every optimization step and is responsible for esti-
+mating the action-value function and selecting actions
+during interaction with the environment.
+In contrast,
+the target network is a slowly updated copy of the on-
+line network and is used exclusively to compute stable
+temporal-difference (TD) targets, thereby mitigating the
+moving-target instability inherent in bootstrapped value
+estimation.
+To improve sample efficiency and stabilize learning,
+we employ a replay memory that stores past transitions
+(s, a, r, s′) collected during interaction with the environ-
+ment. At each training step, we draw a minibatch B of
+transitions uniformly at random from this buffer, which
+breaks the correlations between sequential observations
+and provides a more diverse training distribution. For
+exploration, we use the standard ε-greedy strategy: with
+probability ε the agent selects a random action, and with
+probability 1 −ε it selects the action that maximizes the
+current Q-value estimate. As indicated in Table I, we
+begin training with a relatively large ε and gradually de-
+cay it so that the agent transitions from exploration to
+exploitation as learning progresses.
+For each transition (s, a, r, s′) in the sampled mini-
+batch, we compute the TD target using the target net-
+work parameters θi−1:
+y = r + γ max
+a′ Q(s′, a′; θi−1),
+(7)
+where the target network performs both action selection
+and evaluation.
+Because the online network Q(s, a; θ)
+is not used to select the maximizing action in the TD
+target, our implementation corresponds to the classical
+DQN formulation rather than Double DQN.
+The TD error for each transition is defined as
+ξ = y −Q(s, a; θ),
+(8)
+and the online network parameters θ are optimized by
+minimizing the Huber loss applied to ξ:
+L(ξ) =
+(
+1
+2ξ2,
+if |ξ| ≤1,
+|ξ| −1
+2,
+otherwise.
+(9)
+The total loss minimized over the minibatch is the aver-
+age Huber loss:
+L(θ) =
+1
+|B|
+X
+(s,a,r,s′)∈B
+L(ξ),
+(10)
+which corresponds to PyTorch’s SmoothL1Loss. Gradi-
+ents of this loss are computed over the minibatch and
+applied using the AdamW optimizer.
+To ensure stable learning, the target network parame-
+ters are updated using a soft-update rule
+θi−1 ←τθ + (1 −τ)θi−1,
+(11)
+with τ = 0.005, ensuring that the target network evolves
+slowly relative to the online network
+D.
+Experimental setup
+Our test molecule is the Hydrogen dimer, written as a
+two-qubit problem in the STO-3G (Slater-Type Orbital
+approximated by three Gaussians) basis [31]. We run it
+on a simulated transmon device with fixed frequencies
+and always-on coupling [7, 25]. When the two atoms sit
+0.75 ˚A apart, the exact energy is −1.1371 Ha and the
+Hartree-Fock energy is −1.1175 Ha. The gap between
+these two numbers is what the agent has to find.
+Our earlier study [32] used four actions and a 0.1 ns
+step. The agent reached a fidelity of 0.99577 in about
+31 ns, about three times faster than the best random
+search pulse, which reached 0.99449 in about 88 ns.
+We change two things here. First, each qubit now has
+three amplitude levels to choose from, full negative, zero,
+or full positive, and the policy network picks one for each
+qubit at every step. The zero level applies no drive, so
+it lets the qubit idle. With two qubits and three levels
+each, the policy online network chooses from nine possi-
+ble actions per step. Second, we fix each step to 1 ns so it
+matches what real waveform generators can produce [33].
+We try three scanning times, 10, 40, and 100 ns, the du-
+ration each pulse is applied, which makes episodes 10,
+40, or 100 steps long. That gives 910, 940, or 9100 pos-
+sible pulses to choose from. We train for 3000 episodes
+at each scanning time using the same random seed. To
+judge how close we get, we mark a 5 milli-Hartree energy
+as the reference line.
+Furthermore, the agent’s observation consists of the
+current set of Pauli expectation values (⟨σi, σj⟩; i, j =
+
+
+4
+{I, X, Y, Z}), which characterize the quantum state and
+would be obtained from repeated measurements on real
+hardware. Based on this observation, the agent selects
+the drive amplitudes for the next 1 ns control segment
+from a discrete set of nine possible choices. Appending
+a segment corresponds to allowing the system to evolve
+for 1 ns , after which the agent receives a new state de-
+scription and continues the process.
+The reward is defined at each step.
+Let Et be the
+energy after step t and Emin the lowest energy seen so
+far in training. The reward is
+rt =
+
+
+
+
+
+
+
+
+
+−10 (Et −EFCI) + 5
+if t = terminal, Et ≤Emin,
+−10 (Et −EFCI)
+if t = terminal, Et > Emin,
+5
+if t̸ = terminal, Et ≤Emin,
+0
+if t̸ = terminal, Et > Emin.
+(12)
+where EFCI is the exact ground-state energy. The en-
+ergy term −10(Et −EFCI) is given only on the final step
+and grows as the final energy drops closer to the exact
+value, the factor 10 rescales the small energy difference
+into a useful learning signal. The bonus of 5 is added at
+any step that reaches a new lowest energy, after which
+Emin is updated to that value. This bonus encourages
+the agent to continually surpass its previous best perfor-
+mance. Each episode corresponds to a full traversal of the
+scanning window, beginning from the Hartree–Fock state
+|01⟩and terminating when the allotted evolution time is
+exhausted. Note that the DQN accumulates experience
+over time. By storing and learning from past transitions,
+it gradually develops a policy that identifies which pulse
+adjustments are effective in different situations.
+E.
+Model architecture and baseline random search
+methods
+We configure our DQN as a fully connected feedfor-
+ward neural network that maps the agent’s observation,
+the vector of Pauli expectation values describing the cur-
+rent quantum state, to a set of discrete action values. The
+input layer therefore has dimension equal to the num-
+ber of measured Pauli operators, 16.
+We process this
+input through two hidden layers of 64 neurons each, us-
+ing ReLU activations to provide sufficient nonlinearity
+for modeling the control landscape.
+The output layer
+contains nine units, corresponding to the nine available
+drive-amplitude choices for the next 1 ns control segment.
+Each output represents the estimated value Q(s, a; θ) for
+selecting that particular pulse configuration. Moreover,
+the target network Q(s, a; θi−1) shares the same archi-
+tecture and initialization as the policy network, but it
+is updated only through the soft-update rule described
+above. The policy network is trained using the AdamW
+optimizer with a learning rate of 10−4, and all weights use
+PyTorch’s default Kaiming-uniform initialization. Simi-
+larly, the random-search baseline operates under identical
+conditions, using the same environment, simulator, scan-
+TABLE I. All hyperparameters used for training the DQN
+agent. The same settings are applied at every scanning time;
+only the total gate-time budget varies across experiments.
+Setting
+Value
+Network
+16 →64 →64 →9 (2 hidden layers of
+64, 9 actions out)
+Algorithm
+DQN
+Optimizer
+AdamW (AMSGrad), learning rate
+10−4
+Loss
+Huber (smooth L1)
+Gradient clipping
+value 1.0
+Batch size
+128
+Discount factor γ
+0.99
+Replay buffer capacity 50,000 transitions
+Target-network update soft, τ = 0.005 per step
+Exploration
+ε from 0.9 to 0.05, decay constant
+900× scanning time (in ns)
+Episodes per gate time 3000
+Pulse step width
+1 ns
+Actions
+9 (bang-bang, includes idle)
+ning window, and number of episodes, but selects every
+action uniformly at random. It contains no network and
+retains no memory of previous episodes, making it a clean
+baseline that isolates the contribution of the learned pol-
+icy. Note that we simulate the evolution of the quantum
+system on a classical computer using Trotterization. This
+approach mirrors the sequence of operations a quantum
+processor would carry out by applying the control pulse,
+allowing the system to evolve under the Hamiltonian, and
+then evaluating the resulting state. The hyperparameter
+set used in this paper is shown in Table I.
+III.
+RESULTS AND DISCUSSION
+A.
+Cumulative sub-Hartree–Fock discovery
+We first measure how often each method finds ener-
+gies below the Hartree–Fock baseline, E < EHF. Finding
+such a state means the agent has reached the quantum-
+correlated regime that matters for estimating the ground
+state. The total number of findings over 3000 training
+episodes is shown in Fig. 2, with results displayed for
+both a shorter (left) and a longer (right) scanning time.
+The DQN curve starts almost flat and then bends sharply
+upward as training goes on, a sign of learning, while the
+random-search curve grows slowly and steadily through-
+out, with no sign of the speed-up that comes from learn-
+ing. At 10 ns the DQN agent finds 845 sub-Hartree–Fock
+states over training while random search finds only 29—
+about 29 times more. At 100 ns DQN finds 1056 against
+61 for random search—about 17 times more. The very
+large ratio at 10 ns comes from the short search horizon
+
+
+5
+FIG. 2. Cumulative number of sub-Hartree–Fock steps (E <
+EHF) versus training episode for the DQN policy (blue) and
+the random-search baseline (red), at representative scanning
+times of 10 ns (left) and 100 ns (right).
+The DQN curve
+accelerates with training while random search remains slow
+and nearly linear.
+FIG. 3.
+Success rate (fraction of episodes with E < EHF,
+200-episode moving average) versus training episode for the
+Hydrogen dimer at 0.75 ˚A (STO-3G), at representative scan-
+ning times of (a) 10 ns and (b) 100 ns. The DQN policy (solid
+blue) improves steadily with training while the random-search
+baseline (dashed red) stays flat.
+of only ten pulse steps, which the agent learns quickly. At
+longer scanning times the number of steps N increases,
+and the number of possible pulse sequences grows as 9N.
+Random search therefore struggles as N grows, yet DQN
+still finds far more useful states. The largest total, 1056,
+occurs at 100 ns, showing that the agent may become
+more effective as we increase the scanning window.
+B.
+Success rate over training
+We also track the success rate, defined as the fraction of
+episodes within a sliding window of 200 episodes in which
+the agent finds at least one energy below the Hartree-
+Fock baseline. Using a moving window of 200 episodes
+rather than single episodes smooths out run-to-run noise
+and makes the training trend easier to see.
+Figure 3
+shows how this success rate evolves over training.
+At 10 ns the DQN success rate rises to a peak of
+roughly 57% near episode 2350, then declines as indicated
+in the Figure 3(a). The late-stage decline is unexpected,
+but it may indicate a trade-off between extended train-
+ing and maintaining peak accuracy for a shorter scan-
+ning window. At 100 ns it climbs more steadily, reaching
+about 61% by the end. In both cases the random-search
+baseline stays flat near 1–2%. Random search starts each
+FIG. 4. Peak state fidelity achieved by the DQN policy (blue)
+and random search (red) at the total scanning times of 10,
+40, and 100 ns. Annotations give the fidelity and the pulse
+duration at which it is reached.
+The DQN policy attains
+higher peak fidelity at every scanning time and is the only
+method to enter the high-fidelity region above 0.995.
+episode fresh with no memory of past runs, so its success
+rate does not improve as training continues. The rising
+DQN curve next to the flat baseline is a clear sign the
+agent is learning. At 100 ns, where the gap is largest,
+DQN finds a useful energy about 30 times more often
+than random search by the end of training.
+C.
+Fidelity and decoherence
+We next look at the best (peak) fidelity each method
+reaches and how long it takes to get there. The peak
+fidelity at scanning times of 10, 40, and 100 ns is shown
+in Figure 4. DQN reaches a higher peak fidelity at every
+scanning time, going from 0.9917 at 10 ns to 0.9956 at
+40 ns and 0.9969 at 100 ns, while random search stays
+around 0.991–0.992. The gap between them widens as
+the scanning time grows, and only DQN climbs into the
+high-fidelity region above 0.995.
+At total scanning time of 100 ns, the DQN reaches
+its highest fidelity much earlier than the random-search
+baseline. As shown in Figure 4, the DQN attains its peak
+at approximately 42 ns, whereas random search requires
+about 66 ns. This difference of roughly 24 ns is significant
+because the quantum state gradually loses coherence as
+the time passes. Reaching the peak sooner reduces the
+likelihood that the state degrades before measurement.
+For this reason, the 100 ns setting provides the most fa-
+vorable balance in our tests, offering both the highest
+fidelity and the largest reduction in evolution time.
+
+
+6
+FIG. 5. Absolute energy gap from the FCI reference for the
+Hydrogen dimer at 0.75 ˚A (STO-3G). (a) Gap at each scan-
+ning time for the DQN policy (blue) and random search (red);
+the dashed line and shaded region mark the 5 mHa accuracy
+reference. (b) Energy-gap trend versus scanning time, with
+the shaded region indicating the DQN advantage. The DQN
+policy is consistently closer to FCI and the advantage widens
+with scanning time.
+D.
+Energy accuracy
+What we ultimately care about is how close each
+method gets to the exact ground state energy. The en-
+ergy gap from FCI at each pulse time, with a 5 milli-
+Hartree accuracy reference drawn as a dashed line and
+shaded zone is shown in Figure 5.
+Panel (a) shows the result directly, at every scanning
+time the DQN bar is shorter than the random-search bar,
+so DQN always reaches a lower energy. The DQN gaps
+are 11.52, 4.82, and 2.42 mHa at 10, 40, and 100 ns,
+against 11.62, 8.72, and 6.12 mHa for random search. At
+10 ns, with only ten pulse steps, the two methods are
+almost tied (about 1% apart), but the gap grows quickly
+with scanning time, DQN’s energy error is 45% lower
+at 40 ns and 60% lower at 100 ns.
+Compared to the
+5 mHa reference, DQN enters the accuracy zone at 40 ns
+and stays inside it at 100 ns, while random search never
+reaches it.
+Panel (b) shows the same data as a trend
+line, both curves drop as the scanning time grows, but
+the DQN curve drops faster and the gap between them
+widens. This means DQN keeps pulling further ahead
+as the pulse gets longer and the 9N space of possible
+sequences grows.
+E.
+Structure of the learned policy and control
+pulses
+We explore which actions the training agent actually
+uses.
+The comparison between the DQN and random
+search action-space at each evolution for 100 ns is shown
+in Figure 6.
+Random search uses all nine actions with roughly equal
+frequency, each between about 6% and 18%, close to the
+1/9 ≈11.1% expected under uniform random choice.
+DQN behaves very differently. It spends about 70% of its
+steps on the idle action (0, 0), uses most of the remain-
+der on single-qubit drives, and almost never drives both
+qubits at once; two of the simultaneous two-qubit actions
+FIG. 6.
+Action-usage distribution at the 100 ns scanning
+time for the DQN policy (blue) and random search (red),
+expressed as the percentage of pulse steps assigned to each
+of the nine action-spaces (∆1, ∆2) ∈{−1, 0, +1}2. For each
+method, the analysis covers the best sequence up to the step
+at which it reaches its peak fidelity (43 steps for DQN, 67
+for random search as shown in Figure 4). The DQN policy
+concentrates heavily on the idle action (0, 0), whereas random
+search spreads its usage nearly uniformly.
+FIG. 7. Learned control pulses for the two qubits, showing
+the best pulse found by the DQN policy, which reaches a
+peak fidelity of 0.9969 at 42 ns as shown in Figure 4. The
+top panel is qubit 0 and the bottom panel is qubit 1.
+At
+each one-nanosecond step, the agent either drives a qubit at
+full strength (positive or negative) or leaves it idle, with no
+intermediate amplitudes. Both qubits stay idle for most of
+the time and fire only brief pulses at selected moments, and
+the two qubits are driven at different times.
+are never used at all. In effect, the agent learns to mostly
+idle and let the system evolve on its own, applying short,
+precise pulses only at select moments.
+This pattern,
+long intervals of free evolution punctuated by occasional
+pulses, resembles the bang-bang strategy that optimal-
+control theory identifies as the most time-efficient way to
+drive a quantum system to a target state [26, 27]. This
+result suggests that the agent may be learning a control
+strategy that aligns with the underlying physics of the
+system, based solely on the reward signals it receives.
+
+
+7
+We now look at the actual pulses the training agent
+finds at the 100 ns scanning time. The drive on each of
+the two qubits over the full scanning time is shown in
+Figure 7. At every one nanosecond step the agent either
+drives a qubit at full strength, up or down, or leaves it
+idle, with nothing in between. As described in the pre-
+vious paragraph and indicated in Figure 6, both qubits
+stay idle for most of times and fire only short pulses at a
+few selected moments, and the two qubits are driven at
+different times.
+IV.
+DISCUSSION AND CONCLUSION
+We explored whether a learning-based approach can
+assist in constructing pulse sequences for state prepara-
+tion. The agent receives only the system description and
+a numerical reward, and it attempts to improve its per-
+formance over repeated trials.
+Across the settings we
+examined, the agent performed better than a random-
+search baseline, particularly in cases where the number of
+possible pulse choices is large. These results suggest that
+learning methods may be useful when the search space
+becomes too extensive for simple trial-and-error strate-
+gies.
+The pulse sequences produced by the agent also exhibit
+a pattern in how control is applied. Although the agent
+is not provided with any control-theoretic guidance, it
+tends to trigger pulses at selected moments while remain-
+ing idle otherwise. This resembles strategies that have
+been studied in theoretical work. While we do not draw
+firm conclusions from this observation, it indicates that
+learning-based approaches may be capable of identifying
+structured control behaviors.
+We also observed that the agent’s performance is lim-
+ited by the discrete set of drive levels available during
+training.
+With only three levels per qubit, the agent
+cannot reduce the energy beyond a certain point. This
+appears to be a constraint of the action space rather than
+the learning method itself. Allowing finer or continuous
+control options may enable further improvement.
+Although Hydrogen molecule is used as a test case
+here, the approach does not rely on features specific to
+that system. The method depends only on the ability to
+simulate the dynamics and evaluate a reward, suggesting
+that it could be applied to other systems with similar re-
+quirements. The pulse durations used in training match
+the time resolution of current hardware, which may make
+it possible to transfer learned pulses to real devices.
+Our device model incorporates realistic parameters,
+but does not include all sources of noise present in phys-
+ical systems, such as decoherence and control imperfec-
+tions. Future work may expand this approach to larger
+molecular systems and materials, train in more realistic
+noise models, and evaluate directly on hardware. These
+directions aim to further assess how learning-based tech-
+niques can support the development of control strategies
+that align with the capabilities of quantum devices.
+ACKNOWLEDGMENTS
+The authors thank Chenxu Liu, Yanzhu Chen, Brian
+T. Kirby, and Thomas A. Searles for valuable discus-
+sions. We acknowledge support from the SMU startup
+fund, and Sanjaya Lohani also acknowledges support
+from the Sam Taylor Fellowship Program.
+Computa-
+tional resources for this work were provided in part by
+SMU’s O’Donnell Data Science and Research Computing
+Institute.
+[1] N. Khaneja, T. Reiss, C. Kehlet, T. Schulte-Herbr¨uggen,
+and S. J. Glaser, Journal of Magnetic Resonance 172,
+296 (2005).
+[2] T. Caneva, T. Calarco, and S. Montangero, Physical Re-
+view A 84, 022326 (2011).
+[3] Y. Baum, M. Amico, S. Howell, M. Hush, M. Liuzzi,
+P. Mundada, T. Merkh, A. R. Carvalho, and M. J. Bier-
+cuk, PRX Quantum 2, 040324 (2021).
+[4] V. V. Sivak, A. Eickbusch, H. Liu, B. Royer, I. Tsioutsios,
+and M. H. Devoret, Physical Review X 12, 011059 (2022).
+[5] A. Peruzzo, J. McClean, P. Shadbolt, M.-H. Yung, X.-Q.
+Zhou, P. J. Love, A. Aspuru-Guzik, and J. L. O’Brien,
+Nature Communications 5, 4213 (2014).
+[6] A. Kandala, A. Mezzacapo, K. Temme, M. Takita,
+M. Brink, J. M. Chow, and J. M. Gambetta, Nature 549,
+242 (2017).
+[7] O. R. Meitei, B. T. Gard, G. S. Barron, D. P. Pappas,
+S. E. Economou, E. Barnes, and N. J. Mayhall, npj Quan-
+tum Information 7, 155 (2021).
+[8] M. Y. Niu, S. Boixo, V. N. Smelyanskiy, and H. Neven,
+npj Quantum Information 5, 33 (2019).
+[9] M.
+Bukov
+and
+F.
+Marquardt,
+arXiv
+preprint
+arXiv:2601.18953 (2026).
+[10] M. M. M¨uller, R. S. Said, F. Jelezko, T. Calarco, and
+S. Montangero, Reports on Progress in Physics 85,
+076001 (2022).
+[11] C. P. Koch, U. Boscain, T. Calarco, G. Dirr, S. Fil-
+ipp, S. J. Glaser, R. Kosloff, S. Montangero, T. Schulte-
+Herbr¨uggen, D. Sugny, and F. K. Wilhelm, EPJ Quan-
+tum Technology 9, 19 (2022).
+[12] N. Leung, M. Abdelhafez, J. Koch, and D. Schuster,
+Physical Review A 95, 042318 (2017).
+[13] M. Bukov,
+A. G. R. Day,
+D. Sels,
+P. Weinberg,
+A. Polkovnikov, and P. Mehta, Physical Review X 8,
+031086 (2018).
+[14] X.-M. Zhang, Z. Wei, R. Asad, X.-C. Yang, and X. Wang,
+npj Quantum Information 5, 85 (2019).
+[15] T. F¨osel, P. Tighineanu, T. Weiss, and F. Marquardt,
+Physical Review X 8, 031084 (2018).
+[16] R. Porotti, D. Tamascelli, M. Restelli, and E. Prati, Com-
+munications Physics 2, 61 (2019).
+
+
+8
+[17] J. Mackeprang, D. B. R. Dasari, and J. Wrachtrup, Quan-
+tum Machine Intelligence 2, 5 (2020).
+[18] Z. An and D. L. Zhou, EPL (Europhysics Letters) 126,
+60002 (2019).
+[19] M. Dalgaard, F. Motzoi, J. J. Sørensen, and J. Sherson,
+npj Quantum Information 6, 6 (2020).
+[20] C. Chen, D. Dong, H.-X. Li, J. Chu, and T.-J. Tarn,
+IEEE Transactions on Neural Networks and Learning
+Systems 25, 920 (2014).
+[21] M. Cerezo, A. Arrasmith, R. Babbush, S. C. Benjamin,
+S. Endo, K. Fujii, J. R. McClean, K. Mitarai, X. Yuan,
+L. Cincio, and P. J. Coles, Nature Reviews Physics 3, 625
+(2021).
+[22] J. Romero, R. Babbush, J. R. McClean, C. Hempel, P. J.
+Love, and A. Aspuru-Guzik, Quantum Science and Tech-
+nology 4, 014008 (2018).
+[23] J. Koch, T. M. Yu, J. Gambetta, A. A. Houck, D. I.
+Schuster, J. Majer, A. Blais, M. H. Devoret, S. M. Girvin,
+and R. J. Schoelkopf, Physical Review A 76, 042319
+(2007).
+[24] P. Krantz, M. Kjaergaard, F. Yan, T. P. Orlando, S. Gus-
+tavsson, and W. D. Oliver, Applied Physics Reviews 6,
+021318 (2019).
+[25] A. Asthana, C. Liu, O. R. Meitei, S. E. Economou,
+E. Barnes, and N. J. Mayhall, Physical Review Applied
+19, 064071 (2023).
+[26] L. S. Pontryagin, V. G. Boltyanskii, R. V. Gamkrelidze,
+and E. F. Mishchenko, The Mathematical Theory of Opti-
+mal Processes (Interscience Publishers, New York, 1962).
+[27] Z. C. Yang, A. Rahmani, A. Shabani, H. Neven, and
+C. Chamon, Physical Review X 7, 021027 (2017).
+[28] R. S. Sutton and A. G. Barto, Reinforcement Learning:
+An Introduction, 2nd ed. (MIT Press, Cambridge, MA,
+2018).
+[29] R. Bellman, Dynamic Programming (Princeton Univer-
+sity Press, Princeton, NJ, 1957).
+[30] V. Mnih, K. Kavukcuoglu, D. Silver, A. A. Rusu, J. Ve-
+ness, M. G. Bellemare, A. Graves, M. Riedmiller, A. K.
+Fidjeland, G. Ostrovski, et al., Nature 518, 529 (2015).
+[31] C.-L. Hong, T. Tsai, J.-P. Chou, P.-J. Chen, P.-K. Tsai,
+Y.-C. Chen, E.-J. Kuo, D. Srolovitz, A. Hu, Y.-C. Cheng,
+et al., PRX Quantum 3, 020360 (2022).
+[32] S. Shapkota, Y. Mo, C. Liu, Y. Chen, B. T. Kirby, T. A.
+Searles, and S. Lohani, in Proc. IEEE Dallas Circuits and
+Systems Conference (DCAS) (Dallas, TX, 2026).
+[33] K. N. Smith, G. S. Ravi, T. Alexander, N. T. Bronn,
+A. R. Carvalho, A. Cervera-Lierta, F. T. Chong, J. M.
+Chow, M. Cubeddu, A. Hashim, et al., Frontiers in
+Physics 10, 900099 (2022).

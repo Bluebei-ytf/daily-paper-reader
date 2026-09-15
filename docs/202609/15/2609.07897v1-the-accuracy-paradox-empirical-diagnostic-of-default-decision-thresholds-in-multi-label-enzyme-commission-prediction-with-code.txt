@@ -1,0 +1,344 @@
+The Accuracy Paradox: Empirical Diagnostic of Default 
+Decision Thresholds in M ulti-Label Enzyme Commission 
+Prediction [W ith Code] 
+Bilal Ahmada,b,* , Rajed Mehmooda 
+a The Department of Electrical, Electronics and Telecommunication Engineering, UET Lahore, Pakistan 
+b Department of Computer Science and Engineering, Jiangsu University, Jiangsu, China 
+* Corresponding Author: bilalahmad@stu.jiangnan.edu.cn, bilalrouf@ujs.edu.pk 
+ 
+Abstract 
+Automated prediction of Enzyme Commission (EC) numbers plays a central role in functional 
+annotation and computational drug discovery. However, standard multi-label machine learning 
+pipelines frequently rely on default decision thresholds (τ = 0.50), assuming balanced prior 
+distributions across target heads. In this study, we present a systematic empirical diagnostic of 
+uncalibrated fixed decision boundaries operating under severe class imbalance across N = 14,096 
+annotated compounds categorized into six primary EC classes (EC1–EC6). Our results highlight 
+a pronounced Accuracy Paradox: while the multi-label system achieves a deceivingly high mean 
+accuracy of 77.16%, the macro F1-score (0.3976) and macro recall (0.3872) reveal severe predictive 
+breakdown. Majority target classes suffer from hyper-sensitivity and over-prediction, whereas 
+minority classes exhibit sharp recall decay, culminating in a total decision boundary collapse for 
+EC6 (Recall = 0.00%) despite underlying discriminative power (ROC-AUC = 0.5857). Feature 
+correlation analysis further reveals high linear redundancy among topological indices relative to 
+fingerprint density metrics. Ultimately, this diagnostic study demonstrates that standard point 
+predictions mask critical errors in bioinformatics workflows. We establish target-specific threshold 
+optimization and post-hoc conformal calibration as essential, open-source post-processing 
+safeguards for reliable applied machine learning and deep learning architectures. 
+Keywords: Enzyme Commission number prediction, multi-label classification, class 
+imbalance, threshold optimization, conformal calibration, accuracy paradox, 
+predictive 
+breakdown, 
+decision 
+boundary 
+collapse, 
+functional 
+annotation, 
+computational drug discovery, applied machine learning, deep learning evaluation, 
+bioinformatics workflows, post-hoc calibration, topological indices, molecular 
+fingerprints, imbalanced bio-data, model diagnostic, performance metrics, open-
+source pipeline.  
+ 
+ 
+
+
+ 
+1. Introduction 
+ 
+Enzyme Commission (EC) numbers serve as a standardized numerical classification system for 
+biological catalysts, categorizing catalytic activities into six primary functional classes: 
+Oxidoreductases (EC1), Transferases (EC2), Hydrolases (EC3), Lyases (EC4), Isomerases (EC5), 
+and Ligases (EC6) [1]. Accurate computational annotation of these functional roles plays a pivotal 
+role in modern drug discovery, metabolic network reconstruction, and industrial biotechnology [2]. 
+In particular, virtual screening pipelines and molecular docking frameworks routinely depend on 
+precise functional assignments to narrow down compound libraries and simulate binding affinities 
+[3]. High-throughput computational biology strategies; ranging from multi-swarm particle swarm 
+optimization for ligand-receptor binding [3] to deep learning architectures across biomedical 
+domain tasks [4]–[7] have progressively shifted bio-annotation toward fully automated machine 
+learning pipelines. 
+As high-throughput sequencing and chemical library synthesis expand exponentially, automated 
+machine learning (ML) architectures-ranging from topological descriptor pipelines to deep 
+molecular representations; have emerged as the primary mechanism for computational enzyme 
+prediction [8], [9]. Modern artificial intelligence frameworks across parallel computer vision and 
+bioinformatics tasks have increasingly leveraged advanced feature extraction and attention 
+mechanisms to resolve complex data representations. For instance, attention-guided networks and 
+multi-head attention (MHA) modules have proven vital for multi-scale biological image 
+segmentation [4], while multi-scale spatial representations such as gradient-pyramid features have 
+significantly enhanced weakly-supervised localization in complex visual inputs [5]. Similarly, cross-
+modal retrieval and structural hashing paradigms rely on distribution-similarity metrics to retain 
+structural semantics across high-dimensional feature spaces [6]. 
+Despite these impressive advances in feature representations and multi-task learning, multi-label 
+enzyme classification poses severe operational challenges due to inherent class imbalance [10]. In 
+multi-label molecular benchmarks, active functional labels are non-uniformly distributed across 
+functional categories; highly prevalent reactions dominate the training landscape, whereas 
+specialized catalytic pathways remain sparse [11]. Furthermore, many biological molecules exhibit 
+multi-functional co-activation, participating in multiple catalytic pathways simultaneously [12]. 
+This structural overlap creates complex label interdependencies that standard multi-output 
+predictors struggle to capture without dedicated joint-probability modeling [13]. 
+A pervasive yet under-addressed issue in applied multi-label enzymology is the reliance on default 
+fixed decision thresholds (𝛕= 0.50) for binary target heads [14]. Standard classification workflows 
+frequently convert posterior probability estimates 𝒫̂(𝓧) into discrete predictions using an 
+uncalibrated  (𝛕= 0.50) cutoff under the assumption of balanced label priors. However, when 
+deployed on highly skewed biological datasets, this uncalibrated decision boundary triggers a 
+dramatic performance distortion known as the Accuracy Paradox [15], [16]. High overall accuracy 
+scores mask catastrophic diagnostic failures: majority targets suffer from hyper-sensitivity and 
+
+
+trivial class assignment, while minority targets undergo severe recall degradation or complete 
+target collapse [17]. 
+To address these diagnostic oversights, this study presents a systematic empirical evaluation of 
+standard fixed-threshold decision boundaries across a multi-label enzyme dataset of N = 14,096 
+annotated compounds. Rather than claiming an incremental state-of-the-art predictor, we isolate 
+and quantify the structural pathologies that emerge when standard point-prediction models 
+operate under severe label imbalance. 
+The main contributions of this work are three-fold: 
+1. Feature Interdependence vs. Target Separation: We quantify the mutual 
+redundancy of molecular topological descriptors (𝐶ℎ𝑖𝑠𝑒𝑟𝑖𝑒𝑠, 𝐵𝑒𝑟𝑡𝑧𝐶𝑇) relative to 
+fingerprint density metrics (FpDensityMorgan) and evaluate their linear correlation against 
+primary EC target heads. 
+2. Empirical Diagnostic of Decision Boundaries: We demonstrate how uncalibrated 
+static thresholds (𝛕= 0.50) induce majority-class over-prediction in dominant targets 
+(EC1, EC2) while driving minority targets (EC3-EC6) into severe sensitivity decay and 
+total decision boundary collapse (EC6 recall = 0.00%). 
+3. M ethodological Post-Processing Guidelines: We provide explicit recommendations 
+for applied machine learning workflows, highlighting target-specific threshold optimization 
+and post-hoc conformal calibration as essential post-processing safeguards for biological 
+multi-label pipelines. 
+2. M ethodology 
+2.1. M ulti-Label Framework 
+The computational enzymology task is formulated as a multi-label binary classification problem over K = 
+6 distinct functional target classes corresponding to primary Enzyme Commission (EC) categories: 
+Oxidoreductases (EC1), Transferases (EC2), Hydrolases (EC3), Lyases (EC4), Isomerases (EC5), and 
+Ligases (EC6). Given an input molecular feature vector 𝑥𝑖 ℰ ℝ𝑑 representing the i-th chemical compound, 
+the system predicts a binary vector 𝑦𝑖= [𝑦𝑖,1 , 𝑦𝑖,2 , 𝑦𝑖,3 , 𝑦𝑖,4 , … . 𝑦𝑖,6]
+𝑇ℰ [0,1]6 
+ 
+
+
+ 
+Figure 1: Schematic overview of the multi-label enzyme classification workflow and parallel target 
+evaluation pipeline. 
+ 
+2.2. Dataset 
+The evaluation dataset contains 14,096 annotated biological compounds with substantial multi-label class 
+imbalance. EC2 and EC1 are the most prevalent classes, with active ratios of 80.09% (n = 11,289) and 
+66.75% (n = 9,409), respectively, while EC5 and EC6 are less represented at 14.46% (n = 2,038) and 
+15.10% (n = 2,129). 
+ 
+Figure 2: Enzyme distribution per class in dataset 
+ 
+
+
+ 
+2.3. Feature Analysis 
+Molecules are represented using two complementary descriptor types calculated via RDKit: 
+ 
+Global Topological & Connectivity Descriptors: Numerical indices encoding structural complexity, 
+molecular weight, valence, and electrotopological states (including BertzCT, Chi1, Chi1n, Chi1v, Chi2n, 
+Chi2v, Chi3v, Chi4n, Estate_VSA1, EState_VSA2, ExactMolWt, and HallKierAlpha). 
+1. Local Fingerprint Density M etrics: Substructural density measures computed across 
+extended connectivity radii (FpDensityMorgan1, FpDensityMorgan2, and FpDensityMorgan3). 
+Linear interdependence among structural features and target labels was quantified using Pearson's 
+correlation coefficient: 
+ 
+ 
+ 
+ 
+
+
+4. Decision Protocol 
+For each target k ∈ {1…6} in {1…6}, predicted probabilities 𝒫̂𝑘(𝓧) are converted to binary labels using a 
+threshold of τ = 0.50 . Performance is evaluated using Accuracy, Precision, Recall, F1-Score, and ROC-
+AUC based on TP, TN, FP, and FN. Macro-averaged metrics across all six targets provide an overall 
+measure of predictive performance and stability. 
+ 
+3. Results and Discussion 
+3.1. Exploratory Data Analysis  
+The topological and structural feature matrices reveal significant collinearity among low-
+dimensional descriptors while highlighting high independence in fingerprint density metrics. As 
+shown in the correlation analysis, topological indices display strong mutual dependence; for 
+example, Chi1 correlates strongly with Chi2v (r = 0.971) and ExactMolWt (r = 0.960). 
+Conversely, Morgan fingerprint densities (FpDensityMorgan1 through FpDensityMorgan3) 
+demonstrate near-zero linear correlation with all primary Enzyme Commission (EC) targets (|r| <
+0.025). This indicates that localized substructural density alone cannot linearly separate complex 
+multi-label enzyme functions, necessitating non-linear mapping capabilities in downstream 
+classification heads. 
+Furthermore, pairwise target analysis demonstrates strong co-activation patterns among specific 
+enzyme classes. EC1 (Oxidoreductases) and EC2 (Transferases) share 7,151 active instances, 
+representing the dominant co-occurrence pair in the dataset (N = 14,096). In contrast, functional 
+overlap drops significantly among minority targets; for instance, EC5 (Isomerases) and EC6 
+(Ligases) co-occur in only 245 samples. This structural sparsity directly influences baseline 
+classifier behavior across distinct target heads. 
+ 
+
+
+3.2. M ulti-Label Classification Performance & The Accuracy Paradox 
+Evaluation of the baseline classifier under a standard decision boundary (𝛕= 0.50) reveals a classic 
+Accuracy Paradox caused by multi-label class imbalance. While the overall mean accuracy 
+reaches a high baseline of 77.16%, the macro F1-score (0.3976) and macro recall (0.3872) expose 
+severe predictive degradation across minority targets. 
+As detailed in the table above, mean ROC-AUC across all targets remains stable at 0.6451 
+(peaking at 0.6987 for EC1). This confirms that the model's latent representation retains 
+discriminative ranking power. However, applying a static threshold 𝛕= 0.50 across imbalanced 
+active distributions results in poor operational decision boundaries. 
+ 
+3.3. Target-by-Target Failure Dynamics 
+           [ Uncalibrated Threshold Pathology (τ = 0.50) ] 
+                                 │ 
+         ┌───────────────────────┴───────────────────────┐ 
+         ▼                                               ▼ 
+Majority Classes (EC1, EC2)                    Minority Classes (EC3–EC6) 
+ • Active Ratio: 66.75% – 80.09%               • Active Ratio: 14.46% – 
+31.31% 
+ • High False Positives                        • High False Negatives 
+ • EC2 Trivial Collapse:                        • EC6 Complete Collapse: 
+   Recall = 100.0%, TN = 1                       Recall = 0.00%, TP = 0 
+ 
+ 
+ 
+
+
+ 
+Figure 3: Masked Corelation Heatmap with Numeric Values 
+ 
+
+
+ 
+Figure 4: Pairwise Enzyme Class Co-activation Matrix 
+ 
+ 
+3.3.1 M ajority Class Over-Prediction (EC1 & EC2) 
+EC2 H yper-Sensitivity: With an active ratio of 80.09%, the fixed decision threshold 
+forces the classifier into trivial majority-class assignment. The model correctly identifies 
+active instances (Recall = 100.00%, TP = 11,289) but virtually fails to detect negative 
+instances (TN = 1, FP = 2,806), rendering its 80.09% accuracy uninformative. 
+EC1 False Positive Drift: At a 66.75% active ratio, EC1 achieves a robust F1-score of 
+0.7946 (Recall = 87.17%). However, it incurs 3,034 false positives, demonstrating a 
+systemic bias toward positive label assignment under uncalibrated posterior estimates. 
+3.3.2 M inority Class Sensitivity Decay & Target Collapse (EC3–EC6) 
+Sensitivity Decay (EC3, EC4, EC5): As target prevalence decreases below 35%, recall 
+decays sharply. EC3 (31.31% active) drops to a recall of 16.34% (FN = 3,692). EC4 
+(27.87% active) yields a recall of 18.25% (FN = 3,211), and EC5 (14.46% active) decays 
+to 10.55% recall (FN = 1,823). 
+Complete Target Collapse (EC6): At an active ratio of 15.10%, EC6 suffers a total 
+breakdown under 𝛕= 0.50. The classifier assigns zero positive instances (TP = 0, FP = 0), 
+producing an F1-score, precision, and recall of 0.0000. Despite an underlying ROC-AUC 
+of 0.5857, all 2,129 active test instances are misclassified as inactive (FN = 2,129). 
+
+
+4. M ethodological Implications & Recommendations 
+These empirical findings demonstrate that standard point-prediction models operating under fixed 
+decision thresholds are insufficient for imbalanced multi-label biological targets. The failure of 
+EC6 and the trivial assignment of EC2 confirm that raw accuracy masks critical diagnostic errors 
+in minority categories. 
+To resolve these failure modes in deployment, the classification pipeline requires two essential 
+post-processing steps: 
+1. Target-Specific Threshold Optimization: Moving away from a static 𝛕= 0.50 to per-
+target optimal thresholds (e.g., maximizing Precision-Recall AUC or 𝐹𝛽𝑆𝑐𝑜𝑟𝑒𝑠) to recover 
+sensitivity on collapsed classes like EC6. 
+2. Post-Hoc Conformal Calibration: Integrating post-hoc probability calibration (e.g., 
+Platt Scaling) combined with Class-Conditional Conformal Prediction (Mondrian CP). 
+This guarantees mathematically bounded coverage error rates across all individual EC 
+categories, ensuring minority enzyme classes retain explicit safety bounds. 
+5. Conclusion 
+In this study, we presented an empirical diagnostic evaluation of multi-label enzyme classification pipelines 
+operating under severe class imbalance across six primary Enzyme Commission (EC1–EC6) target heads. 
+Through systematic evaluation of N = 14,096 annotated compounds, our findings demonstrate that relying 
+on default, uncalibrated decision boundaries (\tau = 0.50) induces a severe Accuracy Paradox. While raw 
+accuracy metrics yield a respectable baseline average of 77.16%, macro-averaged F1-scores (0.3976) and 
+recall (0.3872) reveal profound underlying diagnostic failures. 
+Our target-by-target analysis highlights two distinct operational pathologies driven by uncalibrated label 
+priors: 
+1. M ajority Class Over-Prediction (EC1, EC2): High active class ratios push fixed-threshold 
+classifiers into trivial majority assignment. For EC2 (80.09% active), this results in hyper-sensitivity 
+(Recall = 100.00%) paired with near-total failure to identify inactive compounds (TN = 1). 
+2. M inority Class Sensitivity Decay and Collapse (EC3–EC6): As target prevalence decreases 
+below 35%, sensitivity degrades rapidly. Crucially, EC6 (15.10% active ratio) undergoes a complete 
+decision boundary collapse under \tau = 0.50, yielding zero true positive predictions (TP = 0, F1 
+= 0.0000) despite retaining discriminative ranking capability (ROC-AUC = 0.5857). 
+Furthermore, topological feature correlation analysis confirmed strong mutual redundancy among 
+connectivity indices (r > 0.90) relative to the linear independence of local fingerprint densities (|r| <
+0.025). These results prove that fixed thresholding on point predictions fails to map non-linear 
+probabilistic outputs into valid decisions when target distributions are non-uniform. 
+ 
+Code Availability: You can request for code at correspondance email. 
+
+
+References 
+[1] 
+Bairoch, 
+A. 
+(2000). 
+The 
+ENZYME 
+database 
+in 
+2000. 
+Nucleic 
+Acids 
+Research, 
+28(1), 
+304–305. 
+https://doi.org/10.1093/nar/28.1.304  
+[2] R. D. Slobodaniuk, O. O. Vaneev, and A. A. Serov, "Machine learning applications in enzyme engineering and functional 
+annotation," Comput. Struct. Biotechnol. J., vol. 19, pp. 6430–6444, Dec. 2021. 
+[3] J. Li, Y. Tang, and X. Zhang, "Parallel multi-swarm cooperative particle swarm optimization for protein–ligand docking and 
+virtual screening," BMC Bioinformatics, vol. 23, no. 1, p. 207, Jun. 2022. https://doi.org/10.1186/s12859-022-04711-0 
+[4] Y. Wang, L. Zhang, and X. Liu, "A MHA-based integrated diagnosis and segmentation method for COVID-19 pandemic," 
+Journal of Image and Graphics, vol. 27, no. 4, pp. 1100–1112, 2022. https://doi.org/10.11834/jig.211015 
+[5] Z. Chen, J. Xu, and H. Zhao, "Weakly-supervised object localization with gradient-pyramid feature," Applied Intelligence, vol. 
+52, no. 14, pp. 16500–16512, Oct. 2022. https://doi.org/10.1007/s10489-022-03686-y 
+[6] H. Zhou, M. Yang, and L. Wang, "Distribution similarity aware cross-model hashing," Image and Vision Computing, vol. 166, 
+p. 105926, Feb. 2026. https://doi.org/10.1016/j.imavis.2026.105926 
+[7] M. R. Al-Musa, S. K. Gupta, and A. H. Ali, "Comparative study of deep learning models for automatic detection of metastases 
+in 
+H&E 
+stained 
+images," 
+in 
+Proc. 
+IEEE 
+Int. 
+Conf. 
+Comput. 
+Inf. 
+Sci. 
+(ICCIS), 
+2021, 
+pp. 
+1–6. 
+https://doi.org/10.1109/ICCIS54243.2021.9676187 
+[8]  Zou Z, Tian S, Gao X, Li Y. mlDEEPre: Multi-Functional Enzyme Function Prediction With Hierarchical Multi-Label Deep 
+Learning. Front Genet. 2019 Jan 22;9:714. doi: 10.3389/fgene.2018.00714. PMID: 30723495; PMCID: PMC6349967. 
+[9] Shen, X., & Yu, L. (2019). DeepEC: Predicting Enzyme Commission numbers from protein sequences using deep learning. 
+Bioinformatics, 35(18), 3211–3217. https://doi.org/10.1093/bioinformatics/btz038 
+[10]  Tsoumakas, G., & Vlahavas, I. (2007). Random k-labelsets for multilabel classification. In European Conference on Machine 
+Learning (pp. 406–417). Springer, Berlin, Heidelberg. https://doi.org/10.1007/978-3-540-74958-5_38 
+[11] J. Zhang and Z. H. Zhou, "A review on multi-label learning algorithms," IEEE Trans. Knowl. Data Eng., vol. 26, no. 8, pp. 
+1819–1837, Aug. 2014. https://doi.ieeecomputersociety.org/10.1109/TKDE.2013.39 
+[12]  Kanehisa, M., Furumichi, M., Tanabe, M., Sato, Y., & Morishima, K. (2017). KEGG: New perspectives on genomes, 
+pathways, diseases and drugs. Nucleic Acids Research, 45(D1), D353–D361. https://doi.org/10.1093/nar/gkw1092 
+[13]  Read, J., Pfahringer, B., Holmes, G., & Frank, E. (2011). Classifier chains for multi-label classification. Machine Learning, 
+85(3), 333–359. https://doi.org/10.1007/s10994-011-5256-y 
+[14] Krawczyk, B. (2016). Learning from imbalanced data: Open challenges and future directions. Progress in Artificial 
+Intelligence, 5(4), 221–232. https://doi.org/10.1007/s13748-016-0094-0 
+[15] N. V. Chawla, K. W. Bowyer, L. O. Hall, and W. P. Kegelmeyer, "SMOTE: synthetic minority over-sampling technique," J. 
+Artif. Intell. Res., vol. 16, pp. 321–357, Jun. 2002. https://doi.org/10.1613/jair.953 
+[16] 2. 
+He, H., & Garcia, E. A. (2009). Learning from imbalanced data. IEEE Transactions on Knowledge and Data Engineering, 
+21(9), 1263–1284. https://doi.org/10.1109/TKDE.2008.239 
+[17] A. Luque, A. Carrasco, A. Martín, and A. de las Heras, "The impact of class imbalance in classification performance metrics 
+based 
+on 
+the 
+binary 
+confusion 
+matrix," 
+Pattern 
+Recognit., 
+vol. 
+91, 
+pp. 
+216–231, 
+Jul. 
+2019. 
+https://doi.org/10.1016/j.patcog.2019.02.023 
+ 
