@@ -41,17 +41,17 @@
 <section class="dpr-home-dashboard-card dpr-home-report-card">
   <div class="dpr-home-dashboard-header">
     <div>
-      <span class="dpr-home-dashboard-kicker">2026-09-15</span>
+      <span class="dpr-home-dashboard-kicker">2026-09-16</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">共 15 篇</strong>
+    <strong class="dpr-home-dashboard-count">共 0 篇</strong>
   </div>
   <dl class="dpr-home-dashboard-stats">
     <div class="dpr-home-dashboard-stat"><dt>累计更新</dt><dd>1 次</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>7</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>8</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>0</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>0</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-09-15 22:14:11 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-09-16 22:57:15 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -62,10 +62,7 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>今日共生成 15 篇推荐（精读 7 篇，速读 8 篇）</p>
-<p>精读：《Fraglingo: Molecular Design via Attachment-Aware Autoregressive Fragment Generation》（9.0/10）, 《Ensemble-Conditioned Molecular Design》（9.0/10）</p>
-<p>速读：《MIRAGE: Measuring Interpolation and Redundancy in Affinity GEneralization》（7.0/10）, 《El Agente Potente: High-Throughput Agentic Atomistic Simulations》（7.0/10）, 《Evaluating Predicted Densities, Hamiltonians, and Density Matrices as Periodic SCF Initializers》（7.0/10）</p>
-<p>这些结果覆盖了当下较热的方向，建议先看精读区论文的关键问题与方法。</p>
+<p>今日无新推荐，系统未产出可展示论文。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -74,12 +71,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">精读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">7 篇</strong>
+    <strong class="dpr-home-dashboard-count">0 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Fraglingo: Molecular Design via Attachment-Aware Autoregressive Fragment Generation">Fraglingo: Molecular Design via Attachment-Aware Autoregressive Fragment Generation</span></li><li><span class="dpr-home-dashboard-paper-title" title="Ensemble-Conditioned Molecular Design">Ensemble-Conditioned Molecular Design</span></li><li><span class="dpr-home-dashboard-paper-title" title="Can Autonomous LLM Agents Execute Multireference Quantum Chemistry Calculations?">Can Autonomous LLM Agents Execute Multireference Quantum Chemistry Calculations?</span></li></ul>
+<p class="dpr-home-dashboard-empty">今日暂无推荐。</p>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">smc <strong>4</strong></span><span class="dpr-home-dashboard-tag">aichem-map <strong>3</strong></span></div>
+
 </section>
 <section class="dpr-home-dashboard-card dpr-home-skim-card">
   <div class="dpr-home-dashboard-header">
@@ -87,12 +84,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">速读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">8 篇</strong>
+    <strong class="dpr-home-dashboard-count">0 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="MIRAGE: Measuring Interpolation and Redundancy in Affinity GEneralization">MIRAGE: Measuring Interpolation and Redundancy in Affinity GEneralization</span></li><li><span class="dpr-home-dashboard-paper-title" title="El Agente Potente: High-Throughput Agentic Atomistic Simulations">El Agente Potente: High-Throughput Agentic Atomistic Simulations</span></li><li><span class="dpr-home-dashboard-paper-title" title="Evaluating Predicted Densities, Hamiltonians, and Density Matrices as Periodic SCF Initializers">Evaluating Predicted Densities, Hamiltonians, and Density Matrices as Periodic SCF Initializers</span></li></ul>
+<p class="dpr-home-dashboard-empty">今日暂无推荐。</p>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">aichem-map <strong>5</strong></span><span class="dpr-home-dashboard-tag">smc <strong>3</strong></span></div>
+
 </section>
 </div>
 
